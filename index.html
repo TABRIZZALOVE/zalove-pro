@@ -1,0 +1,4663 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZALOVE PRODUCTION — Workspace</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #fafaf8;
+  --bg-2: #ffffff;
+  --bg-3: #f4f3f0;
+  --bg-paper: #fbf8f1;
+  --line: #ececea;
+  --line-2: #d8d6d2;
+  --line-strong: #1a1a1a;
+  --text: #0a0a0a;
+  --text-2: #4a4a4a;
+  --muted: #8c8a85;
+  --brand-red: #e8231d;
+  --brand-red-deep: #b81812;
+  --green: #1e9e4e;
+  --amber: #d97706;
+  --blue: #1d4ed8;
+}
+html, body { background: var(--bg); }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  font-size: 14px;
+}
+/* Subtle paper grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply;
+}
+
+.app { display: flex; min-height: 100vh; position: relative; z-index: 2; }
+
+/* ============ SIDEBAR ============ */
+.sidebar {
+  width: 248px;
+  background: var(--bg-2);
+  border-right: 1px solid var(--line);
+  padding: 0 0 24px;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.logo-block {
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.logo-svg {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+}
+.logo-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  letter-spacing: 5px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 4px;
+  max-width: 200px;
+  text-align: center;
+}
+.color-bar-thin {
+  display: flex;
+  height: 2px;
+  margin-top: 12px;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.color-bar-thin div { flex: 1; }
+.cb-r { background: var(--brand-red); }
+.cb-b { background: var(--text); }
+.cb-g { background: var(--line); }
+
+/* NAV */
+.nav-section { padding: 8px 0; }
+.nav-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: var(--muted);
+  padding: 6px 22px 6px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 22px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-2);
+  transition: all 0.15s;
+  font-weight: 500;
+  position: relative;
+}
+.nav-item:hover { color: var(--text); background: var(--bg-3); }
+.nav-item.active {
+  color: var(--brand-red);
+  background: var(--bg-3);
+  font-weight: 600;
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--brand-red);
+}
+.nav-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.65;
+}
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-count {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--bg-3);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+.nav-item.active .nav-count { background: rgba(232,35,29,0.12); color: var(--brand-red); }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px 22px 0;
+  border-top: 1px solid var(--line);
+  background: var(--bg-2);
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand-red);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+.user-info { line-height: 1.2; flex: 1; min-width: 0; }
+.user-name { font-size: 12px; font-weight: 600; }
+.user-role { font-size: 10px; color: var(--muted); }
+
+/* ============ MAIN ============ */
+.main {
+  margin-left: 248px;
+  flex: 1;
+  padding: 28px 40px 80px;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* TOP BAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 28px;
+  gap: 24px;
+}
+.page-title-block {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.page-title {
+  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  font-size: 44px;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.page-counter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+}
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+/* BUTTONS */
+.btn {
+  background: var(--brand-red);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover {
+  background: var(--brand-red-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(232, 35, 29, 0.25);
+}
+.btn-secondary {
+  background: var(--bg-2);
+  color: var(--text);
+  border: 1px solid var(--line-2);
+}
+.btn-secondary:hover {
+  background: var(--bg-3);
+  border-color: var(--text);
+  box-shadow: none;
+  transform: none;
+}
+.btn-dark {
+  background: var(--text);
+  color: white;
+}
+.btn-dark:hover { background: #2a2a2a; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+
+/* SEARCH */
+.search-box {
+  flex: 1;
+  max-width: 360px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 9px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--text);
+}
+.search-box .kbd {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  border-radius: 3px;
+}
+
+/* STATS STRIP */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 16px 20px;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.stat::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--brand-red);
+}
+.stat-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: 'Anton', sans-serif;
+  font-size: 32px;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.stat-delta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stat-delta.up { color: var(--green); }
+.stat-delta.down { color: var(--brand-red); }
+
+/* FILTER BAR */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-3);
+  padding: 3px;
+  border-radius: 4px;
+}
+.view-tab {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+}
+.view-tab.active {
+  background: var(--bg-2);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.filter-chip {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 6px 11px;
+  font-size: 12px;
+  border-radius: 4px;
+  color: var(--text-2);
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.filter-chip:hover { border-color: var(--line-2); background: var(--bg-3); }
+
+/* PROJECT GRID */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+.project-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.project-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--text);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+.poster {
+  width: 100%;
+  height: 220px;
+  position: relative;
+  overflow: hidden;
+  background: var(--text);
+}
+.poster::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+}
+.poster-1 { background: linear-gradient(135deg, #5a1f1f, #2d1010); }
+.poster-2 { background: linear-gradient(135deg, #1a3f5c, #0a1c2d); }
+.poster-3 { background: linear-gradient(135deg, #3a5c1f, #1a2e10); }
+.poster-4 { background: linear-gradient(135deg, #5a2a5a, #2d0e2d); }
+.poster-5 { background: linear-gradient(135deg, #5c5520, #2d2a0f); }
+.poster-6 { background: linear-gradient(135deg, #2a2d5c, #14152e); }
+
+.poster-num {
+  position: absolute;
+  bottom: -6px;
+  right: 14px;
+  font-family: 'Anton', sans-serif;
+  font-size: 110px;
+  color: rgba(255,255,255,0.08);
+  line-height: 1;
+  z-index: 2;
+}
+.poster-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  padding: 4px 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 2px;
+  color: white;
+  z-index: 3;
+}
+.poster-tag.status-prod { color: #fdb022; }
+.poster-tag.status-pre { color: #6ee7b7; }
+.poster-tag.status-post { color: #fda4af; }
+
+.poster-title {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 1.2px;
+  z-index: 3;
+}
+.poster-slate {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.45);
+  z-index: 3;
+  text-transform: uppercase;
+}
+.poster-slate strong { color: rgba(255,255,255,0.95); display: block; font-size: 11px; font-family: 'Anton', sans-serif; letter-spacing: 0.5px;}
+
+.card-body { padding: 16px 18px 18px; }
+.card-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 22px;
+  letter-spacing: -0.3px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.card-meta {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.card-progress {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--brand-red);
+}
+.progress-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* DETAIL */
+.detail-page { display: none; }
+.detail-page.active { display: block; }
+.dashboard.hidden { display: none; }
+
+.breadcrumb {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.breadcrumb:hover { color: var(--brand-red); }
+
+.detail-hero {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  margin-bottom: 32px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+}
+.detail-poster {
+  height: 360px;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.detail-poster::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+.detail-info { padding-top: 4px; }
+.detail-meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 600;
+  border: 1px solid var(--text);
+  color: var(--text);
+  border-radius: 3px;
+}
+.tag.red { border-color: var(--brand-red); color: var(--brand-red); background: rgba(232,35,29,0.04); }
+.detail-h1 {
+  font-family: 'Anton', sans-serif;
+  font-size: 80px;
+  letter-spacing: -2px;
+  line-height: 0.95;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+.detail-meta-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.detail-meta-item .label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+.detail-meta-item .value {
+  font-family: 'Anton', sans-serif;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+.detail-meta-item .value.small { font-size: 16px; }
+.detail-meta-item .value.red { color: var(--brand-red); }
+.detail-actions { margin-top: 22px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* SECTION TITLE */
+.section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 28px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+}
+.section-title::before {
+  content: '';
+  width: 14px;
+  height: 2px;
+  background: var(--brand-red);
+}
+.section-title .pill {
+  background: var(--bg-3);
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* SMART FILL */
+.smart-fill {
+  background: var(--bg-paper);
+  border: 1px solid #e8dec4;
+  border-left: 3px solid var(--brand-red);
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sf-icon {
+  width: 28px; height: 28px;
+  background: var(--brand-red);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sf-text { flex: 1; font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.sf-text strong {
+  color: var(--text);
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+/* DOC GRID */
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.doc-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.doc-card:hover {
+  border-color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+.doc-card.loaded {
+  border-color: rgba(232,35,29,0.3);
+  background: linear-gradient(135deg, rgba(232,35,29,0.025), transparent 30%);
+}
+.doc-card.loaded:hover { border-color: var(--brand-red); }
+.doc-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-family: 'Anton', sans-serif;
+  font-size: 16px;
+  color: var(--text);
+}
+.doc-card.loaded .doc-icon { background: rgba(232,35,29,0.1); color: var(--brand-red); }
+.doc-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; letter-spacing: -0.1px; }
+.doc-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.doc-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.status-ready { background: var(--green); }
+.status-draft { background: var(--amber); }
+.status-empty { background: var(--line-2); }
+.status-loaded { background: var(--brand-red); box-shadow: 0 0 0 3px rgba(232,35,29,0.15); }
+.loaded-badge {
+  position: absolute;
+  top: 12px;
+  right: 28px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--brand-red);
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.doc-create {
+  border: 1px dashed var(--line-2);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: var(--muted);
+}
+.doc-create:hover {
+  border-color: var(--brand-red);
+  color: var(--brand-red);
+  border-style: solid;
+  background: rgba(232,35,29,0.02);
+}
+.doc-create-plus {
+  font-family: 'Anton', sans-serif;
+  font-size: 32px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.legend-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin: 8px 0 24px;
+  text-transform: uppercase;
+}
+.legend-note .red-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--brand-red);
+  margin: 0 4px -1px 0;
+}
+
+/* MODAL OVERLAYS */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,20,18,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.active { display: flex; }
+
+.doc-overlay {
+  background: var(--bg-2);
+  width: 1000px;
+  max-width: 96%;
+  max-height: 92vh;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+  border: 1px solid var(--line-2);
+}
+.doc-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--brand-red);
+}
+
+.doc-header {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-2);
+}
+.doc-header-l { display: flex; align-items: center; gap: 14px; }
+.doc-header-icon {
+  width: 40px; height: 40px;
+  background: var(--brand-red);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Anton', sans-serif;
+  font-size: 19px;
+  border-radius: 4px;
+}
+.doc-section-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.doc-header-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 24px;
+  letter-spacing: -0.3px;
+  text-transform: uppercase;
+}
+.doc-actions-h { display: flex; gap: 6px; }
+.modal-close-x {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  width: 34px; height: 34px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+.modal-close-x:hover { border-color: var(--text); color: var(--text); }
+.doc-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+  background: var(--bg);
+}
+.doc-footer {
+  padding: 14px 28px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-2);
+}
+.doc-footer-info {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+}
+
+/* ESTIMATE */
+.est-meta {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.est-meta-item {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 11px 13px;
+  border-radius: 4px;
+}
+.est-meta-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+.est-meta-value { font-size: 13px; font-weight: 600; }
+.est-section {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.est-section-head {
+  padding: 11px 16px;
+  background: var(--bg-2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-left: 3px solid var(--brand-red);
+}
+.est-section-head .h {
+  font-family: 'Anton', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.est-section-head .h-count {
+  color: var(--muted);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+  margin-left: 6px;
+}
+.est-section-head .sum {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--brand-red);
+  font-weight: 700;
+}
+.est-rows { padding: 4px 16px; background: var(--bg); border-top: 1px solid var(--line); }
+.est-row {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 60px 60px 120px;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 12px;
+  align-items: center;
+}
+.est-row:last-child { border-bottom: none; }
+.est-row .name { font-weight: 600; }
+.est-row .desc { color: var(--muted); font-size: 11px; }
+.est-row .qty, .est-row .days, .est-row .price {
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+  font-size: 11px;
+}
+.est-row .price { color: var(--text); font-weight: 700; }
+.est-total {
+  background: var(--bg-2);
+  padding: 14px 22px;
+  margin-top: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+.est-total-row {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  padding: 5px 0;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.est-total-row.grand { padding-top: 12px; border-top: 1px solid var(--text); margin-top: 8px; }
+.est-total-row .label { color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; font-size: 11px; font-weight: 600;}
+.est-total-row .val { text-align: right; font-weight: 700; font-size: 14px; }
+.est-total-row.grand .val { color: var(--brand-red); font-size: 20px; font-family: 'Anton', sans-serif; letter-spacing: 0.3px; }
+
+/* CALL SHEET */
+.cs-header {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--brand-red);
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+}
+.cs-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+.cs-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 36px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.cs-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  margin-top: 4px;
+}
+.cs-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--brand-red);
+  letter-spacing: 1.5px;
+  font-weight: 700;
+}
+.cs-info-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  font-size: 12px;
+}
+.cs-info-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+.cs-info-value { font-weight: 600; }
+.cs-info-value .small { color: var(--muted); display: block; margin-top: 2px; font-size: 10px; font-weight: 400; }
+.cs-times {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.cs-time-cell { text-align: center; }
+.cs-time-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.cs-time-value {
+  font-family: 'Anton', sans-serif;
+  font-size: 26px;
+  color: var(--brand-red);
+}
+.cs-loc {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+}
+.cs-loc h3 {
+  font-family: 'Anton', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  color: var(--brand-red);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.cs-loc-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 2fr;
+  gap: 16px;
+  font-size: 12px;
+}
+.cs-loc-grid b { display: block; font-family: 'Inter', sans-serif; font-size: 10px; color: var(--muted); margin-bottom: 4px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; }
+.cs-loc-warn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--brand-red);
+  margin-top: 10px;
+  letter-spacing: 0.8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.cs-table-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cs-table {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.cs-table-h {
+  background: var(--bg-3);
+  padding: 8px 14px;
+  font-family: 'Anton', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--brand-red);
+  border-bottom: 1px solid var(--line);
+}
+.cs-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1.5fr 50px;
+  gap: 8px;
+  padding: 6px 14px;
+  border-bottom: 1px dashed var(--line);
+  font-size: 11px;
+  align-items: center;
+}
+.cs-row:last-child { border-bottom: none; }
+.cs-row .pos { color: var(--muted); }
+.cs-row .nm { font-weight: 600; }
+.cs-row .in { font-family: 'JetBrains Mono', monospace; color: var(--brand-red); text-align: right; font-weight: 700; }
+
+/* GANTT */
+.gantt-wrap {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 16px;
+  overflow-x: auto;
+}
+.gantt-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+.gantt-table th, .gantt-table td {
+  border: 1px solid var(--line);
+  padding: 3px 5px;
+  text-align: center;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.gantt-table th.stage-h, .gantt-table td.stage-h {
+  background: var(--bg-3);
+  color: var(--text);
+  text-align: left;
+  font-weight: 700;
+  font-family: 'Anton', sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 130px;
+  position: sticky; left: 0;
+}
+.gantt-table td.proc {
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--text);
+  background: var(--bg-2);
+  min-width: 200px;
+  position: sticky; left: 130px;
+  font-weight: 500;
+}
+.gantt-table .gd { min-width: 18px; height: 22px; }
+.gantt-table .work { background: var(--text); }
+.gantt-table .weekend { background: var(--bg-3); }
+.gantt-table .crit { background: var(--brand-red); }
+.gantt-table .approval { background: rgba(232,35,29,0.25); }
+.gantt-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.gantt-legend span { display: flex; align-items: center; gap: 6px; }
+.gantt-legend i {
+  width: 12px; height: 12px;
+  border: 1px solid var(--line);
+  display: inline-block;
+}
+
+/* RELEASE PAPER */
+.paper {
+  background: var(--bg-paper);
+  color: var(--text);
+  padding: 40px 50px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+  border: 1px solid #e8dec4;
+  border-radius: 4px;
+}
+.paper h1 {
+  font-family: 'Anton', sans-serif;
+  font-size: 22px;
+  text-transform: uppercase;
+  letter-spacing: -0.3px;
+  margin-bottom: 2px;
+  text-align: center;
+}
+.paper h2 {
+  font-family: 'Anton', sans-serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  margin-bottom: 18px;
+  text-align: center;
+  color: var(--text-2);
+}
+.paper-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.paper p { margin-bottom: 10px; }
+.paper ul { margin: 8px 0 14px 22px; }
+.paper li { margin-bottom: 4px; }
+.paper .var {
+  background: rgba(232,35,29,0.1);
+  color: var(--brand-red-deep);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+.paper .sig {
+  margin-top: 36px;
+  border-top: 1px solid var(--line-2);
+  padding-top: 14px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 20px;
+}
+.paper .sig-cell {
+  border-bottom: 1px solid var(--text);
+  padding-bottom: 4px;
+  height: 24px;
+}
+.paper .sig-label { text-align: center; font-size: 9px; color: var(--text-2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
+
+/* New doc / placeholder modals */
+.new-doc-form { display: flex; flex-direction: column; gap: 14px; }
+.form-label {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  border-radius: 4px;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--brand-red);
+}
+
+/* ===== Roadmap Panel ===== */
+.roadmap-section {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid var(--line);
+}
+.roadmap-h {
+  font-family: 'Anton', sans-serif;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.roadmap-sub {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.phases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.phase {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 14px 16px;
+  position: relative;
+}
+.phase.current { border-color: var(--brand-red); background: linear-gradient(135deg, rgba(232,35,29,0.03), transparent 50%); }
+.phase.done { background: var(--bg-3); }
+.phase-num {
+  font-family: 'Anton', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.phase.current .phase-num { color: var(--brand-red); }
+.phase-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.phase-desc { font-size: 11px; color: var(--text-2); line-height: 1.4; }
+.phase-status {
+  position: absolute;
+  top: 14px; right: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.phase.done .phase-status { color: var(--green); }
+.phase.current .phase-status { color: var(--brand-red); }
+.phase-status .dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.phase.done .phase-status .dot { background: var(--green); }
+.phase.current .phase-status .dot { background: var(--brand-red); animation: pulse 1.5s infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===== PRIVACY / ACCESS CONTROL ===== */
+.role-switch {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 3px;
+  display: flex;
+  gap: 2px;
+  margin: 0 22px 14px;
+}
+.role-tab {
+  flex: 1;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px 8px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--muted);
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.role-tab.active {
+  background: var(--bg-2);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.role-tab.active.producer-active { color: var(--brand-red); }
+
+/* Lock badge */
+.private-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(232,35,29,0.08);
+  color: var(--brand-red);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border: 1px solid rgba(232,35,29,0.2);
+}
+.private-badge::before {
+  content: '🔒';
+  font-size: 9px;
+}
+
+.doc-card .private-badge {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+}
+
+/* Team view (when role = team) hides/masks financial data */
+body.team-view .financial { display: none !important; }
+body.team-view .mask-value { color: transparent !important; position: relative; user-select: none; }
+body.team-view .mask-value::after {
+  content: '🔒 Приватно';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+body.team-view .stat-value.mask-value::after {
+  font-size: 13px;
+  justify-content: flex-start;
+}
+body.team-view .doc-card.financial-doc {
+  display: none !important;
+}
+
+/* Access info banner */
+.access-info {
+  background: var(--bg-paper);
+  border: 1px solid #e8dec4;
+  border-left: 3px solid var(--text);
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.access-info-icon {
+  width: 24px; height: 24px;
+  background: var(--text);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+body.team-view .access-info {
+  border-left-color: var(--muted);
+}
+body.team-view .access-info-icon { background: var(--muted); }
+.access-info strong { font-weight: 700; color: var(--text); }
+
+/* ===== SUB-ESTIMATES (от подрядчиков) ===== */
+.sub-est-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.sub-est-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.sub-est-card:hover {
+  border-color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+}
+.sub-est-card.received { border-color: rgba(30,158,78,0.4); background: linear-gradient(135deg, rgba(30,158,78,0.04), transparent 50%); }
+.sub-est-card.received:hover { border-color: var(--green); }
+.sub-est-card.draft { border-color: rgba(217,119,6,0.4); }
+.sub-est-card .icon {
+  width: 28px; height: 28px;
+  background: var(--bg-3);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Anton', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.sub-est-card.received .icon { background: rgba(30,158,78,0.15); color: var(--green); }
+.sub-est-card .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.sub-est-card .name { font-size: 13px; font-weight: 700; line-height: 1.3; }
+.sub-est-card .sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+.sub-est-card .status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.dot-recv { background: var(--green); box-shadow: 0 0 0 3px rgba(30,158,78,0.15); }
+.dot-await { background: var(--line-2); }
+.dot-draft { background: var(--amber); box-shadow: 0 0 0 3px rgba(217,119,6,0.15); }
+.sub-est-card .bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.sub-est-card .amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand-red);
+}
+.sub-est-card .from {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+.sub-est-card.empty .amount { color: var(--muted); }
+
+.sub-est-upload {
+  border: 1px dashed var(--line-2);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 110px;
+  color: var(--muted);
+}
+.sub-est-upload:hover {
+  border-color: var(--brand-red);
+  color: var(--brand-red);
+  background: rgba(232,35,29,0.02);
+  border-style: solid;
+}
+.sub-est-upload .icon-plus {
+  font-family: 'Anton', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* Subestimate totals row */
+.sub-est-summary {
+  background: var(--bg-paper);
+  border: 1px solid #e8dec4;
+  border-radius: 4px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.sub-est-summary .lbl {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.sub-est-summary .v {
+  font-family: 'Anton', sans-serif;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+  margin-top: 2px;
+}
+.sub-est-summary .v.red { color: var(--brand-red); }
+.sub-est-summary .v.green { color: var(--green); }
+
+/* ===== CREATIVE DOCS ===== */
+.creative-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.creative-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.creative-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--text);
+  opacity: 0.15;
+}
+.creative-card.uploaded::before { background: var(--brand-red); opacity: 1; }
+.creative-card:hover { border-color: var(--text); transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.05); }
+.creative-card .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.creative-card .ico {
+  width: 36px; height: 36px;
+  background: var(--bg-3);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Anton', sans-serif;
+  font-size: 15px;
+  color: var(--text);
+}
+.creative-card.uploaded .ico { background: rgba(232,35,29,0.1); color: var(--brand-red); }
+.creative-card .type {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 3px 7px;
+  background: var(--bg-3);
+  border-radius: 3px;
+}
+.creative-card .ctitle { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.creative-card .author {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.creative-card .ext-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+.creative-card .ext-info .lnk {
+  color: var(--brand-red);
+  font-weight: 700;
+  text-decoration: none;
+}
+.creative-card .pending {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 10px 0;
+  text-align: center;
+  font-style: italic;
+}
+.creative-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+.creative-actions button {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.creative-actions button:hover { background: var(--bg-2); border-color: var(--text); color: var(--text); }
+
+/* ===== TEAM RATING (post-project) ===== */
+.rating-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.rating-card.private-section { border-left: 3px solid var(--brand-red); }
+.rating-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.rating-overall {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.rating-num {
+  font-family: 'Anton', sans-serif;
+  font-size: 44px;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.rating-num.high { color: var(--green); }
+.rating-num.mid { color: var(--amber); }
+.rating-num.low { color: var(--brand-red); }
+.rating-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.rating-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.rating-meta {
+  text-align: right;
+  font-size: 11px;
+  color: var(--muted);
+}
+.rating-meta .v {
+  color: var(--text);
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.team-row {
+  display: grid;
+  grid-template-columns: 32px 1.5fr 1.4fr 200px 60px;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line);
+  align-items: center;
+}
+.team-row:last-child { border-bottom: none; }
+.team-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--text);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 10px;
+}
+.team-info .name { font-size: 13px; font-weight: 600; }
+.team-info .role { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.team-note {
+  font-size: 11px;
+  color: var(--text-2);
+  font-style: italic;
+  line-height: 1.4;
+}
+.team-note.empty { color: var(--muted); font-style: italic; opacity: 0.6; }
+.team-rating-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rate-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.rate-fill { height: 100%; border-radius: 3px; }
+.rate-fill.high { background: var(--green); }
+.rate-fill.mid { background: var(--amber); }
+.rate-fill.low { background: var(--brand-red); }
+.team-rating-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+}
+.team-rating-pct.high { color: var(--green); }
+.team-rating-pct.mid { color: var(--amber); }
+.team-rating-pct.low { color: var(--brand-red); }
+
+.rating-add-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--line-2);
+  padding: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.rating-add-btn:hover { border-color: var(--brand-red); color: var(--brand-red); border-style: solid; }
+
+/* Watermark logo on documents */
+.doc-watermark {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  max-width: 120px;
+  max-height: 32px;
+  opacity: 0.8;
+  z-index: 5;
+  pointer-events: none;
+}
+.doc-watermark.fallback-text {
+  font-family: 'Anton', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--brand-red);
+  opacity: 0.4;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+/* User logo image styles */
+.user-logo {
+  display: block;
+  max-width: 180px;
+  max-height: 60px;
+  width: auto;
+  height: auto;
+}
+
+/* ===== MUSI-PUSI BLOCK — анимации, муд-иконки, звуки и весь fun ===== */
+
+/* Mood icon on project card */
+.mood-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px; height: 32px;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  z-index: 4;
+  cursor: help;
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: transform 0.2s;
+}
+.mood-icon:hover { transform: scale(1.15) rotate(8deg); }
+.mood-icon.mood-fire { animation: flicker 1.5s infinite; }
+.mood-icon.mood-sos { animation: sos-pulse 0.8s infinite; }
+@keyframes flicker {
+  0%, 100% { box-shadow: 0 0 12px rgba(251,146,60,0.6); }
+  50% { box-shadow: 0 0 18px rgba(232,35,29,0.9); transform: scale(1.05); }
+}
+@keyframes sos-pulse {
+  0%, 100% { background: rgba(232,35,29,0.85); box-shadow: 0 0 0 0 rgba(232,35,29,0.7); }
+  50% { background: rgba(232,35,29,1); box-shadow: 0 0 0 8px rgba(232,35,29,0); }
+}
+
+/* Hover lift + shine on cards */
+.project-card {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s, border-color 0.25s;
+}
+.project-card:hover { transform: translateY(-4px) scale(1.01); }
+.project-card .poster::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s;
+  z-index: 4;
+  pointer-events: none;
+}
+.project-card:hover .poster::before { left: 150%; }
+
+/* Document stamp animation */
+.doc-stamp {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5) rotate(-12deg);
+  z-index: 1300;
+  padding: 20px 36px;
+  border: 4px solid var(--brand-red);
+  font-family: 'Anton', sans-serif;
+  font-size: 48px;
+  letter-spacing: 4px;
+  color: var(--brand-red);
+  background: rgba(232,35,29,0.05);
+  pointer-events: none;
+  opacity: 0;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+.doc-stamp.show { animation: stampHit 1.6s ease-out forwards; }
+@keyframes stampHit {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(2) rotate(-25deg); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-12deg); }
+  80% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-12deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95) rotate(-12deg); }
+}
+
+/* CONFETTI canvas */
+#confettiCanvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1400;
+}
+
+/* CLAPPERBOARD animation */
+#clapperboard {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 480px;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 4px;
+  z-index: 1500;
+  display: none;
+  font-family: 'Anton', sans-serif;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+}
+#clapperboard.active { display: block; animation: boardIn 0.4s ease-out; }
+@keyframes boardIn {
+  from { transform: translate(-50%, -120%) rotate(-8deg); opacity: 0; }
+  to { transform: translate(-50%, -50%) rotate(0); opacity: 1; }
+}
+.clap-stripes {
+  height: 56px;
+  background:
+    repeating-linear-gradient(90deg, #000 0 40px, #fff 40px 80px);
+  transform-origin: top left;
+  transition: transform 0.2s ease-out;
+}
+#clapperboard.clapping .clap-stripes {
+  animation: clapHit 0.5s ease-out;
+}
+@keyframes clapHit {
+  0% { transform: rotate(-25deg) translateY(-20px); }
+  35% { transform: rotate(0) translateY(0); }
+  45% { transform: rotate(2deg) translateY(2px); }
+  55% { transform: rotate(0); }
+  100% { transform: rotate(0); }
+}
+.clap-body {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 18px;
+  text-transform: uppercase;
+}
+.clap-cell { border-bottom: 2px solid #000; padding-bottom: 4px; }
+.clap-cell .lbl { font-size: 10px; letter-spacing: 1.5px; color: #666; font-family: 'Inter', sans-serif; font-weight: 700; }
+.clap-cell .val { font-size: 24px; letter-spacing: -0.5px; }
+.clap-bigtitle {
+  grid-column: span 3;
+  text-align: center;
+  font-size: 38px;
+  letter-spacing: -1px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+.clap-subtitle {
+  grid-column: span 3;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #666;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+/* Film reel strip on project detail */
+.film-reel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 88px;
+  background: #0a0907;
+  border-left: 1px solid var(--line);
+  z-index: 5;
+  overflow: hidden;
+  padding: 18px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.film-reel::before,
+.film-reel::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 14px;
+  background-image:
+    radial-gradient(circle at 25% 50%, #0a0907 3px, transparent 3.5px),
+    radial-gradient(circle at 75% 50%, #0a0907 3px, transparent 3.5px);
+  background-color: #1a1814;
+  z-index: 2;
+}
+.film-reel::before { top: 0; }
+.film-reel::after { bottom: 0; }
+.film-reel-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin: 18px 0 10px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.film-frame {
+  width: 68px;
+  height: 48px;
+  border-radius: 2px;
+  margin: 3px 0;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.film-frame:hover { transform: scale(1.15); z-index: 10; }
+.film-frame::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse, transparent 50%, rgba(0,0,0,0.5));
+}
+.film-frame .frame-num {
+  position: absolute;
+  bottom: 2px; right: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: rgba(255,255,255,0.65);
+  z-index: 2;
+}
+/* shift main content when reel visible */
+body.has-reel .main { padding-right: 120px; }
+
+/* Camera shutter toggle */
+.shutter-toggle {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  width: 44px; height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 50;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.shutter-toggle:hover { transform: scale(1.08); }
+.shutter-toggle.muted { opacity: 0.5; }
+body.has-reel .shutter-toggle { right: 106px; }
+
+/* Weather chip in callsheet */
+.weather-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+}
+.weather-chip .ico { font-size: 16px; }
+.weather-chip.loading { opacity: 0.5; }
+
+/* Easter egg modal */
+#easterEggOverlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: white;
+  text-align: center;
+  cursor: pointer;
+}
+#easterEggOverlay.active { display: flex; animation: eeFade 0.5s ease-in; }
+@keyframes eeFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.ee-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 80px;
+  letter-spacing: -2px;
+  background: linear-gradient(90deg, var(--brand-red), #ff6b6b, var(--brand-red));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: 0% center; }
+}
+.ee-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-size: 14px;
+  margin-bottom: 36px;
+  opacity: 0.7;
+}
+.ee-bts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  max-width: 800px;
+}
+.ee-bts-grid div {
+  height: 120px;
+  border-radius: 4px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+}
+.ee-bts-grid div::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse, transparent 40%, rgba(0,0,0,0.5));
+}
+.ee-bts-1 { background: linear-gradient(135deg, #2d1010, #5a1f1f); }
+.ee-bts-2 { background: linear-gradient(135deg, #0a1c2d, #1a3f5c); }
+.ee-bts-3 { background: linear-gradient(135deg, #1a2e10, #3a5c1f); }
+.ee-bts-4 { background: linear-gradient(135deg, #2d0e2d, #5a2a5a); }
+.ee-bts-5 { background: linear-gradient(135deg, #2d2a0f, #5c5520); }
+.ee-bts-6 { background: linear-gradient(135deg, #14152e, #2a2d5c); }
+.ee-bts-7 { background: linear-gradient(135deg, #3a1a3a, #6a2a6a); }
+.ee-bts-8 { background: linear-gradient(135deg, #1a3a1a, #2a5a2a); }
+.ee-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  opacity: 0.4;
+  margin-top: 24px;
+  letter-spacing: 2px;
+}
+
+/* Logo click cursor */
+.logo-svg, .user-logo {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.logo-svg:hover, .user-logo:hover { transform: scale(1.03); }
+
+/* Dark mode (auto night) */
+body.dark-mode {
+  --bg: #0e0e10;
+  --bg-2: #16161a;
+  --bg-3: #1d1d22;
+  --bg-paper: #1a1814;
+  --line: #2a2a30;
+  --line-2: #3a3a40;
+  --line-strong: #ede6d8;
+  --text: #ede6d8;
+  --text-2: #c8c5be;
+  --muted: #7a7872;
+}
+body.dark-mode .paper {
+  background: #1a1814;
+  color: #ede6d8;
+  border-color: #3a3a40;
+}
+body.dark-mode .paper h1, body.dark-mode .paper h2 { color: #ede6d8; }
+body.dark-mode .smart-fill { background: rgba(232,35,29,0.08); border-color: rgba(232,35,29,0.3); }
+body.dark-mode .access-info { background: rgba(232,35,29,0.05); border-color: rgba(232,35,29,0.2); }
+
+/* Theme toggle button */
+.theme-toggle {
+  position: fixed;
+  bottom: 18px;
+  right: 70px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  width: 44px; height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 50;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.theme-toggle:hover { transform: scale(1.08); }
+body.has-reel .theme-toggle { right: 158px; }
+
+/* Greeting line */
+.greeting-line {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.greeting-line .name {
+  color: var(--brand-red);
+  font-weight: 700;
+}
+
+/* Quote at bottom */
+.bottom-quote {
+  margin: 60px 0 20px;
+  padding: 20px;
+  border-top: 1px solid var(--line);
+  font-style: italic;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  font-family: Georgia, serif;
+}
+.bottom-quote::before { content: '« '; color: var(--brand-red); font-size: 22px; font-weight: 900; }
+.bottom-quote::after { content: ' »'; color: var(--brand-red); font-size: 22px; font-weight: 900; }
+.bottom-quote .author { display: block; font-size: 11px; font-style: normal; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; font-family: 'Inter', sans-serif; }
+
+/* Avatar with image */
+.avatar-img, .team-avatar-img {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-size: cover;
+  background-position: center;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 2px solid white;
+}
+
+/* ===== TEAM MEMBERS section ===== */
+.team-members-section {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.team-members-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.team-members-table th {
+  background: var(--bg-3);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+}
+.team-members-table td {
+  padding: 12px 14px;
+  border-bottom: 1px dashed var(--line);
+  font-size: 12px;
+  vertical-align: middle;
+}
+.team-members-table tr:last-child td { border-bottom: none; }
+.team-members-table tr:hover td { background: var(--bg-3); }
+.tm-name-ru { font-weight: 600; }
+.tm-name-en { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.tm-role-cell {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.tm-handle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.tm-handle a, .tm-handle .lnk {
+  color: var(--brand-red);
+  text-decoration: none;
+  cursor: pointer;
+}
+.tm-handle a:hover, .tm-handle .lnk:hover { text-decoration: underline; }
+.tm-handle.empty { color: var(--muted); font-style: italic; }
+.tm-actions { text-align: right; color: var(--muted); cursor: pointer; }
+.team-add-row {
+  padding: 12px 14px;
+  background: var(--bg-3);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.team-add-row:hover { color: var(--brand-red); background: rgba(232,35,29,0.04); }
+
+/* Contracts folder badge in sidebar */
+.nav-group-folder {
+  margin: 0 12px;
+  background: rgba(232,35,29,0.04);
+  border: 1px solid rgba(232,35,29,0.15);
+  border-radius: 4px;
+  padding: 8px 0 6px;
+}
+.nav-group-folder .nav-title {
+  padding: 4px 12px 6px;
+  color: var(--brand-red);
+}
+.nav-group-folder .nav-item {
+  padding-left: 18px;
+  padding-right: 12px;
+  font-size: 12px;
+}
+.nav-folder-icon {
+  font-size: 11px;
+  margin-right: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="logo-block">
+      <!-- Логотип ZALOVE из logo.png -->
+      <img class="logo-svg user-logo" src="logo.png" alt="ZALOVE PRODUCTION" style="width: 100%; max-width: 200px; height: auto; display: block;">
+      <div class="logo-sub">PRODUCTION</div>
+      <div class="color-bar-thin">
+        <div class="cb-r"></div>
+        <div class="cb-r"></div>
+        <div class="cb-b"></div>
+        <div class="cb-g"></div>
+      </div>
+    </div>
+
+    <div class="role-switch">
+      <div class="role-tab active producer-active" onclick="setRole('producer')">👁 Я · Продюсер</div>
+      <div class="role-tab" onclick="setRole('team')">👥 Глазами команды</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">Workspace</div>
+      <div class="nav-item active" onclick="showDashboard()">
+        <span class="nav-icon">▤</span> Все проекты <span class="nav-count">6</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">⏵</span> Мои задачи <span class="nav-count">9</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◷</span> Календарь
+      </div>
+      <div class="nav-item financial">
+        <span class="nav-icon">⌗</span> Финансы <span class="private-badge" style="margin-left:auto;">Приватно</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">Документы</div>
+      <div class="nav-item"><span class="nav-icon">§</span> Договоры с клиентом</div>
+      <div class="nav-item financial"><span class="nav-icon">₽</span> Сметы <span class="private-badge" style="margin-left:auto;">Приватно</span></div>
+      <div class="nav-item financial"><span class="nav-icon">₽</span> Подсметы <span class="private-badge" style="margin-left:auto;">Приватно</span></div>
+      <div class="nav-item"><span class="nav-icon">⌚</span> Вызывные</div>
+      <div class="nav-item"><span class="nav-icon">⊞</span> Шаблоны</div>
+    </div>
+
+    <!-- Отдельная папка договоров с исполнителями -->
+    <div class="nav-group-folder">
+      <div class="nav-title">📁 Договоры с исполнителями</div>
+      <div class="nav-item"><span class="nav-folder-icon">▸</span> ИП → ИП</div>
+      <div class="nav-item"><span class="nav-folder-icon">▸</span> ИП → Самозанятый</div>
+      <div class="nav-item"><span class="nav-folder-icon">▸</span> ИП → ФЛ безвозмездно</div>
+      <div class="nav-item"><span class="nav-folder-icon">▸</span> NDA исполнителя</div>
+      <div class="nav-item"><span class="nav-folder-icon">▸</span> Расписка о получении</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">База контактов</div>
+      <div class="nav-item"><span class="nav-icon">⚇</span> Клиенты</div>
+      <div class="nav-item"><span class="nav-icon">⚐</span> Команда</div>
+      <div class="nav-item"><span class="nav-icon">★</span> Кастинг</div>
+      <div class="nav-item"><span class="nav-icon">⌂</span> Локации</div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">TZ</div>
+        <div class="user-info">
+          <div class="user-name">Табриз Залов</div>
+          <div class="user-role">Продюсер · ИП</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <section class="dashboard" id="dashboard">
+      <div class="topbar">
+        <div class="page-title-block">
+          <div>
+            <div class="greeting-line" id="greetingLine">С возвращением, <span class="name">Табриз</span>.</div>
+            <div class="page-title">Проекты</div>
+            <div class="page-counter">6 АКТИВНЫХ · ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670</div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="search-box">
+            <span>⌕</span><input placeholder="Поиск проектов..."/><span class="kbd">⌘ K</span>
+          </div>
+          <button class="btn-secondary btn">⤓ Экспорт</button>
+          <button class="btn" onclick="openNewDoc()">＋ Новый проект</button>
+        </div>
+      </div>
+
+      <!-- ACCESS INFO -->
+      <div class="access-info" id="accessInfo">
+        <div class="access-info-icon" id="accessInfoIcon">👁</div>
+        <div id="accessInfoText"><strong>Режим продюсера.</strong> Видите всё: финансы, сметы, маржу. Команда не видит финансовых данных — переключите на «Глазами команды», чтобы посмотреть.</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">В работе</div>
+          <div class="stat-value">6</div>
+          <div class="stat-delta up">▲ +2 за месяц</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Бюджет (квартал) <span class="private-badge" style="margin-left: 6px;">Приватно</span></div>
+          <div class="stat-value mask-value">12.4 М</div>
+          <div class="stat-delta up financial">▲ +18% к Q1</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Документы готовы</div>
+          <div class="stat-value">24/41</div>
+          <div class="stat-delta">17 в работе</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Сдача в этом месяце</div>
+          <div class="stat-value">3</div>
+          <div class="stat-delta down">▼ 1 в группе риска</div>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filter-bar">
+        <div class="view-tabs">
+          <div class="view-tab active">▤ Карточки</div>
+          <div class="view-tab">≡ Список</div>
+          <div class="view-tab">⊞ Канбан</div>
+          <div class="view-tab">◷ Календарь</div>
+        </div>
+        <div style="flex: 1;"></div>
+        <div class="filter-chip">Статус ⌄</div>
+        <div class="filter-chip">Клиент ⌄</div>
+        <div class="filter-chip">Команда ⌄</div>
+        <div class="filter-chip">Сортировка: дата ⌄</div>
+      </div>
+
+      <!-- PROJECTS GRID -->
+      <div class="projects-grid">
+        <div class="project-card" onclick="openProject('Nebula', 1)">
+          <div class="poster poster-1">
+            <div class="poster-tag status-prod">PRODUCTION</div>
+            <div class="mood-icon mood-fire" title="Горит! Дедлайн близко">🔥</div>
+            <div class="poster-title">SAMSUNG</div>
+            <div class="poster-slate"><strong>NEBULA</strong>TVC · 60 SEC</div>
+            <div class="poster-num">01</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Nebula</div>
+            <div class="card-meta">Samsung · TVC · 18.05 — 04.06</div>
+            <div class="card-progress">
+              <div class="progress-bar"><div class="progress-fill" style="width: 65%"></div></div>
+              <span class="progress-text">65%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card" onclick="openProject('Echo in the City', 2)">
+          <div class="poster poster-2">
+            <div class="poster-tag status-pre">PRE-PROD</div>
+            <div class="mood-icon" title="Спокойно — идёт по плану">🌙</div>
+            <div class="poster-title">NIKE</div>
+            <div class="poster-slate"><strong>ECHO IN THE CITY</strong>ДОК · 12 МИН</div>
+            <div class="poster-num">02</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Echo in the City</div>
+            <div class="card-meta">Nike · документальный · 01.06 — 30.07</div>
+            <div class="card-progress">
+              <div class="progress-bar"><div class="progress-fill" style="width: 20%"></div></div>
+              <span class="progress-text">20%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card" onclick="openProject('Vertigo', 3)">
+          <div class="poster poster-3">
+            <div class="poster-tag status-post">POST</div>
+            <div class="mood-icon mood-sos" title="SOS! Срочно — сдача завтра">🚨</div>
+            <div class="poster-title">SBER</div>
+            <div class="poster-slate"><strong>VERTIGO</strong>CG-РОЛИК</div>
+            <div class="poster-num">03</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Vertigo</div>
+            <div class="card-meta">Sber · CG-ролик · сдача 25.05</div>
+            <div class="card-progress">
+              <div class="progress-bar"><div class="progress-fill" style="width: 88%"></div></div>
+              <span class="progress-text">88%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card" onclick="openProject('Outliers', 4)">
+          <div class="poster poster-4">
+            <div class="poster-tag status-prod">PRODUCTION</div>
+            <div class="mood-icon" title="В графике">🌙</div>
+            <div class="poster-title">YANDEX</div>
+            <div class="poster-slate"><strong>OUTLIERS</strong>BRAND FILM</div>
+            <div class="poster-num">04</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Outliers</div>
+            <div class="card-meta">Yandex · brand film · 20.05 — 12.06</div>
+            <div class="card-progress">
+              <div class="progress-bar"><div class="progress-fill" style="width: 45%"></div></div>
+              <span class="progress-text">45%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card" onclick="openProject('Salt', 5)">
+          <div class="poster poster-5">
+            <div class="poster-tag status-pre">PRE-PROD</div>
+            <div class="mood-icon" title="Только стартовали">🌙</div>
+            <div class="poster-title">VK · MV</div>
+            <div class="poster-slate"><strong>SALT</strong>МУЗЫКАЛЬНЫЙ КЛИП</div>
+            <div class="poster-num">05</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Salt</div>
+            <div class="card-meta">VK · муз. клип · 25.06 — 08.07</div>
+            <div class="card-progress">
+              <div class="progress-bar"><div class="progress-fill" style="width: 12%"></div></div>
+              <span class="progress-text">12%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card" onclick="openProject('Static Noise', 6)">
+          <div class="poster poster-6">
+            <div class="poster-tag status-post">POST</div>
+            <div class="mood-icon mood-fire" title="Финал близко">🔥</div>
+            <div class="poster-title">TINKOFF</div>
+            <div class="poster-slate"><strong>STATIC NOISE</strong>TVC · POST</div>
+            <div class="poster-num">06</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Static Noise</div>
+            <div class="card-meta">Tinkoff · сдача 30.05</div>
+            <div class="card-progress">
+              <div class="progress-bar"><div class="progress-fill" style="width: 92%"></div></div>
+              <span class="progress-text">92%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROADMAP -->
+      <div class="roadmap-section">
+        <div class="roadmap-h">Roadmap внедрения</div>
+        <div class="roadmap-sub">Где мы сейчас · 6 фаз внедрения системы</div>
+        <div class="phases">
+          <div class="phase done">
+            <div class="phase-status"><span class="dot"></span> Готово</div>
+            <div class="phase-num">PHASE 0</div>
+            <div class="phase-name">Фундамент</div>
+            <div class="phase-desc">База, шаблоны, контакты в одном месте. Прототип утверждён.</div>
+          </div>
+          <div class="phase current">
+            <div class="phase-status"><span class="dot"></span> Сейчас</div>
+            <div class="phase-num">PHASE 1</div>
+            <div class="phase-name">Автогенерация</div>
+            <div class="phase-desc">Placeholder-ы в шаблонах, кнопка «Сгенерировать», Smart Fill.</div>
+          </div>
+          <div class="phase">
+            <div class="phase-num">PHASE 2</div>
+            <div class="phase-name">Календарь · GCal</div>
+            <div class="phase-desc">Миграция с SingularityApp на Google Calendar + Telegram-канал.</div>
+          </div>
+          <div class="phase">
+            <div class="phase-num">PHASE 3</div>
+            <div class="phase-name">Telegram-бот</div>
+            <div class="phase-desc">Рассылка в общий чат + @-меншены команды. Опц. дубль в DM.</div>
+          </div>
+          <div class="phase">
+            <div class="phase-num">PHASE 4</div>
+            <div class="phase-name">ИИ-агенты</div>
+            <div class="phase-desc">Агент-смета, агент-дедлайн, агент-бриф, агент-проверка.</div>
+          </div>
+          <div class="phase">
+            <div class="phase-num">PHASE 5</div>
+            <div class="phase-name">Масштаб</div>
+            <div class="phase-desc">Клиентский портал, аналитика, мобильное приложение.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECT DETAIL -->
+    <section class="detail-page" id="detail">
+      <div class="breadcrumb" onclick="showDashboard()">◀ ВСЕ ПРОЕКТЫ</div>
+
+      <div class="detail-hero">
+        <div class="detail-poster poster-1" id="detail-poster">
+          <div class="poster-tag status-prod">PRODUCTION</div>
+          <div class="poster-title">SAMSUNG</div>
+          <div class="poster-slate"><strong>NEBULA</strong>TVC · 60 SEC</div>
+          <div class="poster-num" style="font-size: 140px;" id="detail-num">01</div>
+        </div>
+        <div class="detail-info">
+          <div class="detail-meta-tags">
+            <span class="tag red">TVC</span>
+            <span class="tag">SAMSUNG</span>
+            <span class="tag">60 SEC</span>
+            <span class="tag">3 ДНЯ</span>
+            <span class="tag">4K · 24FPS</span>
+          </div>
+          <h1 class="detail-h1" id="detail-title">Nebula</h1>
+          <div class="detail-meta-row">
+            <div class="detail-meta-item">
+              <div class="label">Бюджет <span class="private-badge" style="margin-left: 4px;">Приватно</span></div>
+              <div class="value red mask-value">4.2 М ₽</div>
+            </div>
+            <div class="detail-meta-item">
+              <div class="label">Съёмочные дни</div>
+              <div class="value">3 ДНЯ</div>
+            </div>
+            <div class="detail-meta-item">
+              <div class="label">Сдача</div>
+              <div class="value small">04.06.2026</div>
+            </div>
+            <div class="detail-meta-item">
+              <div class="label">Прогресс</div>
+              <div class="value">65%</div>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="btn" onclick="openNewDoc()">＋ Новый документ</button>
+            <button class="btn-secondary btn">⤓ Экспорт всех</button>
+            <button class="btn-secondary btn">📨 Поделиться</button>
+            <button class="btn-dark btn">🤖 В Telegram</button>
+            <button class="btn-secondary btn" style="margin-left: auto;">🎬 Закрыть проект</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Smart Fill активен</strong>
+          Реквизиты ИП «Залов Табриз Руслан-Оглы» · ОГРНИП 324508100144670, состав крю и кастинга подтягиваются во все документы автоматически
+        </div>
+      </div>
+
+      <!-- TEAM MEMBERS -->
+      <div class="section-title">Участники проекта <span class="pill">ОТДЕЛЬНОЕ ОКНО ПРОЕКТА</span></div>
+      <div class="team-members-section">
+        <table class="team-members-table">
+          <thead>
+            <tr>
+              <th>ФИО (рус) / Latin</th>
+              <th>Роль</th>
+              <th>Telegram</th>
+              <th>Instagram</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="tm-name-ru">Иван Иванов</div>
+                <div class="tm-name-en">Ivan Ivanov</div>
+              </td>
+              <td><span class="tm-role-cell">Режиссёр</span></td>
+              <td class="tm-handle"><a>@ivan_dir</a></td>
+              <td class="tm-handle"><a>@ivan.directs</a></td>
+              <td class="tm-actions">⋯</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="tm-name-ru">Сергей Сергеев</div>
+                <div class="tm-name-en">Sergey Sergeev</div>
+              </td>
+              <td><span class="tm-role-cell">DOP</span></td>
+              <td class="tm-handle"><a>@s_dop</a></td>
+              <td class="tm-handle"><a>@sergey.shoots</a></td>
+              <td class="tm-actions">⋯</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="tm-name-ru">Ольга Ольгина</div>
+                <div class="tm-name-en">Olga Olgina</div>
+              </td>
+              <td><span class="tm-role-cell">Арт-директор</span></td>
+              <td class="tm-handle"><a>@olga_art</a></td>
+              <td class="tm-handle empty">— не указан —</td>
+              <td class="tm-actions">⋯</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="tm-name-ru">Михаил Михайлов</div>
+                <div class="tm-name-en">Mikhail Mikhailov</div>
+              </td>
+              <td><span class="tm-role-cell">Администратор</span></td>
+              <td class="tm-handle"><a>@misha_admin</a></td>
+              <td class="tm-handle"><a>@misha.set</a></td>
+              <td class="tm-actions">⋯</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="tm-name-ru">Анна Анина</div>
+                <div class="tm-name-en">Anna Anina</div>
+              </td>
+              <td><span class="tm-role-cell">Стилист</span></td>
+              <td class="tm-handle"><a>@anna_style</a></td>
+              <td class="tm-handle"><a>@anna.wardrobe</a></td>
+              <td class="tm-actions">⋯</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="tm-name-ru">Алексей Алексеев</div>
+                <div class="tm-name-en">Alexey Alexeev</div>
+              </td>
+              <td><span class="tm-role-cell">Реж. монтажа</span></td>
+              <td class="tm-handle"><a>@a_editor</a></td>
+              <td class="tm-handle empty">— не указан —</td>
+              <td class="tm-actions">⋯</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="team-add-row" onclick="openDoc('add-member')">＋ Добавить участника</div>
+      </div>
+
+      <!-- CREATIVE & SCRIPT -->
+      <div class="section-title">Креатив и сценарий <span class="pill">ЗАГРУЗКА ССЫЛКОЙ ИЛИ ФАЙЛОМ</span></div>
+      <div class="creative-grid">
+        <div class="creative-card uploaded" onclick="openDoc('creative-treatment')">
+          <div class="top">
+            <div class="ico">⊡</div>
+            <div class="type">Тритмент</div>
+          </div>
+          <div class="ctitle">Тритмент v.3</div>
+          <div class="author">от режиссёра</div>
+          <div class="ext-info">
+            <span>🔗</span><a class="lnk">drive.google.com/...</a>
+            <span style="margin-left: auto;">PDF · 14 МБ</span>
+          </div>
+          <div class="creative-actions">
+            <button>↻ Обновить</button>
+            <button>📨 Отправить</button>
+          </div>
+        </div>
+
+        <div class="creative-card uploaded" onclick="openDoc('creative-script')">
+          <div class="top">
+            <div class="ico">≡</div>
+            <div class="type">Сценарий</div>
+          </div>
+          <div class="ctitle">Сценарий v.2</div>
+          <div class="author">от режиссёра</div>
+          <div class="ext-info">
+            <span>📄</span><span>scenario_v2.docx</span>
+            <span style="margin-left: auto;">DOCX · 8 стр.</span>
+          </div>
+          <div class="creative-actions">
+            <button>↻ Обновить</button>
+            <button>📨 Отправить</button>
+          </div>
+        </div>
+
+        <div class="creative-card" onclick="openDoc('creative-upload')">
+          <div class="top">
+            <div class="ico">✦</div>
+            <div class="type">Креатив</div>
+          </div>
+          <div class="ctitle">Креативная концепция</div>
+          <div class="author">ожидает от креативного специалиста</div>
+          <div class="pending">— ещё не загружено —</div>
+          <div class="creative-actions">
+            <button style="border-color: var(--brand-red); color: var(--brand-red);">📎 Прикрепить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTS -->
+      <div class="section-title">Документация проекта <span class="pill">11 ТИПОВ · 8 ВСТРОЕНО</span></div>
+      <div class="docs-grid">
+        <div class="doc-card loaded" onclick="openDoc('brief')">
+          <div class="loaded-badge">DOCX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">✎</div>
+          <div class="doc-name">Бриф клиента</div>
+          <div class="doc-meta">Creative brief · 30+ полей</div>
+        </div>
+
+        <div class="doc-card loaded financial-doc" onclick="openDoc('estimate')">
+          <div class="loaded-badge">XLSX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">₽</div>
+          <div class="doc-name">Смета проекта</div>
+          <div class="doc-meta">14 разделов · v.3</div>
+          <div class="private-badge">Только продюсер</div>
+        </div>
+
+        <div class="doc-card loaded" onclick="openDoc('timing')">
+          <div class="loaded-badge">XLSX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">◷</div>
+          <div class="doc-name">Тайминг проекта</div>
+          <div class="doc-meta">3 этапа · 44 дня</div>
+        </div>
+
+        <div class="doc-card loaded" onclick="openDoc('ppm')">
+          <div class="loaded-badge">PPTX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">⎙</div>
+          <div class="doc-name">ППМ Бук</div>
+          <div class="doc-meta">27 слайдов · v.2</div>
+        </div>
+
+        <div class="doc-card loaded" onclick="openDoc('callsheet')">
+          <div class="loaded-badge">XLS · 2</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">⌚</div>
+          <div class="doc-name">Вызывной</div>
+          <div class="doc-meta">клип / реклама · 2 шаблона</div>
+        </div>
+
+        <div class="doc-card loaded" onclick="openDoc('release')">
+          <div class="loaded-badge">DOCX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">★</div>
+          <div class="doc-name">Согласие участника</div>
+          <div class="doc-meta">универсальное · клип/реклама</div>
+        </div>
+
+        <div class="doc-card loaded" onclick="openDoc('nda')">
+          <div class="loaded-badge">DOCX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">⊠</div>
+          <div class="doc-name">NDA участника</div>
+          <div class="doc-meta">штраф · 1 000 000 ₽</div>
+        </div>
+
+        <div class="doc-card loaded" onclick="openDoc('risks')">
+          <div class="loaded-badge">DOCX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">⚠</div>
+          <div class="doc-name">Матрица рисков</div>
+          <div class="doc-meta">P × I = R</div>
+        </div>
+
+        <div class="doc-card loaded" onclick="openDoc('report')">
+          <div class="loaded-badge">DOCX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">▦</div>
+          <div class="doc-name">Продакшн-рапорт</div>
+          <div class="doc-meta">wrap смены</div>
+        </div>
+
+        <div class="doc-card loaded" onclick="openDoc('postprod')">
+          <div class="loaded-badge">DOCX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">✂</div>
+          <div class="doc-name">ТЗ пост-продакшн</div>
+          <div class="doc-meta">продюсер + монтажёр</div>
+        </div>
+
+        <div class="doc-card" onclick="openDoc('placeholder')">
+          <div class="doc-status status-empty"></div>
+          <div class="doc-icon">§</div>
+          <div class="doc-name">Договор с клиентом</div>
+          <div class="doc-meta">Ожидает шаблон</div>
+        </div>
+
+        <div class="doc-card doc-create" onclick="openNewDoc()">
+          <div class="doc-create-plus">+</div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px;">Добавить</div>
+        </div>
+      </div>
+      <div class="legend-note">
+        <span class="red-dot"></span> КРАСНЫЙ = ВАШ ШАБЛОН ВСТРОЕН · СЕРЫЙ = ЖДЁМ ШАБЛОН
+      </div>
+
+      <!-- SUB-ESTIMATES from contractors -->
+      <div class="section-title financial">Подсметы от исполнителей <span class="pill">7 ЦЕХОВ</span> <span class="private-badge" style="margin-left: 8px;">Только продюсер</span></div>
+      <div class="financial">
+      <div class="sub-est-summary">
+        <div>
+          <div class="lbl">Сумма по всем подсметам</div>
+          <div class="v red mask-value">— ₽ (4 / 7 получено)</div>
+        </div>
+        <button class="btn">📎 Загрузить подсмету</button>
+      </div>
+      <div class="sub-est-grid">
+        <div class="sub-est-card received" onclick="openDoc('sub-est')">
+          <div class="head">
+            <div>
+              <div class="name">Цех художника-постановщика</div>
+              <div class="sub">от арт-департамента</div>
+            </div>
+            <div class="status-dot dot-recv"></div>
+          </div>
+          <div class="icon">🎨</div>
+          <div class="bottom-row">
+            <div class="from">получено · 14.05</div>
+            <div class="amount mask-value">— ₽</div>
+          </div>
+        </div>
+
+        <div class="sub-est-card received" onclick="openDoc('sub-est')">
+          <div class="head">
+            <div>
+              <div class="name">Цех осветителей</div>
+              <div class="sub">от гаффера</div>
+            </div>
+            <div class="status-dot dot-recv"></div>
+          </div>
+          <div class="icon">💡</div>
+          <div class="bottom-row">
+            <div class="from">получено · 12.05</div>
+            <div class="amount mask-value">— ₽</div>
+          </div>
+        </div>
+
+        <div class="sub-est-card received" onclick="openDoc('sub-est')">
+          <div class="head">
+            <div>
+              <div class="name">Рентал кинотехники</div>
+              <div class="sub">подрядчик · ALEXA 35 kit</div>
+            </div>
+            <div class="status-dot dot-recv"></div>
+          </div>
+          <div class="icon">🎥</div>
+          <div class="bottom-row">
+            <div class="from">получено · 11.05</div>
+            <div class="amount mask-value">— ₽</div>
+          </div>
+        </div>
+
+        <div class="sub-est-card received" onclick="openDoc('sub-est')">
+          <div class="head">
+            <div>
+              <div class="name">Стилист</div>
+              <div class="sub">от стилиста</div>
+            </div>
+            <div class="status-dot dot-recv"></div>
+          </div>
+          <div class="icon">👗</div>
+          <div class="bottom-row">
+            <div class="from">получено · 13.05</div>
+            <div class="amount mask-value">— ₽</div>
+          </div>
+        </div>
+
+        <div class="sub-est-card draft" onclick="openDoc('sub-est')">
+          <div class="head">
+            <div>
+              <div class="name">Кастинг-директор</div>
+              <div class="sub">от кастинг-департамента</div>
+            </div>
+            <div class="status-dot dot-draft"></div>
+          </div>
+          <div class="icon">★</div>
+          <div class="bottom-row">
+            <div class="from">черновик · ожидает финал</div>
+            <div class="amount mask-value">— ₽</div>
+          </div>
+        </div>
+
+        <div class="sub-est-card empty" onclick="openDoc('sub-est')">
+          <div class="head">
+            <div>
+              <div class="name">Администратор площадки</div>
+              <div class="sub">от директора площадки</div>
+            </div>
+            <div class="status-dot dot-await"></div>
+          </div>
+          <div class="icon">📋</div>
+          <div class="bottom-row">
+            <div class="from">ожидает</div>
+            <div class="amount">— ₽</div>
+          </div>
+        </div>
+
+        <div class="sub-est-card empty" onclick="openDoc('sub-est')">
+          <div class="head">
+            <div>
+              <div class="name">CG и AI</div>
+              <div class="sub">подрядчик не назначен</div>
+            </div>
+            <div class="status-dot dot-await"></div>
+          </div>
+          <div class="icon">⚡</div>
+          <div class="bottom-row">
+            <div class="from">ожидает</div>
+            <div class="amount">— ₽</div>
+          </div>
+        </div>
+
+        <div class="sub-est-card sub-est-upload" onclick="openDoc('sub-est')">
+          <div class="icon-plus">+</div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Прикрепить</div>
+        </div>
+      </div>
+      </div>
+
+      <!-- PROJECT RATING (post-project) -->
+      <div class="section-title financial">Оценка проекта <span class="pill">ПОСТ-ФАКТУМ · ТОЛЬКО ВЫ</span> <span class="private-badge" style="margin-left: 8px;">Только продюсер</span></div>
+      <div class="financial">
+      <div class="rating-card private-section">
+        <div class="rating-header-row">
+          <div>
+            <div class="rating-label">Общий рейтинг проекта</div>
+            <div class="rating-overall">
+              <div class="rating-num high">87</div>
+              <div class="rating-pct">/ 100</div>
+            </div>
+          </div>
+          <div class="rating-meta">
+            <div>Закрыт <span class="v">11.05.2026</span></div>
+            <div>Команда <span class="v">14 человек</span></div>
+            <div>Косяков <span class="v" style="color: var(--amber)">2</span></div>
+          </div>
+        </div>
+
+        <div class="team-row">
+          <div class="team-avatar" style="background: var(--brand-red);">Р</div>
+          <div class="team-info">
+            <div class="name">Режиссёр</div>
+            <div class="role">пример: Иван Иванов</div>
+          </div>
+          <div class="team-note">Идеально отработал. Тритмент в срок, на площадке держал темп.</div>
+          <div class="team-rating-bar">
+            <div class="rate-bar"><div class="rate-fill high" style="width: 100%"></div></div>
+          </div>
+          <div class="team-rating-pct high">100%</div>
+        </div>
+
+        <div class="team-row">
+          <div class="team-avatar" style="background: var(--green);">ОП</div>
+          <div class="team-info">
+            <div class="name">Оператор-постановщик</div>
+            <div class="role">пример: Сергей Сергеев</div>
+          </div>
+          <div class="team-note">Чистая работа. Свет ставил быстро, материал отдал сразу после смены.</div>
+          <div class="team-rating-bar">
+            <div class="rate-bar"><div class="rate-fill high" style="width: 95%"></div></div>
+          </div>
+          <div class="team-rating-pct high">95%</div>
+        </div>
+
+        <div class="team-row">
+          <div class="team-avatar" style="background: var(--amber);">РМ</div>
+          <div class="team-info">
+            <div class="name">Режиссёр монтажа</div>
+            <div class="role">пример: Алексей Алексеев</div>
+          </div>
+          <div class="team-note" style="color: var(--brand-red);">⚠ Пропустил дедлайн чернового монтажа на 2 дня. Хорошо работает, но коммуникация слабая.</div>
+          <div class="team-rating-bar">
+            <div class="rate-bar"><div class="rate-fill mid" style="width: 80%"></div></div>
+          </div>
+          <div class="team-rating-pct mid">80%</div>
+        </div>
+
+        <div class="team-row">
+          <div class="team-avatar" style="background: var(--blue);">АД</div>
+          <div class="team-info">
+            <div class="name">Арт-директор</div>
+            <div class="role">пример: Ольга Ольгина</div>
+          </div>
+          <div class="team-note">Отличная визуальная концепция. Фото со съёмки — топ.</div>
+          <div class="team-rating-bar">
+            <div class="rate-bar"><div class="rate-fill high" style="width: 92%"></div></div>
+          </div>
+          <div class="team-rating-pct high">92%</div>
+        </div>
+
+        <div class="team-row">
+          <div class="team-avatar" style="background: var(--text);">АП</div>
+          <div class="team-info">
+            <div class="name">Администратор площадки</div>
+            <div class="role">пример: Михаил Михайлов</div>
+          </div>
+          <div class="team-note empty">Без комментариев · стандартная отработка</div>
+          <div class="team-rating-bar">
+            <div class="rate-bar"><div class="rate-fill high" style="width: 88%"></div></div>
+          </div>
+          <div class="team-rating-pct high">88%</div>
+        </div>
+
+        <div class="team-row">
+          <div class="team-avatar" style="background: var(--brand-red);">СТ</div>
+          <div class="team-info">
+            <div class="name">Стилист</div>
+            <div class="role">пример: Анна Анина</div>
+          </div>
+          <div class="team-note" style="color: var(--amber);">Костюмы согласовали в последний момент, образ ГГ менялся на площадке.</div>
+          <div class="team-rating-bar">
+            <div class="rate-bar"><div class="rate-fill mid" style="width: 75%"></div></div>
+          </div>
+          <div class="team-rating-pct mid">75%</div>
+        </div>
+
+        <button class="rating-add-btn">＋ Добавить участника команды</button>
+
+        <div style="margin-top: 20px; padding: 14px 16px; background: var(--bg-paper); border: 1px solid #e8dec4; border-radius: 4px; font-size: 12px; color: var(--text-2);">
+          <strong style="color: var(--text); font-family: 'Anton', sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 6px;">🔮 На будущее</strong>
+          После завершения проекта рейтинг можно публиковать в общий чат команды через Telegram-бота. Сейчас оценки видите только вы.
+        </div>
+      </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ====== DOCUMENT OVERLAYS ====== -->
+
+<!-- ESTIMATE -->
+<div class="modal-overlay" id="m-estimate">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">₽</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">Смета · Nebula <span class="private-badge" style="margin-left: 8px; vertical-align: middle;">Только продюсер</span></div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ XLSX</button>
+        <button class="btn-secondary btn">⎙ PDF</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="access-info" style="border-left-color: var(--brand-red);">
+        <div class="access-info-icon" style="background: var(--brand-red);">🔒</div>
+        <div><strong>Приватный документ.</strong> Видите только вы (Табриз Залов · Продюсер). История доступа: вы открывали 14 раз. Никто из команды доступа не имел.</div>
+      </div>
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «шаблон сметы 2026.xlsx»</strong>
+          14 разделов · 105 позиций. Жду обновлённый шаблон от тебя — встрою новую версию.
+        </div>
+      </div>
+
+      <div class="est-meta">
+        <div class="est-meta-item"><div class="est-meta-label">Production</div><div class="est-meta-value">ZALOVE Production</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Producer</div><div class="est-meta-value">Tabriz Zalov</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Director</div><div class="est-meta-value">—</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">DOP</div><div class="est-meta-value">—</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Agency</div><div class="est-meta-value">—</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Client</div><div class="est-meta-value">Samsung</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Product</div><div class="est-meta-value">TVC · 60 sec</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Date</div><div class="est-meta-value">18.05.2026</div></div>
+      </div>
+
+      <div class="est-section">
+        <div class="est-section-head">
+          <div class="h">01 · Подготовка проекта <span class="h-count">12 позиций</span></div>
+          <div class="sum">— ₽</div>
+        </div>
+        <div class="est-rows">
+          <div class="est-row"><div class="name">Создание тритмента / креатива</div><div class="desc">Идея и концепция истории проекта</div><div class="qty">1</div><div class="days">—</div><div class="price">—</div></div>
+          <div class="est-row"><div class="name">Сценарий</div><div class="desc">Подробный сценарий</div><div class="qty">1</div><div class="days">—</div><div class="price">—</div></div>
+          <div class="est-row"><div class="name">Аренда локации</div><div class="desc">павильон + дополнительная локация</div><div class="qty">1</div><div class="days">3</div><div class="price">—</div></div>
+          <div class="est-row"><div class="name">Кастинг-директор</div><div class="desc">Подбор актёров и моделей</div><div class="qty">1</div><div class="days">—</div><div class="price">—</div></div>
+          <div class="est-row"><div class="name">Главные герои</div><div class="desc">Главная роль + поддерживающая</div><div class="qty">2</div><div class="days">3</div><div class="price">—</div></div>
+          <div class="est-row"><div class="name">Групповка</div><div class="desc">Второй план</div><div class="qty">4</div><div class="days">2</div><div class="price">—</div></div>
+          <div class="est-row"><div class="name">АМС (массовка)</div><div class="desc">Массовка в кадре</div><div class="qty">8</div><div class="days">1</div><div class="price">—</div></div>
+        </div>
+      </div>
+
+      <div class="est-section"><div class="est-section-head"><div class="h">02 · Продюсерский цех <span class="h-count">3 позиции</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">03 · Творческая группа <span class="h-count">15 позиций</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">04 · Операторский цех <span class="h-count">13 позиций</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">05 · Звуковой цех <span class="h-count">2 позиции</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">06 · Грим <span class="h-count">6 позиций</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">07 · Администрация <span class="h-count">4 позиции</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">08 · Техническое оборудование <span class="h-count">3 позиции</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">09 · Прочее <span class="h-count">11 позиций · NDA +20%</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">10 · Логистика <span class="h-count">10 позиций</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">11 · Экспедиция <span class="h-count">5 позиций</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">12 · Питание <span class="h-count">9 позиций</span></div><div class="sum">— ₽</div></div></div>
+      <div class="est-section"><div class="est-section-head"><div class="h">13 · Постпродакшн <span class="h-count">14 позиций · CG / AI</span></div><div class="sum">— ₽</div></div></div>
+
+      <div class="est-total">
+        <div class="est-total-row"><div class="label">Сумма разделов</div><div class="val">— ₽</div></div>
+        <div class="est-total-row"><div class="label">Налог · 10%</div><div class="val">— ₽</div></div>
+        <div class="est-total-row grand"><div class="label">Итого с налогом</div><div class="val">— ₽</div></div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">SMETA-NEB-2026-001 · 14 РАЗДЕЛОВ · 105 ПОЗИЦИЙ</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn">Сохранить</button>
+        <button class="btn">⚡ Сгенерировать XLSX</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALL SHEET -->
+<div class="modal-overlay" id="m-callsheet">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">⌚</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">Вызывной · Nebula · день 1</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ PDF</button>
+        <button class="btn-secondary btn">📨 В Telegram</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «вызывной — реклама / клип»</strong>
+          27 контактов · крю + кастинг. Telegram-ссылки и телефоны кликабельны в готовом PDF.
+        </div>
+      </div>
+
+      <div class="cs-header">
+        <div class="cs-title-row">
+          <div>
+            <div class="cs-title">Вызывной</div>
+            <div class="cs-subtitle">SAMSUNG — «NEBULA» · TVC 60 SEC · ДЕНЬ 1</div>
+          </div>
+          <div class="cs-date">18/05/2026</div>
+        </div>
+        <div class="cs-info-row">
+          <div>
+            <div class="cs-info-label">Director</div>
+            <div class="cs-info-value">[ режиссёр ]</div>
+          </div>
+          <div>
+            <div class="cs-info-label">DOP</div>
+            <div class="cs-info-value">[ оператор ]</div>
+          </div>
+          <div>
+            <div class="cs-info-label">Producer</div>
+            <div class="cs-info-value">Табриз Залов</div>
+          </div>
+          <div>
+            <div class="cs-info-label">Art</div>
+            <div class="cs-info-value">[ арт-директор ]</div>
+          </div>
+        </div>
+        <div class="cs-times">
+          <div class="cs-time-cell"><div class="cs-time-label">Начало смены</div><div class="cs-time-value">10:00</div></div>
+          <div class="cs-time-cell"><div class="cs-time-label">Начало съёмки</div><div class="cs-time-value">12:00</div></div>
+          <div class="cs-time-cell"><div class="cs-time-label">Конец смены</div><div class="cs-time-value">05:00</div></div>
+        </div>
+        <div class="cs-info-row">
+          <div>
+            <div class="cs-info-label">Wi-Fi</div>
+            <div class="cs-info-value">[ название ]<span class="small">пароль: ********</span></div>
+          </div>
+          <div>
+            <div class="cs-info-label">Погода (Open-Meteo)</div>
+            <div class="cs-info-value"><span class="weather-chip loading" id="weatherChip"><span class="ico">⏳</span> Загружаем...</span></div>
+          </div>
+          <div style="grid-column: span 2;">
+            <div class="cs-info-label">Парковка</div>
+            <div class="cs-info-value" style="font-size: 11px; color: var(--text-2); font-weight: 400;">[ инструкция по парковке подтягивается из карточки локации ]</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cs-loc">
+        <h3>Где снимаем</h3>
+        <div class="cs-loc-grid">
+          <div><b>Название</b><div>[ локация ]</div></div>
+          <div><b>Адрес</b><div>[ адрес локации ]</div></div>
+          <div><b>Контакт на площадке</b><div>[ ФИО ] · <span style="color: var(--brand-red); font-weight: 700;">+7 ___ ___ __ __</span></div></div>
+        </div>
+        <div class="cs-loc-warn">⚠ Важно: с собой иметь паспорт</div>
+      </div>
+
+      <div class="cs-table-wrap">
+        <div class="cs-table">
+          <div class="cs-table-h">Крю · 14 человек</div>
+          <div class="cs-row"><div class="pos">Режиссёр</div><div class="nm">[ ФИО ]</div><div class="in">11:00</div></div>
+          <div class="cs-row"><div class="pos">Второй режиссёр</div><div class="nm">[ ФИО ]</div><div class="in">11:00</div></div>
+          <div class="cs-row"><div class="pos">Лин. продюсер</div><div class="nm">[ ФИО ]</div><div class="in">10:00</div></div>
+          <div class="cs-row"><div class="pos">Оператор</div><div class="nm">[ ФИО ]</div><div class="in">10:30</div></div>
+          <div class="cs-row"><div class="pos">Арт / Фото</div><div class="nm">[ ФИО ]</div><div class="in">10:45</div></div>
+          <div class="cs-row"><div class="pos">Администрация</div><div class="nm">[ ФИО ]</div><div class="in">09:30</div></div>
+          <div class="cs-row"><div class="pos">Худ. цех</div><div class="nm">[ ФИО ]</div><div class="in">11:00</div></div>
+          <div class="cs-row"><div class="pos">Гаффер</div><div class="nm">[ ФИО ]</div><div class="in">10:00</div></div>
+          <div class="cs-row"><div class="pos">Визажист</div><div class="nm">[ ФИО ]</div><div class="in">10:45</div></div>
+          <div class="cs-row"><div class="pos">Стилист</div><div class="nm">[ ФИО ]</div><div class="in">10:30</div></div>
+          <div class="cs-row"><div class="pos">Реж. монтажа</div><div class="nm">[ ФИО ]</div><div class="in">11:30</div></div>
+          <div class="cs-row"><div class="pos">Кастинг</div><div class="nm">[ ФИО ]</div><div class="in">10:45</div></div>
+          <div class="cs-row"><div class="pos">Бэкстейдж</div><div class="nm">[ ФИО ]</div><div class="in">10:00</div></div>
+          <div class="cs-row"><div class="pos">Буфет</div><div class="nm">[ ФИО ]</div><div class="in">10:00</div></div>
+        </div>
+        <div class="cs-table">
+          <div class="cs-table-h">Клиент / Кастинг</div>
+          <div class="cs-row"><div class="pos">Клиент (бренд)</div><div class="nm">Samsung Electronics</div><div class="in">11:00</div></div>
+          <div class="cs-row"><div class="pos">Агентство</div><div class="nm">[ название ]</div><div class="in">11:00</div></div>
+          <div class="cs-row"><div class="pos">Главный герой</div><div class="nm">[ актёр ]</div><div class="in">11:00</div></div>
+          <div class="cs-row"><div class="pos">Второй план</div><div class="nm">[ актёры ×4 ]</div><div class="in">12:00</div></div>
+          <div class="cs-row"><div class="pos">Массовка АМС</div><div class="nm">[ группа · 8 чел. ]</div><div class="in">14:00</div></div>
+          <div class="cs-row"><div class="pos">Стилист</div><div class="nm">[ ФИО ]</div><div class="in">10:30</div></div>
+          <div class="cs-row"><div class="pos">Грим</div><div class="nm">[ ФИО ]</div><div class="in">10:45</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">CALLSHEET-NEB-D01 · ДЕНЬ 1 ИЗ 3</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn">📋 Скопировать</button>
+        <button class="btn">⚡ Разослать в Telegram</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TIMING -->
+<div class="modal-overlay" id="m-timing">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">◷</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">Тайминг · 44 дня</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ XLSX</button>
+        <button class="btn-secondary btn">📅 В GCal</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «тайминг проекта»</strong>
+          3 этапа · 28 процессов. Даты автоматически рассчитываются от старта проекта.
+        </div>
+      </div>
+      <div class="gantt-wrap">
+        <table class="gantt-table" id="ganttTable"></table>
+        <div class="gantt-legend">
+          <span><i style="background: var(--text);"></i> рабочие дни</span>
+          <span><i style="background: var(--bg-3);"></i> выходные</span>
+          <span><i style="background: rgba(232,35,29,0.25);"></i> дни согласования</span>
+          <span><i style="background: var(--brand-red);"></i> критические дни</span>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">TIMING-2026 · 44 ДНЯ · 3 ЭТАПА · 28 ПРОЦЕССОВ</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn">Сохранить</button>
+        <button class="btn">⚡ Sync в Google Calendar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RELEASE -->
+<div class="modal-overlay" id="m-release">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">★</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">Согласие участника съёмок</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="btn-secondary btn">⎙ PDF</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «ДОГОВОР АКТРИСА МИРАНДА.docx»</strong>
+          Это release-форма (talent consent) без выплат. Для платных актёров нужен отдельный шаблон.
+        </div>
+      </div>
+      <div class="paper">
+        <h1>Согласие участника съёмок</h1>
+        <h2>аудиовизуального произведения</h2>
+        <div class="paper-row">
+          <div><b>г. <span class="var">Москва</span></b></div>
+          <div><b><span class="var">10 мая 2026 г.</span></b></div>
+        </div>
+        <p><b>Термины, применяемые в настоящем согласии:</b></p>
+        <p>Произведение — <span class="var">рекламный ролик</span>, под рабочим названием «<span class="var">NEBULA</span>» для рекламодателя <span class="var">Samsung</span>;</p>
+        <p>Студия — <span class="var">ИП «Залов Табриз»</span> (ИНН <span class="var">180204378651</span>), являющееся изготовителем/правообладателем Клипа (в смысле пп.4 ст.1263 ГК РФ);</p>
+        <p>Участник — лицо, принимающее участие в съёмке Фильма, чьё изображение используется в Клипе (роль — под рабочим названием «<span class="var">[РОЛЬ]</span>»).</p>
+        <p>Я, нижеподписавшийся, ставя свою подпись под настоящим Согласием, подтверждаю все изложенные в нём условия и гарантирую их соблюдение.</p>
+        <p>Настоящим Согласием, в силу ст.152.1 ГК РФ подтверждаю своё участие в съёмках Фильма в качестве Участника и даю согласие на обнародование и дальнейшее использование моего изображения в Фильме.</p>
+        <p><b>Я подтверждаю и гарантирую следующее:</b></p>
+        <ul>
+          <li>мне известны все условия участия в съёмке;</li>
+          <li>действую по своей доброй воле, без принуждения;</li>
+          <li>моё участие в съёмке и использование изображения не нарушает моих прав;</li>
+          <li>сроки, способы и территория использования Фильма не ограничиваются;</li>
+          <li>любые выплаты вознаграждений в моих интересах не предусматриваются.</li>
+        </ul>
+        <p>Предоставление этого Согласия является моим личным согласием на использование и обработку моих персональных данных в рамках реализации работ по созданию Фильма.</p>
+        <div class="sig">
+          <div>
+            <div class="sig-cell">&nbsp;</div>
+            <div class="sig-label">ФИО участника</div>
+          </div>
+          <div>
+            <div class="sig-cell">&nbsp;</div>
+            <div class="sig-label">Подпись</div>
+          </div>
+          <div>
+            <div class="sig-cell">&nbsp;</div>
+            <div class="sig-label">Дата</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">RELEASE-2026 · TALENT CONSENT · БЕЗ ВЫПЛАТ</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn">📋 На массовку (12)</button>
+        <button class="btn">⚡ Сгенерировать DOCX</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PLACEHOLDER -->
+<div class="modal-overlay" id="m-placeholder">
+  <div class="doc-overlay" style="width: 560px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon" style="background: var(--bg-3); color: var(--muted);">?</div>
+        <div>
+          <div class="doc-section-label">Ожидает шаблон</div>
+          <div class="doc-header-title">Документ ещё не загружен</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <p style="font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: var(--text-2);">Чтобы я встроил документ в систему, пришли мне свой шаблон в чат — в любом формате:</p>
+      <ul style="list-style: none; padding: 0; font-size: 13px;">
+        <li style="padding: 10px 0; border-bottom: 1px solid var(--line);">→ <b>Договор с клиентом</b> — договор оказания услуг</li>
+        <li style="padding: 10px 0; border-bottom: 1px solid var(--line);">→ <b>Договор с исполнителем</b> — физлицо / самозанятый / ИП</li>
+        <li style="padding: 10px 0; border-bottom: 1px solid var(--line);">→ <b>ППМ-бук</b> — даже одна страница покажет структуру</li>
+        <li style="padding: 10px 0;">→ <b>Технический райдер</b> — если есть</li>
+      </ul>
+      <div class="smart-fill" style="margin-top: 20px;">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Как обрабатываю</strong>
+          Извлеку структуру и переменные → встрою в карточку проекта → научу систему генерировать документ автоматически.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW DOC -->
+<div class="modal-overlay" id="m-new">
+  <div class="doc-overlay" style="width: 600px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">+</div>
+        <div>
+          <div class="doc-section-label">Создание</div>
+          <div class="doc-header-title">Новый документ</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Smart Fill готов</strong>
+          Реквизиты ZALOVE Production · ИП Залов Табриз · ИНН 180204378651 — подставятся автоматически
+        </div>
+      </div>
+      <div class="new-doc-form">
+        <div>
+          <label class="form-label">Шаблон (10 встроенных)</label>
+          <select class="form-select">
+            <optgroup label="Креатив">
+              <option>✎ Бриф клиента</option>
+              <option>⎙ ППМ Бук (27 слайдов)</option>
+            </optgroup>
+            <optgroup label="Финансы и сроки">
+              <option>₽ Смета проекта (приватно)</option>
+              <option>◷ Тайминг проекта</option>
+            </optgroup>
+            <optgroup label="Площадка">
+              <option>⌚ Вызывной — клип</option>
+              <option>⌚ Вызывной — реклама</option>
+              <option>▦ Продакшн-рапорт</option>
+              <option>⚠ Матрица рисков</option>
+            </optgroup>
+            <optgroup label="Участники">
+              <option>★ Согласие участника (универсальное)</option>
+              <option>⊠ NDA участника (штраф 1 МЛН)</option>
+            </optgroup>
+            <optgroup label="Пост-продакшн">
+              <option>✂ ТЗ пост-продакшн</option>
+            </optgroup>
+            <optgroup label="📁 Договоры с исполнителями">
+              <option>§ ИП → ИП</option>
+              <option>§ ИП → Самозанятый</option>
+              <option>§ ИП → ФЛ безвозмездно</option>
+              <option>⊠ NDA исполнителя (штраф 650К)</option>
+              <option>📋 Расписка о получении</option>
+            </optgroup>
+          </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div>
+            <label class="form-label">Дата</label>
+            <input class="form-input" value="10.05.2026">
+          </div>
+          <div>
+            <label class="form-label">Номер</label>
+            <input class="form-input" value="MAL-2026-001">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Примечание</label>
+          <textarea class="form-textarea" rows="2" placeholder="Дополнительные комментарии..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">Выберите шаблон из списка</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="closeAll()">⚡ Создать</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BRIEF -->
+<div class="modal-overlay" id="m-brief">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">✎</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">Бриф клиента · Creative brief</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="btn-secondary btn">📨 Отправить клиенту</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «шаблон бриф клиента.docx»</strong>
+          ~30 полей: бренд/артист, ToV, цели, KPI, референсы, площадки, ограничения
+        </div>
+      </div>
+      <div class="paper">
+        <h1>Бриф клиента</h1>
+        <h2>Client brief · Production brief</h2>
+        <div class="paper-row">
+          <div><b>Название проекта: <span class="var">Nebula</span></b></div>
+          <div><b>Тип: <span class="var">☐ Клип  ☑ Реклама  ☐ Иное</span></b></div>
+          <div><b>Дата: <span class="var">18.05.2026</span></b></div>
+        </div>
+        <p><b>1. КОНТАКТЫ КЛИЕНТА</b> · ФИО / Telegram / e-mail / лицо принимающее решение</p>
+        <p><b>2. О БРЕНДЕ / АРТИСТЕ</b> · кто, чем известен, прошлые проекты, портфолио</p>
+        <p><b>3. ЦЕЛИ ПРОЕКТА</b> · главная цель + доп. цели + KPI / метрики успеха</p>
+        <p><b>4. СООБЩЕНИЕ</b> · главное message + reasons to believe + CTA</p>
+        <p><b>5. ТОН И СТИЛЬ</b> · кинематографично / документально / игриво / премиум / драйв / лирично / стрит / арт</p>
+        <p><b>6. РЕФЕРЕНСЫ</b> · ссылки на ролики, что нравится / анти-референсы</p>
+        <p><b>7. ОГРАНИЧЕНИЯ</b> · юридические, нормативные, NDA</p>
+        <p><b>8. ПЛОЩАДКИ</b> · ТВ · YouTube/Rutube · Соцсети · Кино · DOOH · сайт · иное</p>
+        <p><b>9. БЮДЖЕТ И СРОКИ</b> · ориентир, дедлайн сдачи финала</p>
+        <p style="margin-top: 18px; color: var(--muted); font-style: italic; font-size: 11px;">Полная форма содержит 30+ полей. Здесь — сводка разделов.</p>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">BRIEF-NEB-2026 · 30+ ПОЛЕЙ · v.2</div>
+      <button class="btn">⚡ Сгенерировать DOCX</button>
+    </div>
+  </div>
+</div>
+
+<!-- PPM BOOK -->
+<div class="modal-overlay" id="m-ppm">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">⎙</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">ППМ Бук · 27 слайдов</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ Keynote</button>
+        <button class="btn btn-dark">⤓ PPTX</button>
+        <button class="btn-secondary btn">⎙ PDF</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «шаблон PPM Book.pptx»</strong>
+          ZALOVE PRODUCTION × <span style="color: var(--brand-red); font-weight: 700;">Клиент</span>. 27 слайдов · структура из вашего шаблона.
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+        <div class="creative-card uploaded"><div class="top"><div class="ico">1</div><div class="type">Cover</div></div><div class="ctitle">Обложка</div><div class="author">проект, дата PPM, съёмки</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">2</div><div class="type">Раскадровка</div></div><div class="ctitle">Storyboard ×3</div><div class="author">слайды 2-4 · 6 кадров на сцену</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">3</div><div class="type">Локация</div></div><div class="ctitle">Locations ×2</div><div class="author">фото, адрес, разрешения</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">4</div><div class="type">Кастинг</div></div><div class="ctitle">ГГ · 2-й · Доп</div><div class="author">main + back-up, видеопроба</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">5</div><div class="type">Костюмы</div></div><div class="ctitle">Costumes ×3</div><div class="author">6 опций × 3 героя</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">6</div><div class="type">Грим/Волосы</div></div><div class="ctitle">Hair & Makeup ×2</div><div class="author">референсы, описание</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">7</div><div class="type">Оформление</div></div><div class="ctitle">Floor plan ×2</div><div class="author">схема, детали</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">8</div><div class="type">Реквизит</div></div><div class="ctitle">Props ×4</div><div class="author">постеры, мебель, наполнение, ручной</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">9</div><div class="type">Музыка</div></div><div class="ctitle">Music</div><div class="author">треки, лицензии, реко-комментарий</div></div>
+        <div class="creative-card uploaded"><div class="top"><div class="ico">10</div><div class="type">Съём. план</div></div><div class="ctitle">Shoot plan ×2</div><div class="author">день 1 / день 2: время, сцены, кадры</div></div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">PPM-NEB-2026 · 27 СЛАЙДОВ · v.2</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn">🍎 Открыть в Keynote</button>
+        <button class="btn">⚡ Открыть в PowerPoint</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NDA -->
+<div class="modal-overlay" id="m-nda">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">⊠</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">NDA участника съёмок</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «шаблон NDA участника съемок.docx»</strong>
+          Штраф 1 000 000 ₽ за нарушение · отдельный блок для несовершеннолетних
+        </div>
+      </div>
+      <div class="paper">
+        <h1>Соглашение о неразглашении</h1>
+        <h2>NDA · клип / реклама</h2>
+        <div class="paper-row">
+          <div><b>г. <span class="var">Москва</span></b></div>
+          <div><b><span class="var">__ ______ 202_</span></b></div>
+        </div>
+        <p><b>Тип проекта:</b> <span class="var">☐ музыкальный клип</span> · <span class="var">☑ рекламный проект «Nebula» для Samsung</span> · <span class="var">☐ иное</span></p>
+        <p><b>Заказчик:</b> ИП «<span class="var">ЗАЛОВ ТАБРИЗ РУСЛАН-ОГЛЫ</span>» (ИНН <span class="var">180204378651</span>, ОГРНИП <span class="var">324508100144670</span>)</p>
+        <p><b>Участник:</b> ФИО / паспорт / адрес / телефон / e-mail</p>
+        <p><b>Под конфиденциальной информацией понимается:</b></p>
+        <ul>
+          <li>сценарий, тритмент, раскадровка, режиссёрский сценарий, шот-лист, мудборды</li>
+          <li>кастинг, актёрский состав, гонорары, состав крю, контакты, call-sheets</li>
+          <li>локации съёмок, декорации, реквизит, образы, костюмы, грим</li>
+          <li>для рекламы — сведения о рекламодателе, бренде, кампании, медиаплане</li>
+          <li>для клипов — неизданные треки, демо, тексты, сроки релиза</li>
+          <li>любые фото-, видео-, аудиоматериалы с площадки</li>
+        </ul>
+        <p style="margin-top: 12px; padding: 12px; background: rgba(232,35,29,0.08); border-radius: 3px; color: var(--brand-red-deep);"><b>Штраф за нарушение: <span class="var">1 000 000 (один миллион) ₽</span> + возмещение убытков и упущенной выгоды.</b></p>
+        <p style="margin-top: 12px;">Срок действия: бессрочно. Безотзывное.</p>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">NDA-NEB-2026 · v.1 · штраф 1 МЛН ₽</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn">📋 На всю команду</button>
+        <button class="btn">⚡ Сгенерировать DOCX</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RISK MATRIX -->
+<div class="modal-overlay" id="m-risks">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">⚠</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">Матрица рисков · Risk matrix</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «шаблон матрица рисков.docx»</strong>
+          Каждый риск: Вероятность (P 1-5) × Ущерб (I 1-5) = Балл R. Чем выше R — тем приоритетнее.
+        </div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; overflow: hidden;">
+        <thead>
+          <tr style="background: var(--bg-3); color: var(--muted); text-transform: uppercase; font-size: 10px; letter-spacing: 1px;">
+            <th style="padding: 10px 14px; text-align: left;">Риск</th>
+            <th style="padding: 10px 14px; text-align: center;">P</th>
+            <th style="padding: 10px 14px; text-align: center;">I</th>
+            <th style="padding: 10px 14px; text-align: center;">R</th>
+            <th style="padding: 10px 14px; text-align: left;">Митигация</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-top: 1px solid var(--line);"><td style="padding: 10px 14px;">Артист опоздал на смену</td><td style="text-align: center;">3</td><td style="text-align: center;">4</td><td style="text-align: center; background: rgba(232,35,29,0.15); color: var(--brand-red); font-weight: 700;">12</td><td style="padding: 10px 14px; color: var(--muted);">Звонок за 2ч, бэк-ап сцены без артиста</td></tr>
+          <tr style="border-top: 1px solid var(--line);"><td style="padding: 10px 14px;">Дождь на open-air</td><td style="text-align: center;">2</td><td style="text-align: center;">5</td><td style="text-align: center; background: rgba(232,35,29,0.15); color: var(--brand-red); font-weight: 700;">10</td><td style="padding: 10px 14px; color: var(--muted);">Резерв-локация в крытом помещении</td></tr>
+          <tr style="border-top: 1px solid var(--line);"><td style="padding: 10px 14px;">Реквизит не привезли вовремя</td><td style="text-align: center;">2</td><td style="text-align: center;">4</td><td style="text-align: center; background: rgba(217,119,6,0.15); color: var(--amber); font-weight: 700;">8</td><td style="padding: 10px 14px; color: var(--muted);">Подтверждение от худцеха за 24ч</td></tr>
+          <tr style="border-top: 1px solid var(--line);"><td style="padding: 10px 14px;">Камера сломалась</td><td style="text-align: center;">1</td><td style="text-align: center;">5</td><td style="text-align: center; background: rgba(217,119,6,0.15); color: var(--amber); font-weight: 700;">5</td><td style="padding: 10px 14px; color: var(--muted);">Бэк-ап тушки в комплекте рентала</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">RISKS-NEB-2026 · 12 РИСКОВ · v.1</div>
+      <button class="btn">⚡ Сгенерировать DOCX</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTION REPORT -->
+<div class="modal-overlay" id="m-report">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">▦</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">Продакшн-рапорт · wrap смены</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «шаблон продакшн-рапорт.docx»</strong>
+          Wrap-отчёт смены: команда, оборудование, технические/творческие итоги, инциденты
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px;">
+        <div class="est-meta-item"><div class="est-meta-label">Проект</div><div class="est-meta-value">Nebula</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Тип</div><div class="est-meta-value">☑ Реклама</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Дата</div><div class="est-meta-value">18.05.2026</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Смена</div><div class="est-meta-value">Day 1 / 3</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Локация</div><div class="est-meta-value">[ павильон ]</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Погода</div><div class="est-meta-value">+18 / +9°C</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Начало</div><div class="est-meta-value">07:00</div></div>
+        <div class="est-meta-item"><div class="est-meta-label">Wrap</div><div class="est-meta-value">22:30</div></div>
+      </div>
+      <div class="section-title" style="margin-top: 0;">Инциденты / отклонения от плана</div>
+      <div style="background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; overflow: hidden;">
+        <div style="padding: 10px 14px; border-bottom: 1px dashed var(--line); display: grid; grid-template-columns: 50px 1fr 100px; gap: 12px; font-size: 12px; align-items: center;">
+          <div style="background: rgba(217,119,6,0.15); color: var(--amber); padding: 3px 6px; border-radius: 3px; text-align: center; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 11px;">SEV 2</div>
+          <div><b>Артист опоздал на 45 минут</b><div style="color: var(--muted); margin-top: 2px;">Сдвиг тайминга сцены вечерней тусовки</div></div>
+          <div style="text-align: right; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px;">+45 мин</div>
+        </div>
+        <div style="padding: 10px 14px; display: grid; grid-template-columns: 50px 1fr 100px; gap: 12px; font-size: 12px; align-items: center;">
+          <div style="background: rgba(30,158,78,0.15); color: var(--green); padding: 3px 6px; border-radius: 3px; text-align: center; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 11px;">SEV 1</div>
+          <div><b>Перебой Wi-Fi на 10 минут</b><div style="color: var(--muted); margin-top: 2px;">Не повлияло на смену</div></div>
+          <div style="text-align: right; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px;">0 мин</div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">REPORT-NEB-2026-D01 · v.1</div>
+      <button class="btn">⚡ Сгенерировать DOCX</button>
+    </div>
+  </div>
+</div>
+
+<!-- POST-PROD TASK -->
+<div class="modal-overlay" id="m-postprod">
+  <div class="doc-overlay">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">✂</div>
+        <div>
+          <div class="doc-section-label">Документ · из вашего шаблона</div>
+          <div class="doc-header-title">ТЗ пост-продакшн · продюсер + монтажёр</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Из шаблона «шаблон ТЗ пост-продакшн».docx</strong>
+          Совместный документ: [П] — пост-продюсер, [М] — режиссёр монтажа.
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
+        <div style="background: var(--bg-paper); border: 1px solid #e8dec4; border-radius: 4px; padding: 12px 14px;">
+          <div style="font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--brand-red); margin-bottom: 4px;">[ П ] Пост-продюсер</div>
+          <div style="font-weight: 700;">Табриз Залов</div>
+          <div style="font-size: 11px; color: var(--muted);">Telegram · @tabrizzalov</div>
+        </div>
+        <div style="background: var(--bg-paper); border: 1px solid #e8dec4; border-radius: 4px; padding: 12px 14px;">
+          <div style="font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--brand-red); margin-bottom: 4px;">[ М ] Режиссёр монтажа</div>
+          <div style="font-weight: 700;">[ ФИО монтажёра ]</div>
+          <div style="font-size: 11px; color: var(--muted);">Telegram · @...</div>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top: 0;">Структура ТЗ</div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>0.</b> Регулярный sync пост-продюсера и монтажёра · OWNER: П + М</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>1.</b> Передача материала · структура папок, нейминг, прокси, звук с площадки · OWNER: П → М</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>2.</b> Логлайн и драматургия по таймкодам · OWNER: М</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>3.</b> Темп, ритм, склейки, переходы · OWNER: М</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>4.</b> Референсы / анти-референсы · OWNER: П → М</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>5.</b> Музыка: трек, лицензия, акценты под монтаж · OWNER: П → М</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>6.</b> Цветокор и грейд · OWNER: П (координация) + М (XML/EDL/AAF)</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>7.</b> VFX / моушн / графика · OWNER: М (помечает шоты) + П (брифует)</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>8.</b> Титры, шрифты, лого · OWNER: П</div>
+        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>9.</b> Юр. требования: 18+, дисклеймеры, маркировка</div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">POSTPROD-NEB-2026 · v.1</div>
+      <button class="btn">⚡ Сгенерировать DOCX</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUB-EST PLACEHOLDER -->
+<div class="modal-overlay" id="m-sub-est">
+  <div class="doc-overlay" style="width: 620px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">📎</div>
+        <div>
+          <div class="doc-section-label">Подсмета от исполнителя</div>
+          <div class="doc-header-title">Загрузка / просмотр подсметы</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="access-info" style="border-left-color: var(--brand-red);">
+        <div class="access-info-icon" style="background: var(--brand-red);">🔒</div>
+        <div><strong>Приватно.</strong> Эти файлы видите только вы. Подсметы не входят в основную смету проекта — это отдельное хранилище расходов от подрядчиков.</div>
+      </div>
+      <div style="display: grid; gap: 14px;">
+        <div>
+          <label class="form-label">Цех / Подрядчик</label>
+          <select class="form-select">
+            <option>Цех художника-постановщика</option>
+            <option>Цех осветителей</option>
+            <option>Рентал кинотехники</option>
+            <option>Стилист</option>
+            <option>Кастинг-директор</option>
+            <option>Администратор площадки</option>
+            <option>CG и AI</option>
+            <option>Другое (указать)</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">От кого</label>
+          <input class="form-input" placeholder="ФИО или название подрядчика">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Сумма</label>
+            <input class="form-input" placeholder="0 ₽">
+          </div>
+          <div>
+            <label class="form-label">Дата получения</label>
+            <input class="form-input" value="10.05.2026">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Файл сметы</label>
+          <div style="padding: 14px; border: 1px dashed var(--line-2); border-radius: 4px; text-align: center; cursor: pointer; color: var(--muted); font-size: 12px;">📎 Перетащите файл или нажмите для выбора · XLSX / PDF / DOCX</div>
+        </div>
+        <div>
+          <label class="form-label">Комментарий</label>
+          <textarea class="form-textarea" rows="2" placeholder="Заметки по подсмете..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">SUB-EST · приватно</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="closeAll()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATIVE DOCS -->
+<div class="modal-overlay" id="m-creative-treatment">
+  <div class="doc-overlay" style="width: 600px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">⊡</div>
+        <div>
+          <div class="doc-section-label">Креативный документ</div>
+          <div class="doc-header-title">Тритмент v.3</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div style="background: var(--bg-paper); border: 1px solid #e8dec4; border-radius: 4px; padding: 18px; margin-bottom: 16px;">
+        <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600;">📎 Текущий файл</div>
+        <div style="font-weight: 700; margin-bottom: 4px;">Treatment_Nebula_v3.pdf</div>
+        <div style="font-size: 12px; color: var(--muted);">14 МБ · от режиссёра · 05.05.2026</div>
+        <div style="margin-top: 12px; display: flex; gap: 6px;">
+          <button class="btn">📄 Открыть</button>
+          <button class="btn-secondary btn">⤓ Скачать</button>
+          <button class="btn-secondary btn">↻ Заменить</button>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top: 0;">История версий</div>
+      <div style="font-size: 12px; line-height: 1.6;">
+        <div style="padding: 8px 0; border-bottom: 1px dashed var(--line); display: flex; justify-content: space-between;"><div><b>v.3</b> · текущая · от режиссёра</div><div style="color: var(--muted);">05.05.2026</div></div>
+        <div style="padding: 8px 0; border-bottom: 1px dashed var(--line); display: flex; justify-content: space-between;"><div>v.2 · правки клиента учтены</div><div style="color: var(--muted);">02.05.2026</div></div>
+        <div style="padding: 8px 0; display: flex; justify-content: space-between;"><div>v.1 · первая версия</div><div style="color: var(--muted);">28.04.2026</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="m-creative-script">
+  <div class="doc-overlay" style="width: 600px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">≡</div>
+        <div>
+          <div class="doc-section-label">Креативный документ</div>
+          <div class="doc-header-title">Сценарий v.2</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div style="background: var(--bg-paper); border: 1px solid #e8dec4; border-radius: 4px; padding: 18px;">
+        <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600;">📎 Текущий файл</div>
+        <div style="font-weight: 700; margin-bottom: 4px;">scenario_nebula_v2.docx</div>
+        <div style="font-size: 12px; color: var(--muted);">8 страниц · от режиссёра · 07.05.2026</div>
+        <div style="margin-top: 12px; display: flex; gap: 6px;">
+          <button class="btn">📄 Открыть</button>
+          <button class="btn-secondary btn">⤓ Скачать</button>
+          <button class="btn-secondary btn">↻ Заменить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TEAM MEMBER -->
+<div class="modal-overlay" id="m-add-member">
+  <div class="doc-overlay" style="width: 640px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">⚇</div>
+        <div>
+          <div class="doc-section-label">Добавить в проект</div>
+          <div class="doc-header-title">Участник проекта</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Подскажу при заполнении</strong>
+          Latin-имя сгенерируется автоматически из русского. Если человек уже есть в базе контактов — найдётся по @никнейму.
+        </div>
+      </div>
+      <div style="display: grid; gap: 14px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">ФИО (кириллица)</label>
+            <input class="form-input" placeholder="Иван Иванов">
+          </div>
+          <div>
+            <label class="form-label">FIO (Latin)</label>
+            <input class="form-input" placeholder="Ivan Ivanov · авто из RU">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Роль на проекте</label>
+          <select class="form-select">
+            <option>Режиссёр</option>
+            <option>Оператор-постановщик (DOP)</option>
+            <option>Второй режиссёр</option>
+            <option>Линейный продюсер</option>
+            <option>Исп. продюсер</option>
+            <option>Художник-постановщик</option>
+            <option>Художник по костюмам / Стилист</option>
+            <option>Кастинг-директор</option>
+            <option>Режиссёр монтажа</option>
+            <option>Арт-директор</option>
+            <option>Гаффер</option>
+            <option>Звукорежиссёр</option>
+            <option>Гример / Визажист</option>
+            <option>Администратор площадки</option>
+            <option>Бэкстейдж / Фотограф</option>
+            <option>Другая (указать вручную)</option>
+          </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Telegram</label>
+            <input class="form-input" placeholder="@username">
+          </div>
+          <div>
+            <label class="form-label">Instagram</label>
+            <input class="form-input" placeholder="@username">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Телефон (опционально)</label>
+            <input class="form-input" placeholder="+7 ___ ___ __ __">
+          </div>
+          <div>
+            <label class="form-label">E-mail (опционально)</label>
+            <input class="form-input" placeholder="name@mail.ru">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Заметка</label>
+          <textarea class="form-textarea" rows="2" placeholder="Особенности работы, предпочтения, ставка..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">Добавится в проект + в общую базу контактов</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="closeAll()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="m-creative-upload">
+  <div class="doc-overlay" style="width: 560px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">✦</div>
+        <div>
+          <div class="doc-section-label">Креативный документ</div>
+          <div class="doc-header-title">Загрузить креатив</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <p style="font-size: 13px; color: var(--text-2); margin-bottom: 14px;">Можно прикрепить файл или вставить ссылку (Google Docs, Notion, Figma).</p>
+      <div style="display: grid; gap: 14px;">
+        <div>
+          <label class="form-label">Тип</label>
+          <select class="form-select">
+            <option>Креатив / концепция</option>
+            <option>Тритмент</option>
+            <option>Сценарий</option>
+            <option>Раскадровка</option>
+            <option>Мудборд</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">От кого</label>
+          <input class="form-input" placeholder="Креативный специалист / режиссёр">
+        </div>
+        <div>
+          <label class="form-label">Ссылка ИЛИ файл</label>
+          <input class="form-input" placeholder="https://docs.google.com/... или прикрепите файл">
+        </div>
+        <div style="padding: 14px; border: 1px dashed var(--line-2); border-radius: 4px; text-align: center; cursor: pointer; color: var(--muted); font-size: 12px;">📎 Перетащите файл или нажмите</div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">Файл / ссылка появится в карточке проекта</div>
+      <button class="btn" onclick="closeAll()">Прикрепить</button>
+    </div>
+  </div>
+</div>
+
+<!-- FILM REEL · правая боковая полоса с миниатюрами кадров -->
+<aside class="film-reel" id="filmReel" style="display: none;">
+  <div class="film-reel-title">STORYBOARD</div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #2d1010, #5a1f1f);"><span class="frame-num">01</span></div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #0a1c2d, #1a3f5c);"><span class="frame-num">02</span></div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #3a5c1f, #1a2e10);"><span class="frame-num">03</span></div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #2d2a0f, #5c5520);"><span class="frame-num">04</span></div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #2d0e2d, #5a2a5a);"><span class="frame-num">05</span></div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #14152e, #2a2d5c);"><span class="frame-num">06</span></div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #1a3a1a, #2a5a2a);"><span class="frame-num">07</span></div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #3a1a3a, #6a2a6a);"><span class="frame-num">08</span></div>
+  <div class="film-frame" style="background: linear-gradient(135deg, #2d1010, #5a2f1f);"><span class="frame-num">09</span></div>
+</aside>
+
+<!-- CLAPPERBOARD · анимация при открытии проекта -->
+<div id="clapperboard">
+  <div class="clap-stripes"></div>
+  <div class="clap-body">
+    <div class="clap-bigtitle" id="clapTitle">NEBULA</div>
+    <div class="clap-cell"><div class="lbl">PROD</div><div class="val">ZALOVE</div></div>
+    <div class="clap-cell"><div class="lbl">SCENE</div><div class="val" id="clapScene">01</div></div>
+    <div class="clap-cell"><div class="lbl">TAKE</div><div class="val">01</div></div>
+    <div class="clap-subtitle">ZALOVE PRODUCTION × CLIENT</div>
+  </div>
+</div>
+
+<!-- EASTER EGG · клик 5 раз на сердечко -->
+<div id="easterEggOverlay" onclick="this.classList.remove('active')">
+  <div class="ee-title">BEHIND THE SCENES</div>
+  <div class="ee-subtitle">×  ZALOVE PRODUCTION  ×</div>
+  <div class="ee-bts-grid">
+    <div class="ee-bts-1"></div><div class="ee-bts-2"></div><div class="ee-bts-3"></div><div class="ee-bts-4"></div>
+    <div class="ee-bts-5"></div><div class="ee-bts-6"></div><div class="ee-bts-7"></div><div class="ee-bts-8"></div>
+  </div>
+  <div class="ee-hint">click anywhere to close · нашёл секрет</div>
+</div>
+
+<!-- CONFETTI CANVAS -->
+<canvas id="confettiCanvas"></canvas>
+
+<!-- STAMP -->
+<div class="doc-stamp" id="docStamp">GENERATED</div>
+
+<!-- THEME + SHUTTER TOGGLES -->
+<button class="theme-toggle" id="themeToggle" title="Переключить тему">🌙</button>
+<button class="shutter-toggle" id="shutterToggle" title="Звук затвора">🔊</button>
+
+<script>
+const posterMap = {1:'poster-1',2:'poster-2',3:'poster-3',4:'poster-4',5:'poster-5',6:'poster-6'};
+const numMap = {1:'01',2:'02',3:'03',4:'04',5:'05',6:'06'};
+
+function openProject(name, idx) {
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('detail').classList.add('active');
+  document.getElementById('detail-title').textContent = name;
+  const poster = document.getElementById('detail-poster');
+  poster.className = 'detail-poster ' + posterMap[idx];
+  document.getElementById('detail-num').textContent = numMap[idx];
+  window.scrollTo(0, 0);
+}
+function showDashboard() {
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('detail').classList.remove('active');
+}
+function openDoc(type) {
+  closeAll();
+  const map = {
+    estimate: 'm-estimate',
+    callsheet: 'm-callsheet',
+    timing: 'm-timing',
+    release: 'm-release',
+    brief: 'm-brief',
+    ppm: 'm-ppm',
+    nda: 'm-nda',
+    risks: 'm-risks',
+    report: 'm-report',
+    postprod: 'm-postprod',
+    'sub-est': 'm-sub-est',
+    'creative-treatment': 'm-creative-treatment',
+    'creative-script': 'm-creative-script',
+    'creative-upload': 'm-creative-upload',
+    'add-member': 'm-add-member',
+    placeholder: 'm-placeholder'
+  };
+  document.getElementById(map[type] || 'm-new').classList.add('active');
+}
+
+// Watermark на документах отключён — пересекался с кнопкой закрытия
+
+/* ===== MUSI-PUSI BLOCK ===== */
+
+// --- Greeting line: меняется по времени суток ---
+(function setGreeting() {
+  const h = new Date().getHours();
+  let greet = 'С возвращением';
+  if (h < 6) greet = 'Не спишь? Уважаю';
+  else if (h < 11) greet = 'Доброе утро';
+  else if (h < 17) greet = 'Добрый день';
+  else if (h < 22) greet = 'Добрый вечер';
+  else greet = 'Поздний час';
+  const el = document.getElementById('greetingLine');
+  if (el) el.innerHTML = greet + ', <span class="name">Табриз</span>. Сегодня смена по Nebula — ни пуха.';
+})();
+
+// --- Цитата внизу страницы ---
+const quotes = [
+  { q: 'Кино — это правда 24 кадра в секунду.', a: 'Жан-Люк Годар' },
+  { q: 'Если ты можешь рассказать историю просто — расскажи просто.', a: 'Стэнли Кубрик' },
+  { q: 'Снимай то, что любишь, а не то, что должно нравиться другим.', a: 'Мартин Скорсезе' },
+  { q: 'Хорошее кино делается в монтажной.', a: 'Альфред Хичкок' },
+  { q: 'Кадр должен говорить — даже без звука.', a: 'Андрей Тарковский' },
+  { q: 'Хорошая команда дороже хорошей камеры.', a: '— старая продюсерская мудрость' },
+  { q: 'Бюджет — это не ограничение, это вызов.', a: 'Роджер Корман' }
+];
+window.addEventListener('DOMContentLoaded', () => {
+  const dash = document.getElementById('dashboard');
+  if (dash && !document.getElementById('bottomQuote')) {
+    const q = quotes[Math.floor(Math.random() * quotes.length)];
+    const div = document.createElement('div');
+    div.id = 'bottomQuote';
+    div.className = 'bottom-quote';
+    div.innerHTML = q.q + '<span class="author">' + q.a + '</span>';
+    dash.appendChild(div);
+  }
+});
+
+// --- CONFETTI (canvas) ---
+const confCanvas = document.getElementById('confettiCanvas');
+const confCtx = confCanvas.getContext('2d');
+let confParticles = [];
+function resizeConf() {
+  confCanvas.width = window.innerWidth;
+  confCanvas.height = window.innerHeight;
+}
+resizeConf();
+window.addEventListener('resize', resizeConf);
+function launchConfetti() {
+  const colors = ['#e8231d', '#fdb022', '#16a34a', '#1d4ed8', '#8b5cf6', '#fb923c'];
+  for (let i = 0; i < 180; i++) {
+    confParticles.push({
+      x: Math.random() * confCanvas.width,
+      y: -20,
+      w: 8 + Math.random() * 8,
+      h: 4 + Math.random() * 6,
+      vx: -2 + Math.random() * 4,
+      vy: 2 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      r: Math.random() * Math.PI,
+      vr: -0.1 + Math.random() * 0.2
+    });
+  }
+  if (!confettiRunning) animateConfetti();
+}
+let confettiRunning = false;
+function animateConfetti() {
+  confettiRunning = true;
+  confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+  confParticles.forEach((p, i) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.08;
+    p.r += p.vr;
+    confCtx.save();
+    confCtx.translate(p.x, p.y);
+    confCtx.rotate(p.r);
+    confCtx.fillStyle = p.color;
+    confCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    confCtx.restore();
+  });
+  confParticles = confParticles.filter(p => p.y < confCanvas.height + 30);
+  if (confParticles.length > 0) requestAnimationFrame(animateConfetti);
+  else confettiRunning = false;
+}
+
+// --- CAMERA SHUTTER SOUND (Web Audio) ---
+let audioCtx = null;
+let soundEnabled = true;
+function playShutter() {
+  if (!soundEnabled) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const now = audioCtx.currentTime;
+  // Click 1
+  const o1 = audioCtx.createOscillator();
+  const g1 = audioCtx.createGain();
+  o1.connect(g1); g1.connect(audioCtx.destination);
+  o1.frequency.value = 800;
+  o1.type = 'square';
+  g1.gain.setValueAtTime(0.15, now);
+  g1.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+  o1.start(now); o1.stop(now + 0.05);
+  // Click 2 (delayed)
+  const o2 = audioCtx.createOscillator();
+  const g2 = audioCtx.createGain();
+  o2.connect(g2); g2.connect(audioCtx.destination);
+  o2.frequency.value = 600;
+  o2.type = 'square';
+  g2.gain.setValueAtTime(0.12, now + 0.08);
+  g2.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  o2.start(now + 0.08); o2.stop(now + 0.18);
+}
+function playClapSound() {
+  if (!soundEnabled) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const now = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.frequency.value = 200;
+  o.type = 'triangle';
+  g.gain.setValueAtTime(0.3, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  o.start(now); o.stop(now + 0.15);
+  // Noise burst for clap
+  const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.1, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() - 0.5) * 0.5;
+  const noiseSrc = audioCtx.createBufferSource();
+  const noiseGain = audioCtx.createGain();
+  noiseSrc.buffer = buffer;
+  noiseSrc.connect(noiseGain);
+  noiseGain.connect(audioCtx.destination);
+  noiseGain.gain.setValueAtTime(0.4, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  noiseSrc.start(now);
+}
+// Toggle button
+const shutterBtn = document.getElementById('shutterToggle');
+shutterBtn.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  shutterBtn.textContent = soundEnabled ? '🔊' : '🔇';
+  shutterBtn.classList.toggle('muted', !soundEnabled);
+  if (soundEnabled) playShutter();
+});
+
+// --- DOCUMENT STAMP animation ---
+function showStamp(text) {
+  const stamp = document.getElementById('docStamp');
+  stamp.textContent = text || 'GENERATED';
+  stamp.classList.remove('show');
+  void stamp.offsetWidth; // restart animation
+  stamp.classList.add('show');
+}
+// Привяжем к кнопкам ⚡ Сгенерировать в модалках
+document.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Сгенерировать')) {
+    playShutter();
+    showStamp('GENERATED');
+  }
+});
+
+// --- CLAPPERBOARD animation when opening project ---
+const projectTitles = { Nebula: 'NEBULA', 'Echo in the City': 'ECHO', Vertigo: 'VERTIGO', Outliers: 'OUTLIERS', Salt: 'SALT', 'Static Noise': 'STATIC NOISE' };
+const _origOpenProject = window.openProject;
+window.openProject = function(name, idx) {
+  const board = document.getElementById('clapperboard');
+  document.getElementById('clapTitle').textContent = projectTitles[name] || name.toUpperCase();
+  document.getElementById('clapScene').textContent = String(idx).padStart(2, '0');
+  board.classList.add('active');
+  setTimeout(() => {
+    board.classList.add('clapping');
+    playClapSound();
+  }, 350);
+  setTimeout(() => {
+    board.classList.remove('active', 'clapping');
+    _origOpenProject(name, idx);
+    // Show film reel on detail page
+    document.body.classList.add('has-reel');
+    document.getElementById('filmReel').style.display = 'flex';
+  }, 1300);
+};
+// Hide reel when going back to dashboard
+const _origShowDash = window.showDashboard;
+window.showDashboard = function() {
+  document.body.classList.remove('has-reel');
+  document.getElementById('filmReel').style.display = 'none';
+  _origShowDash();
+};
+
+// --- THEME TOGGLE (auto-dark after 21:00, manual override) ---
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(mode) {
+  if (mode === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Переключить на светлую';
+  } else {
+    document.body.classList.remove('dark-mode');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Переключить на тёмную';
+  }
+}
+// Auto: dark if hour >= 21 or < 7
+const _h = new Date().getHours();
+if (_h >= 21 || _h < 7) applyTheme('dark');
+else applyTheme('light');
+themeBtn.addEventListener('click', () => {
+  applyTheme(document.body.classList.contains('dark-mode') ? 'light' : 'dark');
+});
+
+// --- WEATHER (Open-Meteo, no API key) ---
+async function loadWeather() {
+  const chip = document.getElementById('weatherChip');
+  if (!chip) return;
+  try {
+    // Moscow coords as default
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&current=temperature_2m,weather_code&daily=temperature_2m_min&timezone=Europe%2FMoscow');
+    const d = await r.json();
+    const t = Math.round(d.current.temperature_2m);
+    const tNight = Math.round(d.daily.temperature_2m_min[0]);
+    const code = d.current.weather_code;
+    let icon = '☀️';
+    if (code >= 51 && code < 70) icon = '🌧';
+    else if (code >= 71 && code < 80) icon = '🌨';
+    else if (code >= 80) icon = '⛈';
+    else if (code >= 1 && code <= 3) icon = '⛅';
+    else if (code === 45 || code === 48) icon = '🌫';
+    chip.innerHTML = '<span class="ico">' + icon + '</span> Москва · день +' + t + '°C / ночь ' + (tNight >= 0 ? '+' : '') + tNight + '°C';
+    chip.classList.remove('loading');
+  } catch (e) {
+    chip.innerHTML = '<span class="ico">⛅</span> погода недоступна';
+    chip.classList.remove('loading');
+  }
+}
+
+// --- AVATAR helper: replace inline initial spans with image-backed circles ---
+// (placeholder div with letter inside, still shows initials but with image-ready div)
+
+// --- EASTER EGG: click broken heart 5 times ---
+let eggClickCount = 0;
+let eggClickTimer = null;
+document.querySelector('.logo-svg, .user-logo')?.addEventListener('click', () => {
+  eggClickCount++;
+  clearTimeout(eggClickTimer);
+  eggClickTimer = setTimeout(() => eggClickCount = 0, 2500);
+  if (eggClickCount >= 5) {
+    document.getElementById('easterEggOverlay').classList.add('active');
+    playClapSound();
+    launchConfetti();
+    eggClickCount = 0;
+  }
+});
+
+// --- CLOSE PROJECT button (для демо конфетти) ---
+// Привязка к кнопке "Закрыть проект" если будет на странице
+document.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Закрыть проект')) {
+    launchConfetti();
+    playClapSound();
+  }
+});
+
+// Load weather on open
+window.addEventListener('DOMContentLoaded', loadWeather);
+setTimeout(loadWeather, 500);
+function openNewDoc() { closeAll(); document.getElementById('m-new').classList.add('active'); }
+function closeAll() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+// ===== ROLE / PRIVACY TOGGLE =====
+function setRole(role) {
+  const body = document.body;
+  const tabs = document.querySelectorAll('.role-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+
+  if (role === 'team') {
+    body.classList.add('team-view');
+    tabs[1].classList.add('active');
+    // close estimate modal if open
+    document.getElementById('m-estimate').classList.remove('active');
+    // update banner
+    document.getElementById('accessInfoIcon').textContent = '👥';
+    document.getElementById('accessInfoText').innerHTML = '<strong>Режим команды.</strong> Так документ видят твои сотрудники, фрилансеры и подрядчики — все финансовые данные скрыты.';
+    // update user card
+    document.querySelector('.user-name').textContent = 'Член команды';
+    document.querySelector('.user-role').textContent = 'Без доступа к финансам';
+    document.querySelector('.user-avatar').textContent = '👥';
+    document.querySelector('.user-avatar').style.background = 'var(--muted)';
+  } else {
+    body.classList.remove('team-view');
+    tabs[0].classList.add('active');
+    document.getElementById('accessInfoIcon').textContent = '👁';
+    document.getElementById('accessInfoText').innerHTML = '<strong>Режим продюсера.</strong> Видите всё: финансы, сметы, маржу. Команда не видит финансовых данных — переключите на «Глазами команды», чтобы посмотреть.';
+    document.querySelector('.user-name').textContent = 'Табриз Залов';
+    document.querySelector('.user-role').textContent = 'Продюсер · ИП';
+    document.querySelector('.user-avatar').textContent = 'TZ';
+    document.querySelector('.user-avatar').style.background = 'var(--brand-red)';
+  }
+}
+
+// Gantt builder
+const ganttData = {
+  startDate: new Date(2026, 4, 25),
+  days: 44,
+  stages: [
+    { name: 'Pre-Production', processes: [
+      { name: 'Согласование креатива', range: [0, 4] },
+      { name: 'Тритмент', range: [3, 8] },
+      { name: 'Раскадровка', range: [7, 12] },
+      { name: 'CG/AI задники', range: [9, 18] },
+      { name: 'Подборка локаций', range: [4, 10] },
+      { name: 'Скаут локаций', range: [10, 14] },
+      { name: 'Согласование локации', range: [13, 15], approval: true },
+      { name: 'Кастинг', range: [11, 19] },
+      { name: 'Презентация костюм', range: [16, 18] },
+      { name: 'Доработка костюмов', range: [18, 22] },
+      { name: 'Презентация реквизит', range: [16, 18] },
+      { name: 'Презентация грим', range: [17, 19] },
+      { name: 'Pre-PPM', range: [19, 20], approval: true },
+      { name: 'Доработки после PPM', range: [20, 23] },
+      { name: 'PPM', range: [23, 24], crit: true }
+    ]},
+    { name: 'Production', processes: [
+      { name: 'Освоение локаций', range: [24, 25] },
+      { name: 'Съёмочные смены', range: [25, 28] },
+      { name: 'Выгрузка на ЖД', range: [27, 29] }
+    ]},
+    { name: 'Post-production', processes: [
+      { name: 'Линейный монтаж', range: [29, 35] },
+      { name: 'CG / AI', range: [30, 38] },
+      { name: 'Утверждение трека', range: [33, 34], approval: true },
+      { name: 'Утверждение диктора', range: [34, 35], approval: true },
+      { name: 'Работа со звуком', range: [35, 40] },
+      { name: 'Клинап', range: [36, 39] },
+      { name: 'Цветокоррекция', range: [38, 42] },
+      { name: 'Сдача финала', range: [43, 44], crit: true }
+    ]}
+  ]
+};
+
+function buildGantt() {
+  const t = document.getElementById('ganttTable');
+  if (!t) return;
+  const days = ganttData.days;
+  let html = '<tr><th class="stage-h" rowspan="2">Этап</th><th class="stage-h" rowspan="2" style="left:130px;">Процесс</th>';
+  for (let i = 0; i < days; i++) {
+    const d = new Date(ganttData.startDate);
+    d.setDate(d.getDate() + i);
+    html += '<th>' + d.getDate() + '</th>';
+  }
+  html += '</tr><tr>';
+  for (let i = 0; i < days; i++) {
+    const d = new Date(ganttData.startDate);
+    d.setDate(d.getDate() + i);
+    const wd = ['вс','пн','вт','ср','чт','пт','сб'][d.getDay()];
+    html += '<th style="font-size:9px;">' + wd + '</th>';
+  }
+  html += '</tr>';
+  ganttData.stages.forEach(stage => {
+    stage.processes.forEach((p, pi) => {
+      html += '<tr>';
+      if (pi === 0) html += '<td class="stage-h" rowspan="' + stage.processes.length + '">' + stage.name + '</td>';
+      html += '<td class="proc">' + p.name + '</td>';
+      for (let i = 0; i < days; i++) {
+        const d = new Date(ganttData.startDate);
+        d.setDate(d.getDate() + i);
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        const inRange = i >= p.range[0] && i < p.range[1];
+        let cls = 'gd';
+        if (inRange) {
+          if (p.crit) cls += ' crit';
+          else if (p.approval) cls += ' approval';
+          else cls += ' work';
+        } else if (isWeekend) cls += ' weekend';
+        html += '<td class="' + cls + '"></td>';
+      }
+      html += '</tr>';
+    });
+  });
+  t.innerHTML = html;
+}
+buildGantt();
+</script>
+</body>
+</html>
