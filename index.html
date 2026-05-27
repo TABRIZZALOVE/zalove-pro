@@ -2249,6 +2249,121 @@ body.has-reel .theme-toggle { right: 158px; }
 .bottom-quote::after { content: ' »'; color: var(--brand-red); font-size: 22px; font-weight: 900; }
 .bottom-quote .author { display: block; font-size: 11px; font-style: normal; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; font-family: 'Inter', sans-serif; }
 
+/* Card actions (edit/delete buttons on project cards) */
+.card-actions {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 5;
+}
+.project-card:hover .card-actions { opacity: 1; }
+.card-actions button {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.75);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+.card-actions button:hover { background: var(--brand-red); transform: scale(1.1); }
+.card-actions button.btn-edit:hover { background: #1d4ed8; }
+
+/* Empty state if no projects */
+.empty-state {
+  grid-column: 1 / -1;
+  background: var(--bg-2);
+  border: 2px dashed var(--line-2);
+  border-radius: 8px;
+  padding: 48px 32px;
+  text-align: center;
+  color: var(--muted);
+}
+.empty-state-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 24px;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.empty-state-text { font-size: 13px; margin-bottom: 16px; }
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--text);
+  color: white;
+  padding: 12px 22px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  opacity: 0;
+  transition: all 0.3s;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast.success { background: var(--green); }
+.toast.error { background: var(--brand-red); }
+
+/* Color picker for poster */
+.poster-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.poster-swatch {
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.15s;
+}
+.poster-swatch:hover { transform: scale(1.05); }
+.poster-swatch.selected { border-color: var(--text); transform: scale(1.05); }
+.poster-swatch.poster-1 { background: linear-gradient(135deg, #5a1f1f, #2d1010); }
+.poster-swatch.poster-2 { background: linear-gradient(135deg, #1a3f5c, #0a1c2d); }
+.poster-swatch.poster-3 { background: linear-gradient(135deg, #3a5c1f, #1a2e10); }
+.poster-swatch.poster-4 { background: linear-gradient(135deg, #5a2a5a, #2d0e2d); }
+.poster-swatch.poster-5 { background: linear-gradient(135deg, #5c5520, #2d2a0f); }
+.poster-swatch.poster-6 { background: linear-gradient(135deg, #2a2d5c, #14152e); }
+
+/* Mood picker */
+.mood-picker {
+  display: flex;
+  gap: 8px;
+}
+.mood-option {
+  flex: 1;
+  background: var(--bg-3);
+  border: 2px solid transparent;
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 22px;
+  transition: all 0.15s;
+}
+.mood-option:hover { background: var(--bg-2); }
+.mood-option.selected { border-color: var(--brand-red); background: var(--bg-2); }
+.mood-option .mood-label { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+
 /* Personal brand section */
 .brand-grid {
   display: grid;
@@ -2562,8 +2677,10 @@ body.has-reel .theme-toggle { right: 158px; }
           <div class="search-box">
             <span>⌕</span><input placeholder="Поиск проектов..."/><span class="kbd">⌘ K</span>
           </div>
-          <button class="btn-secondary btn">⤓ Экспорт</button>
-          <button class="btn" onclick="openNewDoc()">＋ Новый проект</button>
+          <button class="btn-secondary btn" onclick="exportData()" title="Скачать все проекты в JSON-файл">⤓ Экспорт</button>
+          <button class="btn-secondary btn" onclick="document.getElementById('importInput').click()" title="Импорт проектов из JSON">⤒ Импорт</button>
+          <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(this.files[0])">
+          <button class="btn" onclick="openProjectForm()">＋ Новый проект</button>
         </div>
       </div>
 
@@ -2613,7 +2730,10 @@ body.has-reel .theme-toggle { right: 158px; }
       </div>
 
       <!-- PROJECTS GRID -->
-      <div class="projects-grid">
+      <div class="projects-grid" id="projectsGrid">
+        <!-- Карточки проектов рендерятся из localStorage через renderProjects() -->
+      </div>
+      <div class="projects-grid" style="display:none">
         <div class="project-card" onclick="openProject('Nebula', 1)">
           <div class="poster poster-1">
             <div class="poster-tag status-prod">PRODUCTION</div>
@@ -4434,6 +4554,126 @@ body.has-reel .theme-toggle { right: 158px; }
   </div>
 </div>
 
+<!-- NEW / EDIT PROJECT MODAL -->
+<div class="modal-overlay" id="m-project">
+  <div class="doc-overlay" style="width: 720px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">🎬</div>
+        <div>
+          <div class="doc-section-label" id="np-mode-label">Создание проекта</div>
+          <div class="doc-header-title" id="np-title">Новый проект</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⚡</div>
+        <div class="sf-text">
+          <strong>Сохранится в браузере</strong>
+          Все данные хранятся локально на твоём Mac. Можно делать бэкап через «Экспорт» в JSON.
+        </div>
+      </div>
+
+      <div style="display: grid; gap: 14px;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Название проекта *</label>
+            <input class="form-input" id="np-name" placeholder="Например: Nebula" required>
+          </div>
+          <div>
+            <label class="form-label">Тип *</label>
+            <select class="form-select" id="np-type">
+              <option value="TVC">TVC / Реклама</option>
+              <option value="MV">Музыкальный клип</option>
+              <option value="DOC">Документальный</option>
+              <option value="BRAND FILM">Brand film</option>
+              <option value="CG">CG / Анимация</option>
+              <option value="SOCIAL">Соц. сети / Шортс</option>
+              <option value="OTHER">Иное</option>
+            </select>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Клиент / Бренд</label>
+            <input class="form-input" id="np-client" placeholder="Samsung, Nike...">
+          </div>
+          <div>
+            <label class="form-label">Артист (если клип)</label>
+            <input class="form-input" id="np-artist" placeholder="—">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Дата старта</label>
+            <input class="form-input" type="date" id="np-start">
+          </div>
+          <div>
+            <label class="form-label">Дедлайн сдачи</label>
+            <input class="form-input" type="date" id="np-deadline">
+          </div>
+          <div>
+            <label class="form-label">Съём. дней</label>
+            <input class="form-input" type="number" id="np-days" placeholder="1" min="0">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Бюджет ₽ <span class="private-badge" style="margin-left:4px;">Приватно</span></label>
+            <input class="form-input" type="number" id="np-budget" placeholder="0">
+          </div>
+          <div>
+            <label class="form-label">Прогресс %</label>
+            <input class="form-input" type="number" id="np-progress" min="0" max="100" value="0">
+          </div>
+          <div>
+            <label class="form-label">Статус</label>
+            <select class="form-select" id="np-status">
+              <option value="preprod">Pre-production</option>
+              <option value="production">Production</option>
+              <option value="post">Post-production</option>
+              <option value="done">Сдан</option>
+              <option value="archive">Архив</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Настроение проекта</label>
+          <div class="mood-picker" id="np-mood-picker">
+            <div class="mood-option" data-mood="calm">🌙<span class="mood-label">Спокойно</span></div>
+            <div class="mood-option" data-mood="fire">🔥<span class="mood-label">Горит</span></div>
+            <div class="mood-option" data-mood="sos">🚨<span class="mood-label">SOS</span></div>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Цвет постера</label>
+          <div class="poster-picker" id="np-poster-picker">
+            <div class="poster-swatch poster-1" data-poster="poster-1"></div>
+            <div class="poster-swatch poster-2" data-poster="poster-2"></div>
+            <div class="poster-swatch poster-3" data-poster="poster-3"></div>
+            <div class="poster-swatch poster-4" data-poster="poster-4"></div>
+            <div class="poster-swatch poster-5" data-poster="poster-5"></div>
+            <div class="poster-swatch poster-6" data-poster="poster-6"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="np-info">Новый проект</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" id="np-delete-btn" onclick="deleteProjectFromForm()" style="display:none; color: var(--brand-red);">🗑 Удалить проект</button>
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="saveProjectForm()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST notifications -->
+<div class="toast" id="toast"></div>
+
 <!-- FILM REEL · правая боковая полоса с миниатюрами кадров -->
 <aside class="film-reel" id="filmReel" style="display: none;">
   <div class="film-reel-title">STORYBOARD</div>
@@ -4775,6 +5015,337 @@ document.addEventListener('click', (e) => {
 // Load weather on open
 window.addEventListener('DOMContentLoaded', loadWeather);
 setTimeout(loadWeather, 500);
+
+/* ============================================================
+   ЛОКАЛЬНАЯ БАЗА ДАННЫХ (localStorage)
+   ============================================================ */
+const DB = {
+  KEY: 'zalove_data_v1',
+
+  load() {
+    try {
+      const stored = localStorage.getItem(this.KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) { console.warn('DB load fail', e); }
+    return this.seed();
+  },
+
+  save(data) {
+    try {
+      localStorage.setItem(this.KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error('DB save fail', e);
+      toast('Не удалось сохранить (превышен лимит)', 'error');
+    }
+  },
+
+  seed() {
+    const data = {
+      version: 1,
+      projects: [
+        { id: 'p_seed_1', name: 'Nebula', client: 'Samsung', type: 'TVC', artist: '', budget: 4200000, days: 3, deadline: '2026-06-04', progress: 65, status: 'production', mood: 'fire', poster: 'poster-1', createdAt: new Date().toISOString() },
+        { id: 'p_seed_2', name: 'Echo in the City', client: 'Nike', type: 'DOC', artist: '', budget: 8500000, days: 12, deadline: '2026-07-30', progress: 20, status: 'preprod', mood: 'calm', poster: 'poster-2', createdAt: new Date().toISOString() },
+        { id: 'p_seed_3', name: 'Vertigo', client: 'Sber', type: 'CG', artist: '', budget: 2800000, days: 0, deadline: '2026-05-25', progress: 88, status: 'post', mood: 'sos', poster: 'poster-3', createdAt: new Date().toISOString() },
+        { id: 'p_seed_4', name: 'Outliers', client: 'Yandex', type: 'BRAND FILM', artist: '', budget: 6100000, days: 5, deadline: '2026-06-12', progress: 45, status: 'production', mood: 'calm', poster: 'poster-4', createdAt: new Date().toISOString() },
+        { id: 'p_seed_5', name: 'Salt', client: 'VK', type: 'MV', artist: '', budget: 1400000, days: 2, deadline: '2026-07-08', progress: 12, status: 'preprod', mood: 'calm', poster: 'poster-5', createdAt: new Date().toISOString() },
+        { id: 'p_seed_6', name: 'Static Noise', client: 'Tinkoff', type: 'TVC', artist: '', budget: 3600000, days: 4, deadline: '2026-05-30', progress: 92, status: 'post', mood: 'fire', poster: 'poster-6', createdAt: new Date().toISOString() }
+      ]
+    };
+    this.save(data);
+    return data;
+  },
+
+  getProjects() { return this.load().projects || []; },
+
+  getProject(id) { return this.getProjects().find(p => p.id === id); },
+
+  addProject(p) {
+    const data = this.load();
+    p.id = 'p_' + Date.now();
+    p.createdAt = new Date().toISOString();
+    data.projects.unshift(p);
+    this.save(data);
+    return p;
+  },
+
+  updateProject(id, updates) {
+    const data = this.load();
+    const idx = data.projects.findIndex(x => x.id === id);
+    if (idx === -1) return null;
+    data.projects[idx] = { ...data.projects[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.save(data);
+    return data.projects[idx];
+  },
+
+  deleteProject(id) {
+    const data = this.load();
+    data.projects = data.projects.filter(p => p.id !== id);
+    this.save(data);
+  },
+
+  reset() {
+    localStorage.removeItem(this.KEY);
+    return this.load();
+  }
+};
+
+/* ============================================================
+   РЕНДЕРИНГ КАРТОЧЕК ПРОЕКТА
+   ============================================================ */
+const STATUS_TAGS = {
+  preprod: { txt: 'PRE-PROD', cls: 'status-pre' },
+  production: { txt: 'PRODUCTION', cls: 'status-prod' },
+  post: { txt: 'POST', cls: 'status-post' },
+  done: { txt: 'DONE', cls: 'status-pre' },
+  archive: { txt: 'ARCHIVE', cls: '' }
+};
+const MOOD_ICONS = {
+  fire: { emoji: '🔥', cls: 'mood-fire', title: 'Горит! Дедлайн близко' },
+  calm: { emoji: '🌙', cls: '', title: 'Спокойно — идёт по плану' },
+  sos: { emoji: '🚨', cls: 'mood-sos', title: 'SOS! Срочно' }
+};
+
+function formatDeadline(p) {
+  if (!p.deadline) return '';
+  const d = new Date(p.deadline);
+  if (isNaN(d.getTime())) return '';
+  const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  return d.getDate() + ' ' + months[d.getMonth()];
+}
+
+function projectCardHTML(p, idx) {
+  const num = String(idx + 1).padStart(2, '0');
+  const mood = MOOD_ICONS[p.mood || 'calm'];
+  const status = STATUS_TAGS[p.status || 'preprod'];
+  const deadlineStr = formatDeadline(p);
+  const meta = [p.client, p.type, deadlineStr ? 'сдача ' + deadlineStr : ''].filter(Boolean).join(' · ');
+  return `
+    <div class="project-card" data-project-id="${p.id}" onclick="openProjectDetail('${p.id}', ${idx + 1})">
+      <div class="card-actions">
+        <button class="btn-edit" onclick="event.stopPropagation(); openProjectForm('${p.id}')" title="Редактировать">✎</button>
+        <button onclick="event.stopPropagation(); deleteProjectConfirm('${p.id}', '${escapeHtml(p.name)}')" title="Удалить">×</button>
+      </div>
+      <div class="poster ${p.poster || 'poster-1'}">
+        <div class="poster-tag ${status.cls}">${status.txt}</div>
+        <div class="mood-icon ${mood.cls}" title="${mood.title}">${mood.emoji}</div>
+        <div class="poster-title">${escapeHtml(p.client || p.artist || '')}</div>
+        <div class="poster-slate"><strong>${escapeHtml((p.name || '').toUpperCase())}</strong>${escapeHtml(p.type || '')}</div>
+        <div class="poster-num">${num}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(p.name || 'Без названия')}</div>
+        <div class="card-meta">${escapeHtml(meta)}</div>
+        <div class="card-progress">
+          <div class="progress-bar"><div class="progress-fill" style="width: ${p.progress || 0}%"></div></div>
+          <span class="progress-text">${p.progress || 0}%</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function renderProjects() {
+  const grid = document.getElementById('projectsGrid');
+  if (!grid) return;
+  const projects = DB.getProjects();
+  if (projects.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-title">Пока нет проектов</div>
+        <div class="empty-state-text">Создайте первый проект — он сохранится в этом браузере.</div>
+        <button class="btn" onclick="openProjectForm()">＋ Новый проект</button>
+      </div>`;
+    return;
+  }
+  grid.innerHTML = projects.map((p, i) => projectCardHTML(p, i)).join('');
+}
+
+/* ============================================================
+   ФОРМА ПРОЕКТА (новый / редактирование / удаление)
+   ============================================================ */
+let _editingProjectId = null;
+
+function openProjectForm(id = null) {
+  closeAll();
+  _editingProjectId = id;
+  const modal = document.getElementById('m-project');
+  const isEdit = !!id;
+  document.getElementById('np-mode-label').textContent = isEdit ? 'Редактирование проекта' : 'Создание проекта';
+  document.getElementById('np-title').textContent = isEdit ? 'Редактировать проект' : 'Новый проект';
+  document.getElementById('np-delete-btn').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('np-info').textContent = isEdit ? ('ID: ' + id) : 'Новый проект';
+
+  // Reset
+  const p = isEdit ? DB.getProject(id) : null;
+  document.getElementById('np-name').value = p?.name || '';
+  document.getElementById('np-client').value = p?.client || '';
+  document.getElementById('np-artist').value = p?.artist || '';
+  document.getElementById('np-type').value = p?.type || 'TVC';
+  document.getElementById('np-start').value = p?.startDate || '';
+  document.getElementById('np-deadline').value = p?.deadline || '';
+  document.getElementById('np-days').value = p?.days || '';
+  document.getElementById('np-budget').value = p?.budget || '';
+  document.getElementById('np-progress').value = p?.progress ?? 0;
+  document.getElementById('np-status').value = p?.status || 'preprod';
+
+  // Mood selector
+  document.querySelectorAll('#np-mood-picker .mood-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.mood === (p?.mood || 'calm'));
+    opt.onclick = () => {
+      document.querySelectorAll('#np-mood-picker .mood-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+    };
+  });
+
+  // Poster selector
+  document.querySelectorAll('#np-poster-picker .poster-swatch').forEach(sw => {
+    sw.classList.toggle('selected', sw.dataset.poster === (p?.poster || 'poster-1'));
+    sw.onclick = () => {
+      document.querySelectorAll('#np-poster-picker .poster-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+    };
+  });
+
+  modal.classList.add('active');
+  setTimeout(() => document.getElementById('np-name').focus(), 100);
+}
+
+function saveProjectForm() {
+  const name = document.getElementById('np-name').value.trim();
+  if (!name) {
+    toast('Укажите название проекта', 'error');
+    document.getElementById('np-name').focus();
+    return;
+  }
+  const selectedMood = document.querySelector('#np-mood-picker .mood-option.selected')?.dataset.mood || 'calm';
+  const selectedPoster = document.querySelector('#np-poster-picker .poster-swatch.selected')?.dataset.poster || 'poster-1';
+
+  const data = {
+    name,
+    client: document.getElementById('np-client').value.trim(),
+    artist: document.getElementById('np-artist').value.trim(),
+    type: document.getElementById('np-type').value,
+    startDate: document.getElementById('np-start').value,
+    deadline: document.getElementById('np-deadline').value,
+    days: parseInt(document.getElementById('np-days').value) || 0,
+    budget: parseInt(document.getElementById('np-budget').value) || 0,
+    progress: Math.min(100, Math.max(0, parseInt(document.getElementById('np-progress').value) || 0)),
+    status: document.getElementById('np-status').value,
+    mood: selectedMood,
+    poster: selectedPoster
+  };
+
+  if (_editingProjectId) {
+    DB.updateProject(_editingProjectId, data);
+    toast('Проект обновлён', 'success');
+  } else {
+    DB.addProject(data);
+    toast('Проект создан 🎬', 'success');
+  }
+  closeAll();
+  renderProjects();
+}
+
+function deleteProjectConfirm(id, name) {
+  if (confirm('Удалить проект «' + name + '»?\\n\\nЭто действие нельзя отменить (но всегда можно восстановить из бэкапа).')) {
+    DB.deleteProject(id);
+    toast('Проект удалён', 'success');
+    renderProjects();
+  }
+}
+
+function deleteProjectFromForm() {
+  if (!_editingProjectId) return;
+  const p = DB.getProject(_editingProjectId);
+  if (!p) return;
+  if (confirm('Удалить проект «' + p.name + '»?\\n\\nЭто действие нельзя отменить.')) {
+    DB.deleteProject(_editingProjectId);
+    toast('Проект удалён', 'success');
+    closeAll();
+    renderProjects();
+  }
+}
+
+/* ============================================================
+   ОТКРЫТИЕ ПРОЕКТА (детальная страница)
+   ============================================================ */
+function openProjectDetail(id, idx) {
+  const p = DB.getProject(id);
+  if (!p) return;
+  // Используем существующий openProject, который показывает детальную страницу
+  // Но обновляем заголовок и постер из реальных данных
+  const fakeIdx = ((idx - 1) % 6) + 1; // for poster mapping
+  window.openProject(p.name, fakeIdx);
+  // Подставляем настоящие данные
+  const titleEl = document.getElementById('detail-title');
+  if (titleEl) titleEl.textContent = p.name;
+  const posterEl = document.getElementById('detail-poster');
+  if (posterEl) posterEl.className = 'detail-poster ' + (p.poster || 'poster-1');
+  const numEl = document.getElementById('detail-num');
+  if (numEl) numEl.textContent = String(idx).padStart(2, '0');
+}
+
+/* ============================================================
+   ЭКСПОРТ / ИМПОРТ
+   ============================================================ */
+function exportData() {
+  const data = DB.load();
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const ts = new Date().toISOString().slice(0,10);
+  a.download = `zalove-backup-${ts}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Бэкап скачан 💾', 'success');
+}
+
+function importData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.projects || !Array.isArray(data.projects)) throw new Error('Неверный формат');
+      if (!confirm('Импорт перезапишет все текущие данные.\\nПродолжить?')) return;
+      DB.save(data);
+      renderProjects();
+      toast(`Импортировано ${data.projects.length} проектов`, 'success');
+    } catch (err) {
+      toast('Ошибка: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  document.getElementById('importInput').value = '';
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let _toastTimer = null;
+function toast(msg, kind = '') {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderProjects();
 function openNewDoc() { closeAll(); document.getElementById('m-new').classList.add('active'); }
 function closeAll() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
