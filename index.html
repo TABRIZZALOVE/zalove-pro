@@ -2694,23 +2694,23 @@ body.has-reel .theme-toggle { right: 158px; }
       <div class="stats">
         <div class="stat">
           <div class="stat-label">В работе</div>
-          <div class="stat-value">6</div>
-          <div class="stat-delta up">▲ +2 за месяц</div>
+          <div class="stat-value" id="stat-active">0</div>
+          <div class="stat-delta" id="stat-active-delta">—</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Бюджет (квартал) <span class="private-badge" style="margin-left: 6px;">Приватно</span></div>
-          <div class="stat-value mask-value">12.4 М</div>
-          <div class="stat-delta up financial">▲ +18% к Q1</div>
+          <div class="stat-label">Общий бюджет <span class="private-badge" style="margin-left: 6px;">Приватно</span></div>
+          <div class="stat-value mask-value" id="stat-budget">— ₽</div>
+          <div class="stat-delta financial" id="stat-budget-delta">средний на проект —</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Документы готовы</div>
-          <div class="stat-value">24/41</div>
-          <div class="stat-delta">17 в работе</div>
+          <div class="stat-label">Креатив загружен</div>
+          <div class="stat-value" id="stat-creative">0/0</div>
+          <div class="stat-delta" id="stat-creative-delta">тритмент · сценарий · креатив · трек</div>
         </div>
         <div class="stat">
           <div class="stat-label">Сдача в этом месяце</div>
-          <div class="stat-value">3</div>
-          <div class="stat-delta down">▼ 1 в группе риска</div>
+          <div class="stat-value" id="stat-deadlines">0</div>
+          <div class="stat-delta" id="stat-deadlines-delta">всё спокойно</div>
         </div>
       </div>
 
@@ -5197,9 +5197,99 @@ function renderProjects() {
         <div class="empty-state-text">Создайте первый проект — он сохранится в этом браузере.</div>
         <button class="btn" onclick="openProjectForm()">＋ Новый проект</button>
       </div>`;
-    return;
+  } else {
+    grid.innerHTML = projects.map((p, i) => projectCardHTML(p, i)).join('');
   }
-  grid.innerHTML = projects.map((p, i) => projectCardHTML(p, i)).join('');
+  renderStats();
+}
+
+function renderStats() {
+  const projects = DB.getProjects();
+
+  // 1. В работе — не закрытые проекты
+  const active = projects.filter(p => !['done', 'archive'].includes(p.status));
+  const activeCount = active.length;
+  const sosCount = active.filter(p => p.mood === 'sos').length;
+  const fireCount = active.filter(p => p.mood === 'fire').length;
+  document.getElementById('stat-active').textContent = activeCount;
+  const activeDelta = document.getElementById('stat-active-delta');
+  if (sosCount > 0) {
+    activeDelta.innerHTML = '🚨 ' + sosCount + ' в группе риска';
+    activeDelta.className = 'stat-delta down';
+  } else if (fireCount > 0) {
+    activeDelta.innerHTML = '🔥 ' + fireCount + ' горят';
+    activeDelta.className = 'stat-delta';
+    activeDelta.style.color = '#f59e0b';
+  } else if (activeCount > 0) {
+    activeDelta.innerHTML = '✓ всё в графике';
+    activeDelta.className = 'stat-delta up';
+  } else {
+    activeDelta.innerHTML = 'нет активных';
+    activeDelta.className = 'stat-delta';
+  }
+
+  // 2. Общий бюджет
+  const totalBudget = active.reduce((s, p) => s + (Number(p.budget) || 0), 0);
+  const avgBudget = activeCount > 0 ? totalBudget / activeCount : 0;
+  const fmt = (n) => {
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + ' М';
+    if (n >= 1000) return Math.round(n / 1000) + ' К';
+    return Math.round(n);
+  };
+  document.getElementById('stat-budget').textContent = totalBudget > 0 ? fmt(totalBudget) + ' ₽' : '— ₽';
+  document.getElementById('stat-budget-delta').textContent = activeCount > 0
+    ? 'средний на проект ' + fmt(avgBudget) + ' ₽'
+    : '—';
+
+  // 3. Креатив загружен (тритмент/сценарий/креатив/трек) по всем проектам
+  let totalSlots = 0, filledSlots = 0;
+  active.forEach(p => {
+    const c = p.creative || {};
+    ['treatment', 'script', 'creative', 'track'].forEach(k => {
+      totalSlots++;
+      const item = c[k];
+      if (item && (item.url || item.fileKey)) filledSlots++;
+    });
+  });
+  document.getElementById('stat-creative').textContent = totalSlots > 0 ? filledSlots + '/' + totalSlots : '0/0';
+  const pct = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
+  const cDelta = document.getElementById('stat-creative-delta');
+  if (totalSlots === 0) {
+    cDelta.textContent = 'нет проектов';
+    cDelta.className = 'stat-delta';
+  } else if (pct >= 75) {
+    cDelta.innerHTML = '✓ ' + pct + '% готово';
+    cDelta.className = 'stat-delta up';
+  } else if (pct >= 30) {
+    cDelta.textContent = pct + '% готово';
+    cDelta.className = 'stat-delta';
+  } else {
+    cDelta.innerHTML = '⚠ только ' + pct + '%';
+    cDelta.className = 'stat-delta down';
+  }
+
+  // 4. Сдача в этом месяце
+  const now = new Date();
+  const curMonth = now.getMonth(), curYear = now.getFullYear();
+  const deadlinesThisMonth = active.filter(p => {
+    if (!p.deadline) return false;
+    const d = new Date(p.deadline);
+    if (isNaN(d)) return false;
+    return d.getMonth() === curMonth && d.getFullYear() === curYear;
+  });
+  document.getElementById('stat-deadlines').textContent = deadlinesThisMonth.length;
+  const dDelta = document.getElementById('stat-deadlines-delta');
+  const inRiskThisMonth = deadlinesThisMonth.filter(p => p.mood === 'sos').length;
+  if (deadlinesThisMonth.length === 0) {
+    dDelta.textContent = 'спокойный месяц';
+    dDelta.className = 'stat-delta';
+  } else if (inRiskThisMonth > 0) {
+    dDelta.innerHTML = '🚨 ' + inRiskThisMonth + ' в группе риска';
+    dDelta.className = 'stat-delta down';
+  } else {
+    dDelta.textContent = deadlinesThisMonth.length === 1 ? '1 проект на сдачу' : deadlinesThisMonth.length + ' проекта на сдачу';
+    dDelta.className = 'stat-delta up';
+  }
 }
 
 /* ============================================================
@@ -5619,7 +5709,8 @@ let _pendingFileBlob = null;
 function creativeCardHTML(project, kind) {
   const type = CREATIVE_TYPES[kind];
   const data = (project.creative || {})[kind];
-  if (!data) {
+  const hasAny = data && (data.url || data.fileKey);
+  if (!hasAny) {
     return `
       <div class="creative-card" onclick="openCreativeUpload('${kind}')">
         <div class="top">
@@ -5634,10 +5725,20 @@ function creativeCardHTML(project, kind) {
         </div>
       </div>`;
   }
-  const isFile = data.mode === 'file';
-  const info = isFile
-    ? `<span>📄</span><span>${escapeHtml(data.filename || 'PDF')}</span><span style="margin-left:auto;">${data.size ? formatBytes(data.size) : 'PDF'}</span>`
-    : `<span>🔗</span><a class="lnk" href="${escapeHtml(data.url || '#')}" target="_blank" onclick="event.stopPropagation()">${escapeHtml(truncate(data.url || '', 32))}</a>`;
+  // Собираем строки информации (ссылка и/или файл)
+  const infoLines = [];
+  if (data.url) {
+    infoLines.push(`<span>🔗</span><a class="lnk" href="${escapeHtml(data.url)}" target="_blank" onclick="event.stopPropagation()">${escapeHtml(truncate(data.url, 32))}</a>`);
+  }
+  if (data.fileKey) {
+    infoLines.push(`<span>📄</span><span>${escapeHtml(data.filename || 'файл')}</span><span style="margin-left:auto;">${data.size ? formatBytes(data.size) : ''}</span>`);
+  }
+  // Кнопки действий (открыть ссылку и/или файл)
+  const actions = [];
+  if (data.url) actions.push(`<button onclick="event.stopPropagation(); window.open('${escapeHtml(data.url)}', '_blank')">🔗 Ссылка</button>`);
+  if (data.fileKey) actions.push(`<button onclick="event.stopPropagation(); openCreativeFile('${kind}')">📄 Файл</button>`);
+  actions.push(`<button onclick="event.stopPropagation(); openCreativeUpload('${kind}')">↻</button>`);
+
   return `
     <div class="creative-card uploaded" onclick="openCreativeUpload('${kind}')">
       <div class="top">
@@ -5646,10 +5747,11 @@ function creativeCardHTML(project, kind) {
       </div>
       <div class="ctitle">${escapeHtml(data.name || type.name)}</div>
       <div class="author">${escapeHtml(data.author || '—')}</div>
-      <div class="ext-info">${info}</div>
+      <div class="ext-info" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+        ${infoLines.map(l => `<div style="display:flex; align-items:center; gap:6px; font-family: 'JetBrains Mono', monospace; font-size:10px; color: var(--muted); width:100%;">${l}</div>`).join('')}
+      </div>
       <div class="creative-actions">
-        ${isFile ? `<button onclick="event.stopPropagation(); openCreativeFile('${kind}')">📄 Открыть</button>` : `<button onclick="event.stopPropagation(); window.open('${escapeHtml(data.url || '#')}', '_blank')">🔗 Открыть</button>`}
-        <button onclick="event.stopPropagation(); openCreativeUpload('${kind}')">↻ Заменить</button>
+        ${actions.join('')}
       </div>
     </div>`;
 }
@@ -5727,7 +5829,6 @@ async function saveCreativeMaterial() {
   const name = document.getElementById('cf-name').value.trim();
   const author = document.getElementById('cf-author').value.trim();
   const link = document.getElementById('cf-link').value.trim();
-  const isFileMode = document.getElementById('cf-file-block').style.display === 'block';
   const project = DB.getProject(_currentProjectId);
   if (!project) return;
   const creative = { ...(project.creative || {}) };
@@ -5735,37 +5836,34 @@ async function saveCreativeMaterial() {
 
   let data = { name, author, uploadedAt: new Date().toISOString() };
 
-  if (isFileMode) {
-    if (_pendingFileBlob) {
-      const fileKey = 'file_' + _currentProjectId + '_' + kind + '_' + Date.now();
-      try {
-        await FileStore.save(fileKey, _pendingFileBlob);
-        data.mode = 'file';
-        data.filename = _pendingFileBlob.name;
-        data.size = _pendingFileBlob.size;
-        data.fileKey = fileKey;
-        // Delete old file if existed
-        if (existing.fileKey) FileStore.delete(existing.fileKey).catch(()=>{});
-      } catch (err) {
-        toast('Ошибка сохранения файла: ' + err.message, 'error');
-        return;
-      }
-    } else if (existing.mode === 'file') {
-      // Keep existing file
-      data.mode = 'file';
-      data.filename = existing.filename;
-      data.size = existing.size;
-      data.fileKey = existing.fileKey;
-    } else {
-      toast('Выберите PDF файл', 'error');
+  // Ссылка — если есть
+  if (link) data.url = link;
+
+  // Файл — если выбран новый ИЛИ если был ранее загружен
+  if (_pendingFileBlob) {
+    const fileKey = 'file_' + _currentProjectId + '_' + kind + '_' + Date.now();
+    try {
+      await FileStore.save(fileKey, _pendingFileBlob);
+      data.filename = _pendingFileBlob.name;
+      data.size = _pendingFileBlob.size;
+      data.fileKey = fileKey;
+      // Удалить старый файл, если был
+      if (existing.fileKey) FileStore.delete(existing.fileKey).catch(()=>{});
+    } catch (err) {
+      toast('Ошибка сохранения файла: ' + err.message, 'error');
       return;
     }
-  } else {
-    if (!link) { toast('Вставьте ссылку', 'error'); return; }
-    data.mode = 'link';
-    data.url = link;
-    // Delete old file if there was one
-    if (existing.fileKey) FileStore.delete(existing.fileKey).catch(()=>{});
+  } else if (existing.fileKey) {
+    // Сохраняем уже существующий файл
+    data.filename = existing.filename;
+    data.size = existing.size;
+    data.fileKey = existing.fileKey;
+  }
+
+  // Должно быть хоть что-то
+  if (!data.url && !data.fileKey) {
+    toast('Добавьте ссылку или файл (хотя бы что-то одно)', 'error');
+    return;
   }
 
   creative[kind] = data;
