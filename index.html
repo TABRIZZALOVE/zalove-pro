@@ -3022,13 +3022,13 @@ body.has-reel .theme-toggle { right: 158px; }
 
       <div class="detail-hero">
         <div class="detail-poster poster-1" id="detail-poster">
-          <div class="poster-tag status-prod">PRODUCTION</div>
-          <div class="poster-title">SAMSUNG</div>
-          <div class="poster-slate"><strong>NEBULA</strong>TVC · 60 SEC</div>
+          <div class="poster-tag status-prod" id="detail-status">PRODUCTION</div>
+          <div class="poster-title" id="detail-poster-title">SAMSUNG</div>
+          <div class="poster-slate" id="detail-poster-slate"><strong>NEBULA</strong>TVC · 60 SEC</div>
           <div class="poster-num" style="font-size: 140px;" id="detail-num">01</div>
         </div>
         <div class="detail-info">
-          <div class="detail-meta-tags">
+          <div class="detail-meta-tags" id="detail-tags">
             <span class="tag red">TVC</span>
             <span class="tag">SAMSUNG</span>
             <span class="tag">60 SEC</span>
@@ -3039,19 +3039,19 @@ body.has-reel .theme-toggle { right: 158px; }
           <div class="detail-meta-row">
             <div class="detail-meta-item">
               <div class="label">Бюджет <span class="private-badge" style="margin-left: 4px;">Приватно</span></div>
-              <div class="value red mask-value">4.2 М ₽</div>
+              <div class="value red mask-value" id="detail-budget">4.2 М ₽</div>
             </div>
             <div class="detail-meta-item">
               <div class="label">Съёмочные дни</div>
-              <div class="value">3 ДНЯ</div>
+              <div class="value" id="detail-days">3 ДНЯ</div>
             </div>
             <div class="detail-meta-item">
               <div class="label">Сдача</div>
-              <div class="value small">04.06.2026</div>
+              <div class="value small" id="detail-deadline">04.06.2026</div>
             </div>
             <div class="detail-meta-item">
               <div class="label">Прогресс</div>
-              <div class="value">65%</div>
+              <div class="value" id="detail-progress">65%</div>
             </div>
           </div>
           <div class="detail-actions">
@@ -5272,22 +5272,86 @@ function deleteProjectFromForm() {
 }
 
 /* ============================================================
-   ОТКРЫТИЕ ПРОЕКТА (детальная страница)
+   ОТКРЫТИЕ ПРОЕКТА (детальная страница) — наполняем всё из данных
    ============================================================ */
+function formatBudget(rub) {
+  if (!rub || rub === 0) return '— ₽';
+  if (rub >= 1000000) return (rub / 1000000).toFixed(1).replace('.0', '') + ' М ₽';
+  if (rub >= 1000) return Math.round(rub / 1000) + ' К ₽';
+  return rub + ' ₽';
+}
+function pluralDays(n) {
+  if (!n) return '—';
+  const mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return n + ' ДЕНЬ';
+  if ([2,3,4].includes(mod10) && ![12,13,14].includes(mod100)) return n + ' ДНЯ';
+  return n + ' ДНЕЙ';
+}
+function formatDateRu(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+}
+
 function openProjectDetail(id, idx) {
   const p = DB.getProject(id);
   if (!p) return;
-  // Используем существующий openProject, который показывает детальную страницу
-  // Но обновляем заголовок и постер из реальных данных
-  const fakeIdx = ((idx - 1) % 6) + 1; // for poster mapping
+  const fakeIdx = ((idx - 1) % 6) + 1;
+  // Открываем детальную страницу
   window.openProject(p.name, fakeIdx);
-  // Подставляем настоящие данные
+
+  // Заголовок
   const titleEl = document.getElementById('detail-title');
   if (titleEl) titleEl.textContent = p.name;
+
+  // Постер класс и номер
   const posterEl = document.getElementById('detail-poster');
   if (posterEl) posterEl.className = 'detail-poster ' + (p.poster || 'poster-1');
   const numEl = document.getElementById('detail-num');
   if (numEl) numEl.textContent = String(idx).padStart(2, '0');
+
+  // Постер контент (клиент + слейт)
+  const posterTitleEl = document.getElementById('detail-poster-title');
+  if (posterTitleEl) posterTitleEl.textContent = (p.client || p.artist || '').toUpperCase();
+  const posterSlateEl = document.getElementById('detail-poster-slate');
+  if (posterSlateEl) posterSlateEl.innerHTML = '<strong>' + escapeHtml((p.name || '').toUpperCase()) + '</strong>' + escapeHtml(p.type || '');
+
+  // Статус-тег на постере
+  const statusEl = document.getElementById('detail-status');
+  if (statusEl) {
+    const status = STATUS_TAGS[p.status || 'preprod'];
+    statusEl.textContent = status.txt;
+    statusEl.className = 'poster-tag ' + status.cls;
+  }
+
+  // Бюджет
+  const budgetEl = document.getElementById('detail-budget');
+  if (budgetEl) budgetEl.textContent = formatBudget(p.budget);
+
+  // Съёмочные дни
+  const daysEl = document.getElementById('detail-days');
+  if (daysEl) daysEl.textContent = pluralDays(p.days);
+
+  // Дедлайн
+  const deadlineEl = document.getElementById('detail-deadline');
+  if (deadlineEl) deadlineEl.textContent = formatDateRu(p.deadline);
+
+  // Прогресс
+  const progressEl = document.getElementById('detail-progress');
+  if (progressEl) progressEl.textContent = (p.progress || 0) + '%';
+
+  // Теги (динамически по типу проекта)
+  const tagsEl = document.getElementById('detail-tags');
+  if (tagsEl) {
+    const tags = [];
+    if (p.type) tags.push({ txt: p.type, red: true });
+    if (p.client) tags.push({ txt: p.client.toUpperCase(), red: false });
+    if (p.artist) tags.push({ txt: p.artist.toUpperCase(), red: false });
+    if (p.days) tags.push({ txt: pluralDays(p.days), red: false });
+    tags.push({ txt: '4K · 24FPS', red: false });
+    tagsEl.innerHTML = tags.map(t => `<span class="tag ${t.red ? 'red' : ''}">${escapeHtml(t.txt)}</span>`).join('');
+  }
 }
 
 /* ============================================================
