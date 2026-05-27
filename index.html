@@ -4401,25 +4401,96 @@ body.has-reel .theme-toggle { right: 158px; }
         <div>
           <label class="form-label">Роль на проекте *</label>
           <select class="form-select" id="mb-role">
-            <option>Режиссёр</option>
-            <option>Оператор-постановщик (DOP)</option>
-            <option>Второй режиссёр</option>
-            <option>Линейный продюсер</option>
-            <option>Исп. продюсер</option>
-            <option>Художник-постановщик</option>
-            <option>Художник по костюмам / Стилист</option>
-            <option>Кастинг-директор</option>
-            <option>Режиссёр монтажа</option>
-            <option>Арт-директор</option>
-            <option>Гаффер</option>
-            <option>Звукорежиссёр</option>
-            <option>Гример / Визажист</option>
-            <option>Администратор площадки</option>
-            <option>Бэкстейдж / Фотограф</option>
-            <option>Актёр главной роли</option>
-            <option>Актёр второго плана</option>
-            <option>Хореограф</option>
-            <option>Другая</option>
+            <optgroup label="🎬 Продюсерский цех">
+              <option>Генеральный продюсер</option>
+              <option>Исполнительный продюсер</option>
+              <option>Линейный продюсер</option>
+              <option>Креативный продюсер</option>
+              <option>Ассистент продюсера</option>
+            </optgroup>
+            <optgroup label="📝 Режиссура и сценарий">
+              <option>Режиссёр</option>
+              <option>Второй режиссёр</option>
+              <option>Ассистент режиссёра</option>
+              <option>Сценарист / Редактор</option>
+              <option>Супервайзер</option>
+              <option>Арт-директор</option>
+            </optgroup>
+            <optgroup label="🎥 Камера и оператор">
+              <option>Оператор-постановщик (DOP)</option>
+              <option>Камерамен</option>
+              <option>Механик камеры</option>
+              <option>Механик ронина</option>
+              <option>Фокус-пуллер</option>
+              <option>Плейбек / Логгер</option>
+              <option>Стедикамщик</option>
+              <option>Кран-оператор / Долли</option>
+            </optgroup>
+            <optgroup label="💡 Свет">
+              <option>Гаффер</option>
+              <option>Осветитель</option>
+              <option>Кейгрип</option>
+              <option>Ригер</option>
+            </optgroup>
+            <optgroup label="🔊 Звук">
+              <option>Звукорежиссёр</option>
+              <option>Ассистент звукорежиссёра</option>
+            </optgroup>
+            <optgroup label="🎨 Художественный цех">
+              <option>Художник-постановщик</option>
+              <option>Постановщик</option>
+              <option>Декоратор</option>
+              <option>Реквизитор</option>
+              <option>Ассистент по реквизиту</option>
+              <option>Художник по костюмам / Стилист</option>
+            </optgroup>
+            <optgroup label="💄 Грим и волосы">
+              <option>Гример / Визажист</option>
+              <option>Ассистент гримёра</option>
+              <option>Стилист по волосам</option>
+              <option>Пластический грим</option>
+              <option>Стилист маникюра</option>
+              <option>Барбер</option>
+            </optgroup>
+            <optgroup label="🎭 Кастинг и актёры">
+              <option>Кастинг-директор</option>
+              <option>Ассистент кастинг-директора</option>
+              <option>Актёр главной роли</option>
+              <option>Актёр второго плана</option>
+              <option>АМС (массовка)</option>
+              <option>Танцор</option>
+              <option>Хореограф</option>
+              <option>Музыкант</option>
+            </optgroup>
+            <optgroup label="📋 Площадка и логистика">
+              <option>Директор площадки</option>
+              <option>Администратор площадки</option>
+              <option>Локейшн-менеджер</option>
+              <option>Рабочий / Хелпер</option>
+              <option>Водитель</option>
+              <option>Игровой транспорт</option>
+              <option>Курьер</option>
+            </optgroup>
+            <optgroup label="🍽 Питание">
+              <option>Буфетчик / Кейтеринг</option>
+            </optgroup>
+            <optgroup label="📸 Контент со съёмки">
+              <option>Бэкстейдж / Фотограф</option>
+              <option>Видеограф (BTS)</option>
+            </optgroup>
+            <optgroup label="✂ Пост-продакшн">
+              <option>Режиссёр монтажа</option>
+              <option>Композитор</option>
+              <option>Диктор</option>
+              <option>Колорист</option>
+              <option>Sound-дизайнер</option>
+              <option>Графический дизайнер / Моушн</option>
+              <option>CG-супервайзер</option>
+              <option>AI-специалист</option>
+            </optgroup>
+            <optgroup label="—">
+              <option>Другая</option>
+            </optgroup>
           </select>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -4475,8 +4546,8 @@ body.has-reel .theme-toggle { right: 158px; }
       <div class="smart-fill">
         <div class="sf-icon">📎</div>
         <div class="sf-text">
-          <strong>Ссылка или файл PDF</strong>
-          Можно вставить ссылку (Google Docs, Drive, Dropbox, Notion) ИЛИ прикрепить PDF файл (до 20 МБ).
+          <strong id="cf-banner-title">Ссылка или файл</strong>
+          <span id="cf-banner-text">Можно вставить ссылку (Google Drive, Dropbox, Notion) ИЛИ прикрепить файл (до 100 МБ).</span>
         </div>
       </div>
       <div style="display: grid; gap: 14px;">
@@ -4498,18 +4569,12 @@ body.has-reel .theme-toggle { right: 158px; }
           <input class="form-input" id="cf-author" placeholder="Имя автора / роль">
         </div>
         <div>
-          <label class="form-label">Способ загрузки</label>
-          <div style="display: flex; gap: 6px;">
-            <button type="button" class="btn-secondary btn" id="cf-mode-link" onclick="setCreativeMode('link')" style="flex:1;">🔗 Ссылка</button>
-            <button type="button" class="btn-secondary btn" id="cf-mode-file" onclick="setCreativeMode('file')" style="flex:1;">📄 Файл PDF</button>
-          </div>
-        </div>
-        <div id="cf-link-block">
-          <label class="form-label">Ссылка</label>
+          <label class="form-label">🔗 Ссылка <span style="color: var(--muted); font-weight: 400;">(опционально)</span></label>
           <input class="form-input" id="cf-link" placeholder="https://drive.google.com/...">
+          <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Google Drive, Dropbox, Notion, Figma, SoundCloud, Spotify — любая ссылка</div>
         </div>
-        <div id="cf-file-block" style="display:none;">
-          <label class="form-label">Файл <span id="cf-file-label" style="color: var(--muted);">(PDF / DOCX)</span></label>
+        <div>
+          <label class="form-label">📄 Файл <span id="cf-file-label" style="color: var(--muted); font-weight: 400;">(PDF / DOCX)</span></label>
           <input type="file" id="cf-file" accept=".pdf,.docx" style="width:100%; padding: 9px; border: 1px dashed var(--line-2); border-radius: 4px; background: var(--bg-2);">
           <div id="cf-file-status" style="font-size: 11px; color: var(--muted); margin-top: 6px;"></div>
         </div>
@@ -5542,10 +5607,10 @@ function deleteTeamMemberFromForm() {
    КРЕАТИВ — Тритмент / Сценарий / Креатив (ссылка или PDF)
    ============================================================ */
 const CREATIVE_TYPES = {
-  treatment: { icon: '⊡', name: 'Тритмент', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX' },
-  script: { icon: '≡', name: 'Сценарий', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX' },
-  creative: { icon: '✦', name: 'Креатив', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX' },
-  track: { icon: '🎵', name: 'Трек', accept: '.mp3,.wav,.m4a,.flac,.aac', fileLabel: 'MP3 / WAV / M4A' }
+  treatment: { icon: '⊡', name: 'Тритмент', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX', bannerHead: 'Тритмент', bannerText: 'Можно прикрепить ссылку, файл, или сразу оба варианта. До 100 МБ.' },
+  script: { icon: '≡', name: 'Сценарий', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX', bannerHead: 'Сценарий', bannerText: 'Можно прикрепить ссылку, файл, или сразу оба варианта. До 100 МБ.' },
+  creative: { icon: '✦', name: 'Креатив', accept: '.pdf,.docx,.ppt,.pptx,.key', fileLabel: 'PDF / DOCX / PPTX', bannerHead: 'Креатив', bannerText: 'Можно прикрепить ссылку (Figma, Miro), файл, или сразу оба варианта. До 100 МБ.' },
+  track: { icon: '🎵', name: 'Трек', accept: '.mp3,.wav,.m4a,.flac,.aac', fileLabel: 'MP3 / WAV / M4A', bannerHead: 'Трек', bannerText: 'Можно прикрепить ссылку (SoundCloud, Spotify), аудиофайл, или сразу оба варианта. До 100 МБ.' }
 };
 
 let _editingCreativeKind = null;
@@ -5610,30 +5675,34 @@ function openCreativeUpload(kind) {
   const project = DB.getProject(_currentProjectId);
   const data = (project?.creative || {})[kind] || {};
   const type = CREATIVE_TYPES[kind];
+  const hasAny = !!(data.url || data.fileKey);
   document.getElementById('cf-icon').textContent = type.icon;
-  document.getElementById('cf-title').textContent = (data.name ? 'Редактировать: ' : 'Загрузить: ') + type.name;
+  document.getElementById('cf-title').textContent = (hasAny ? 'Редактировать: ' : 'Загрузить: ') + type.name;
   document.getElementById('cf-kind').value = kind;
   updateCfAccept();
   document.getElementById('cf-name').value = data.name || (type.name + ' v.1');
   document.getElementById('cf-author').value = data.author || '';
-  document.getElementById('cf-link').value = data.mode === 'link' ? (data.url || '') : '';
-  document.getElementById('cf-file-status').textContent = data.mode === 'file' && data.filename ? ('Текущий файл: ' + data.filename + ' · ' + (data.size ? formatBytes(data.size) : '')) : '';
+  document.getElementById('cf-link').value = data.url || '';
+  document.getElementById('cf-file-status').textContent = data.filename
+    ? ('Текущий файл: ' + data.filename + ' · ' + (data.size ? formatBytes(data.size) : ''))
+    : '';
   document.getElementById('cf-file').value = '';
-  document.getElementById('cf-delete-btn').style.display = data.mode ? 'inline-flex' : 'none';
-  document.getElementById('cf-info').textContent = data.mode ? ('Загружено: ' + (data.uploadedAt ? new Date(data.uploadedAt).toLocaleString('ru-RU') : '—')) : 'Новая загрузка';
-  setCreativeMode(data.mode === 'file' ? 'file' : 'link');
+  document.getElementById('cf-delete-btn').style.display = hasAny ? 'inline-flex' : 'none';
+  document.getElementById('cf-info').textContent = hasAny
+    ? ('Загружено: ' + (data.uploadedAt ? new Date(data.uploadedAt).toLocaleString('ru-RU') : '—'))
+    : 'Новая загрузка · можно ссылку, файл, или сразу оба';
 
   // File input handler
   document.getElementById('cf-file').onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast('Файл больше 20 МБ — используйте ссылку', 'error');
+    if (file.size > 100 * 1024 * 1024) {
+      toast('Файл больше 100 МБ', 'error');
       e.target.value = '';
       return;
     }
     _pendingFileBlob = file;
-    document.getElementById('cf-file-status').textContent = 'Готов к сохранению: ' + file.name + ' · ' + formatBytes(file.size);
+    document.getElementById('cf-file-status').textContent = '✓ Готов к сохранению: ' + file.name + ' · ' + formatBytes(file.size);
   };
 
   document.getElementById('m-creative-upload').classList.add('active');
@@ -5646,15 +5715,10 @@ function updateCfAccept() {
   document.getElementById('cf-file').setAttribute('accept', type.accept);
   const label = document.getElementById('cf-file-label');
   if (label) label.textContent = '(' + type.fileLabel + ')';
-}
-
-function setCreativeMode(mode) {
-  document.getElementById('cf-link-block').style.display = mode === 'link' ? 'block' : 'none';
-  document.getElementById('cf-file-block').style.display = mode === 'file' ? 'block' : 'none';
-  const btnL = document.getElementById('cf-mode-link');
-  const btnF = document.getElementById('cf-mode-file');
-  if (mode === 'link') { btnL.style.background = 'var(--text)'; btnL.style.color = 'white'; btnF.style.background = ''; btnF.style.color = ''; }
-  else { btnF.style.background = 'var(--text)'; btnF.style.color = 'white'; btnL.style.background = ''; btnL.style.color = ''; }
+  const bannerHead = document.getElementById('cf-banner-title');
+  if (bannerHead) bannerHead.textContent = type.bannerHead;
+  const bannerText = document.getElementById('cf-banner-text');
+  if (bannerText) bannerText.textContent = type.bannerText;
 }
 
 async function saveCreativeMaterial() {
