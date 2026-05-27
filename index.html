@@ -2364,6 +2364,273 @@ body.has-reel .theme-toggle { right: 158px; }
 .mood-option.selected { border-color: var(--brand-red); background: var(--bg-2); }
 .mood-option .mood-label { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
 
+/* Estimate editable */
+.est-row-edit {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 70px 70px 130px 110px 28px;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 12px;
+  align-items: center;
+}
+.est-row-edit:last-child { border-bottom: none; }
+.est-row-edit .name { font-weight: 600; }
+.est-row-edit .desc { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.est-row-edit input.est-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text);
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.est-row-edit input.est-input:hover { border-color: var(--line); background: var(--bg-3); }
+.est-row-edit input.est-input:focus {
+  outline: none;
+  border-color: var(--brand-red);
+  background: var(--bg-2);
+  font-weight: 700;
+}
+.est-row-edit input.est-input.price { color: var(--brand-red); font-weight: 600; }
+.est-row-edit .row-total {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--text);
+}
+.est-row-edit .row-total.zero { color: var(--muted); font-weight: 400; }
+.est-del-btn {
+  width: 24px; height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.est-row-edit:hover .est-del-btn { opacity: 1; }
+.est-del-btn:hover { background: rgba(232,35,29,0.1); color: var(--brand-red); }
+
+.est-section-edit .est-section-head {
+  cursor: pointer;
+  user-select: none;
+}
+.est-section-edit .h-arrow {
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.2s;
+  font-size: 10px;
+  color: var(--muted);
+}
+.est-section-edit.expanded .h-arrow { transform: rotate(90deg); }
+.est-section-edit .est-rows-edit { display: none; padding: 0 16px; }
+.est-section-edit.expanded .est-rows-edit { display: block; }
+
+.est-add-row-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--line-2);
+  padding: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 10px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.est-add-row-btn:hover { border-color: var(--brand-red); color: var(--brand-red); border-style: solid; }
+
+.est-section-edit .sum-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--brand-red);
+  font-weight: 700;
+}
+.est-section-edit .sum-display.zero { color: var(--muted); font-weight: 400; }
+
+.est-headers {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 70px 70px 130px 110px 28px;
+  gap: 10px;
+  padding: 6px 16px 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--line);
+}
+.est-headers .h-num { text-align: right; }
+
+/* Integrations (для музыкальных клипов) */
+.integrations-section { margin-bottom: 28px; }
+.int-summary {
+  background: linear-gradient(135deg, rgba(232,35,29,0.06), transparent);
+  border: 1px solid rgba(232,35,29,0.2);
+  border-left: 3px solid var(--brand-red);
+  border-radius: 6px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.int-summary .lbl {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.int-summary .v {
+  font-family: 'Anton', sans-serif;
+  font-size: 22px;
+  margin-top: 2px;
+  letter-spacing: -0.3px;
+  color: var(--brand-red);
+}
+
+.int-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.int-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.int-card:hover {
+  border-color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+}
+.int-card.status-paid { border-color: rgba(30,158,78,0.4); background: linear-gradient(135deg, rgba(30,158,78,0.04), transparent 50%); }
+.int-card.status-shot { border-color: rgba(30,158,78,0.6); background: linear-gradient(135deg, rgba(30,158,78,0.08), transparent 50%); }
+.int-card.status-pending { border-color: rgba(180,180,186,0.4); }
+.int-card.status-negotiating { border-color: rgba(29,78,216,0.4); }
+.int-card.status-signed { border-color: rgba(217,119,6,0.4); }
+
+.int-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.int-brand {
+  font-family: 'Anton', sans-serif;
+  font-size: 18px;
+  letter-spacing: -0.3px;
+  text-transform: uppercase;
+  flex: 1;
+}
+.int-status-pill {
+  display: inline-block;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+  padding: 3px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.int-status-pending { background: #e5e7eb; color: #6b7280; }
+.int-status-negotiating { background: rgba(29,78,216,0.15); color: #1d4ed8; }
+.int-status-signed { background: rgba(217,119,6,0.15); color: #d97706; }
+.int-status-paid { background: rgba(30,158,78,0.15); color: #16a34a; }
+.int-status-shot { background: #16a34a; color: white; }
+
+.int-types {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.int-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  font-size: 11px;
+}
+.int-cost {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--brand-red);
+}
+.int-scene { color: var(--muted); }
+
+.int-add-card {
+  border: 1px dashed var(--line-2);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 130px;
+  cursor: pointer;
+  color: var(--muted);
+  text-align: center;
+  padding: 14px;
+}
+.int-add-card:hover {
+  border-color: var(--brand-red);
+  color: var(--brand-red);
+  border-style: solid;
+  background: rgba(232,35,29,0.02);
+}
+.int-add-card .plus {
+  font-family: 'Anton', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* Чекбоксы для типов интеграции */
+.int-types-checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.int-type-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.int-type-check:hover { background: var(--bg-2); border-color: var(--text-2); }
+.int-type-check.selected {
+  background: rgba(232,35,29,0.08);
+  border-color: var(--brand-red);
+  color: var(--brand-red);
+  font-weight: 600;
+}
+.int-type-check input { display: none; }
+
 /* Personal brand section */
 .brand-grid {
   display: grid;
@@ -3092,6 +3359,24 @@ body.has-reel .theme-toggle { right: 158px; }
         <div class="team-add-row" onclick="openAddMember()">＋ Добавить участника</div>
       </div>
 
+      <!-- INTEGRATIONS (только для музыкальных клипов) -->
+      <div id="integrationsBlock" style="display:none;">
+        <div class="section-title">Интеграции <span class="pill" id="int-count-pill">0 партнёров</span> <span class="private-badge" style="margin-left: 6px;">Суммы приватно</span></div>
+        <div class="int-summary">
+          <div>
+            <div class="lbl">Общий бюджет интеграций</div>
+            <div class="v mask-value" id="int-total">— ₽</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="lbl">Снято / договорено / в работе</div>
+            <div style="font-size: 13px; margin-top: 4px; color: var(--text-2);" id="int-breakdown">—</div>
+          </div>
+        </div>
+        <div class="int-grid" id="integrationsGrid">
+          <!-- Динамически -->
+        </div>
+      </div>
+
       <!-- CREATIVE & SCRIPT -->
       <div class="section-title">Креатив и сценарий <span class="pill">ССЫЛКА ИЛИ PDF · СОХРАНЯЕТСЯ В БРАУЗЕРЕ</span></div>
       <div class="creative-grid" id="creativeGrid">
@@ -3488,7 +3773,7 @@ body.has-reel .theme-toggle { right: 158px; }
         <div class="doc-header-icon">₽</div>
         <div>
           <div class="doc-section-label">Документ · из вашего шаблона</div>
-          <div class="doc-header-title">Смета · Nebula <span class="private-badge" style="margin-left: 8px; vertical-align: middle;">Только продюсер</span></div>
+          <div class="doc-header-title"><span id="est-project-title">Смета</span> <span class="private-badge" style="margin-left: 8px; vertical-align: middle;">Только продюсер</span></div>
         </div>
       </div>
       <div class="doc-actions-h">
@@ -3510,57 +3795,25 @@ body.has-reel .theme-toggle { right: 158px; }
         </div>
       </div>
 
-      <div class="est-meta">
-        <div class="est-meta-item"><div class="est-meta-label">Production</div><div class="est-meta-value">ZALOVE Production</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Producer</div><div class="est-meta-value">Tabriz Zalov</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Director</div><div class="est-meta-value">—</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">DOP</div><div class="est-meta-value">—</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Agency</div><div class="est-meta-value">—</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Client</div><div class="est-meta-value">Samsung</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Product</div><div class="est-meta-value">TVC · 60 sec</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Date</div><div class="est-meta-value">18.05.2026</div></div>
+      <div class="est-meta" id="est-meta-grid">
+        <!-- Динамически из проекта -->
       </div>
 
-      <div class="est-section">
-        <div class="est-section-head">
-          <div class="h">01 · Подготовка проекта <span class="h-count">12 позиций</span></div>
-          <div class="sum">— ₽</div>
-        </div>
-        <div class="est-rows">
-          <div class="est-row"><div class="name">Создание тритмента / креатива</div><div class="desc">Идея и концепция истории проекта</div><div class="qty">1</div><div class="days">—</div><div class="price">—</div></div>
-          <div class="est-row"><div class="name">Сценарий</div><div class="desc">Подробный сценарий</div><div class="qty">1</div><div class="days">—</div><div class="price">—</div></div>
-          <div class="est-row"><div class="name">Аренда локации</div><div class="desc">павильон + дополнительная локация</div><div class="qty">1</div><div class="days">3</div><div class="price">—</div></div>
-          <div class="est-row"><div class="name">Кастинг-директор</div><div class="desc">Подбор актёров и моделей</div><div class="qty">1</div><div class="days">—</div><div class="price">—</div></div>
-          <div class="est-row"><div class="name">Главные герои</div><div class="desc">Главная роль + поддерживающая</div><div class="qty">2</div><div class="days">3</div><div class="price">—</div></div>
-          <div class="est-row"><div class="name">Групповка</div><div class="desc">Второй план</div><div class="qty">4</div><div class="days">2</div><div class="price">—</div></div>
-          <div class="est-row"><div class="name">АМС (массовка)</div><div class="desc">Массовка в кадре</div><div class="qty">8</div><div class="days">1</div><div class="price">—</div></div>
-        </div>
+      <div id="estimateSections">
+        <!-- Динамически из SMETA_SECTIONS -->
       </div>
-
-      <div class="est-section"><div class="est-section-head"><div class="h">02 · Продюсерский цех <span class="h-count">3 позиции</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">03 · Творческая группа <span class="h-count">15 позиций</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">04 · Операторский цех <span class="h-count">13 позиций</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">05 · Звуковой цех <span class="h-count">2 позиции</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">06 · Грим <span class="h-count">6 позиций</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">07 · Администрация <span class="h-count">4 позиции</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">08 · Техническое оборудование <span class="h-count">3 позиции</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">09 · Прочее <span class="h-count">11 позиций · NDA +20%</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">10 · Логистика <span class="h-count">10 позиций</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">11 · Экспедиция <span class="h-count">5 позиций</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">12 · Питание <span class="h-count">9 позиций</span></div><div class="sum">— ₽</div></div></div>
-      <div class="est-section"><div class="est-section-head"><div class="h">13 · Постпродакшн <span class="h-count">14 позиций · CG / AI</span></div><div class="sum">— ₽</div></div></div>
 
       <div class="est-total">
-        <div class="est-total-row"><div class="label">Сумма разделов</div><div class="val">— ₽</div></div>
-        <div class="est-total-row"><div class="label">Налог · 10%</div><div class="val">— ₽</div></div>
-        <div class="est-total-row grand"><div class="label">Итого с налогом</div><div class="val">— ₽</div></div>
+        <div class="est-total-row"><div class="label">Сумма разделов</div><div class="val" id="est-subtotal">— ₽</div></div>
+        <div class="est-total-row"><div class="label">Налог · <input type="number" id="est-tax" value="10" min="0" max="100" style="width: 50px; background: var(--bg-3); border: 1px solid var(--line); color: var(--text); padding: 2px 6px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-align: right; border-radius: 3px;">%</div><div class="val" id="est-tax-amount">— ₽</div></div>
+        <div class="est-total-row grand"><div class="label">Итого с налогом</div><div class="val" id="est-grand">— ₽</div></div>
       </div>
     </div>
     <div class="doc-footer">
-      <div class="doc-footer-info">SMETA-NEB-2026-001 · 14 РАЗДЕЛОВ · 105 ПОЗИЦИЙ</div>
+      <div class="doc-footer-info" id="est-footer-info">Авто-сохранение при каждой правке</div>
       <div style="display: flex; gap: 6px;">
-        <button class="btn-secondary btn">Сохранить</button>
-        <button class="btn">⚡ Сгенерировать XLSX</button>
+        <button class="btn-secondary btn" onclick="resetEstimate()">↺ Сбросить</button>
+        <button class="btn" onclick="closeAll()">💾 Закрыть</button>
       </div>
     </div>
   </div>
@@ -4591,6 +4844,96 @@ body.has-reel .theme-toggle { right: 158px; }
   </div>
 </div>
 
+<!-- INTEGRATION FORM MODAL (для музыкальных клипов) -->
+<div class="modal-overlay" id="m-integration">
+  <div class="doc-overlay" style="width: 700px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">★</div>
+        <div>
+          <div class="doc-section-label" id="int-mode-label">Интеграция в клипе</div>
+          <div class="doc-header-title" id="int-form-title">Новая интеграция</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">★</div>
+        <div class="sf-text">
+          <strong>Брендовая интеграция в клипе</strong>
+          Стоимость — приватно, видна только тебе. Бренду в выгрузке передаём только то, что согласовано.
+        </div>
+      </div>
+      <div style="display: grid; gap: 14px;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Бренд / Партнёр *</label>
+            <input class="form-input" id="int-brand" placeholder="Adidas, Sber, Тинькофф...">
+          </div>
+          <div>
+            <label class="form-label">Статус</label>
+            <select class="form-select" id="int-status">
+              <option value="pending">📍 Предложение</option>
+              <option value="negotiating">💬 Переговоры</option>
+              <option value="signed">📝 Договорено</option>
+              <option value="paid">💰 Оплачено</option>
+              <option value="shot">✅ Снято</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Тип интеграции (можно несколько)</label>
+          <div class="int-types-checks">
+            <label class="int-type-check" data-type="product"><input type="checkbox" value="product"> 📦 Продакт-плейсмент</label>
+            <label class="int-type-check" data-type="logo"><input type="checkbox" value="logo"> 🏷 Логотип в кадре</label>
+            <label class="int-type-check" data-type="mention"><input type="checkbox" value="mention"> 🎤 Упоминание в треке</label>
+            <label class="int-type-check" data-type="scene"><input type="checkbox" value="scene"> 🎬 Спец. сцена под бренд</label>
+            <label class="int-type-check" data-type="costume"><input type="checkbox" value="costume"> 👕 Костюм / мерч</label>
+            <label class="int-type-check" data-type="transport"><input type="checkbox" value="transport"> 🚗 Транспорт</label>
+            <label class="int-type-check" data-type="location"><input type="checkbox" value="location"> 📍 Локация</label>
+            <label class="int-type-check" data-type="other"><input type="checkbox" value="other"> ⊕ Иное</label>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Стоимость ₽ <span class="private-badge" style="margin-left: 4px;">Приватно</span></label>
+            <input class="form-input" type="number" id="int-cost" placeholder="0">
+          </div>
+          <div>
+            <label class="form-label">Привязка к сцене</label>
+            <input class="form-input" id="int-scene" placeholder="Сцена 3, 0:42-0:48">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Контактное лицо</label>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px;">
+            <input class="form-input" id="int-contact-name" placeholder="Имя">
+            <input class="form-input" id="int-contact-phone" placeholder="Телефон">
+            <input class="form-input" id="int-contact-email" placeholder="E-mail">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Описание / ТЗ от бренда</label>
+          <textarea class="form-textarea" id="int-description" rows="3" placeholder="Что именно делаем для бренда. Требования к показу, обязательные условия..."></textarea>
+        </div>
+        <div>
+          <label class="form-label">Внутренние заметки</label>
+          <textarea class="form-textarea" id="int-notes" rows="2" placeholder="Особенности по этому партнёру, важные нюансы..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="int-info">Сохранится в проекте</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" id="int-delete-btn" onclick="deleteIntegrationFromForm()" style="display:none; color: var(--brand-red);">🗑 Удалить</button>
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="saveIntegration()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- NEW / EDIT PROJECT MODAL -->
 <div class="modal-overlay" id="m-project">
   <div class="doc-overlay" style="width: 720px;">
@@ -4777,6 +5120,11 @@ function showDashboard() {
 }
 function openDoc(type) {
   closeAll();
+  // Открытие сметы — обязательно подтягиваем актуальные данные проекта
+  if (type === 'estimate' && _currentProjectId) {
+    const project = DB.getProject(_currentProjectId);
+    if (project) renderEstimate(project);
+  }
   const map = {
     estimate: 'm-estimate',
     callsheet: 'm-callsheet',
@@ -5950,7 +6298,542 @@ async function openCreativeFile(kind) {
 }
 
 /* ============================================================
-   ОБНОВЛЯЕМ openProjectDetail — подключаем team + creative
+   СМЕТА — все 14 разделов из шаблона + редактирование
+   ============================================================ */
+const SMETA_TEMPLATE = [
+  { id: 'prep', n: '01', title: 'Подготовка проекта', rows: [
+    { name: 'Создание тритмента / креатива', desc: 'Создание идеи / концепции истории проекта' },
+    { name: 'Оформитель тритментов', desc: 'Дизайнер презентаций' },
+    { name: 'Сценарий', desc: 'Написание подробного сценария проекта' },
+    { name: 'Редактор', desc: '' },
+    { name: 'Аренда локации', desc: 'Описание локации' },
+    { name: 'Скаутинг локаций', desc: 'Предварительный выезд и отсмотр локаций' },
+    { name: 'Освоение выбранной локации', desc: 'Выезд на локацию основной съёмочной группой' },
+    { name: 'Разрешение на съёмку', desc: 'Получение и сбор документов для разрешения съёмок на натуре' },
+    { name: 'Локейшн-менеджер', desc: 'Поиск, согласование и менеджмент локаций' },
+    { name: 'Отрисовка раскадровки', desc: 'Художественная раскадровка проекта' },
+    { name: 'Аниматик', desc: 'Предварительная сборка проекта из референсов / раскадровки' },
+    { name: 'Кастинг-директор', desc: 'Подбор актёров и моделей на проект' },
+    { name: 'Ассистент кастинг-директора', desc: 'Подбор актёров и моделей на проект' },
+    { name: 'Главные герои', desc: 'Главные герои проекта' },
+    { name: 'Групповка', desc: 'Герои проекта второй план' },
+    { name: 'АМС', desc: 'Актёры массовых сцен проекта' },
+    { name: 'Предварительный оффлайн кастинг', desc: 'Пробы до съёмочного дня' },
+    { name: 'Права актёров', desc: 'Полное отчуждение' }
+  ]},
+  { id: 'producers', n: '02', title: 'Продюсерский цех', rows: [
+    { name: 'Продюсер Исполнительный', desc: 'Организация и контроль всего съёмочного процесса' },
+    { name: 'Продюсер Линейный', desc: 'Организация и контроль технической части проекта' },
+    { name: 'Ассистент продюсера', desc: 'Помощь в административных задачах' }
+  ]},
+  { id: 'creative', n: '03', title: 'Творческая группа', rows: [
+    { name: 'Режиссёр', desc: 'Контроль всего процесса создания проекта и сдача финального результата' },
+    { name: 'Арт-директор', desc: 'Ответственный за общую визуальную концепцию проекта' },
+    { name: 'Второй режиссёр', desc: 'Руководство площадкой, разработка КПП, вызов группы на съёмку' },
+    { name: 'Ассистент режиссёра', desc: 'Хлопушка' },
+    { name: 'Супервайзер', desc: 'Контроль и логика, детали и монтажность по сценарию' },
+    { name: 'Оператор-постановщик', desc: 'Съёмка проекта' },
+    { name: 'Камерамен', desc: 'Съёмка под руководством оператора-постановщика' },
+    { name: 'Художник-постановщик', desc: 'Худ. оформление локации, создание/покупка реквизита' },
+    { name: 'Декоратор', desc: 'Художественное декорирование локации' },
+    { name: 'Ассистент по реквизиту', desc: 'Худ. оформление локации, создание/покупка реквизита' },
+    { name: 'Постановщики и реквизиторы', desc: 'Застройка локации' },
+    { name: 'Художник по костюмам / Стилист', desc: 'Подбор образа для актёров и действующих лиц' },
+    { name: 'Ассистент худ. по костюмам', desc: 'Подбор образа для актёров' },
+    { name: 'Режиссёр монтажа на площадке', desc: 'Предварительный монтаж на площадке' },
+    { name: 'Хореограф', desc: 'Постановка хореографии на проекте' },
+    { name: 'Танцоры', desc: 'Танцы в проекте' }
+  ]},
+  { id: 'camera', n: '04', title: 'Операторский цех', rows: [
+    { name: 'Механик камеры', desc: 'Работа с камерой' },
+    { name: 'Механик ронина', desc: 'Работа с ронином' },
+    { name: 'Фокус-пуллер', desc: 'Работа с фокусом камеры' },
+    { name: 'Плейбек / Логгер', desc: 'Слив материала, помощь с техникой' },
+    { name: 'Стедикамщик', desc: 'Стабилизирующая система «стедикам»' },
+    { name: 'Долли', desc: 'Операторская телега' },
+    { name: 'Кран', desc: 'Операторский кран' },
+    { name: 'Роборука', desc: 'Motion Control' },
+    { name: 'Second Unit', desc: 'Съёмка на авто-дорогах' },
+    { name: 'Гаффер', desc: 'Контроль и организация команды осветителей' },
+    { name: 'Осветители', desc: 'Постановка света на площадке' },
+    { name: 'Ригеры', desc: 'Специалисты по высотным работам' },
+    { name: 'Кейгрип', desc: 'Крепление, установка ферм' }
+  ]},
+  { id: 'sound', n: '05', title: 'Звуковой цех', rows: [
+    { name: 'Звукорежиссёр', desc: 'Запись диалогов и звука на площадке' },
+    { name: 'Ассистент звукорежиссёра', desc: 'Запись диалогов и звука на площадке' }
+  ]},
+  { id: 'makeup', n: '06', title: 'Грим', rows: [
+    { name: 'Гример / Визажист', desc: 'Корректировка образа, мейкап' },
+    { name: 'Ассистент по гриму', desc: 'Корректировка образа, мейкап' },
+    { name: 'Стилист по волосам', desc: 'Создание и поддержка причёсок' },
+    { name: 'Ассистент стилиста по волосам', desc: 'Создание и поддержка причёсок' },
+    { name: 'Пластический грим', desc: 'Изменение внешности актёра спецматериалами' },
+    { name: 'Стилист маникюра', desc: 'Авторский дизайн маникюра' }
+  ]},
+  { id: 'admin', n: '07', title: 'Администрация', rows: [
+    { name: 'Директор площадки', desc: 'Администрирование съёмочной площадки, ведение площадки' },
+    { name: 'Администратор', desc: 'Администрирование съёмочной площадки' },
+    { name: 'Рабочие', desc: 'Помощники на площадке, разнорабочие задачи' },
+    { name: 'Громкий звук', desc: 'Привоз и контроль оборудования для громкого звука' }
+  ]},
+  { id: 'tech', n: '08', title: 'Техническое оборудование', rows: [
+    { name: 'Техника', desc: 'Кинооборудование' },
+    { name: 'Жёсткие диски SSD', desc: 'Закупка SSD для хранения материалов проекта' },
+    { name: 'Осветительное оборудование', desc: 'Набор профессионального светового оборудования' }
+  ]},
+  { id: 'misc', n: '09', title: 'Прочее', rows: [
+    { name: 'АХЧ', desc: 'Административно-хозяйственная часть и расходники' },
+    { name: 'Документация', desc: 'Документация, курьеры и доставки' },
+    { name: 'Реквизит / материалы для декораций + транспорт', desc: 'Наполнение, застройки кадра' },
+    { name: 'Костюмы + химчистка + транспорт', desc: 'Покупка образов для съёмки' },
+    { name: 'Предварительная примерка костюмов', desc: 'Выезд стилиста и примерка образов' },
+    { name: 'Предварительные репетиции хореографии', desc: 'Репетиции хореографа и танцоров перед съёмками' },
+    { name: 'Оператор видео-бэкстейджа', desc: 'Фильм о фильме' },
+    { name: 'Фотограф', desc: 'Фотограф на съёмочной площадке' },
+    { name: 'Переработки', desc: 'Оплата группы, превышающая норму рабочего дня' },
+    { name: 'Непредвиденные расходы', desc: 'Бюджетный резерв' },
+    { name: 'NDA', desc: 'Надбавка за NDA (~20%)' }
+  ]},
+  { id: 'logistics', n: '10', title: 'Логистика', rows: [
+    { name: 'Камераваген', desc: 'Доставка / увоз кинотехники' },
+    { name: 'Светобаза', desc: 'Доставка / увоз осветительного оборудования' },
+    { name: 'Транспорт худ. цеха', desc: 'Доставка / увоз, курьеры' },
+    { name: 'АХЧ-ваген', desc: 'Доставка / увоз / закуп АХЧ' },
+    { name: 'Гримваген', desc: 'Гримёрный вагончик' },
+    { name: 'Костюмваген', desc: 'Костюмерный вагончик' },
+    { name: 'Расположение клиента (микроавтобус)', desc: 'Вагончик для клиента' },
+    { name: 'Генератор', desc: 'Электричество на натуре' },
+    { name: 'Скайлифт', desc: 'Авто с высоким краном для съёмки оператором с высоты' },
+    { name: 'Транспортные расходы группы', desc: 'Такси, каршеринг, бензин, парковки' }
+  ]},
+  { id: 'expedition', n: '11', title: 'Экспедиция', rows: [
+    { name: 'Билеты', desc: '' },
+    { name: 'Проживание', desc: '' },
+    { name: 'Скаутинг', desc: '' },
+    { name: 'Логистика / трансфер / такси', desc: '' },
+    { name: 'Суточные', desc: '' }
+  ]},
+  { id: 'food', n: '12', title: 'Питание', rows: [
+    { name: 'Буфет', desc: 'Питание на площадке: смены + застройка' },
+    { name: 'Закуп буфета', desc: 'Предварительный выезд, закуп буфета и райдера' },
+    { name: 'Буфетчица', desc: 'Ответственный за буфет и обеды' },
+    { name: 'Фудтрак', desc: 'Мобильная кухня на колёсах' },
+    { name: 'Обеды', desc: 'Обеды для съёмочной группы' },
+    { name: 'Райдер артиста', desc: 'Бытовой райдер для удобства артиста' },
+    { name: 'Райдер агентства', desc: 'Бытовой райдер для удобства агентства' },
+    { name: 'Райдер клиента', desc: 'Бытовой райдер для удобства клиента' },
+    { name: 'Райдер режиссёра и продюсера', desc: 'Бытовой райдер для удобства режиссёра и продюсера' }
+  ]},
+  { id: 'post', n: '13', title: 'Постпродакшн', rows: [
+    { name: 'Менеджмент постпродакшна', desc: 'Продюсирование постпродакшна' },
+    { name: 'Монтаж основных версий', desc: 'Сборка материала, правки, звук, ЦК, графика, прокси' },
+    { name: 'Монтаж дополнительных версий', desc: 'Тизеры, короткие версии и ресайзы' },
+    { name: 'Ассистент режиссёра монтажа', desc: 'Линейный монтаж и сборка проекта' },
+    { name: 'Композитор', desc: 'Создание музыкального сопровождения' },
+    { name: 'Диктор', desc: 'Озвучка проекта / закадровый голос' },
+    { name: 'Клинап', desc: 'Затирание ненужных объектов в видео' },
+    { name: 'Саунд-дизайн', desc: 'SFX звуковые эффекты' },
+    { name: 'Титры и обложка', desc: 'Дизайнерские эксклюзивные титры и обложка' },
+    { name: 'Цифровая цветокоррекция', desc: 'Регулировка цветовых составляющих' },
+    { name: 'CG', desc: 'Графика' },
+    { name: 'Инфографика', desc: '' },
+    { name: 'Моушн-дизайн', desc: '' },
+    { name: 'AI-специалист', desc: 'Создание концепции, контента с помощью нейросетей' }
+  ]}
+];
+
+function ensureEstimate(project) {
+  // Создать структуру сметы из шаблона, если её нет, либо смерджить с шаблоном
+  const est = project.estimate || {};
+  est.taxPercent = est.taxPercent != null ? est.taxPercent : 10;
+  est.sections = est.sections || {};
+  est.expanded = est.expanded || { 'prep': true }; // первый раздел открыт
+  SMETA_TEMPLATE.forEach(tmpl => {
+    if (!est.sections[tmpl.id]) {
+      est.sections[tmpl.id] = {
+        rows: tmpl.rows.map((r, i) => ({ id: 'r' + i, name: r.name, desc: r.desc, qty: 0, days: 0, price: 0 })),
+        customRows: []
+      };
+    }
+  });
+  return est;
+}
+
+function calcRowTotal(row) {
+  const q = Number(row.qty) || 0;
+  const d = Number(row.days) || 0;
+  const p = Number(row.price) || 0;
+  // Если задано и кол-во, и дни, и цена — умножаем все три
+  if (q > 0 && d > 0 && p > 0) return q * d * p;
+  // Если только qty и price — умножаем их
+  if (q > 0 && p > 0) return q * p;
+  // Иначе просто цена (если задана)
+  return p;
+}
+
+function calcSectionTotal(section) {
+  const allRows = [...(section.rows || []), ...(section.customRows || [])];
+  return allRows.reduce((s, r) => s + calcRowTotal(r), 0);
+}
+
+function calcGrandTotal(est) {
+  return Object.values(est.sections || {}).reduce((s, sec) => s + calcSectionTotal(sec), 0);
+}
+
+function fmtRub(n) {
+  if (!n || n === 0) return '— ₽';
+  return new Intl.NumberFormat('ru-RU').format(Math.round(n)) + ' ₽';
+}
+
+function renderEstimate(project) {
+  if (!project) return;
+  const est = ensureEstimate(project);
+
+  // Title
+  document.getElementById('est-project-title').textContent = 'Смета · ' + project.name;
+
+  // Meta grid
+  const metaItems = [
+    { label: 'Production', val: 'ZALOVE Production' },
+    { label: 'Producer', val: 'Tabriz Zalov' },
+    { label: 'Project', val: project.name },
+    { label: 'Type', val: project.type || '—' },
+    { label: 'Client', val: project.client || '—' },
+    { label: 'Artist', val: project.artist || '—' },
+    { label: 'Deadline', val: formatDateRu(project.deadline) },
+    { label: 'Days', val: project.days ? pluralDays(project.days) : '—' }
+  ];
+  document.getElementById('est-meta-grid').innerHTML = metaItems.map(m => `
+    <div class="est-meta-item">
+      <div class="est-meta-label">${escapeHtml(m.label)}</div>
+      <div class="est-meta-value">${escapeHtml(m.val)}</div>
+    </div>`).join('');
+
+  // Sections
+  const cont = document.getElementById('estimateSections');
+  cont.innerHTML = SMETA_TEMPLATE.map(tmpl => renderEstSection(tmpl, est)).join('');
+
+  // Tax
+  document.getElementById('est-tax').value = est.taxPercent || 10;
+
+  // Bind input handlers
+  cont.querySelectorAll('input.est-input').forEach(inp => {
+    inp.addEventListener('input', onEstimateInputChange);
+  });
+  document.getElementById('est-tax').addEventListener('input', onEstimateInputChange);
+  cont.querySelectorAll('.est-section-head').forEach(head => {
+    head.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.closest('.est-add-row-btn') || e.target.closest('.est-del-btn')) return;
+      const wrap = head.closest('.est-section-edit');
+      const sid = wrap.dataset.sid;
+      wrap.classList.toggle('expanded');
+      est.expanded[sid] = wrap.classList.contains('expanded');
+      DB.updateProject(_currentProjectId, { estimate: est });
+    });
+  });
+
+  updateEstimateTotals(project, est);
+}
+
+function renderEstSection(tmpl, est) {
+  const section = est.sections[tmpl.id];
+  const allRows = [...(section.rows || []), ...(section.customRows || [])];
+  const isExpanded = est.expanded[tmpl.id];
+  const total = calcSectionTotal(section);
+  return `
+    <div class="est-section est-section-edit ${isExpanded ? 'expanded' : ''}" data-sid="${tmpl.id}">
+      <div class="est-section-head">
+        <div class="h"><span class="h-arrow">▶</span>${tmpl.n} · ${escapeHtml(tmpl.title)} <span class="h-count">${allRows.length} позиций</span></div>
+        <div class="sum-display ${total === 0 ? 'zero' : ''}" data-sum="${tmpl.id}">${fmtRub(total)}</div>
+      </div>
+      <div class="est-rows-edit">
+        <div class="est-headers">
+          <div>ПОЗИЦИЯ</div><div>ОПИСАНИЕ</div><div class="h-num">КОЛ-ВО</div><div class="h-num">ДНЕЙ</div><div class="h-num">ЦЕНА ₽</div><div class="h-num">ИТОГО</div><div></div>
+        </div>
+        ${allRows.map((r, i) => renderEstRow(tmpl.id, r, i, i >= section.rows.length)).join('')}
+        <button class="est-add-row-btn" onclick="addEstimateRow('${tmpl.id}')">＋ Добавить свою позицию</button>
+      </div>
+    </div>`;
+}
+
+function renderEstRow(sid, row, idx, isCustom) {
+  const total = calcRowTotal(row);
+  return `
+    <div class="est-row-edit" data-row-id="${row.id}" data-sid="${sid}">
+      <div class="name">${escapeHtml(row.name)}</div>
+      <div class="desc">${escapeHtml(row.desc || '')}</div>
+      <input class="est-input qty" type="number" min="0" value="${row.qty || ''}" placeholder="—" data-field="qty">
+      <input class="est-input days" type="number" min="0" value="${row.days || ''}" placeholder="—" data-field="days">
+      <input class="est-input price" type="number" min="0" value="${row.price || ''}" placeholder="—" data-field="price">
+      <div class="row-total ${total === 0 ? 'zero' : ''}" data-row-total>${fmtRub(total)}</div>
+      ${isCustom ? `<button class="est-del-btn" onclick="deleteEstimateRow('${sid}','${row.id}')" title="Удалить">×</button>` : '<div></div>'}
+    </div>`;
+}
+
+let _estimateSaveTimer = null;
+function onEstimateInputChange(e) {
+  const inp = e.target;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const est = ensureEstimate(project);
+
+  if (inp.id === 'est-tax') {
+    est.taxPercent = Math.max(0, Math.min(100, Number(inp.value) || 0));
+  } else {
+    const rowEl = inp.closest('.est-row-edit');
+    if (!rowEl) return;
+    const sid = rowEl.dataset.sid;
+    const rid = rowEl.dataset.rowId;
+    const field = inp.dataset.field;
+    const val = Number(inp.value) || 0;
+    const section = est.sections[sid];
+    if (!section) return;
+    let row = section.rows.find(r => r.id === rid);
+    if (!row) row = (section.customRows || []).find(r => r.id === rid);
+    if (!row) return;
+    row[field] = val;
+
+    // Обновить итог строки
+    const total = calcRowTotal(row);
+    const totalEl = rowEl.querySelector('[data-row-total]');
+    if (totalEl) {
+      totalEl.textContent = fmtRub(total);
+      totalEl.classList.toggle('zero', total === 0);
+    }
+    // Обновить сумму раздела
+    const sumEl = document.querySelector(`[data-sum="${sid}"]`);
+    const secTotal = calcSectionTotal(section);
+    if (sumEl) {
+      sumEl.textContent = fmtRub(secTotal);
+      sumEl.classList.toggle('zero', secTotal === 0);
+    }
+  }
+
+  updateEstimateTotals(project, est);
+
+  // Debounced save + синхронизация бюджета проекта
+  clearTimeout(_estimateSaveTimer);
+  _estimateSaveTimer = setTimeout(() => {
+    const sub = calcGrandTotal(est);
+    const grand = Math.round(sub * (1 + (est.taxPercent || 0) / 100));
+    DB.updateProject(_currentProjectId, { estimate: est, budget: grand });
+    renderStats();
+  }, 400);
+}
+
+function updateEstimateTotals(project, est) {
+  const sub = calcGrandTotal(est);
+  const taxAmount = sub * ((est.taxPercent || 0) / 100);
+  const grand = sub + taxAmount;
+  document.getElementById('est-subtotal').textContent = fmtRub(sub);
+  document.getElementById('est-tax-amount').textContent = fmtRub(taxAmount);
+  document.getElementById('est-grand').textContent = fmtRub(grand);
+  document.getElementById('est-footer-info').textContent = 'Авто-сохранение · Сумма: ' + fmtRub(grand);
+}
+
+function addEstimateRow(sid) {
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const est = ensureEstimate(project);
+  const section = est.sections[sid];
+  if (!section.customRows) section.customRows = [];
+  const newRow = { id: 'cr_' + Date.now(), name: 'Своя позиция', desc: '', qty: 0, days: 0, price: 0 };
+  section.customRows.push(newRow);
+  DB.updateProject(_currentProjectId, { estimate: est });
+  renderEstimate(DB.getProject(_currentProjectId));
+  toast('Строка добавлена', 'success');
+}
+
+function deleteEstimateRow(sid, rid) {
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const est = ensureEstimate(project);
+  const section = est.sections[sid];
+  if (!section || !section.customRows) return;
+  section.customRows = section.customRows.filter(r => r.id !== rid);
+  DB.updateProject(_currentProjectId, { estimate: est });
+  renderEstimate(DB.getProject(_currentProjectId));
+}
+
+function resetEstimate() {
+  if (!confirm('Сбросить все суммы сметы? Кастомные строки тоже удалятся.\\n\\nДействие нельзя отменить.')) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  DB.updateProject(_currentProjectId, { estimate: null });
+  renderEstimate(DB.getProject(_currentProjectId));
+  toast('Смета сброшена', 'success');
+}
+
+/* ============================================================
+   ИНТЕГРАЦИИ (для музыкальных клипов · type === 'MV')
+   ============================================================ */
+const INTEGRATION_TYPES_MAP = {
+  product: '📦 Продакт-плейсмент',
+  logo: '🏷 Логотип в кадре',
+  mention: '🎤 Упоминание в треке',
+  scene: '🎬 Спец. сцена',
+  costume: '👕 Костюм / мерч',
+  transport: '🚗 Транспорт',
+  location: '📍 Локация',
+  other: '⊕ Иное'
+};
+const INTEGRATION_STATUSES = {
+  pending: { label: '📍 Предложение', cls: 'pending' },
+  negotiating: { label: '💬 Переговоры', cls: 'negotiating' },
+  signed: { label: '📝 Договорено', cls: 'signed' },
+  paid: { label: '💰 Оплачено', cls: 'paid' },
+  shot: { label: '✅ Снято', cls: 'shot' }
+};
+
+let _editingIntegrationId = null;
+
+function renderIntegrations(project) {
+  const block = document.getElementById('integrationsBlock');
+  if (!block) return;
+  // Только для музыкальных клипов
+  if (project.type !== 'MV') {
+    block.style.display = 'none';
+    return;
+  }
+  block.style.display = 'block';
+  const integrations = project.integrations || [];
+  const grid = document.getElementById('integrationsGrid');
+  const pill = document.getElementById('int-count-pill');
+  const totalEl = document.getElementById('int-total');
+  const breakdownEl = document.getElementById('int-breakdown');
+
+  pill.textContent = integrations.length === 0 ? 'пока никто' : integrations.length + ' партнёр' + (integrations.length === 1 ? '' : (integrations.length < 5 ? 'а' : 'ов'));
+
+  const total = integrations.reduce((s, i) => s + (Number(i.cost) || 0), 0);
+  const shot = integrations.filter(i => i.status === 'shot').length;
+  const signed = integrations.filter(i => ['signed', 'paid'].includes(i.status)).length;
+  const working = integrations.filter(i => ['pending', 'negotiating'].includes(i.status)).length;
+
+  totalEl.textContent = total > 0 ? formatBudget(total) : '— ₽';
+  breakdownEl.textContent = integrations.length === 0
+    ? '—'
+    : `${shot} снято · ${signed} в работе · ${working} обсуждаем`;
+
+  // Карточки
+  const cards = integrations.map(i => integrationCardHTML(i)).join('');
+  grid.innerHTML = cards + `
+    <div class="int-add-card" onclick="openIntegrationForm()">
+      <div class="plus">+</div>
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px;">Добавить интеграцию</div>
+    </div>`;
+}
+
+function integrationCardHTML(i) {
+  const status = INTEGRATION_STATUSES[i.status || 'pending'];
+  const types = (i.types || []).map(t => INTEGRATION_TYPES_MAP[t] || t).join(' · ') || '—';
+  return `
+    <div class="int-card status-${status.cls}" onclick="openIntegrationForm('${i.id}')">
+      <div class="int-card-head">
+        <div class="int-brand">${escapeHtml(i.brand || 'Без названия')}</div>
+        <span class="int-status-pill int-status-${status.cls}">${status.label}</span>
+      </div>
+      <div class="int-types">${escapeHtml(types)}</div>
+      <div class="int-meta-row">
+        <div class="int-cost mask-value financial">${i.cost ? formatBudget(i.cost) : '— ₽'}</div>
+        <div class="int-scene">${escapeHtml(i.scene_ref || '—')}</div>
+      </div>
+    </div>`;
+}
+
+function openIntegrationForm(id = null) {
+  if (!_currentProjectId) return;
+  closeAll();
+  _editingIntegrationId = id;
+  const project = DB.getProject(_currentProjectId);
+  const i = id ? (project?.integrations || []).find(x => x.id === id) : null;
+  const isEdit = !!i;
+  document.getElementById('int-form-title').textContent = isEdit ? 'Редактировать интеграцию' : 'Новая интеграция';
+  document.getElementById('int-mode-label').textContent = isEdit ? 'Редактирование' : 'Новая брендовая интеграция';
+  document.getElementById('int-brand').value = i?.brand || '';
+  document.getElementById('int-status').value = i?.status || 'pending';
+  document.getElementById('int-cost').value = i?.cost || '';
+  document.getElementById('int-scene').value = i?.scene_ref || '';
+  document.getElementById('int-contact-name').value = i?.contact_name || '';
+  document.getElementById('int-contact-phone').value = i?.contact_phone || '';
+  document.getElementById('int-contact-email').value = i?.contact_email || '';
+  document.getElementById('int-description').value = i?.description || '';
+  document.getElementById('int-notes').value = i?.notes || '';
+  document.getElementById('int-delete-btn').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('int-info').textContent = isEdit ? ('ID: ' + id) : 'Сохранится в проекте';
+
+  // Types checkboxes
+  const types = i?.types || [];
+  document.querySelectorAll('#m-integration .int-type-check').forEach(check => {
+    const t = check.dataset.type;
+    const input = check.querySelector('input');
+    const selected = types.includes(t);
+    input.checked = selected;
+    check.classList.toggle('selected', selected);
+    check.onclick = (ev) => {
+      ev.preventDefault();
+      input.checked = !input.checked;
+      check.classList.toggle('selected', input.checked);
+    };
+  });
+
+  document.getElementById('m-integration').classList.add('active');
+  setTimeout(() => document.getElementById('int-brand').focus(), 100);
+}
+
+function saveIntegration() {
+  if (!_currentProjectId) return;
+  const brand = document.getElementById('int-brand').value.trim();
+  if (!brand) {
+    toast('Укажите название бренда', 'error');
+    document.getElementById('int-brand').focus();
+    return;
+  }
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const types = Array.from(document.querySelectorAll('#m-integration .int-type-check input:checked')).map(i => i.value);
+  const data = {
+    brand,
+    status: document.getElementById('int-status').value,
+    types,
+    cost: parseInt(document.getElementById('int-cost').value) || 0,
+    scene_ref: document.getElementById('int-scene').value.trim(),
+    contact_name: document.getElementById('int-contact-name').value.trim(),
+    contact_phone: document.getElementById('int-contact-phone').value.trim(),
+    contact_email: document.getElementById('int-contact-email').value.trim(),
+    description: document.getElementById('int-description').value.trim(),
+    notes: document.getElementById('int-notes').value.trim()
+  };
+  const integrations = [...(project.integrations || [])];
+  if (_editingIntegrationId) {
+    const idx = integrations.findIndex(x => x.id === _editingIntegrationId);
+    if (idx >= 0) integrations[idx] = { ...integrations[idx], ...data };
+  } else {
+    data.id = 'int_' + Date.now();
+    data.createdAt = new Date().toISOString();
+    integrations.unshift(data);
+  }
+  DB.updateProject(_currentProjectId, { integrations });
+  closeAll();
+  renderIntegrations(DB.getProject(_currentProjectId));
+  toast(_editingIntegrationId ? 'Интеграция обновлена' : 'Интеграция добавлена ★', 'success');
+}
+
+function deleteIntegrationFromForm() {
+  if (!_editingIntegrationId) return;
+  const project = DB.getProject(_currentProjectId);
+  const i = (project?.integrations || []).find(x => x.id === _editingIntegrationId);
+  if (!i) return;
+  if (!confirm('Удалить интеграцию с «' + i.brand + '»?')) return;
+  const integrations = (project.integrations || []).filter(x => x.id !== _editingIntegrationId);
+  DB.updateProject(_currentProjectId, { integrations });
+  closeAll();
+  renderIntegrations(DB.getProject(_currentProjectId));
+  toast('Интеграция удалена', 'success');
+}
+
+/* ============================================================
+   ОБНОВЛЯЕМ openProjectDetail — подключаем team + creative + integrations
    ============================================================ */
 const _origOpenProjectDetail = window.openProjectDetail;
 window.openProjectDetail = function(id, idx) {
@@ -5960,6 +6843,7 @@ window.openProjectDetail = function(id, idx) {
   if (project) {
     renderTeamMembers(project);
     renderCreative(project);
+    renderIntegrations(project);
   }
 };
 
