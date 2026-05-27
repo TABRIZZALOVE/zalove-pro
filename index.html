@@ -2249,6 +2249,122 @@ body.has-reel .theme-toggle { right: 158px; }
 .bottom-quote::after { content: ' »'; color: var(--brand-red); font-size: 22px; font-weight: 900; }
 .bottom-quote .author { display: block; font-size: 11px; font-style: normal; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; font-family: 'Inter', sans-serif; }
 
+/* Personal brand section */
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.brand-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px 18px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.brand-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+.brand-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.brand-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  color: white;
+  font-weight: 800;
+}
+.brand-icon.brand-ig { background: linear-gradient(135deg, #f09433, #dc2743 50%, #bc1888); }
+.brand-icon.brand-th { background: #000; }
+.brand-icon.brand-tg { background: #229ED9; }
+.brand-icon.brand-li { background: #0a66c2; }
+.brand-icon.brand-yt { background: #ff0000; }
+.brand-icon.brand-shorts { background: linear-gradient(135deg, #ff0000, #ff4d6a); }
+.brand-info { flex: 1; min-width: 0; }
+.brand-platform { font-size: 13px; font-weight: 700; }
+.brand-handle {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+.brand-score {
+  font-family: 'Anton', sans-serif;
+  text-align: right;
+}
+.brand-num { font-size: 24px; letter-spacing: -0.5px; }
+.brand-of {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.brand-score.score-high .brand-num { color: var(--green); }
+.brand-score.score-mid .brand-num { color: var(--amber); }
+.brand-score.score-low .brand-num { color: var(--brand-red); }
+
+.brand-bar {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+.brand-segment {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.brand-bar[data-score="10"] .brand-segment:nth-child(-n+10),
+.brand-bar[data-score="9"] .brand-segment:nth-child(-n+9),
+.brand-bar[data-score="8"] .brand-segment:nth-child(-n+8) {
+  background: #16a34a;
+  box-shadow: 0 0 6px rgba(22,163,74,0.45);
+}
+.brand-bar[data-score="7"] .brand-segment:nth-child(-n+7),
+.brand-bar[data-score="6"] .brand-segment:nth-child(-n+6),
+.brand-bar[data-score="5"] .brand-segment:nth-child(-n+5) {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245,158,11,0.4);
+}
+.brand-bar[data-score="4"] .brand-segment:nth-child(-n+4),
+.brand-bar[data-score="3"] .brand-segment:nth-child(-n+3),
+.brand-bar[data-score="2"] .brand-segment:nth-child(-n+2),
+.brand-bar[data-score="1"] .brand-segment:nth-child(-n+1) {
+  background: var(--brand-red);
+  box-shadow: 0 0 6px rgba(232,35,29,0.5);
+}
+
+.brand-meta {
+  font-size: 11px;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.brand-meta .dot-stat {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.brand-meta .dot-green { background: #16a34a; box-shadow: 0 0 6px rgba(22,163,74,0.6); }
+.brand-meta .dot-amber { background: #f59e0b; }
+.brand-meta .dot-red { background: var(--brand-red); animation: sosBlink 1.5s infinite; }
+@keyframes sosBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 /* Avatar with image */
 .avatar-img, .team-avatar-img {
   width: 28px; height: 28px;
@@ -2605,6 +2721,138 @@ body.has-reel .theme-toggle { right: 158px; }
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- PERSONAL BRAND HEALTH -->
+      <div class="section-title">Личный бренд <span class="pill">АКТИВНОСТЬ ПО ПЛАТФОРМАМ · 10-БАЛЛЬНАЯ ШКАЛА</span></div>
+      <div class="brand-grid">
+
+        <!-- Instagram -->
+        <div class="brand-card">
+          <div class="brand-card-header">
+            <div class="brand-icon brand-ig">◫</div>
+            <div class="brand-info">
+              <div class="brand-platform">Instagram</div>
+              <div class="brand-handle">@zalove.production</div>
+            </div>
+            <div class="brand-score score-high">
+              <span class="brand-num">8</span><span class="brand-of">/10</span>
+            </div>
+          </div>
+          <div class="brand-bar" data-score="8">
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span>
+          </div>
+          <div class="brand-meta"><span class="dot-stat dot-green"></span> Активен · последний пост 2 дня назад</div>
+        </div>
+
+        <!-- Threads -->
+        <div class="brand-card">
+          <div class="brand-card-header">
+            <div class="brand-icon brand-th">@</div>
+            <div class="brand-info">
+              <div class="brand-platform">Threads</div>
+              <div class="brand-handle">@zalove.production</div>
+            </div>
+            <div class="brand-score score-mid">
+              <span class="brand-num">5</span><span class="brand-of">/10</span>
+            </div>
+          </div>
+          <div class="brand-bar" data-score="5">
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span>
+          </div>
+          <div class="brand-meta"><span class="dot-stat dot-amber"></span> Средне · 8 дней без поста</div>
+        </div>
+
+        <!-- Telegram канал -->
+        <div class="brand-card">
+          <div class="brand-card-header">
+            <div class="brand-icon brand-tg">✈</div>
+            <div class="brand-info">
+              <div class="brand-platform">Telegram канал</div>
+              <div class="brand-handle">@zaloveproduction</div>
+            </div>
+            <div class="brand-score score-high">
+              <span class="brand-num">9</span><span class="brand-of">/10</span>
+            </div>
+          </div>
+          <div class="brand-bar" data-score="9">
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span>
+          </div>
+          <div class="brand-meta"><span class="dot-stat dot-green"></span> Огонь · сегодня уже опубликовано</div>
+        </div>
+
+        <!-- LinkedIn -->
+        <div class="brand-card">
+          <div class="brand-card-header">
+            <div class="brand-icon brand-li">in</div>
+            <div class="brand-info">
+              <div class="brand-platform">LinkedIn</div>
+              <div class="brand-handle">tabriz-zalov</div>
+            </div>
+            <div class="brand-score score-low">
+              <span class="brand-num">2</span><span class="brand-of">/10</span>
+            </div>
+          </div>
+          <div class="brand-bar" data-score="2">
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span>
+          </div>
+          <div class="brand-meta"><span class="dot-stat dot-red"></span> Глухо · 3 месяца без активности</div>
+        </div>
+
+        <!-- YouTube -->
+        <div class="brand-card">
+          <div class="brand-card-header">
+            <div class="brand-icon brand-yt">▶</div>
+            <div class="brand-info">
+              <div class="brand-platform">YouTube</div>
+              <div class="brand-handle">@zalove.production</div>
+            </div>
+            <div class="brand-score score-mid">
+              <span class="brand-num">6</span><span class="brand-of">/10</span>
+            </div>
+          </div>
+          <div class="brand-bar" data-score="6">
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span>
+          </div>
+          <div class="brand-meta"><span class="dot-stat dot-amber"></span> Норм · видео вышло 5 дней назад</div>
+        </div>
+
+        <!-- YouTube Shorts -->
+        <div class="brand-card">
+          <div class="brand-card-header">
+            <div class="brand-icon brand-shorts">▣</div>
+            <div class="brand-info">
+              <div class="brand-platform">YouTube Shorts</div>
+              <div class="brand-handle">@zalove.production</div>
+            </div>
+            <div class="brand-score score-high">
+              <span class="brand-num">7</span><span class="brand-of">/10</span>
+            </div>
+          </div>
+          <div class="brand-bar" data-score="7">
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span><span class="brand-segment"></span><span class="brand-segment"></span>
+            <span class="brand-segment"></span>
+          </div>
+          <div class="brand-meta"><span class="dot-stat dot-amber"></span> Бодро · 3 дня назад был ролик</div>
+        </div>
+
       </div>
 
       <!-- ROADMAP -->
@@ -4436,25 +4684,12 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// --- CLAPPERBOARD animation when opening project ---
-const projectTitles = { Nebula: 'NEBULA', 'Echo in the City': 'ECHO', Vertigo: 'VERTIGO', Outliers: 'OUTLIERS', Salt: 'SALT', 'Static Noise': 'STATIC NOISE' };
+// --- Open project: показать страницу проекта + киноленту, без хлопушки ---
 const _origOpenProject = window.openProject;
 window.openProject = function(name, idx) {
-  const board = document.getElementById('clapperboard');
-  document.getElementById('clapTitle').textContent = projectTitles[name] || name.toUpperCase();
-  document.getElementById('clapScene').textContent = String(idx).padStart(2, '0');
-  board.classList.add('active');
-  setTimeout(() => {
-    board.classList.add('clapping');
-    playClapSound();
-  }, 350);
-  setTimeout(() => {
-    board.classList.remove('active', 'clapping');
-    _origOpenProject(name, idx);
-    // Show film reel on detail page
-    document.body.classList.add('has-reel');
-    document.getElementById('filmReel').style.display = 'flex';
-  }, 1300);
+  _origOpenProject(name, idx);
+  document.body.classList.add('has-reel');
+  document.getElementById('filmReel').style.display = 'flex';
 };
 // Hide reel when going back to dashboard
 const _origShowDash = window.showDashboard;
