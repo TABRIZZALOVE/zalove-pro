@@ -5586,11 +5586,58 @@ const FileStore = {
 let _currentProjectId = null;
 let _editingMemberId = null;
 
+/* Транслитерация RU → LAT (стандарт ICAO, как в загранпаспортах) */
+const TRANSLIT_MAP = {
+  'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'i',
+  'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f',
+  'х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'ie','ы':'y','ь':'','э':'e','ю':'iu','я':'ia',
+  'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'E','Ё':'E','Ж':'Zh','З':'Z','И':'I','Й':'I',
+  'К':'K','Л':'L','М':'M','Н':'N','О':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ф':'F',
+  'Х':'Kh','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Shch','Ъ':'Ie','Ы':'Y','Ь':'','Э':'E','Ю':'Iu','Я':'Ia'
+};
+function transliterateRuToLat(s) {
+  return (s || '').split('').map(ch => TRANSLIT_MAP[ch] !== undefined ? TRANSLIT_MAP[ch] : ch).join('');
+}
+// Слушатель на поле ФИО (рус) — обновляет latin, если latin пустой или был авто-заполнен
+document.addEventListener('DOMContentLoaded', () => {
+  const ruField = document.getElementById('mb-name-ru');
+  const enField = document.getElementById('mb-name-en');
+  if (!ruField || !enField) return;
+  let autoFilled = true;
+  enField.addEventListener('input', () => { autoFilled = false; });
+  ruField.addEventListener('input', () => {
+    if (autoFilled || !enField.value.trim()) {
+      enField.value = transliterateRuToLat(ruField.value);
+      autoFilled = true;
+    }
+  });
+  // При открытии формы — сбрасываем флаг
+  const obs = new MutationObserver(() => {
+    if (document.getElementById('m-add-member').classList.contains('active')) {
+      autoFilled = !enField.value || enField.value === transliterateRuToLat(ruField.value);
+    }
+  });
+  obs.observe(document.getElementById('m-add-member'), { attributes: true, attributeFilter: ['class'] });
+});
+
+// Приоритет ролей для сортировки участников проекта
+const ROLE_PRIORITY = {
+  'Генеральный продюсер': 1,
+  'Режиссёр': 2
+};
+function sortTeamByRole(arr) {
+  return [...arr].sort((a, b) => {
+    const pa = ROLE_PRIORITY[a.role] || 99;
+    const pb = ROLE_PRIORITY[b.role] || 99;
+    return pa - pb;
+  });
+}
+
 function renderTeamMembers(project) {
   const tbody = document.getElementById('teamMembersBody');
   const pill = document.getElementById('team-count-pill');
   if (!tbody) return;
-  const members = project.team || [];
+  const members = sortTeamByRole(project.team || []);
   if (pill) pill.textContent = members.length === 0 ? 'никого' : (members.length + ' чел.');
   if (members.length === 0) {
     tbody.innerHTML = `
