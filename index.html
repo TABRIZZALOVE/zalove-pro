@@ -1580,7 +1580,7 @@ body.team-view .access-info-icon { background: var(--muted); }
 /* ===== CREATIVE DOCS ===== */
 .creative-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -3073,7 +3073,7 @@ body.has-reel .theme-toggle { right: 158px; }
       </div>
 
       <!-- TEAM MEMBERS -->
-      <div class="section-title">Участники проекта <span class="pill">ОТДЕЛЬНОЕ ОКНО ПРОЕКТА</span></div>
+      <div class="section-title">Участники проекта <span class="pill" id="team-count-pill">0 человек</span></div>
       <div class="team-members-section">
         <table class="team-members-table">
           <thead>
@@ -3085,75 +3085,19 @@ body.has-reel .theme-toggle { right: 158px; }
               <th></th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>
-                <div class="tm-name-ru">Иван Иванов</div>
-                <div class="tm-name-en">Ivan Ivanov</div>
-              </td>
-              <td><span class="tm-role-cell">Режиссёр</span></td>
-              <td class="tm-handle"><a>@ivan_dir</a></td>
-              <td class="tm-handle"><a>@ivan.directs</a></td>
-              <td class="tm-actions">⋯</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="tm-name-ru">Сергей Сергеев</div>
-                <div class="tm-name-en">Sergey Sergeev</div>
-              </td>
-              <td><span class="tm-role-cell">DOP</span></td>
-              <td class="tm-handle"><a>@s_dop</a></td>
-              <td class="tm-handle"><a>@sergey.shoots</a></td>
-              <td class="tm-actions">⋯</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="tm-name-ru">Ольга Ольгина</div>
-                <div class="tm-name-en">Olga Olgina</div>
-              </td>
-              <td><span class="tm-role-cell">Арт-директор</span></td>
-              <td class="tm-handle"><a>@olga_art</a></td>
-              <td class="tm-handle empty">— не указан —</td>
-              <td class="tm-actions">⋯</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="tm-name-ru">Михаил Михайлов</div>
-                <div class="tm-name-en">Mikhail Mikhailov</div>
-              </td>
-              <td><span class="tm-role-cell">Администратор</span></td>
-              <td class="tm-handle"><a>@misha_admin</a></td>
-              <td class="tm-handle"><a>@misha.set</a></td>
-              <td class="tm-actions">⋯</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="tm-name-ru">Анна Анина</div>
-                <div class="tm-name-en">Anna Anina</div>
-              </td>
-              <td><span class="tm-role-cell">Стилист</span></td>
-              <td class="tm-handle"><a>@anna_style</a></td>
-              <td class="tm-handle"><a>@anna.wardrobe</a></td>
-              <td class="tm-actions">⋯</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="tm-name-ru">Алексей Алексеев</div>
-                <div class="tm-name-en">Alexey Alexeev</div>
-              </td>
-              <td><span class="tm-role-cell">Реж. монтажа</span></td>
-              <td class="tm-handle"><a>@a_editor</a></td>
-              <td class="tm-handle empty">— не указан —</td>
-              <td class="tm-actions">⋯</td>
-            </tr>
+          <tbody id="teamMembersBody">
+            <!-- Динамически из project.team -->
           </tbody>
         </table>
-        <div class="team-add-row" onclick="openDoc('add-member')">＋ Добавить участника</div>
+        <div class="team-add-row" onclick="openAddMember()">＋ Добавить участника</div>
       </div>
 
       <!-- CREATIVE & SCRIPT -->
-      <div class="section-title">Креатив и сценарий <span class="pill">ЗАГРУЗКА ССЫЛКОЙ ИЛИ ФАЙЛОМ</span></div>
-      <div class="creative-grid">
+      <div class="section-title">Креатив и сценарий <span class="pill">ССЫЛКА ИЛИ PDF · СОХРАНЯЕТСЯ В БРАУЗЕРЕ</span></div>
+      <div class="creative-grid" id="creativeGrid">
+        <!-- Динамически из project.creative -->
+      </div>
+      <div class="creative-grid" style="display:none">
         <div class="creative-card uploaded" onclick="openDoc('creative-treatment')">
           <div class="top">
             <div class="ico">⊡</div>
@@ -4446,17 +4390,17 @@ body.has-reel .theme-toggle { right: 158px; }
       <div style="display: grid; gap: 14px;">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
-            <label class="form-label">ФИО (кириллица)</label>
-            <input class="form-input" placeholder="Иван Иванов">
+            <label class="form-label">ФИО (кириллица) *</label>
+            <input class="form-input" id="mb-name-ru" placeholder="Иван Иванов">
           </div>
           <div>
             <label class="form-label">FIO (Latin)</label>
-            <input class="form-input" placeholder="Ivan Ivanov · авто из RU">
+            <input class="form-input" id="mb-name-en" placeholder="Ivan Ivanov · опционально">
           </div>
         </div>
         <div>
-          <label class="form-label">Роль на проекте</label>
-          <select class="form-select">
+          <label class="form-label">Роль на проекте *</label>
+          <select class="form-select" id="mb-role">
             <option>Режиссёр</option>
             <option>Оператор-постановщик (DOP)</option>
             <option>Второй режиссёр</option>
@@ -4472,84 +4416,112 @@ body.has-reel .theme-toggle { right: 158px; }
             <option>Гример / Визажист</option>
             <option>Администратор площадки</option>
             <option>Бэкстейдж / Фотограф</option>
-            <option>Другая (указать вручную)</option>
+            <option>Актёр главной роли</option>
+            <option>Актёр второго плана</option>
+            <option>Хореограф</option>
+            <option>Другая</option>
           </select>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
             <label class="form-label">Telegram</label>
-            <input class="form-input" placeholder="@username">
+            <input class="form-input" id="mb-telegram" placeholder="@username">
           </div>
           <div>
             <label class="form-label">Instagram</label>
-            <input class="form-input" placeholder="@username">
+            <input class="form-input" id="mb-instagram" placeholder="@username">
           </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
             <label class="form-label">Телефон (опционально)</label>
-            <input class="form-input" placeholder="+7 ___ ___ __ __">
+            <input class="form-input" id="mb-phone" placeholder="+7 ___ ___ __ __">
           </div>
           <div>
             <label class="form-label">E-mail (опционально)</label>
-            <input class="form-input" placeholder="name@mail.ru">
+            <input class="form-input" id="mb-email" placeholder="name@mail.ru">
           </div>
         </div>
         <div>
           <label class="form-label">Заметка</label>
-          <textarea class="form-textarea" rows="2" placeholder="Особенности работы, предпочтения, ставка..."></textarea>
+          <textarea class="form-textarea" id="mb-note" rows="2" placeholder="Особенности работы, предпочтения, ставка..."></textarea>
         </div>
       </div>
     </div>
     <div class="doc-footer">
-      <div class="doc-footer-info">Добавится в проект + в общую базу контактов</div>
+      <div class="doc-footer-info" id="mb-info">Сохранится в проекте</div>
       <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" id="mb-delete-btn" onclick="deleteTeamMemberFromForm()" style="display:none; color: var(--brand-red);">🗑 Удалить</button>
         <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
-        <button class="btn" onclick="closeAll()">Сохранить</button>
+        <button class="btn" onclick="saveTeamMember()">💾 Сохранить</button>
       </div>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="m-creative-upload">
-  <div class="doc-overlay" style="width: 560px;">
+  <div class="doc-overlay" style="width: 580px;">
     <div class="doc-header">
       <div class="doc-header-l">
-        <div class="doc-header-icon">✦</div>
+        <div class="doc-header-icon" id="cf-icon">✦</div>
         <div>
           <div class="doc-section-label">Креативный документ</div>
-          <div class="doc-header-title">Загрузить креатив</div>
+          <div class="doc-header-title" id="cf-title">Загрузить креатив</div>
         </div>
       </div>
       <button class="modal-close-x" onclick="closeAll()">×</button>
     </div>
     <div class="doc-body">
-      <p style="font-size: 13px; color: var(--text-2); margin-bottom: 14px;">Можно прикрепить файл или вставить ссылку (Google Docs, Notion, Figma).</p>
+      <div class="smart-fill">
+        <div class="sf-icon">📎</div>
+        <div class="sf-text">
+          <strong>Ссылка или файл PDF</strong>
+          Можно вставить ссылку (Google Docs, Drive, Dropbox, Notion) ИЛИ прикрепить PDF файл (до 20 МБ).
+        </div>
+      </div>
       <div style="display: grid; gap: 14px;">
         <div>
-          <label class="form-label">Тип</label>
-          <select class="form-select">
-            <option>Креатив / концепция</option>
-            <option>Тритмент</option>
-            <option>Сценарий</option>
-            <option>Раскадровка</option>
-            <option>Мудборд</option>
+          <label class="form-label">Тип материала</label>
+          <select class="form-select" id="cf-kind" onchange="updateCfAccept()">
+            <option value="treatment">⊡ Тритмент</option>
+            <option value="script">≡ Сценарий</option>
+            <option value="creative">✦ Креатив / концепция</option>
+            <option value="track">🎵 Трек</option>
           </select>
         </div>
         <div>
-          <label class="form-label">От кого</label>
-          <input class="form-input" placeholder="Креативный специалист / режиссёр">
+          <label class="form-label">Название / версия</label>
+          <input class="form-input" id="cf-name" placeholder="Например: Тритмент v.3">
         </div>
         <div>
-          <label class="form-label">Ссылка ИЛИ файл</label>
-          <input class="form-input" placeholder="https://docs.google.com/... или прикрепите файл">
+          <label class="form-label">От кого</label>
+          <input class="form-input" id="cf-author" placeholder="Имя автора / роль">
         </div>
-        <div style="padding: 14px; border: 1px dashed var(--line-2); border-radius: 4px; text-align: center; cursor: pointer; color: var(--muted); font-size: 12px;">📎 Перетащите файл или нажмите</div>
+        <div>
+          <label class="form-label">Способ загрузки</label>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn-secondary btn" id="cf-mode-link" onclick="setCreativeMode('link')" style="flex:1;">🔗 Ссылка</button>
+            <button type="button" class="btn-secondary btn" id="cf-mode-file" onclick="setCreativeMode('file')" style="flex:1;">📄 Файл PDF</button>
+          </div>
+        </div>
+        <div id="cf-link-block">
+          <label class="form-label">Ссылка</label>
+          <input class="form-input" id="cf-link" placeholder="https://drive.google.com/...">
+        </div>
+        <div id="cf-file-block" style="display:none;">
+          <label class="form-label">Файл <span id="cf-file-label" style="color: var(--muted);">(PDF / DOCX)</span></label>
+          <input type="file" id="cf-file" accept=".pdf,.docx" style="width:100%; padding: 9px; border: 1px dashed var(--line-2); border-radius: 4px; background: var(--bg-2);">
+          <div id="cf-file-status" style="font-size: 11px; color: var(--muted); margin-top: 6px;"></div>
+        </div>
       </div>
     </div>
     <div class="doc-footer">
-      <div class="doc-footer-info">Файл / ссылка появится в карточке проекта</div>
-      <button class="btn" onclick="closeAll()">Прикрепить</button>
+      <div class="doc-footer-info" id="cf-info">Сохранится в проекте</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" id="cf-delete-btn" onclick="deleteCreativeMaterial()" style="display:none; color: var(--brand-red);">🗑 Удалить</button>
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="saveCreativeMaterial()">💾 Сохранить</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5405,6 +5377,382 @@ function toast(msg, kind = '') {
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
+
+/* ============================================================
+   ХРАНИЛИЩЕ ФАЙЛОВ (IndexedDB — для PDF тритментов и др.)
+   ============================================================ */
+const FileStore = {
+  dbName: 'zalove_files',
+  storeName: 'files',
+  _db: null,
+  async open() {
+    if (this._db) return this._db;
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(this.dbName, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(this.storeName)) db.createObjectStore(this.storeName);
+      };
+      req.onsuccess = (e) => { this._db = e.target.result; res(this._db); };
+      req.onerror = (e) => rej(e.target.error);
+    });
+  },
+  async save(key, file) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(this.storeName, 'readwrite');
+      tx.objectStore(this.storeName).put(file, key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  },
+  async get(key) {
+    const db = await this.open();
+    return new Promise((res) => {
+      const tx = db.transaction(this.storeName, 'readonly');
+      const req = tx.objectStore(this.storeName).get(key);
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => res(null);
+    });
+  },
+  async delete(key) {
+    const db = await this.open();
+    return new Promise((res) => {
+      const tx = db.transaction(this.storeName, 'readwrite');
+      tx.objectStore(this.storeName).delete(key);
+      tx.oncomplete = () => res();
+    });
+  }
+};
+
+/* ============================================================
+   УЧАСТНИКИ ПРОЕКТА — CRUD
+   ============================================================ */
+let _currentProjectId = null;
+let _editingMemberId = null;
+
+function renderTeamMembers(project) {
+  const tbody = document.getElementById('teamMembersBody');
+  const pill = document.getElementById('team-count-pill');
+  if (!tbody) return;
+  const members = project.team || [];
+  if (pill) pill.textContent = members.length === 0 ? 'никого' : (members.length + ' чел.');
+  if (members.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="5" style="text-align:center; padding: 28px 16px; color: var(--muted); font-size: 13px;">
+        Пока никого. Нажмите <strong style="color: var(--brand-red);">＋ Добавить участника</strong> ниже.
+      </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = members.map(m => `
+    <tr>
+      <td>
+        <div class="tm-name-ru">${escapeHtml(m.name_ru || '—')}</div>
+        ${m.name_en ? `<div class="tm-name-en">${escapeHtml(m.name_en)}</div>` : ''}
+      </td>
+      <td><span class="tm-role-cell">${escapeHtml(m.role || '—')}</span></td>
+      <td class="tm-handle">${m.telegram ? `<a href="https://t.me/${escapeHtml(m.telegram.replace('@',''))}" target="_blank">${escapeHtml(m.telegram.startsWith('@') ? m.telegram : '@' + m.telegram)}</a>` : '<span class="empty">—</span>'}</td>
+      <td class="tm-handle">${m.instagram ? `<a href="https://instagram.com/${escapeHtml(m.instagram.replace('@',''))}" target="_blank">${escapeHtml(m.instagram.startsWith('@') ? m.instagram : '@' + m.instagram)}</a>` : '<span class="empty">—</span>'}</td>
+      <td class="tm-actions">
+        <button onclick="event.stopPropagation(); openAddMember('${m.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-2);font-size:14px;padding:4px;" title="Редактировать">✎</button>
+        <button onclick="event.stopPropagation(); deleteTeamMember('${m.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-2);font-size:14px;padding:4px;" title="Удалить">×</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddMember(memberId = null) {
+  if (!_currentProjectId) {
+    toast('Сначала откройте проект', 'error');
+    return;
+  }
+  closeAll();
+  _editingMemberId = memberId;
+  const project = DB.getProject(_currentProjectId);
+  const m = memberId ? (project?.team || []).find(x => x.id === memberId) : null;
+  const isEdit = !!m;
+  document.querySelector('#m-add-member .doc-header-title').textContent = isEdit ? 'Редактировать участника' : 'Новый участник';
+  document.getElementById('mb-name-ru').value = m?.name_ru || '';
+  document.getElementById('mb-name-en').value = m?.name_en || '';
+  document.getElementById('mb-role').value = m?.role || 'Режиссёр';
+  document.getElementById('mb-telegram').value = m?.telegram || '';
+  document.getElementById('mb-instagram').value = m?.instagram || '';
+  document.getElementById('mb-phone').value = m?.phone || '';
+  document.getElementById('mb-email').value = m?.email || '';
+  document.getElementById('mb-note').value = m?.note || '';
+  document.getElementById('mb-delete-btn').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('mb-info').textContent = isEdit ? ('ID: ' + memberId) : 'Сохранится в проекте';
+  document.getElementById('m-add-member').classList.add('active');
+  setTimeout(() => document.getElementById('mb-name-ru').focus(), 100);
+}
+
+function saveTeamMember() {
+  if (!_currentProjectId) return;
+  const name_ru = document.getElementById('mb-name-ru').value.trim();
+  if (!name_ru) {
+    toast('Укажите ФИО участника', 'error');
+    document.getElementById('mb-name-ru').focus();
+    return;
+  }
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const team = [...(project.team || [])];
+  const data = {
+    name_ru,
+    name_en: document.getElementById('mb-name-en').value.trim(),
+    role: document.getElementById('mb-role').value,
+    telegram: document.getElementById('mb-telegram').value.trim(),
+    instagram: document.getElementById('mb-instagram').value.trim(),
+    phone: document.getElementById('mb-phone').value.trim(),
+    email: document.getElementById('mb-email').value.trim(),
+    note: document.getElementById('mb-note').value.trim()
+  };
+  if (_editingMemberId) {
+    const idx = team.findIndex(x => x.id === _editingMemberId);
+    if (idx >= 0) team[idx] = { ...team[idx], ...data };
+  } else {
+    data.id = 'm_' + Date.now();
+    team.unshift(data);
+  }
+  DB.updateProject(_currentProjectId, { team });
+  closeAll();
+  renderTeamMembers(DB.getProject(_currentProjectId));
+  toast(_editingMemberId ? 'Участник обновлён' : 'Участник добавлен 🎬', 'success');
+}
+
+function deleteTeamMember(memberId) {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const m = (project.team || []).find(x => x.id === memberId);
+  if (!confirm('Удалить участника «' + (m?.name_ru || 'без имени') + '»?')) return;
+  const team = (project.team || []).filter(x => x.id !== memberId);
+  DB.updateProject(_currentProjectId, { team });
+  renderTeamMembers(DB.getProject(_currentProjectId));
+  toast('Участник удалён', 'success');
+}
+
+function deleteTeamMemberFromForm() {
+  if (!_editingMemberId) return;
+  deleteTeamMember(_editingMemberId);
+  closeAll();
+}
+
+/* ============================================================
+   КРЕАТИВ — Тритмент / Сценарий / Креатив (ссылка или PDF)
+   ============================================================ */
+const CREATIVE_TYPES = {
+  treatment: { icon: '⊡', name: 'Тритмент', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX' },
+  script: { icon: '≡', name: 'Сценарий', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX' },
+  creative: { icon: '✦', name: 'Креатив', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX' },
+  track: { icon: '🎵', name: 'Трек', accept: '.mp3,.wav,.m4a,.flac,.aac', fileLabel: 'MP3 / WAV / M4A' }
+};
+
+let _editingCreativeKind = null;
+let _pendingFileBlob = null;
+
+function creativeCardHTML(project, kind) {
+  const type = CREATIVE_TYPES[kind];
+  const data = (project.creative || {})[kind];
+  if (!data) {
+    return `
+      <div class="creative-card" onclick="openCreativeUpload('${kind}')">
+        <div class="top">
+          <div class="ico">${type.icon}</div>
+          <div class="type">${type.name}</div>
+        </div>
+        <div class="ctitle">${type.name}</div>
+        <div class="author">ещё не загружено</div>
+        <div class="pending">— нажмите чтобы прикрепить —</div>
+        <div class="creative-actions">
+          <button style="border-color: var(--brand-red); color: var(--brand-red);">📎 Прикрепить</button>
+        </div>
+      </div>`;
+  }
+  const isFile = data.mode === 'file';
+  const info = isFile
+    ? `<span>📄</span><span>${escapeHtml(data.filename || 'PDF')}</span><span style="margin-left:auto;">${data.size ? formatBytes(data.size) : 'PDF'}</span>`
+    : `<span>🔗</span><a class="lnk" href="${escapeHtml(data.url || '#')}" target="_blank" onclick="event.stopPropagation()">${escapeHtml(truncate(data.url || '', 32))}</a>`;
+  return `
+    <div class="creative-card uploaded" onclick="openCreativeUpload('${kind}')">
+      <div class="top">
+        <div class="ico">${type.icon}</div>
+        <div class="type">${type.name}</div>
+      </div>
+      <div class="ctitle">${escapeHtml(data.name || type.name)}</div>
+      <div class="author">${escapeHtml(data.author || '—')}</div>
+      <div class="ext-info">${info}</div>
+      <div class="creative-actions">
+        ${isFile ? `<button onclick="event.stopPropagation(); openCreativeFile('${kind}')">📄 Открыть</button>` : `<button onclick="event.stopPropagation(); window.open('${escapeHtml(data.url || '#')}', '_blank')">🔗 Открыть</button>`}
+        <button onclick="event.stopPropagation(); openCreativeUpload('${kind}')">↻ Заменить</button>
+      </div>
+    </div>`;
+}
+
+function truncate(s, n) { return s.length > n ? s.slice(0, n) + '...' : s; }
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function renderCreative(project) {
+  const grid = document.getElementById('creativeGrid');
+  if (!grid) return;
+  grid.innerHTML = ['treatment', 'script', 'creative', 'track'].map(k => creativeCardHTML(project, k)).join('');
+}
+
+function openCreativeUpload(kind) {
+  if (!_currentProjectId) return;
+  closeAll();
+  _editingCreativeKind = kind;
+  _pendingFileBlob = null;
+  const project = DB.getProject(_currentProjectId);
+  const data = (project?.creative || {})[kind] || {};
+  const type = CREATIVE_TYPES[kind];
+  document.getElementById('cf-icon').textContent = type.icon;
+  document.getElementById('cf-title').textContent = (data.name ? 'Редактировать: ' : 'Загрузить: ') + type.name;
+  document.getElementById('cf-kind').value = kind;
+  updateCfAccept();
+  document.getElementById('cf-name').value = data.name || (type.name + ' v.1');
+  document.getElementById('cf-author').value = data.author || '';
+  document.getElementById('cf-link').value = data.mode === 'link' ? (data.url || '') : '';
+  document.getElementById('cf-file-status').textContent = data.mode === 'file' && data.filename ? ('Текущий файл: ' + data.filename + ' · ' + (data.size ? formatBytes(data.size) : '')) : '';
+  document.getElementById('cf-file').value = '';
+  document.getElementById('cf-delete-btn').style.display = data.mode ? 'inline-flex' : 'none';
+  document.getElementById('cf-info').textContent = data.mode ? ('Загружено: ' + (data.uploadedAt ? new Date(data.uploadedAt).toLocaleString('ru-RU') : '—')) : 'Новая загрузка';
+  setCreativeMode(data.mode === 'file' ? 'file' : 'link');
+
+  // File input handler
+  document.getElementById('cf-file').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      toast('Файл больше 20 МБ — используйте ссылку', 'error');
+      e.target.value = '';
+      return;
+    }
+    _pendingFileBlob = file;
+    document.getElementById('cf-file-status').textContent = 'Готов к сохранению: ' + file.name + ' · ' + formatBytes(file.size);
+  };
+
+  document.getElementById('m-creative-upload').classList.add('active');
+}
+
+function updateCfAccept() {
+  const kind = document.getElementById('cf-kind').value;
+  const type = CREATIVE_TYPES[kind];
+  if (!type) return;
+  document.getElementById('cf-file').setAttribute('accept', type.accept);
+  const label = document.getElementById('cf-file-label');
+  if (label) label.textContent = '(' + type.fileLabel + ')';
+}
+
+function setCreativeMode(mode) {
+  document.getElementById('cf-link-block').style.display = mode === 'link' ? 'block' : 'none';
+  document.getElementById('cf-file-block').style.display = mode === 'file' ? 'block' : 'none';
+  const btnL = document.getElementById('cf-mode-link');
+  const btnF = document.getElementById('cf-mode-file');
+  if (mode === 'link') { btnL.style.background = 'var(--text)'; btnL.style.color = 'white'; btnF.style.background = ''; btnF.style.color = ''; }
+  else { btnF.style.background = 'var(--text)'; btnF.style.color = 'white'; btnL.style.background = ''; btnL.style.color = ''; }
+}
+
+async function saveCreativeMaterial() {
+  if (!_currentProjectId || !_editingCreativeKind) return;
+  const kind = document.getElementById('cf-kind').value;
+  const name = document.getElementById('cf-name').value.trim();
+  const author = document.getElementById('cf-author').value.trim();
+  const link = document.getElementById('cf-link').value.trim();
+  const isFileMode = document.getElementById('cf-file-block').style.display === 'block';
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const creative = { ...(project.creative || {}) };
+  const existing = creative[kind] || {};
+
+  let data = { name, author, uploadedAt: new Date().toISOString() };
+
+  if (isFileMode) {
+    if (_pendingFileBlob) {
+      const fileKey = 'file_' + _currentProjectId + '_' + kind + '_' + Date.now();
+      try {
+        await FileStore.save(fileKey, _pendingFileBlob);
+        data.mode = 'file';
+        data.filename = _pendingFileBlob.name;
+        data.size = _pendingFileBlob.size;
+        data.fileKey = fileKey;
+        // Delete old file if existed
+        if (existing.fileKey) FileStore.delete(existing.fileKey).catch(()=>{});
+      } catch (err) {
+        toast('Ошибка сохранения файла: ' + err.message, 'error');
+        return;
+      }
+    } else if (existing.mode === 'file') {
+      // Keep existing file
+      data.mode = 'file';
+      data.filename = existing.filename;
+      data.size = existing.size;
+      data.fileKey = existing.fileKey;
+    } else {
+      toast('Выберите PDF файл', 'error');
+      return;
+    }
+  } else {
+    if (!link) { toast('Вставьте ссылку', 'error'); return; }
+    data.mode = 'link';
+    data.url = link;
+    // Delete old file if there was one
+    if (existing.fileKey) FileStore.delete(existing.fileKey).catch(()=>{});
+  }
+
+  creative[kind] = data;
+  DB.updateProject(_currentProjectId, { creative });
+  closeAll();
+  renderCreative(DB.getProject(_currentProjectId));
+  toast('Сохранено · ' + CREATIVE_TYPES[kind].name, 'success');
+}
+
+async function deleteCreativeMaterial() {
+  if (!_currentProjectId || !_editingCreativeKind) return;
+  if (!confirm('Удалить ' + CREATIVE_TYPES[_editingCreativeKind].name.toLowerCase() + '?')) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const creative = { ...(project.creative || {}) };
+  const existing = creative[_editingCreativeKind];
+  if (existing?.fileKey) await FileStore.delete(existing.fileKey).catch(()=>{});
+  delete creative[_editingCreativeKind];
+  DB.updateProject(_currentProjectId, { creative });
+  closeAll();
+  renderCreative(DB.getProject(_currentProjectId));
+  toast('Удалено', 'success');
+}
+
+async function openCreativeFile(kind) {
+  const project = DB.getProject(_currentProjectId);
+  const data = (project?.creative || {})[kind];
+  if (!data?.fileKey) return;
+  const blob = await FileStore.get(data.fileKey);
+  if (!blob) {
+    toast('Файл не найден', 'error');
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+/* ============================================================
+   ОБНОВЛЯЕМ openProjectDetail — подключаем team + creative
+   ============================================================ */
+const _origOpenProjectDetail = window.openProjectDetail;
+window.openProjectDetail = function(id, idx) {
+  _currentProjectId = id;
+  _origOpenProjectDetail(id, idx);
+  const project = DB.getProject(id);
+  if (project) {
+    renderTeamMembers(project);
+    renderCreative(project);
+  }
+};
 
 /* ============================================================
    INIT
