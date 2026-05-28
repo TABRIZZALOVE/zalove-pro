@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZALOVE PRODUCTION — Workspace</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -3527,12 +3528,12 @@ body.has-reel .theme-toggle { right: 158px; }
           <div class="doc-meta">27 слайдов · v.2</div>
         </div>
 
-        <div class="doc-card loaded" onclick="openDoc('callsheet')">
-          <div class="loaded-badge">XLS · 2</div>
+        <div class="doc-card loaded" id="doc-card-callsheet" onclick="openCallsheetsList()">
+          <div class="loaded-badge" id="callsheet-badge">N дней</div>
           <div class="doc-status status-loaded"></div>
           <div class="doc-icon">⌚</div>
-          <div class="doc-name">Вызывной</div>
-          <div class="doc-meta">клип / реклама · 2 шаблона</div>
+          <div class="doc-name">Вызывные</div>
+          <div class="doc-meta" id="callsheet-meta">по дням съёмки</div>
         </div>
 
         <div class="doc-card loaded" onclick="openDoc('release')">
@@ -3893,6 +3894,7 @@ body.has-reel .theme-toggle { right: 158px; }
       <div class="doc-footer-info" id="est-footer-info">Авто-сохранение при каждой правке</div>
       <div style="display: flex; gap: 6px;">
         <button class="btn-secondary btn" onclick="resetEstimate()">↺ Сбросить</button>
+        <button class="btn btn-dark" onclick="exportEstimateToXlsx()">⤓ Скачать XLSX</button>
         <button class="btn" onclick="closeAll()">💾 Закрыть</button>
       </div>
     </div>
@@ -4891,6 +4893,8 @@ body.has-reel .theme-toggle { right: 158px; }
             <option value="script">≡ Сценарий</option>
             <option value="creative">✦ Креатив / концепция</option>
             <option value="track">🎵 Трек</option>
+            <option value="ppm">⎙ ППМ Бук</option>
+            <option value="shooting_plan">🎬 Шутинг-план</option>
           </select>
         </div>
         <div>
@@ -4920,6 +4924,38 @@ body.has-reel .theme-toggle { right: 158px; }
         <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
         <button class="btn" onclick="saveCreativeMaterial()">💾 Сохранить</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALLSHEETS LIST (список вызывных по дням) -->
+<div class="modal-overlay" id="m-callsheets-list">
+  <div class="doc-overlay" style="width: 720px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">⌚</div>
+        <div>
+          <div class="doc-section-label">Документы проекта</div>
+          <div class="doc-header-title">Вызывные · по дням съёмки</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">⌚</div>
+        <div class="sf-text">
+          <strong>Количество вызывных = количество съёмочных дней</strong>
+          Меняй число дней съёмки в карточке проекта — здесь появятся карточки. Каждый вызывной редактируется отдельно (в следующей итерации).
+        </div>
+      </div>
+      <div id="callsheetsList" style="display: grid; gap: 10px;">
+        <!-- Динамически -->
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="cs-list-info">—</div>
+      <button class="btn-secondary btn" onclick="openProjectForm(_currentProjectId)">✎ Изменить число дней</button>
     </div>
   </div>
 </div>
@@ -6175,7 +6211,9 @@ const CREATIVE_TYPES = {
   treatment: { icon: '⊡', name: 'Тритмент', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX', bannerHead: 'Тритмент', bannerText: 'Можно прикрепить ссылку, файл, или сразу оба варианта. До 100 МБ.' },
   script: { icon: '≡', name: 'Сценарий', accept: '.pdf,.docx', fileLabel: 'PDF / DOCX', bannerHead: 'Сценарий', bannerText: 'Можно прикрепить ссылку, файл, или сразу оба варианта. До 100 МБ.' },
   creative: { icon: '✦', name: 'Креатив', accept: '.pdf,.docx,.ppt,.pptx,.key', fileLabel: 'PDF / DOCX / PPTX', bannerHead: 'Креатив', bannerText: 'Можно прикрепить ссылку (Figma, Miro), файл, или сразу оба варианта. До 100 МБ.' },
-  track: { icon: '🎵', name: 'Трек', accept: '.mp3,.wav,.m4a,.flac,.aac', fileLabel: 'MP3 / WAV / M4A', bannerHead: 'Трек', bannerText: 'Можно прикрепить ссылку (SoundCloud, Spotify), аудиофайл, или сразу оба варианта. До 100 МБ.' }
+  track: { icon: '🎵', name: 'Трек', accept: '.mp3,.wav,.m4a,.flac,.aac', fileLabel: 'MP3 / WAV / M4A', bannerHead: 'Трек', bannerText: 'Можно прикрепить ссылку (SoundCloud, Spotify), аудиофайл, или сразу оба варианта. До 100 МБ.' },
+  ppm: { icon: '⎙', name: 'ППМ Бук', accept: '.pdf,.pptx,.key,.docx', fileLabel: 'PDF / PPTX / KEY', bannerHead: 'ППМ Бук', bannerText: 'Pre-Production Meeting Book. Ссылка (Google Slides, Figma) и/или файл (PDF, PPTX, Keynote). До 100 МБ.' },
+  shooting_plan: { icon: '🎬', name: 'Шутинг-план', accept: '.pdf,.docx,.xlsx', fileLabel: 'PDF / DOCX / XLSX', bannerHead: 'Шутинг-план', bannerText: 'Съёмочный план дня. Ссылка (Google Docs, Notion) и/или файл. До 100 МБ.' }
 };
 
 let _editingCreativeKind = null;
@@ -6241,7 +6279,7 @@ function formatBytes(bytes) {
 function renderCreative(project) {
   const grid = document.getElementById('creativeGrid');
   if (!grid) return;
-  grid.innerHTML = ['treatment', 'script', 'creative', 'track'].map(k => creativeCardHTML(project, k)).join('');
+  grid.innerHTML = ['treatment', 'script', 'creative', 'track', 'ppm', 'shooting_plan'].map(k => creativeCardHTML(project, k)).join('');
 }
 
 function openCreativeUpload(kind) {
@@ -6763,6 +6801,97 @@ function deleteEstimateRow(sid, rid) {
   renderEstimate(DB.getProject(_currentProjectId));
 }
 
+function exportEstimateToXlsx() {
+  if (typeof XLSX === 'undefined') {
+    toast('Библиотека XLSX не загрузилась. Перезагрузите страницу.', 'error');
+    return;
+  }
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const est = ensureEstimate(project);
+
+  // Подготавливаем данные для листа (массив массивов)
+  const aoa = [];
+
+  // Шапка проекта
+  aoa.push(['ZALOVE PRODUCTION']);
+  aoa.push(['СМЕТА ПРОЕКТА · ' + (project.name || '')]);
+  aoa.push([]);
+  aoa.push(['PRODUCTION / ПРОДАКШН', 'ZALOVE Production']);
+  aoa.push(['PROJECT / ПРОЕКТ', project.name || '—']);
+  aoa.push(['TYPE / ТИП', project.type || '—']);
+  aoa.push(['CLIENT / КЛИЕНТ', project.client || '—']);
+  if (project.artist) aoa.push(['ARTIST / АРТИСТ', project.artist]);
+  aoa.push(['PRODUCER / ПРОДЮСЕР', 'Tabriz Zalov']);
+  aoa.push(['ИП', 'Залов Табриз Руслан-Оглы']);
+  aoa.push(['ИНН', '180204378651']);
+  aoa.push(['ОГРНИП', '324508100144670']);
+  aoa.push(['DATE / ДАТА', new Date().toLocaleDateString('ru-RU')]);
+  aoa.push([]);
+
+  // Заголовок таблицы позиций
+  aoa.push(['ПОЗИЦИЯ', 'ОПИСАНИЕ УСЛУГИ', 'КОЛИЧЕСТВО', 'СМЕН', 'ЦЕНА', 'ИТОГО']);
+  aoa.push([]);
+
+  // Разделы и строки
+  let grandSum = 0;
+  SMETA_TEMPLATE.forEach(tmpl => {
+    const section = est.sections[tmpl.id];
+    if (!section) return;
+    aoa.push([tmpl.n + ' · ' + tmpl.title.toUpperCase()]);
+    const allRows = [...(section.rows || []), ...(section.customRows || [])];
+    let sectionSum = 0;
+    allRows.forEach(row => {
+      const total = calcRowTotal(row);
+      sectionSum += total;
+      aoa.push([
+        row.name || '',
+        row.desc || '',
+        row.qty || '',
+        row.days || '',
+        Number(row.price) || '',
+        total > 0 ? total : ''
+      ]);
+    });
+    aoa.push(['', '', '', '', 'итого:', sectionSum]);
+    aoa.push([]);
+    grandSum += sectionSum;
+  });
+
+  // Итоги
+  const taxPct = est.taxPercent || 0;
+  const taxAmount = Math.round(grandSum * taxPct / 100);
+  const finalTotal = grandSum + taxAmount;
+  aoa.push(['', '', '', '', 'СУММА РАЗДЕЛОВ:', grandSum]);
+  aoa.push(['', '', '', '', 'НАЛОГ ' + taxPct + '%:', taxAmount]);
+  aoa.push(['', '', '', '', 'ИТОГО ОБЩАЯ СУММА С НАЛОГОМ:', finalTotal]);
+
+  // Создаём workbook
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Ширина столбцов
+  ws['!cols'] = [
+    { wch: 36 }, // позиция
+    { wch: 48 }, // описание
+    { wch: 13 }, // кол-во
+    { wch: 8 },  // смен
+    { wch: 14 }, // цена
+    { wch: 16 }  // итого
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Смета');
+
+  // Filename
+  const projectSlug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 40);
+  const dateSlug = new Date().toISOString().slice(0, 10);
+  const filename = `Смета_${projectSlug}_${dateSlug}.xlsx`;
+
+  XLSX.writeFile(wb, filename);
+  toast('Смета скачана: ' + filename, 'success');
+}
+
 function resetEstimate() {
   if (!confirm('Сбросить все суммы сметы? Кастомные строки тоже удалятся.\\n\\nДействие нельзя отменить.')) return;
   const project = DB.getProject(_currentProjectId);
@@ -6770,6 +6899,57 @@ function resetEstimate() {
   DB.updateProject(_currentProjectId, { estimate: null });
   renderEstimate(DB.getProject(_currentProjectId));
   toast('Смета сброшена', 'success');
+}
+
+/* ============================================================
+   ВЫЗЫВНЫЕ (по числу съёмочных дней)
+   ============================================================ */
+function renderCallsheetCard(project) {
+  const card = document.getElementById('doc-card-callsheet');
+  if (!card) return;
+  const days = Number(project.days) || 1;
+  document.getElementById('callsheet-badge').textContent = days === 1 ? '1 ДЕНЬ' : days + ' ДНЕЙ';
+  document.getElementById('callsheet-meta').textContent = days === 1
+    ? 'на 1 день съёмки'
+    : 'на ' + days + ' дн. съёмки';
+}
+
+function openCallsheetsList() {
+  if (!_currentProjectId) return;
+  closeAll();
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const days = Number(project.days) || 1;
+  const startDate = project.startDate ? new Date(project.startDate) : null;
+  let html = '';
+  for (let i = 0; i < days; i++) {
+    const dayNum = i + 1;
+    let dateStr = '—';
+    if (startDate) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      dateStr = formatDateRu(d.toISOString().slice(0,10));
+    }
+    html += `
+      <div class="creative-card" onclick="openDoc('callsheet')">
+        <div class="top">
+          <div class="ico">⌚</div>
+          <div class="type">День ${dayNum} из ${days}</div>
+        </div>
+        <div class="ctitle">Вызывной · день ${dayNum}</div>
+        <div class="author">${dateStr}</div>
+        <div class="pending" style="text-align: left; color: var(--text-2); padding: 8px 0;">
+          📋 Тип: ${project.type === 'MV' ? 'музыкальный клип' : project.type === 'TVC' ? 'реклама' : project.type || '—'}<br>
+          🎬 Шаблон: ${project.type === 'MV' ? 'для клипа' : 'для рекламы'}
+        </div>
+        <div class="creative-actions">
+          <button onclick="event.stopPropagation(); openDoc('callsheet')">📄 Открыть</button>
+        </div>
+      </div>`;
+  }
+  document.getElementById('callsheetsList').innerHTML = html;
+  document.getElementById('cs-list-info').textContent = days + ' вызывн' + (days === 1 ? 'ой' : (days < 5 ? 'ых' : 'ых')) + ' · по числу съёмочных дней';
+  document.getElementById('m-callsheets-list').classList.add('active');
 }
 
 /* ============================================================
@@ -6951,6 +7131,7 @@ window.openProjectDetail = function(id, idx) {
     renderTeamMembers(project);
     renderCreative(project);
     renderIntegrations(project);
+    renderCallsheetCard(project);
   }
 };
 
