@@ -2364,6 +2364,66 @@ body.has-reel .theme-toggle { right: 158px; }
 .mood-option.selected { border-color: var(--brand-red); background: var(--bg-2); }
 .mood-option .mood-label { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
 
+/* Project total — крупный итоговый блок в смете */
+.project-total-card {
+  background: linear-gradient(135deg, var(--brand-red), var(--brand-red-deep));
+  color: white;
+  padding: 24px 28px;
+  border-radius: 8px;
+  margin-top: 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(232,35,29,0.25);
+}
+.project-total-card::before {
+  content: '';
+  position: absolute;
+  top: -50%; right: -10%;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+  pointer-events: none;
+}
+.project-total-card .ptc-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+.project-total-card .ptc-amount {
+  font-family: 'Anton', sans-serif;
+  font-size: 56px;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 2;
+}
+.project-total-card .ptc-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+  z-index: 2;
+}
+.project-total-card .ptc-cell .lbl {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.project-total-card .ptc-cell .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 /* Estimate editable */
 .est-row-edit {
   display: grid;
@@ -3807,6 +3867,26 @@ body.has-reel .theme-toggle { right: 158px; }
         <div class="est-total-row"><div class="label">Сумма разделов</div><div class="val" id="est-subtotal">— ₽</div></div>
         <div class="est-total-row"><div class="label">Налог · <input type="number" id="est-tax" value="10" min="0" max="100" style="width: 50px; background: var(--bg-3); border: 1px solid var(--line); color: var(--text); padding: 2px 6px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-align: right; border-radius: 3px;">%</div><div class="val" id="est-tax-amount">— ₽</div></div>
         <div class="est-total-row grand"><div class="label">Итого с налогом</div><div class="val" id="est-grand">— ₽</div></div>
+      </div>
+
+      <!-- Итоговый блок: общая сумма проекта -->
+      <div class="project-total-card">
+        <div class="ptc-label">Общая сумма проекта</div>
+        <div class="ptc-amount" id="ptc-amount">— ₽</div>
+        <div class="ptc-breakdown">
+          <div class="ptc-cell">
+            <div class="lbl">Без налога</div>
+            <div class="val" id="ptc-subtotal">— ₽</div>
+          </div>
+          <div class="ptc-cell">
+            <div class="lbl">Налог <span id="ptc-tax-pct">10</span>%</div>
+            <div class="val" id="ptc-tax">— ₽</div>
+          </div>
+          <div class="ptc-cell">
+            <div class="lbl">Заполнено позиций</div>
+            <div class="val" id="ptc-rows-count">0 / 0</div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="doc-footer">
@@ -6461,15 +6541,16 @@ function ensureEstimate(project) {
 }
 
 function calcRowTotal(row) {
-  const q = Number(row.qty) || 0;
-  const d = Number(row.days) || 0;
+  // Цена — основной фактор. Если её нет — строка пустая
   const p = Number(row.price) || 0;
-  // Если задано и кол-во, и дни, и цена — умножаем все три
-  if (q > 0 && d > 0 && p > 0) return q * d * p;
-  // Если только qty и price — умножаем их
-  if (q > 0 && p > 0) return q * p;
-  // Иначе просто цена (если задана)
-  return p;
+  if (!p) return 0;
+  // Если кол-во или дни не указаны (пусто, null, 0, NaN) — считаем как 1
+  // (чтобы пустая цена работала как «просто цена», а не 0×0×цена)
+  const qn = Number(row.qty);
+  const dn = Number(row.days);
+  const q = (!qn || isNaN(qn)) ? 1 : qn;
+  const d = (!dn || isNaN(dn)) ? 1 : dn;
+  return q * d * p;
 }
 
 function calcSectionTotal(section) {
@@ -6486,9 +6567,13 @@ function fmtRub(n) {
   return new Intl.NumberFormat('ru-RU').format(Math.round(n)) + ' ₽';
 }
 
+// Текущее состояние редактируемой сметы — НЕ перечитываем из БД на каждое нажатие
+let _currentEstimate = null;
+
 function renderEstimate(project) {
   if (!project) return;
   const est = ensureEstimate(project);
+  _currentEstimate = est;
 
   // Title
   document.getElementById('est-project-title').textContent = 'Смета · ' + project.name;
@@ -6574,9 +6659,8 @@ function renderEstRow(sid, row, idx, isCustom) {
 let _estimateSaveTimer = null;
 function onEstimateInputChange(e) {
   const inp = e.target;
-  const project = DB.getProject(_currentProjectId);
-  if (!project) return;
-  const est = ensureEstimate(project);
+  if (!_currentEstimate) return;
+  const est = _currentEstimate; // используем тот же объект, не перечитываем из БД
 
   if (inp.id === 'est-tax') {
     est.taxPercent = Math.max(0, Math.min(100, Number(inp.value) || 0));
@@ -6586,7 +6670,9 @@ function onEstimateInputChange(e) {
     const sid = rowEl.dataset.sid;
     const rid = rowEl.dataset.rowId;
     const field = inp.dataset.field;
-    const val = Number(inp.value) || 0;
+    // Сохраняем число (или null если пусто)
+    const raw = inp.value;
+    const val = raw === '' ? null : Number(raw);
     const section = est.sections[sid];
     if (!section) return;
     let row = section.rows.find(r => r.id === rid);
@@ -6610,26 +6696,47 @@ function onEstimateInputChange(e) {
     }
   }
 
+  const project = DB.getProject(_currentProjectId);
   updateEstimateTotals(project, est);
 
-  // Debounced save + синхронизация бюджета проекта
+  // Debounced save
   clearTimeout(_estimateSaveTimer);
-  _estimateSaveTimer = setTimeout(() => {
-    const sub = calcGrandTotal(est);
-    const grand = Math.round(sub * (1 + (est.taxPercent || 0) / 100));
-    DB.updateProject(_currentProjectId, { estimate: est, budget: grand });
-    renderStats();
-  }, 400);
+  _estimateSaveTimer = setTimeout(() => saveEstimateNow(), 400);
+}
+
+function saveEstimateNow() {
+  if (!_currentEstimate || !_currentProjectId) return;
+  const est = _currentEstimate;
+  const sub = calcGrandTotal(est);
+  const grand = Math.round(sub * (1 + (est.taxPercent || 0) / 100));
+  DB.updateProject(_currentProjectId, { estimate: est, budget: grand });
+  renderStats();
 }
 
 function updateEstimateTotals(project, est) {
   const sub = calcGrandTotal(est);
-  const taxAmount = sub * ((est.taxPercent || 0) / 100);
+  const taxPct = est.taxPercent || 0;
+  const taxAmount = sub * (taxPct / 100);
   const grand = sub + taxAmount;
   document.getElementById('est-subtotal').textContent = fmtRub(sub);
   document.getElementById('est-tax-amount').textContent = fmtRub(taxAmount);
   document.getElementById('est-grand').textContent = fmtRub(grand);
   document.getElementById('est-footer-info').textContent = 'Авто-сохранение · Сумма: ' + fmtRub(grand);
+
+  // Крупный итоговый блок
+  document.getElementById('ptc-amount').textContent = fmtRub(grand);
+  document.getElementById('ptc-subtotal').textContent = fmtRub(sub);
+  document.getElementById('ptc-tax').textContent = fmtRub(taxAmount);
+  document.getElementById('ptc-tax-pct').textContent = taxPct;
+
+  // Счётчик заполненных позиций
+  let totalRows = 0, filledRows = 0;
+  Object.values(est.sections || {}).forEach(sec => {
+    const all = [...(sec.rows || []), ...(sec.customRows || [])];
+    totalRows += all.length;
+    all.forEach(r => { if (Number(r.price) > 0) filledRows++; });
+  });
+  document.getElementById('ptc-rows-count').textContent = filledRows + ' / ' + totalRows;
 }
 
 function addEstimateRow(sid) {
@@ -6853,6 +6960,11 @@ window.openProjectDetail = function(id, idx) {
 renderProjects();
 function openNewDoc() { closeAll(); document.getElementById('m-new').classList.add('active'); }
 function closeAll() {
+  // Сохранить смету немедленно, если есть несохранённые правки
+  if (_estimateSaveTimer) {
+    clearTimeout(_estimateSaveTimer);
+    saveEstimateNow();
+  }
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
 }
 
