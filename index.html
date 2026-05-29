@@ -6587,6 +6587,77 @@ const ROLE_PRIORITY = {
   'Генеральный продюсер': 1,
   'Режиссёр': 2
 };
+
+// Карта переводов ролей RU → EN (60+ должностей)
+const ROLE_TRANSLATIONS = {
+  'Генеральный продюсер': 'Executive Producer',
+  'Исполнительный продюсер': 'Producer',
+  'Линейный продюсер': 'Line Producer',
+  'Креативный продюсер': 'Creative Producer',
+  'Ассистент продюсера': 'Production Assistant',
+  'Режиссёр': 'Director',
+  'Второй режиссёр': '2nd Assistant Director',
+  'Ассистент режиссёра': 'AD',
+  'Сценарист / Редактор': 'Writer / Editor',
+  'Супервайзер': 'Supervisor',
+  'Арт-директор': 'Art Director',
+  'Оператор-постановщик (DOP)': 'Director of Photography',
+  'Камерамен': 'Camera Operator',
+  'Механик камеры': 'Camera Technician',
+  'Механик ронина': 'Ronin Operator',
+  'Фокус-пуллер': 'Focus Puller',
+  'Плейбек / Логгер': 'Playback / Logger',
+  'Стедикамщик': 'Steadicam Operator',
+  'Кран-оператор / Долли': 'Crane / Dolly Operator',
+  'Гаффер': 'Gaffer',
+  'Осветитель': 'Lighting Technician',
+  'Кейгрип': 'Key Grip',
+  'Ригер': 'Rigger',
+  'Звукорежиссёр': 'Sound Mixer',
+  'Ассистент звукорежиссёра': 'Sound Assistant',
+  'Художник-постановщик': 'Production Designer',
+  'Постановщик': 'Set Designer',
+  'Декоратор': 'Set Decorator',
+  'Реквизитор': 'Props Master',
+  'Ассистент по реквизиту': 'Props Assistant',
+  'Художник по костюмам / Стилист': 'Costume Designer',
+  'Гример / Визажист': 'Makeup Artist',
+  'Ассистент гримёра': 'Makeup Assistant',
+  'Стилист по волосам': 'Hair Stylist',
+  'Пластический грим': 'SFX Makeup',
+  'Стилист маникюра': 'Nail Stylist',
+  'Барбер': 'Barber',
+  'Кастинг-директор': 'Casting Director',
+  'Ассистент кастинг-директора': 'Casting Assistant',
+  'Актёр главной роли': 'Lead Actor',
+  'Актёр второго плана': 'Supporting Actor',
+  'АМС (массовка)': 'Background Extras',
+  'Танцор': 'Dancer',
+  'Хореограф': 'Choreographer',
+  'Музыкант': 'Musician',
+  'Директор площадки': 'Set Director',
+  'Администратор площадки': 'Set Administrator',
+  'Локейшн-менеджер': 'Location Manager',
+  'Рабочий / Хелпер': 'Helper / PA',
+  'Водитель': 'Driver',
+  'Игровой транспорт': 'Picture Car',
+  'Курьер': 'Courier',
+  'Буфетчик / Кейтеринг': 'Catering',
+  'Бэкстейдж / Фотограф': 'BTS Photographer',
+  'Видеограф (BTS)': 'BTS Videographer',
+  'Режиссёр монтажа': 'Editor',
+  'Композитор': 'Composer',
+  'Диктор': 'Voice Over Artist',
+  'Колорист': 'Colorist',
+  'Sound-дизайнер': 'Sound Designer',
+  'Графический дизайнер / Моушн': 'Motion Designer',
+  'CG-супервайзер': 'CG Supervisor',
+  'AI-специалист': 'AI Specialist',
+  'Другая': 'Other'
+};
+function translateRole(roleRu) {
+  return ROLE_TRANSLATIONS[roleRu] || roleRu;
+}
 function sortTeamByRole(arr) {
   return [...arr].sort((a, b) => {
     const pa = ROLE_PRIORITY[a.role] || 99;
@@ -6608,13 +6679,18 @@ function renderTeamMembers(project) {
       </td></tr>`;
     return;
   }
-  tbody.innerHTML = members.map(m => `
+  tbody.innerHTML = members.map(m => {
+    const roleEn = m.role_en || translateRole(m.role);
+    return `
     <tr>
       <td>
         <div class="tm-name-ru">${escapeHtml(m.name_ru || '—')}</div>
         ${m.name_en ? `<div class="tm-name-en">${escapeHtml(m.name_en)}</div>` : ''}
       </td>
-      <td><span class="tm-role-cell">${escapeHtml(m.role || '—')}</span></td>
+      <td>
+        <span class="tm-role-cell">${escapeHtml(m.role || '—')}</span>
+        ${roleEn && roleEn !== m.role ? `<div class="tm-name-en" style="margin-top:3px;">${escapeHtml(roleEn)}</div>` : ''}
+      </td>
       <td class="tm-handle">${m.telegram ? `<a href="https://t.me/${escapeHtml(m.telegram.replace('@',''))}" target="_blank">${escapeHtml(m.telegram.startsWith('@') ? m.telegram : '@' + m.telegram)}</a>` : '<span class="empty">—</span>'}</td>
       <td class="tm-handle">${m.instagram ? `<a href="https://instagram.com/${escapeHtml(m.instagram.replace('@',''))}" target="_blank">${escapeHtml(m.instagram.startsWith('@') ? m.instagram : '@' + m.instagram)}</a>` : '<span class="empty">—</span>'}</td>
       <td class="tm-actions">
@@ -6622,7 +6698,8 @@ function renderTeamMembers(project) {
         <button onclick="event.stopPropagation(); deleteTeamMember('${m.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-2);font-size:14px;padding:4px;" title="Удалить">×</button>
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function openAddMember(memberId = null) {
@@ -6661,10 +6738,12 @@ function saveTeamMember() {
   const project = DB.getProject(_currentProjectId);
   if (!project) return;
   const team = [...(project.team || [])];
+  const role = document.getElementById('mb-role').value;
   const data = {
     name_ru,
     name_en: document.getElementById('mb-name-en').value.trim(),
-    role: document.getElementById('mb-role').value,
+    role,
+    role_en: translateRole(role),
     telegram: document.getElementById('mb-telegram').value.trim(),
     instagram: document.getElementById('mb-instagram').value.trim(),
     phone: document.getElementById('mb-phone').value.trim(),
@@ -7548,7 +7627,7 @@ function buildEstimatePrintHTML(project, est) {
   c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
 
   let html = `
-    <div style="background:#0a0907;color:white;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="background:#3c3c3c;color:white;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;">
       <img src="logo.png" alt="ZALOVE" style="height:42px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
       <div style="font-size:11px;color:#ccc;letter-spacing:1px;text-transform:uppercase;">Смета · ${new Date().toLocaleDateString('ru-RU')}</div>
     </div>
@@ -8442,9 +8521,9 @@ function buildCallsheetPrintHTML(project, cs) {
   const c = document.createElement('div');
   c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
 
-  // Brand header — logo вместо текста
+  // Brand header — logo вместо текста (серый фон как в заголовке таблицы)
   let html = `
-    <div style="background:#0a0907;color:white;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="background:#3c3c3c;color:white;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;">
       <img src="logo.png" alt="ZALOVE" style="height:42px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
       <div style="text-align:right;">
         ${cs.date ? `<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
@@ -8464,26 +8543,23 @@ function buildCallsheetPrintHTML(project, cs) {
       </div>
     </div>`;
 
-  // Roles strip
-  html += `
-    <div style="margin:0 40px;background:#f5f5f0;padding:14px 18px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;border-radius:4px;">
-      <div>
-        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">РЕЖИССЁР</div>
-        <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(cs.directorName || '—')}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">DOP</div>
-        <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(cs.dopName || '—')}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">ПРОДЮСЕР</div>
-        <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(cs.producerName || '—')}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">АРТ</div>
-        <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(cs.artName || '—')}</div>
-      </div>
-    </div>`;
+  // Roles strip — только заполненные
+  const roleItems = [];
+  if ((cs.directorName || '').trim()) roleItems.push({ lbl: 'РЕЖИССЁР', val: cs.directorName });
+  if ((cs.dopName || '').trim()) roleItems.push({ lbl: 'DOP', val: cs.dopName });
+  if ((cs.producerName || '').trim()) roleItems.push({ lbl: 'ПРОДЮСЕР', val: cs.producerName });
+  if ((cs.artName || '').trim()) roleItems.push({ lbl: 'АРТ', val: cs.artName });
+  if (roleItems.length > 0) {
+    html += `
+      <div style="margin:0 40px;background:#f5f5f0;padding:14px 18px;display:grid;grid-template-columns:repeat(${roleItems.length},1fr);gap:14px;border-radius:4px;">
+        ${roleItems.map(r => `
+          <div>
+            <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">${r.lbl}</div>
+            <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(r.val)}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
 
   // Times
   if (cs.startShift || cs.startShoot || cs.endShift) {
@@ -8536,13 +8612,29 @@ function buildCallsheetPrintHTML(project, cs) {
       </div>`;
   }
 
-  // Crew
-  if (cs.crew && cs.crew.length > 0) {
+  // Crew — фильтр: не дублируем тех, кто уже в "Главных позициях" вверху
+  const TOP_ROLES = new Set([
+    'Режиссёр',
+    'Оператор-постановщик (DOP)',
+    'Генеральный продюсер',
+    'Исполнительный продюсер',
+    'Линейный продюсер',
+    'Креативный продюсер',
+    'Арт-директор',
+    'Художник-постановщик'
+  ]);
+  const topNames = new Set([cs.directorName, cs.dopName, cs.producerName, cs.artName].filter(n => n && n.trim()).map(n => n.trim().toLowerCase()));
+  const filteredCrew = (cs.crew || []).filter(p => {
+    if (TOP_ROLES.has(p.position)) return false;
+    if (p.name && topNames.has(p.name.trim().toLowerCase())) return false;
+    return true;
+  });
+  if (filteredCrew.length > 0) {
     html += `
       <div style="margin:28px 40px 0;">
         <div style="background:#0a0907;color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
           <div style="font-size:15px;font-weight:800;letter-spacing:1px;">КРЮ · СЪЁМОЧНАЯ ГРУППА</div>
-          <div style="font-size:12px;">${cs.crew.length} человек</div>
+          <div style="font-size:12px;">${filteredCrew.length} человек</div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:13px;background:white;">
           <thead>
@@ -8554,14 +8646,19 @@ function buildCallsheetPrintHTML(project, cs) {
             </tr>
           </thead>
           <tbody>
-            ${cs.crew.map((p, i) => `
+            ${filteredCrew.map((p, i) => {
+              const posEn = translateRole(p.position);
+              return `
               <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #e5e5e5;">
-                <td style="padding:9px 14px;font-weight:700;">${escapeHtml(p.position || '')}</td>
+                <td style="padding:9px 14px;font-weight:700;">
+                  ${escapeHtml(p.position || '')}
+                  ${posEn && posEn !== p.position ? `<div style="font-size:10px;color:#999;font-weight:500;margin-top:2px;">${escapeHtml(posEn)}</div>` : ''}
+                </td>
                 <td style="padding:9px 14px;">${escapeHtml(p.name || '')}</td>
                 <td style="padding:9px 14px;color:#444;font-family:monospace;">${escapeHtml(p.phone || '')}</td>
                 <td style="padding:9px 14px;text-align:center;font-weight:700;font-family:monospace;">${escapeHtml(p.callTime || '')}</td>
-              </tr>
-            `).join('')}
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>`;
@@ -8585,14 +8682,19 @@ function buildCallsheetPrintHTML(project, cs) {
             </tr>
           </thead>
           <tbody>
-            ${cs.cast.map((p, i) => `
+            ${cs.cast.map((p, i) => {
+              const posEn = translateRole(p.position);
+              return `
               <tr style="background:${i % 2 ? '#fff5f5' : '#ffffff'};border-bottom:1px solid #e5e5e5;">
-                <td style="padding:9px 14px;font-weight:700;">${escapeHtml(p.position || '')}</td>
+                <td style="padding:9px 14px;font-weight:700;">
+                  ${escapeHtml(p.position || '')}
+                  ${posEn && posEn !== p.position ? `<div style="font-size:10px;color:#999;font-weight:500;margin-top:2px;">${escapeHtml(posEn)}</div>` : ''}
+                </td>
                 <td style="padding:9px 14px;">${escapeHtml(p.name || '')}</td>
                 <td style="padding:9px 14px;color:#444;font-family:monospace;">${escapeHtml(p.phone || '')}</td>
                 <td style="padding:9px 14px;text-align:center;font-weight:700;color:#e8231d;font-family:monospace;">${escapeHtml(p.callTime || '')}</td>
-              </tr>
-            `).join('')}
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>`;
