@@ -2546,6 +2546,50 @@ body.has-reel .theme-toggle { right: 158px; }
   color: var(--brand-red-deep);
 }
 
+/* Cast section — выделенная красным акцентом */
+.cs-section.cs-cast-section {
+  border: 2px solid var(--brand-red);
+  background:
+    linear-gradient(135deg, rgba(232,35,29,0.05) 0%, transparent 60%),
+    var(--bg-2);
+  box-shadow: 0 4px 14px rgba(232,35,29,0.08);
+}
+.cs-section.cs-cast-section .cs-section-title {
+  color: var(--brand-red);
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+.cs-section.cs-cast-section .cs-section-title::before {
+  height: 18px;
+  width: 4px;
+  background: var(--brand-red);
+  box-shadow: 0 0 8px rgba(232,35,29,0.5);
+}
+.cs-section-badge {
+  margin-left: auto;
+  background: var(--brand-red);
+  color: white;
+  padding: 4px 10px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cs-section-badge.mv { background: linear-gradient(135deg, #e8231d, #ff4d6a); }
+.cs-section-badge.ad { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+
+/* Crew section — тёмный акцент */
+.cs-section.cs-crew-section {
+  border-left: 4px solid var(--text);
+}
+.cs-section.cs-crew-section .cs-section-title::before {
+  height: 18px;
+  background: var(--text);
+}
+
 /* Заморозка проекта — ледяной эффект */
 .project-card.frozen {
   position: relative;
@@ -8028,8 +8072,8 @@ function renderCallsheetEditor() {
     </div>
 
     <!-- 6. Крю -->
-    <div class="cs-section">
-      <div class="cs-section-title">👥 Крю (съёмочная группа)</div>
+    <div class="cs-section cs-crew-section">
+      <div class="cs-section-title">👥 Крю · съёмочная группа</div>
       ${renderPeopleTable('crew', cs.crew || [])}
       <div class="cs-table-actions">
         <button class="cs-add-row" onclick="addCsRow('crew')">＋ Добавить позицию</button>
@@ -8037,9 +8081,12 @@ function renderCallsheetEditor() {
       </div>
     </div>
 
-    <!-- 7. Кастинг / Клиент -->
-    <div class="cs-section">
-      <div class="cs-section-title">🎭 ${project.type === 'MV' ? 'Кастинг и артист' : 'Клиент, агентство и кастинг'}</div>
+    <!-- 7. Кастинг / Клиент — выделенная секция -->
+    <div class="cs-section cs-cast-section">
+      <div class="cs-section-title">
+        ${project.type === 'MV' ? '🎤 Артист и кастинг' : '👔 Клиент, агентство и кастинг'}
+        <span class="cs-section-badge ${project.type === 'MV' ? 'mv' : 'ad'}">${project.type === 'MV' ? '🎵 МУЗ. КЛИП' : '📺 РЕКЛАМА'}</span>
+      </div>
       ${renderPeopleTable('cast', cs.cast || [])}
       <div class="cs-table-actions">
         <button class="cs-add-row" onclick="addCsRow('cast')">＋ Добавить позицию</button>
@@ -8199,158 +8246,236 @@ function exportCallsheetToPdf() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const RED = [232, 35, 29];
+  const RED_LIGHT = [255, 230, 230];
   const DARK = [10, 9, 7];
+  const GREY = [120, 120, 120];
+  const LIGHT_BG = [245, 245, 240];
+  const isMV = project.type === 'MV';
 
-  // Header
-  doc.setFillColor(...RED);
-  doc.rect(0, 0, 210, 22, 'F');
+  // === HEADER BAR ===
+  doc.setFillColor(...DARK);
+  doc.rect(0, 0, 210, 26, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text('ZALOVE PRODUCTION', 14, 14);
+  doc.setFontSize(20);
+  doc.text('ZALOVE PRODUCTION', 14, 12);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('ИП Залов Табриз Руслан-Оглы · ИНН 180204378651', 14, 19);
+  // Date top-right
+  if (cs.date) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text(formatDateRu(cs.date), 196, 14, { align: 'right' });
+  }
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('День ' + _currentCsDay + (project.days ? ' из ' + project.days : ''), 196, 20, { align: 'right' });
 
+  // === BIG "ВЫЗЫВНОЙ" TITLE ===
+  let y = 38;
   doc.setTextColor(...DARK);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text('Вызывной · день ' + _currentCsDay + (project.days ? ' из ' + project.days : ''), 14, 32);
-
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text(project.name + (cs.date ? ' · ' + formatDateRu(cs.date) : ''), 14, 39);
-
-  // Меta
-  let y = 48;
+  doc.setFontSize(28);
+  doc.text('ВЫЗЫВНОЙ', 14, y);
+  // Type badge (MV/Реклама)
+  const badge = isMV ? 'МУЗ. КЛИП' : 'РЕКЛАМА';
+  const badgeColor = isMV ? RED : [29, 78, 216];
+  doc.setFillColor(...badgeColor);
+  const badgeW = doc.getTextWidth(badge) + 8;
+  doc.rect(14 + doc.getTextWidth('ВЫЗЫВНОЙ') + 6, y - 6, badgeW, 8, 'F');
+  doc.setTextColor(255, 255, 255);
   doc.setFontSize(9);
-  const metaPairs = [
+  doc.text(badge, 14 + doc.getTextWidth('ВЫЗЫВНОЙ') + 10, y - 0.5);
+
+  doc.setTextColor(...DARK);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'normal');
+  doc.text(project.name + (project.client ? ' · ' + project.client : '') + (project.artist ? ' (' + project.artist + ')' : ''), 14, y + 6);
+  y += 14;
+
+  // === KEY ROLES STRIP ===
+  doc.setFillColor(...LIGHT_BG);
+  doc.rect(14, y, 182, 18, 'F');
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.3);
+  doc.rect(14, y, 182, 18);
+  const colW = 182 / 4;
+  const roles = [
     ['Режиссёр', cs.directorName],
     ['DOP', cs.dopName],
     ['Продюсер', cs.producerName],
-    ['Арт', cs.artName],
-    ['Клиент', project.client || '—'],
-    ['Тип', project.type || '—']
+    ['Арт', cs.artName]
   ];
-  metaPairs.forEach(([lbl, val]) => {
-    if (!val) return;
-    doc.setTextColor(120, 120, 120);
-    doc.text(lbl + ':', 14, y);
-    doc.setTextColor(...DARK);
-    doc.text(String(val), 50, y);
-    y += 5;
-  });
-
-  // Таймнинги
-  y += 4;
-  doc.setFillColor(245, 245, 240);
-  doc.rect(14, y - 4, 182, 12, 'F');
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...DARK);
-  doc.text('ТАЙМИНГИ', 16, y + 2);
-  if (cs.startShift) doc.text('Начало смены: ' + cs.startShift, 60, y + 2);
-  if (cs.startShoot) doc.text('Съёмка: ' + cs.startShoot, 110, y + 2);
-  if (cs.endShift) doc.text('Конец: ' + cs.endShift, 160, y + 2);
-  y += 14;
-
-  // Локация
-  if (cs.locationName || cs.locationAddress) {
-    doc.setFillColor(255, 240, 240);
-    doc.rect(14, y - 4, 182, 18, 'F');
-    doc.setDrawColor(...RED);
-    doc.setLineWidth(0.5);
-    doc.line(14, y - 4, 14, y + 14);
-    doc.setFontSize(10);
+  roles.forEach((r, i) => {
+    const x = 14 + colW * i + 3;
+    doc.setTextColor(...GREY);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('📍 ' + (cs.locationName || ''), 17, y + 2);
-    doc.setFontSize(9);
+    doc.text(r[0].toUpperCase(), x, y + 6);
+    doc.setTextColor(...DARK);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(cs.locationAddress || '', 17, y + 7);
-    if (cs.locationContactName || cs.locationContactPhone) {
-      doc.text((cs.locationContactName || '') + ' · ' + (cs.locationContactPhone || ''), 17, y + 11);
-    }
-    y += 22;
+    doc.text(r[1] || '—', x, y + 13, { maxWidth: colW - 4 });
+  });
+  y += 24;
+
+  // === TIMINGS STRIP ===
+  if (cs.startShift || cs.startShoot || cs.endShift) {
+    doc.setFillColor(...DARK);
+    doc.rect(14, y, 182, 16, 'F');
+    const timeColW = 182 / 3;
+    const times = [
+      ['НАЧАЛО СМЕНЫ', cs.startShift],
+      ['НАЧАЛО СЪЁМКИ', cs.startShoot],
+      ['КОНЕЦ СМЕНЫ', cs.endShift]
+    ];
+    times.forEach((t, i) => {
+      const x = 14 + timeColW * i + timeColW / 2;
+      doc.setTextColor(180, 180, 180);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.text(t[0], x, y + 5, { align: 'center' });
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.text(t[1] || '—:—', x, y + 12, { align: 'center' });
+    });
+    y += 20;
   }
 
-  // Wi-Fi / Погода / Парковка
-  if (cs.wifiName || cs.weatherDay || cs.parking) {
+  // === LOCATION CARD ===
+  if (cs.locationName || cs.locationAddress) {
+    doc.setFillColor(...RED_LIGHT);
+    doc.rect(14, y, 182, 24, 'F');
+    doc.setFillColor(...RED);
+    doc.rect(14, y, 4, 24, 'F');
+    doc.setTextColor(...DARK);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text('ГДЕ СНИМАЕМ', 22, y + 5);
+    doc.setFontSize(13);
+    doc.text(cs.locationName || '—', 22, y + 11);
     doc.setFontSize(9);
-    if (cs.wifiName) {
-      doc.text('Wi-Fi: ' + cs.wifiName + (cs.wifiPass ? ' / ' + cs.wifiPass : ''), 14, y);
-      y += 5;
+    doc.setFont('helvetica', 'normal');
+    if (cs.locationAddress) doc.text(cs.locationAddress, 22, y + 16);
+    if (cs.locationContactName || cs.locationContactPhone || cs.locationContactTelegram) {
+      let contact = cs.locationContactName || '';
+      if (cs.locationContactPhone) contact += ' · ' + cs.locationContactPhone;
+      if (cs.locationContactTelegram) contact += ' · ' + cs.locationContactTelegram;
+      doc.setFontSize(8);
+      doc.setTextColor(...GREY);
+      doc.text(contact, 22, y + 21);
     }
-    if (cs.weatherDay || cs.weatherNight) {
-      doc.text('Погода: день ' + (cs.weatherDay || '?') + '°C · ночь ' + (cs.weatherNight || '?') + '°C', 14, y);
+    y += 28;
+  }
+
+  // === INFO LINE (wifi/weather/parking) ===
+  if (cs.wifiName || cs.weatherDay || cs.parking) {
+    doc.setFontSize(8);
+    const infoParts = [];
+    if (cs.wifiName) infoParts.push('Wi-Fi: ' + cs.wifiName + (cs.wifiPass ? ' / ' + cs.wifiPass : ''));
+    if (cs.weatherDay || cs.weatherNight) infoParts.push('Погода: ' + (cs.weatherDay || '?') + '°C / ' + (cs.weatherNight || '?') + '°C');
+    if (infoParts.length > 0) {
+      doc.setTextColor(...DARK);
+      doc.text(infoParts.join('   ·   '), 14, y);
       y += 5;
     }
     if (cs.parking) {
-      const parkLines = doc.splitTextToSize('Парковка: ' + cs.parking, 180);
+      doc.setTextColor(...GREY);
+      const parkLines = doc.splitTextToSize('Парковка: ' + cs.parking, 182);
       doc.text(parkLines, 14, y);
       y += parkLines.length * 4 + 2;
     }
   }
+
   if (cs.important) {
-    doc.setFontSize(9);
+    doc.setFillColor(...RED);
+    doc.setTextColor(255, 255, 255);
+    doc.rect(14, y, 182, 8, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...RED);
-    doc.text('⚠ ' + cs.important, 14, y);
-    doc.setTextColor(...DARK);
-    doc.setFont('helvetica', 'normal');
-    y += 6;
+    doc.setFontSize(10);
+    doc.text('⚠  ' + cs.important.toUpperCase(), 18, y + 5.5);
+    y += 12;
   }
 
-  // Крю table
+  // === CREW TABLE (with big colored header) ===
   if (cs.crew && cs.crew.length > 0) {
+    if (y > 235) { doc.addPage(); y = 20; }
+    // Header bar
+    doc.setFillColor(...DARK);
+    doc.rect(14, y, 182, 11, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('КРЮ · СЪЁМОЧНАЯ ГРУППА', 18, y + 7.5);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cs.crew.length + ' человек', 192, y + 7.5, { align: 'right' });
+    y += 11;
+
     doc.autoTable({
       head: [['Позиция', 'ФИО', 'Телефон', 'Вызов']],
       body: cs.crew.map(p => [p.position || '', p.name || '', p.phone || '', p.callTime || '']),
-      startY: y + 2,
-      styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5 },
-      headStyles: { fillColor: DARK, textColor: [255,255,255], fontStyle: 'bold' },
+      startY: y,
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [60, 60, 60], textColor: [255,255,255], fontStyle: 'bold', fontSize: 8 },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
       columnStyles: {
-        0: { cellWidth: 50 },
+        0: { cellWidth: 50, fontStyle: 'bold' },
         1: { cellWidth: 55 },
         2: { cellWidth: 45 },
-        3: { cellWidth: 32, halign: 'center' }
+        3: { cellWidth: 32, halign: 'center', fontStyle: 'bold' }
       },
-      margin: { left: 14, right: 14 },
-      didDrawPage: (data) => {
-        if (data.pageNumber === 1) {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...RED);
-          doc.text('КРЮ · ' + cs.crew.length + ' человек', 14, data.settings.startY - 2);
-          doc.setTextColor(...DARK);
-        }
-      }
+      margin: { left: 14, right: 14 }
     });
-    y = doc.lastAutoTable.finalY + 10;
+    y = doc.lastAutoTable.finalY + 8;
   }
 
-  // Кастинг table
+  // === CAST TABLE (big red header — выделенный) ===
   if (cs.cast && cs.cast.length > 0) {
-    if (y > 240) { doc.addPage(); y = 20; }
+    if (y > 235) { doc.addPage(); y = 20; }
+    // Big red header
+    doc.setFillColor(...RED);
+    doc.rect(14, y, 182, 13, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text(isMV ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ, АГЕНТСТВО И КАСТИНГ', 18, y + 8.5);
+    // Type badge
+    doc.setFontSize(8);
+    doc.setFillColor(255, 255, 255);
+    doc.rect(192 - 30, y + 3, 28, 7, 'F');
+    doc.setTextColor(...RED);
+    doc.text(isMV ? '🎵 МУЗ. КЛИП' : '📺 РЕКЛАМА', 192 - 16, y + 7.5, { align: 'center' });
+    y += 13;
+
     doc.autoTable({
       head: [['Позиция', 'ФИО', 'Телефон', 'Вызов']],
       body: cs.cast.map(p => [p.position || '', p.name || '', p.phone || '', p.callTime || '']),
-      startY: y + 2,
-      styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5 },
-      headStyles: { fillColor: RED, textColor: [255,255,255], fontStyle: 'bold' },
+      startY: y,
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [200, 30, 25], textColor: [255,255,255], fontStyle: 'bold', fontSize: 8 },
+      alternateRowStyles: { fillColor: [255, 245, 245] },
       columnStyles: {
-        0: { cellWidth: 50 },
+        0: { cellWidth: 50, fontStyle: 'bold' },
         1: { cellWidth: 55 },
         2: { cellWidth: 45 },
-        3: { cellWidth: 32, halign: 'center' }
+        3: { cellWidth: 32, halign: 'center', fontStyle: 'bold', textColor: RED }
       },
-      margin: { left: 14, right: 14 },
-      didDrawPage: (data) => {
-        if (data.pageNumber === 1) {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...RED);
-          doc.text((project.type === 'MV' ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ И КАСТИНГ') + ' · ' + cs.cast.length + ' человек', 14, data.settings.startY - 2);
-          doc.setTextColor(...DARK);
-        }
-      }
+      margin: { left: 14, right: 14 }
     });
+    y = doc.lastAutoTable.finalY;
+  }
+
+  // Footer на каждой странице
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(...GREY);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ZALOVE PRODUCTION · ' + project.name + ' · день ' + _currentCsDay, 14, 292);
+    doc.text('Стр. ' + i + ' / ' + totalPages, 196, 292, { align: 'right' });
   }
 
   const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
@@ -8363,7 +8488,11 @@ function exportCallsheetToXlsx() {
   if (!_currentProjectId || !_currentCsData) return;
   const project = DB.getProject(_currentProjectId);
   const cs = _currentCsData;
+  const isMV = project.type === 'MV';
   const RED = 'E8231D', DARK = '0A0907', LIGHT = 'F5F5F0';
+  const BLUE = '1D4ED8';
+  const RED_LIGHT = 'FFF0F0';
+  const MID_GREY = 'D8D6D2';
   const ws = {};
   const merges = [];
   const rows = [];
@@ -8373,123 +8502,289 @@ function exportCallsheetToXlsx() {
     const addr = XLSX.utils.encode_cell({ r: row, c: col });
     ws[addr] = { v: val, t: typeof val === 'number' ? 'n' : 's', s: style };
   };
-  const title = {
+
+  // === СТИЛИ ===
+  const brandHeader = {
+    font: { name: 'Arial', bold: true, sz: 20, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: DARK } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const brandSub = {
+    font: { name: 'Arial', sz: 10, color: { rgb: 'CCCCCC' } },
+    fill: { fgColor: { rgb: DARK } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const titleHuge = {
+    font: { name: 'Arial', bold: true, sz: 28, color: { rgb: DARK } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const titleBadge = {
+    font: { name: 'Arial', bold: true, sz: 11, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: isMV ? RED : BLUE } },
+    alignment: { horizontal: 'center', vertical: 'center' }
+  };
+  const projectInfo = {
+    font: { name: 'Arial', sz: 13, color: { rgb: DARK } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const dateBig = {
+    font: { name: 'Arial', bold: true, sz: 14, color: { rgb: RED } },
+    alignment: { horizontal: 'right', vertical: 'center' }
+  };
+  const rolesLbl = {
+    font: { name: 'Arial', bold: true, sz: 9, color: { rgb: '888888' } },
+    fill: { fgColor: { rgb: LIGHT } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: { bottom: { style: 'thin', color: { rgb: MID_GREY } } }
+  };
+  const rolesVal = {
+    font: { name: 'Arial', bold: true, sz: 11, color: { rgb: DARK } },
+    fill: { fgColor: { rgb: LIGHT } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: { bottom: { style: 'thin', color: { rgb: MID_GREY } } }
+  };
+  const timesHeaderDark = {
+    font: { name: 'Arial', bold: true, sz: 9, color: { rgb: 'B8B8B8' } },
+    fill: { fgColor: { rgb: DARK } },
+    alignment: { horizontal: 'center', vertical: 'center' }
+  };
+  const timesValueDark = {
     font: { name: 'Arial', bold: true, sz: 18, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: DARK } },
+    alignment: { horizontal: 'center', vertical: 'center' }
+  };
+  const locTitle = {
+    font: { name: 'Arial', bold: true, sz: 9, color: { rgb: RED } },
+    fill: { fgColor: { rgb: RED_LIGHT } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: { left: { style: 'medium', color: { rgb: RED } } }
+  };
+  const locName = {
+    font: { name: 'Arial', bold: true, sz: 14, color: { rgb: DARK } },
+    fill: { fgColor: { rgb: RED_LIGHT } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: { left: { style: 'medium', color: { rgb: RED } } }
+  };
+  const locText = {
+    font: { name: 'Arial', sz: 10, color: { rgb: DARK } },
+    fill: { fgColor: { rgb: RED_LIGHT } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: { left: { style: 'medium', color: { rgb: RED } } }
+  };
+  const importantStyle = {
+    font: { name: 'Arial', bold: true, sz: 11, color: { rgb: 'FFFFFF' } },
     fill: { fgColor: { rgb: RED } },
     alignment: { horizontal: 'left', vertical: 'center' }
   };
-  const sectionHead = {
-    font: { name: 'Arial', bold: true, sz: 11, color: { rgb: 'FFFFFF' } },
+  const infoText = {
+    font: { name: 'Arial', sz: 10, color: { rgb: DARK } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  // Section blocks
+  const crewSectionHead = {
+    font: { name: 'Arial', bold: true, sz: 14, color: { rgb: 'FFFFFF' } },
     fill: { fgColor: { rgb: DARK } },
     alignment: { horizontal: 'left', vertical: 'center' }
   };
-  const sectionRed = { ...sectionHead, fill: { fgColor: { rgb: RED } } };
-  const lbl = {
-    font: { name: 'Arial', bold: true, sz: 9, color: { rgb: '666666' } },
-    alignment: { horizontal: 'left' }
+  const castSectionHead = {
+    font: { name: 'Arial', bold: true, sz: 14, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: RED } },
+    alignment: { horizontal: 'left', vertical: 'center' }
   };
-  const val = {
-    font: { name: 'Arial', sz: 10, color: { rgb: DARK } },
-    alignment: { horizontal: 'left' }
-  };
-  const tHead = {
-    font: { name: 'Arial', bold: true, sz: 9, color: { rgb: 'FFFFFF' } },
+  const sectionCount = {
+    font: { name: 'Arial', sz: 10, color: { rgb: 'FFFFFF' } },
     fill: { fgColor: { rgb: DARK } },
-    alignment: { horizontal: 'center' },
+    alignment: { horizontal: 'right', vertical: 'center' }
+  };
+  const castSectionCount = { ...sectionCount, fill: { fgColor: { rgb: RED } } };
+  const tHeadDark = {
+    font: { name: 'Arial', bold: true, sz: 10, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: '3C3C3C' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
     border: { top: {style:'thin',color:{rgb:DARK}}, bottom: {style:'thin',color:{rgb:DARK}}, left: {style:'thin',color:{rgb:DARK}}, right: {style:'thin',color:{rgb:DARK}} }
   };
+  const tHeadRed = {
+    ...tHeadDark,
+    fill: { fgColor: { rgb: 'C81E19' } }
+  };
   const tCell = {
-    font: { name: 'Arial', sz: 10 },
+    font: { name: 'Arial', sz: 11 },
     alignment: { vertical: 'center' },
     border: { top: {style:'thin',color:{rgb:'E5E5E5'}}, bottom: {style:'thin',color:{rgb:'E5E5E5'}}, left: {style:'thin',color:{rgb:'E5E5E5'}}, right: {style:'thin',color:{rgb:'E5E5E5'}} }
   };
+  const tCellBold = { ...tCell, font: { name: 'Arial', bold: true, sz: 11 } };
+  const tCellRed = { ...tCell, font: { name: 'Arial', bold: true, sz: 11, color: { rgb: RED } }, alignment: { horizontal: 'center', vertical: 'center' } };
+  const tCellAlt = { ...tCell, fill: { fgColor: { rgb: 'FAFAFA' } } };
+  const tCellCastAlt = { ...tCell, fill: { fgColor: { rgb: 'FFF5F5' } } };
 
-  // Title
-  setCell(r, 0, 'ZALOVE PRODUCTION', title);
+  // === БРЕНД-ШАПКА (ZALOVE PRODUCTION) ===
+  setCell(r, 0, 'ZALOVE PRODUCTION', brandHeader);
+  for (let c = 1; c <= 3; c++) setCell(r, c, '', brandHeader);
   merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
-  rows.push({ hpt: 32 });
+  rows.push({ hpt: 34 });
   r++;
-
-  setCell(r, 0, 'Вызывной · день ' + _currentCsDay + ' · ' + (project.name || ''), {
-    font: { name: 'Arial', bold: true, sz: 13, color: { rgb: DARK } },
-    alignment: { horizontal: 'left' }
-  });
+  setCell(r, 0, 'ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670', brandSub);
+  for (let c = 1; c <= 3; c++) setCell(r, c, '', brandSub);
   merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+  rows.push({ hpt: 18 });
+  r++;
+  r++; // blank
+
+  // === КРУПНЫЙ ТАЙТЛ ===
+  setCell(r, 0, 'ВЫЗЫВНОЙ', titleHuge);
+  setCell(r, 2, isMV ? '🎵 МУЗ. КЛИП' : '📺 РЕКЛАМА', titleBadge);
+  merges.push({ s: { r, c: 2 }, e: { r, c: 2 } });
+  setCell(r, 3, cs.date ? formatDateRu(cs.date) : '—', dateBig);
+  rows.push({ hpt: 38 });
+  r++;
+  setCell(r, 0, project.name + ' · день ' + _currentCsDay + (project.days ? ' из ' + project.days : '') + (project.client ? ' · ' + project.client : ''), projectInfo);
+  merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+  rows.push({ hpt: 22 });
+  r++;
+  r++; // blank
+
+  // === ГЛАВНЫЕ РОЛИ ===
+  setCell(r, 0, 'Режиссёр', rolesLbl);
+  setCell(r, 1, 'DOP', rolesLbl);
+  setCell(r, 2, 'Продюсер', rolesLbl);
+  setCell(r, 3, 'Арт', rolesLbl);
+  rows.push({ hpt: 16 });
+  r++;
+  setCell(r, 0, cs.directorName || '—', rolesVal);
+  setCell(r, 1, cs.dopName || '—', rolesVal);
+  setCell(r, 2, cs.producerName || '—', rolesVal);
+  setCell(r, 3, cs.artName || '—', rolesVal);
+  rows.push({ hpt: 22 });
   r++;
   r++;
 
-  // Meta
-  const meta = [
-    ['Дата', cs.date ? formatDateRu(cs.date) : '—'],
-    ['Режиссёр', cs.directorName || '—'],
-    ['DOP', cs.dopName || '—'],
-    ['Продюсер', cs.producerName || '—'],
-    ['Арт', cs.artName || '—'],
-    ['Клиент', project.client || '—'],
-    ['Тип', project.type || '—']
-  ];
-  meta.forEach(([l, v]) => {
-    setCell(r, 0, l, lbl);
-    setCell(r, 1, v, val);
-    merges.push({ s: { r, c: 1 }, e: { r, c: 3 } });
+  // === ТАЙМИНГИ ===
+  if (cs.startShift || cs.startShoot || cs.endShift) {
+    setCell(r, 0, 'НАЧАЛО СМЕНЫ', timesHeaderDark);
+    setCell(r, 1, 'НАЧАЛО СЪЁМКИ', timesHeaderDark);
+    setCell(r, 2, 'КОНЕЦ СМЕНЫ', timesHeaderDark);
+    setCell(r, 3, '', timesHeaderDark);
+    rows.push({ hpt: 16 });
     r++;
-  });
-
-  r++;
-  // Times
-  setCell(r, 0, 'ТАЙМИНГИ', sectionHead);
-  merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
-  r++;
-  setCell(r, 0, 'Начало смены', lbl); setCell(r, 1, cs.startShift || '—', val);
-  setCell(r, 2, 'Начало съёмки', lbl); setCell(r, 3, cs.startShoot || '—', val);
-  r++;
-  setCell(r, 0, 'Конец смены', lbl); setCell(r, 1, cs.endShift || '—', val);
-  r++;
-
-  // Location
-  r++;
-  setCell(r, 0, 'ЛОКАЦИЯ', sectionRed);
-  merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
-  r++;
-  setCell(r, 0, 'Название', lbl); setCell(r, 1, cs.locationName || '—', val); merges.push({s:{r,c:1},e:{r,c:3}}); r++;
-  setCell(r, 0, 'Адрес', lbl); setCell(r, 1, cs.locationAddress || '—', val); merges.push({s:{r,c:1},e:{r,c:3}}); r++;
-  setCell(r, 0, 'Контакт', lbl); setCell(r, 1, (cs.locationContactName || '') + (cs.locationContactPhone ? ' · ' + cs.locationContactPhone : ''), val); merges.push({s:{r,c:1},e:{r,c:3}}); r++;
-  if (cs.locationContactTelegram) { setCell(r, 0, 'Telegram', lbl); setCell(r, 1, cs.locationContactTelegram, val); merges.push({s:{r,c:1},e:{r,c:3}}); r++; }
-  if (cs.important) { setCell(r, 0, '⚠ Важно', lbl); setCell(r, 1, cs.important, val); merges.push({s:{r,c:1},e:{r,c:3}}); r++; }
-
-  r++;
-  // Wi-Fi / weather / parking
-  if (cs.wifiName || cs.weatherDay || cs.parking) {
-    setCell(r, 0, 'СРЕДА', sectionHead); merges.push({s:{r,c:0},e:{r,c:3}}); r++;
-    if (cs.wifiName) { setCell(r, 0, 'Wi-Fi', lbl); setCell(r, 1, cs.wifiName + (cs.wifiPass ? ' / ' + cs.wifiPass : ''), val); r++; }
-    if (cs.weatherDay || cs.weatherNight) { setCell(r, 0, 'Погода', lbl); setCell(r, 1, 'день ' + (cs.weatherDay || '?') + '°C · ночь ' + (cs.weatherNight || '?') + '°C', val); r++; }
-    if (cs.parking) { setCell(r, 0, 'Парковка', lbl); setCell(r, 1, cs.parking, val); merges.push({s:{r,c:1},e:{r,c:3}}); r++; }
+    setCell(r, 0, cs.startShift || '—:—', timesValueDark);
+    setCell(r, 1, cs.startShoot || '—:—', timesValueDark);
+    setCell(r, 2, cs.endShift || '—:—', timesValueDark);
+    setCell(r, 3, '', timesValueDark);
+    rows.push({ hpt: 28 });
+    r++;
     r++;
   }
 
-  // Crew table
+  // === ЛОКАЦИЯ ===
+  if (cs.locationName || cs.locationAddress) {
+    setCell(r, 0, 'ГДЕ СНИМАЕМ', locTitle);
+    for (let c = 1; c <= 3; c++) setCell(r, c, '', locTitle);
+    merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+    rows.push({ hpt: 16 });
+    r++;
+    setCell(r, 0, cs.locationName || '—', locName);
+    for (let c = 1; c <= 3; c++) setCell(r, c, '', locName);
+    merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+    rows.push({ hpt: 24 });
+    r++;
+    if (cs.locationAddress) {
+      setCell(r, 0, cs.locationAddress, locText);
+      for (let c = 1; c <= 3; c++) setCell(r, c, '', locText);
+      merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+      r++;
+    }
+    if (cs.locationContactName || cs.locationContactPhone || cs.locationContactTelegram) {
+      let contact = cs.locationContactName || '';
+      if (cs.locationContactPhone) contact += ' · ' + cs.locationContactPhone;
+      if (cs.locationContactTelegram) contact += ' · ' + cs.locationContactTelegram;
+      setCell(r, 0, contact, locText);
+      for (let c = 1; c <= 3; c++) setCell(r, c, '', locText);
+      merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+      r++;
+    }
+    r++;
+  }
+
+  // === IMPORTANT ===
+  if (cs.important) {
+    setCell(r, 0, '⚠  ' + cs.important.toUpperCase(), importantStyle);
+    for (let c = 1; c <= 3; c++) setCell(r, c, '', importantStyle);
+    merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+    rows.push({ hpt: 22 });
+    r++;
+    r++;
+  }
+
+  // === СРЕДА (Wi-Fi / weather / parking) ===
+  if (cs.wifiName || cs.weatherDay || cs.parking) {
+    if (cs.wifiName) {
+      setCell(r, 0, 'Wi-Fi: ' + cs.wifiName + (cs.wifiPass ? ' / ' + cs.wifiPass : ''), infoText);
+      merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+      r++;
+    }
+    if (cs.weatherDay || cs.weatherNight) {
+      setCell(r, 0, 'Погода: день ' + (cs.weatherDay || '?') + '°C · ночь ' + (cs.weatherNight || '?') + '°C', infoText);
+      merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+      r++;
+    }
+    if (cs.parking) {
+      setCell(r, 0, 'Парковка: ' + cs.parking, infoText);
+      merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+      r++;
+    }
+    r++;
+  }
+
+  // === КРЮ TABLE ===
   if (cs.crew && cs.crew.length > 0) {
-    setCell(r, 0, 'КРЮ · ' + cs.crew.length + ' ЧЕЛОВЕК', sectionHead); merges.push({s:{r,c:0},e:{r,c:3}}); r++;
-    setCell(r, 0, 'Позиция', tHead); setCell(r, 1, 'ФИО', tHead); setCell(r, 2, 'Телефон', tHead); setCell(r, 3, 'Вызов', tHead); r++;
-    cs.crew.forEach(p => {
-      setCell(r, 0, p.position || '', tCell);
-      setCell(r, 1, p.name || '', tCell);
-      setCell(r, 2, p.phone || '', tCell);
-      setCell(r, 3, p.callTime || '', { ...tCell, alignment: { horizontal: 'center' } });
+    setCell(r, 0, 'КРЮ · СЪЁМОЧНАЯ ГРУППА', crewSectionHead);
+    setCell(r, 1, '', crewSectionHead);
+    setCell(r, 2, '', crewSectionHead);
+    setCell(r, 3, cs.crew.length + ' человек', sectionCount);
+    merges.push({ s: { r, c: 0 }, e: { r, c: 2 } });
+    rows.push({ hpt: 28 });
+    r++;
+    setCell(r, 0, 'Позиция', tHeadDark);
+    setCell(r, 1, 'ФИО', tHeadDark);
+    setCell(r, 2, 'Телефон', tHeadDark);
+    setCell(r, 3, 'Вызов', tHeadDark);
+    rows.push({ hpt: 18 });
+    r++;
+    cs.crew.forEach((p, i) => {
+      const altStyle = i % 2 === 0 ? tCell : tCellAlt;
+      setCell(r, 0, p.position || '', { ...tCellBold, fill: altStyle.fill });
+      setCell(r, 1, p.name || '', altStyle);
+      setCell(r, 2, p.phone || '', altStyle);
+      setCell(r, 3, p.callTime || '', { ...altStyle, alignment: { horizontal: 'center', vertical: 'center' }, font: { name: 'Arial', bold: true, sz: 11 } });
+      rows.push({ hpt: 20 });
       r++;
     });
     r++;
   }
 
-  // Cast table
+  // === КАСТИНГ TABLE — выделенный красным ===
   if (cs.cast && cs.cast.length > 0) {
-    setCell(r, 0, (project.type === 'MV' ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ И КАСТИНГ') + ' · ' + cs.cast.length + ' ЧЕЛОВЕК', sectionRed); merges.push({s:{r,c:0},e:{r,c:3}}); r++;
-    setCell(r, 0, 'Позиция', tHead); setCell(r, 1, 'ФИО', tHead); setCell(r, 2, 'Телефон', tHead); setCell(r, 3, 'Вызов', tHead); r++;
-    cs.cast.forEach(p => {
-      setCell(r, 0, p.position || '', tCell);
-      setCell(r, 1, p.name || '', tCell);
-      setCell(r, 2, p.phone || '', tCell);
-      setCell(r, 3, p.callTime || '', { ...tCell, alignment: { horizontal: 'center' } });
+    r++;
+    setCell(r, 0, isMV ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ, АГЕНТСТВО И КАСТИНГ', castSectionHead);
+    setCell(r, 1, '', castSectionHead);
+    setCell(r, 2, '', castSectionHead);
+    setCell(r, 3, cs.cast.length + ' человек', castSectionCount);
+    merges.push({ s: { r, c: 0 }, e: { r, c: 2 } });
+    rows.push({ hpt: 30 });
+    r++;
+    setCell(r, 0, 'Позиция', tHeadRed);
+    setCell(r, 1, 'ФИО', tHeadRed);
+    setCell(r, 2, 'Телефон', tHeadRed);
+    setCell(r, 3, 'Вызов', tHeadRed);
+    rows.push({ hpt: 18 });
+    r++;
+    cs.cast.forEach((p, i) => {
+      const altStyle = i % 2 === 0 ? tCell : tCellCastAlt;
+      setCell(r, 0, p.position || '', { ...tCellBold, fill: altStyle.fill });
+      setCell(r, 1, p.name || '', altStyle);
+      setCell(r, 2, p.phone || '', altStyle);
+      setCell(r, 3, p.callTime || '', { ...tCellRed, fill: altStyle.fill });
+      rows.push({ hpt: 20 });
       r++;
     });
   }
@@ -8497,7 +8792,7 @@ function exportCallsheetToXlsx() {
   ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: r, c: 3 } });
   ws['!merges'] = merges;
   ws['!rows'] = rows;
-  ws['!cols'] = [{ wch: 24 }, { wch: 32 }, { wch: 24 }, { wch: 16 }];
+  ws['!cols'] = [{ wch: 30 }, { wch: 36 }, { wch: 24 }, { wch: 14 }];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Вызывной');
