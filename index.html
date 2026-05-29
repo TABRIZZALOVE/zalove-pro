@@ -2367,6 +2367,140 @@ body.has-reel .theme-toggle { right: 158px; }
 .mood-option.selected { border-color: var(--brand-red); background: var(--bg-2); }
 .mood-option .mood-label { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
 
+/* Заморозка проекта — ледяной эффект */
+.project-card.frozen {
+  position: relative;
+  overflow: hidden;
+}
+.project-card.frozen .poster {
+  filter: grayscale(0.6) brightness(0.78) blur(1px) hue-rotate(180deg);
+}
+.project-card.frozen .card-body {
+  background: linear-gradient(180deg, rgba(220,240,255,0.5), rgba(200,230,255,0.3));
+}
+.project-card.frozen .card-title,
+.project-card.frozen .card-meta {
+  color: #4a6e8a;
+}
+.project-card.frozen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(180,220,255,0.35) 0%, rgba(220,240,255,0.5) 50%, rgba(180,220,255,0.35) 100%),
+    radial-gradient(circle at 18% 22%, rgba(255,255,255,0.95) 1px, transparent 2px),
+    radial-gradient(circle at 72% 38%, rgba(255,255,255,0.9) 1.5px, transparent 2.5px),
+    radial-gradient(circle at 42% 78%, rgba(255,255,255,0.95) 1px, transparent 2px),
+    radial-gradient(circle at 88% 62%, rgba(255,255,255,0.9) 1.2px, transparent 2.2px),
+    radial-gradient(circle at 12% 65%, rgba(255,255,255,0.95) 1px, transparent 1.8px),
+    radial-gradient(circle at 58% 18%, rgba(255,255,255,0.9) 1.3px, transparent 2.3px),
+    radial-gradient(circle at 92% 88%, rgba(255,255,255,0.9) 1px, transparent 2px),
+    radial-gradient(circle at 28% 52%, rgba(255,255,255,0.85) 0.8px, transparent 1.5px);
+  pointer-events: none;
+  border-radius: 4px;
+  z-index: 5;
+  backdrop-filter: blur(0.5px);
+}
+/* Снежинка по центру */
+.project-card.frozen .frozen-snowflake {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 64px;
+  z-index: 12;
+  pointer-events: none;
+  text-shadow:
+    0 0 18px rgba(180,220,255,0.9),
+    0 4px 20px rgba(100,150,200,0.6);
+  animation: frozenSpin 6s linear infinite;
+}
+@keyframes frozenSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+/* Ледяные сосульки сверху */
+.project-card.frozen .frozen-icicles {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  right: 0;
+  height: 14px;
+  z-index: 11;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(220,240,255,0.95) 0%, rgba(180,220,255,0.6) 100%);
+  clip-path: polygon(
+    0 0, 100% 0, 100% 30%,
+    96% 100%, 92% 30%,
+    86% 80%, 80% 30%,
+    74% 60%, 68% 30%,
+    62% 90%, 56% 30%,
+    50% 70%, 44% 30%,
+    38% 95%, 32% 30%,
+    26% 65%, 20% 30%,
+    14% 85%, 8% 30%,
+    4% 60%, 0 30%
+  );
+}
+/* Бейдж "ЗАМОРОЖЕНО" */
+.frozen-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(70,120,180,0.92);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  z-index: 15;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(180,220,255,0.5);
+  box-shadow: 0 4px 12px rgba(70,120,180,0.4);
+}
+.frozen-badge::before { content: '❄'; font-size: 11px; }
+
+/* Status tag frozen */
+.poster-tag.status-frozen { color: #87CEEB; border-color: rgba(135,206,235,0.5); background: rgba(70,120,180,0.85); }
+
+/* Падающие снежинки (декоративные) */
+.frozen-snow-flake {
+  position: absolute;
+  color: white;
+  font-size: 12px;
+  text-shadow: 0 0 6px rgba(180,220,255,0.9);
+  z-index: 13;
+  pointer-events: none;
+  animation: snowfall linear infinite;
+}
+@keyframes snowfall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(320px) rotate(360deg); opacity: 0; }
+}
+
+/* Кнопка заморозить */
+.btn-freeze {
+  background: linear-gradient(135deg, #87CEEB, #4682B4) !important;
+  color: white !important;
+  border: none !important;
+}
+.btn-freeze:hover { background: linear-gradient(135deg, #4682B4, #2c5f8d) !important; box-shadow: 0 4px 14px rgba(70,120,180,0.4) !important; }
+.btn-unfreeze {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: white !important;
+  border: none !important;
+}
+.btn-unfreeze:hover { background: linear-gradient(135deg, #d97706, #b45309) !important; box-shadow: 0 4px 14px rgba(245,158,11,0.4) !important; }
+
 /* Smeta promo card — главная смета, выделенный блок */
 .smeta-promo {
   background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-paper) 100%);
@@ -3498,7 +3632,8 @@ body.has-reel .theme-toggle { right: 158px; }
             <button class="btn-secondary btn">⤓ Экспорт всех</button>
             <button class="btn-secondary btn">📨 Поделиться</button>
             <button class="btn-dark btn">🤖 В Telegram</button>
-            <button class="btn-secondary btn" style="margin-left: auto;">🎬 Закрыть проект</button>
+            <button class="btn btn-freeze" id="freeze-btn" onclick="toggleFreezeProject()" style="margin-left: auto;">❄ Заморозить</button>
+            <button class="btn-secondary btn">🎬 Закрыть проект</button>
           </div>
         </div>
       </div>
@@ -5313,6 +5448,7 @@ body.has-reel .theme-toggle { right: 158px; }
               <option value="preprod">Pre-production</option>
               <option value="production">Production</option>
               <option value="post">Post-production</option>
+              <option value="frozen">❄ Заморожен</option>
               <option value="done">Сдан</option>
               <option value="archive">Архив</option>
             </select>
@@ -5781,7 +5917,8 @@ const STATUS_TAGS = {
   production: { txt: 'PRODUCTION', cls: 'status-prod' },
   post: { txt: 'POST', cls: 'status-post' },
   done: { txt: 'DONE', cls: 'status-pre' },
-  archive: { txt: 'ARCHIVE', cls: '' }
+  archive: { txt: 'ARCHIVE', cls: '' },
+  frozen: { txt: '❄ FROZEN', cls: 'status-frozen' }
 };
 const MOOD_ICONS = {
   fire: { emoji: '🔥', cls: 'mood-fire', title: 'Горит! Дедлайн близко' },
@@ -5803,12 +5940,27 @@ function projectCardHTML(p, idx) {
   const status = STATUS_TAGS[p.status || 'preprod'];
   const deadlineStr = formatDeadline(p);
   const meta = [p.client, p.type, deadlineStr ? 'сдача ' + deadlineStr : ''].filter(Boolean).join(' · ');
+  const isFrozen = p.status === 'frozen';
+
+  // Снежинки для замороженных
+  const snowflakes = isFrozen ? [
+    '<div class="frozen-snow-flake" style="left: 12%; animation-duration: 4s; animation-delay: 0s;">❄</div>',
+    '<div class="frozen-snow-flake" style="left: 28%; animation-duration: 5s; animation-delay: 1s;">❅</div>',
+    '<div class="frozen-snow-flake" style="left: 48%; animation-duration: 4.5s; animation-delay: 2s;">❄</div>',
+    '<div class="frozen-snow-flake" style="left: 68%; animation-duration: 5.5s; animation-delay: 0.5s;">❅</div>',
+    '<div class="frozen-snow-flake" style="left: 85%; animation-duration: 4.2s; animation-delay: 1.5s;">❄</div>'
+  ].join('') : '';
+
   return `
-    <div class="project-card" data-project-id="${p.id}" onclick="openProjectDetail('${p.id}', ${idx + 1})">
+    <div class="project-card ${isFrozen ? 'frozen' : ''}" data-project-id="${p.id}" onclick="openProjectDetail('${p.id}', ${idx + 1})">
       <div class="card-actions">
         <button class="btn-edit" onclick="event.stopPropagation(); openProjectForm('${p.id}')" title="Редактировать">✎</button>
         <button onclick="event.stopPropagation(); deleteProjectConfirm('${p.id}', '${escapeHtml(p.name)}')" title="Удалить">×</button>
       </div>
+      ${isFrozen ? '<div class="frozen-icicles"></div>' : ''}
+      ${isFrozen ? '<div class="frozen-badge">заморожен</div>' : ''}
+      ${snowflakes}
+      ${isFrozen ? '<div class="frozen-snowflake">❄</div>' : ''}
       <div class="poster ${p.poster || 'poster-1'}">
         <div class="poster-tag ${status.cls}">${status.txt}</div>
         <div class="mood-icon ${mood.cls}" title="${mood.title}">${mood.emoji}</div>
@@ -5853,20 +6005,26 @@ function renderProjects() {
 function renderStats() {
   const projects = DB.getProjects();
 
-  // 1. В работе — не закрытые проекты
-  const active = projects.filter(p => !['done', 'archive'].includes(p.status));
+  // 1. В работе — не закрытые и не замороженные
+  const active = projects.filter(p => !['done', 'archive', 'frozen'].includes(p.status));
+  const frozen = projects.filter(p => p.status === 'frozen');
   const activeCount = active.length;
+  const frozenCount = frozen.length;
   const sosCount = active.filter(p => p.mood === 'sos').length;
   const fireCount = active.filter(p => p.mood === 'fire').length;
   document.getElementById('stat-active').textContent = activeCount;
   const activeDelta = document.getElementById('stat-active-delta');
   if (sosCount > 0) {
-    activeDelta.innerHTML = '🚨 ' + sosCount + ' в группе риска';
+    activeDelta.innerHTML = '🚨 ' + sosCount + ' в группе риска' + (frozenCount ? ' · ❄ ' + frozenCount : '');
     activeDelta.className = 'stat-delta down';
   } else if (fireCount > 0) {
-    activeDelta.innerHTML = '🔥 ' + fireCount + ' горят';
+    activeDelta.innerHTML = '🔥 ' + fireCount + ' горят' + (frozenCount ? ' · ❄ ' + frozenCount : '');
     activeDelta.className = 'stat-delta';
     activeDelta.style.color = '#f59e0b';
+  } else if (frozenCount > 0) {
+    activeDelta.innerHTML = '❄ ' + frozenCount + ' заморожено';
+    activeDelta.className = 'stat-delta';
+    activeDelta.style.color = '#4682B4';
   } else if (activeCount > 0) {
     activeDelta.innerHTML = '✓ всё в графике';
     activeDelta.className = 'stat-delta up';
@@ -7774,8 +7932,49 @@ window.openProjectDetail = function(id, idx) {
     renderCallsheetCard(project);
     renderSmetaPromo(project);
     renderDocCreativeCards(project);
+    updateFreezeButton(project);
   }
 };
+
+function updateFreezeButton(project) {
+  const btn = document.getElementById('freeze-btn');
+  if (!btn) return;
+  if (project.status === 'frozen') {
+    btn.innerHTML = '☀ Разморозить';
+    btn.className = 'btn btn-unfreeze';
+    btn.style.marginLeft = 'auto';
+  } else {
+    btn.innerHTML = '❄ Заморозить';
+    btn.className = 'btn btn-freeze';
+    btn.style.marginLeft = 'auto';
+  }
+}
+
+function toggleFreezeProject() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  if (project.status === 'frozen') {
+    // Разморозить — возвращаем предыдущий статус
+    DB.updateProject(_currentProjectId, {
+      status: project.prevStatus || 'preprod',
+      prevStatus: null
+    });
+    toast('Проект разморожен ☀', 'success');
+  } else {
+    // Заморозить — запоминаем текущий статус
+    if (!confirm('Заморозить проект «' + project.name + '»?\\n\\nПроект перейдёт в статус «заморожен», карточка покроется льдом. Можно будет разморозить в любой момент.')) return;
+    DB.updateProject(_currentProjectId, {
+      prevStatus: project.status || 'preprod',
+      status: 'frozen'
+    });
+    toast('Проект заморожен ❄', 'success');
+  }
+  const updated = DB.getProject(_currentProjectId);
+  updateFreezeButton(updated);
+  renderProjects();
+  renderStats();
+}
 
 // Обновить промо-блок сметы (вверху проекта)
 function renderSmetaPromo(project) {
