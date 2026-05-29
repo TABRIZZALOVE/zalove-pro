@@ -2367,6 +2367,185 @@ body.has-reel .theme-toggle { right: 158px; }
 .mood-option.selected { border-color: var(--brand-red); background: var(--bg-2); }
 .mood-option .mood-label { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
 
+/* Callsheet editor */
+.cs-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 0;
+}
+.cs-tab {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+.cs-tab:hover { color: var(--text); }
+.cs-tab.active {
+  color: var(--brand-red);
+  border-bottom-color: var(--brand-red);
+}
+.cs-tab-empty { opacity: 0.5; }
+.cs-tab-status {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--line-2);
+}
+.cs-tab.active .cs-tab-status,
+.cs-tab.has-data .cs-tab-status { background: var(--green); }
+
+.cs-editor { display: grid; gap: 16px; }
+.cs-section {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+.cs-section-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+.cs-section-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: var(--brand-red);
+}
+.cs-row-grid { display: grid; gap: 10px; }
+.cs-2col { grid-template-columns: 1fr 1fr; }
+.cs-3col { grid-template-columns: 1fr 1fr 1fr; }
+.cs-mixed-2-1 { grid-template-columns: 2fr 1fr; }
+.cs-mixed-1-2 { grid-template-columns: 1fr 2fr; }
+
+.cs-field-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.cs-input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  border-radius: 4px;
+}
+.cs-input:focus { outline: none; border-color: var(--brand-red); }
+.cs-input.cs-time { text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; }
+.cs-textarea { min-height: 56px; resize: vertical; }
+
+/* Crew/Cast tables */
+.cs-people-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.cs-people-table th {
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+}
+.cs-people-table td {
+  padding: 4px 8px;
+  border-bottom: 1px dashed var(--line);
+}
+.cs-people-table tr:last-child td { border-bottom: none; }
+.cs-people-table input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 5px 7px;
+  font-size: 12px;
+  border-radius: 3px;
+  color: var(--text);
+  font-family: inherit;
+}
+.cs-people-table input.center { text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--brand-red); }
+.cs-people-table input:hover { border-color: var(--line); background: var(--bg-3); }
+.cs-people-table input:focus { outline: none; border-color: var(--brand-red); background: var(--bg-2); }
+.cs-del-btn-sm {
+  width: 22px; height: 22px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.cs-people-table tr:hover .cs-del-btn-sm { opacity: 1; }
+.cs-del-btn-sm:hover { background: rgba(232,35,29,0.1); color: var(--brand-red); }
+
+.cs-table-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.cs-add-row {
+  flex: 1;
+  background: transparent;
+  border: 1px dashed var(--line-2);
+  padding: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.cs-add-row:hover { border-color: var(--brand-red); color: var(--brand-red); border-style: solid; }
+.cs-pull-team {
+  background: rgba(232,35,29,0.08);
+  border: 1px solid rgba(232,35,29,0.3);
+  color: var(--brand-red);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.cs-pull-team:hover { background: var(--brand-red); color: white; }
+
+/* Important note red-bordered */
+.cs-important-note {
+  background: rgba(232,35,29,0.05);
+  border: 1px solid rgba(232,35,29,0.3);
+  border-left: 3px solid var(--brand-red);
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--brand-red-deep);
+}
+
 /* Заморозка проекта — ледяной эффект */
 .project-card.frozen {
   position: relative;
@@ -4169,13 +4348,13 @@ body.has-reel .theme-toggle { right: 158px; }
       <div class="doc-header-l">
         <div class="doc-header-icon">⌚</div>
         <div>
-          <div class="doc-section-label">Документ · из вашего шаблона</div>
-          <div class="doc-header-title">Вызывной · Nebula · день 1</div>
+          <div class="doc-section-label">Вызывной · авто-сохранение</div>
+          <div class="doc-header-title" id="cs-title">Вызывной</div>
         </div>
       </div>
       <div class="doc-actions-h">
-        <button class="btn btn-dark">⤓ PDF</button>
-        <button class="btn-secondary btn">📨 В Telegram</button>
+        <button class="btn btn-dark" onclick="exportCallsheetToPdf()">⤓ PDF</button>
+        <button class="btn btn-dark" onclick="exportCallsheetToXlsx()">⤓ XLSX</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
@@ -4183,103 +4362,17 @@ body.has-reel .theme-toggle { right: 158px; }
       <div class="smart-fill">
         <div class="sf-icon">⚡</div>
         <div class="sf-text">
-          <strong>Из шаблона «вызывной — реклама / клип»</strong>
-          27 контактов · крю + кастинг. Telegram-ссылки и телефоны кликабельны в готовом PDF.
+          <strong>Smart Fill: данные подтянулись из проекта</strong>
+          Режиссёр, оператор, продюсер заполнены автоматически из участников. Кнопка <strong>«⊕ Подтянуть из команды»</strong> добавит всех в крю.
         </div>
       </div>
-
-      <div class="cs-header">
-        <div class="cs-title-row">
-          <div>
-            <div class="cs-title">Вызывной</div>
-            <div class="cs-subtitle">SAMSUNG — «NEBULA» · TVC 60 SEC · ДЕНЬ 1</div>
-          </div>
-          <div class="cs-date">18/05/2026</div>
-        </div>
-        <div class="cs-info-row">
-          <div>
-            <div class="cs-info-label">Director</div>
-            <div class="cs-info-value">[ режиссёр ]</div>
-          </div>
-          <div>
-            <div class="cs-info-label">DOP</div>
-            <div class="cs-info-value">[ оператор ]</div>
-          </div>
-          <div>
-            <div class="cs-info-label">Producer</div>
-            <div class="cs-info-value">Табриз Залов</div>
-          </div>
-          <div>
-            <div class="cs-info-label">Art</div>
-            <div class="cs-info-value">[ арт-директор ]</div>
-          </div>
-        </div>
-        <div class="cs-times">
-          <div class="cs-time-cell"><div class="cs-time-label">Начало смены</div><div class="cs-time-value">10:00</div></div>
-          <div class="cs-time-cell"><div class="cs-time-label">Начало съёмки</div><div class="cs-time-value">12:00</div></div>
-          <div class="cs-time-cell"><div class="cs-time-label">Конец смены</div><div class="cs-time-value">05:00</div></div>
-        </div>
-        <div class="cs-info-row">
-          <div>
-            <div class="cs-info-label">Wi-Fi</div>
-            <div class="cs-info-value">[ название ]<span class="small">пароль: ********</span></div>
-          </div>
-          <div>
-            <div class="cs-info-label">Погода (Open-Meteo)</div>
-            <div class="cs-info-value"><span class="weather-chip loading" id="weatherChip"><span class="ico">⏳</span> Загружаем...</span></div>
-          </div>
-          <div style="grid-column: span 2;">
-            <div class="cs-info-label">Парковка</div>
-            <div class="cs-info-value" style="font-size: 11px; color: var(--text-2); font-weight: 400;">[ инструкция по парковке подтягивается из карточки локации ]</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="cs-loc">
-        <h3>Где снимаем</h3>
-        <div class="cs-loc-grid">
-          <div><b>Название</b><div>[ локация ]</div></div>
-          <div><b>Адрес</b><div>[ адрес локации ]</div></div>
-          <div><b>Контакт на площадке</b><div>[ ФИО ] · <span style="color: var(--brand-red); font-weight: 700;">+7 ___ ___ __ __</span></div></div>
-        </div>
-        <div class="cs-loc-warn">⚠ Важно: с собой иметь паспорт</div>
-      </div>
-
-      <div class="cs-table-wrap">
-        <div class="cs-table">
-          <div class="cs-table-h">Крю · 14 человек</div>
-          <div class="cs-row"><div class="pos">Режиссёр</div><div class="nm">[ ФИО ]</div><div class="in">11:00</div></div>
-          <div class="cs-row"><div class="pos">Второй режиссёр</div><div class="nm">[ ФИО ]</div><div class="in">11:00</div></div>
-          <div class="cs-row"><div class="pos">Лин. продюсер</div><div class="nm">[ ФИО ]</div><div class="in">10:00</div></div>
-          <div class="cs-row"><div class="pos">Оператор</div><div class="nm">[ ФИО ]</div><div class="in">10:30</div></div>
-          <div class="cs-row"><div class="pos">Арт / Фото</div><div class="nm">[ ФИО ]</div><div class="in">10:45</div></div>
-          <div class="cs-row"><div class="pos">Администрация</div><div class="nm">[ ФИО ]</div><div class="in">09:30</div></div>
-          <div class="cs-row"><div class="pos">Худ. цех</div><div class="nm">[ ФИО ]</div><div class="in">11:00</div></div>
-          <div class="cs-row"><div class="pos">Гаффер</div><div class="nm">[ ФИО ]</div><div class="in">10:00</div></div>
-          <div class="cs-row"><div class="pos">Визажист</div><div class="nm">[ ФИО ]</div><div class="in">10:45</div></div>
-          <div class="cs-row"><div class="pos">Стилист</div><div class="nm">[ ФИО ]</div><div class="in">10:30</div></div>
-          <div class="cs-row"><div class="pos">Реж. монтажа</div><div class="nm">[ ФИО ]</div><div class="in">11:30</div></div>
-          <div class="cs-row"><div class="pos">Кастинг</div><div class="nm">[ ФИО ]</div><div class="in">10:45</div></div>
-          <div class="cs-row"><div class="pos">Бэкстейдж</div><div class="nm">[ ФИО ]</div><div class="in">10:00</div></div>
-          <div class="cs-row"><div class="pos">Буфет</div><div class="nm">[ ФИО ]</div><div class="in">10:00</div></div>
-        </div>
-        <div class="cs-table">
-          <div class="cs-table-h">Клиент / Кастинг</div>
-          <div class="cs-row"><div class="pos">Клиент (бренд)</div><div class="nm">Samsung Electronics</div><div class="in">11:00</div></div>
-          <div class="cs-row"><div class="pos">Агентство</div><div class="nm">[ название ]</div><div class="in">11:00</div></div>
-          <div class="cs-row"><div class="pos">Главный герой</div><div class="nm">[ актёр ]</div><div class="in">11:00</div></div>
-          <div class="cs-row"><div class="pos">Второй план</div><div class="nm">[ актёры ×4 ]</div><div class="in">12:00</div></div>
-          <div class="cs-row"><div class="pos">Массовка АМС</div><div class="nm">[ группа · 8 чел. ]</div><div class="in">14:00</div></div>
-          <div class="cs-row"><div class="pos">Стилист</div><div class="nm">[ ФИО ]</div><div class="in">10:30</div></div>
-          <div class="cs-row"><div class="pos">Грим</div><div class="nm">[ ФИО ]</div><div class="in">10:45</div></div>
-        </div>
-      </div>
+      <div class="cs-tabs" id="cs-tabs"></div>
+      <div class="cs-editor" id="cs-editor"></div>
     </div>
     <div class="doc-footer">
-      <div class="doc-footer-info">CALLSHEET-NEB-D01 · ДЕНЬ 1 ИЗ 3</div>
+      <div class="doc-footer-info" id="cs-footer-info">—</div>
       <div style="display: flex; gap: 6px;">
-        <button class="btn-secondary btn">📋 Скопировать</button>
-        <button class="btn">⚡ Разослать в Telegram</button>
+        <button class="btn" onclick="closeAll()">💾 Закрыть</button>
       </div>
     </div>
   </div>
@@ -5559,6 +5652,11 @@ function openDoc(type) {
   if (type === 'estimate' && _currentProjectId) {
     const project = DB.getProject(_currentProjectId);
     if (project) renderEstimate(project);
+  }
+  // Вызывной — открываем редактор
+  if (type === 'callsheet' && _currentProjectId) {
+    openCallsheetEditor(1);
+    return;
   }
   const map = {
     estimate: 'm-estimate',
@@ -7700,6 +7798,715 @@ window.addEventListener('DOMContentLoaded', renderBrandHealth);
 setInterval(renderBrandHealth, 60 * 60 * 1000); // каждый час
 
 /* ============================================================
+   ВЫЗЫВНОЙ — РЕДАКТОР (по дням съёмки)
+   ============================================================ */
+let _currentCsDay = 1;
+let _currentCsData = null;
+let _csSaveTimer = null;
+
+function getProjectTeamMember(project, ...roles) {
+  const team = project.team || [];
+  for (const role of roles) {
+    const m = team.find(x => x.role === role);
+    if (m) return m;
+  }
+  return null;
+}
+
+function ensureCallsheet(project, dayNum) {
+  if (!project.callsheets) project.callsheets = {};
+  if (!project.callsheets[dayNum]) {
+    // Auto-fill from project + team
+    const director = getProjectTeamMember(project, 'Режиссёр');
+    const dop = getProjectTeamMember(project, 'Оператор-постановщик (DOP)');
+    const producer = getProjectTeamMember(project, 'Линейный продюсер', 'Исполнительный продюсер', 'Генеральный продюсер');
+    const art = getProjectTeamMember(project, 'Арт-директор', 'Художник-постановщик');
+
+    let date = '';
+    if (project.startDate) {
+      const d = new Date(project.startDate);
+      d.setDate(d.getDate() + (dayNum - 1));
+      date = d.toISOString().slice(0, 10);
+    }
+    project.callsheets[dayNum] = {
+      date,
+      directorName: director?.name_ru || '',
+      dopName: dop?.name_ru || '',
+      producerName: producer?.name_ru || 'Табриз Залов',
+      artName: art?.name_ru || '',
+      wifiName: '',
+      wifiPass: '',
+      weatherDay: '',
+      weatherNight: '',
+      parking: '',
+      startShift: '',
+      startShoot: '',
+      endShift: '',
+      locationName: '',
+      locationAddress: '',
+      locationContactName: '',
+      locationContactPhone: '',
+      locationContactTelegram: '',
+      important: 'С собой иметь паспорт',
+      crew: [],
+      cast: []
+    };
+  }
+  return project.callsheets[dayNum];
+}
+
+function isCallsheetFilled(cs) {
+  if (!cs) return false;
+  return !!(cs.locationName || cs.startShift || (cs.crew && cs.crew.length > 0) || (cs.cast && cs.cast.length > 0));
+}
+
+function openCallsheetEditor(dayNum = 1) {
+  if (!_currentProjectId) return;
+  closeAll();
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  _currentCsDay = dayNum;
+  _currentCsData = ensureCallsheet(project, dayNum);
+  renderCallsheetEditor();
+  document.getElementById('m-callsheet').classList.add('active');
+}
+
+function renderCallsheetEditor() {
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const days = Math.max(1, Number(project.days) || 1);
+  const cs = _currentCsData;
+
+  // Title
+  document.getElementById('cs-title').textContent = 'Вызывной · ' + project.name + ' · день ' + _currentCsDay + ' из ' + days;
+  document.getElementById('cs-footer-info').textContent = 'CALLSHEET · день ' + _currentCsDay + ' · авто-сохранение';
+
+  // Tabs (days)
+  const tabsEl = document.getElementById('cs-tabs');
+  let tabsHtml = '';
+  for (let i = 1; i <= days; i++) {
+    const dayCs = (project.callsheets || {})[i];
+    const hasData = isCallsheetFilled(dayCs);
+    tabsHtml += `<div class="cs-tab ${i === _currentCsDay ? 'active' : ''} ${hasData ? 'has-data' : ''} ${!hasData && i !== _currentCsDay ? 'cs-tab-empty' : ''}" onclick="openCallsheetEditor(${i})">
+      <span class="cs-tab-status"></span>День ${i}
+    </div>`;
+  }
+  tabsEl.innerHTML = tabsHtml;
+
+  // Editor content
+  const ed = document.getElementById('cs-editor');
+  ed.innerHTML = `
+    <!-- 1. Шапка проекта -->
+    <div class="cs-section">
+      <div class="cs-section-title">📅 Шапка вызывного</div>
+      <div class="cs-row-grid cs-3col">
+        <div>
+          <div class="cs-field-label">Дата съёмки</div>
+          <input class="cs-input" type="date" data-cs="date" value="${escapeHtml(cs.date || '')}">
+        </div>
+        <div>
+          <div class="cs-field-label">Проект</div>
+          <input class="cs-input" readonly value="${escapeHtml(project.name || '')}" style="background:var(--bg-3);color:var(--muted);">
+        </div>
+        <div>
+          <div class="cs-field-label">Тип</div>
+          <input class="cs-input" readonly value="${escapeHtml(project.type || '—')}" style="background:var(--bg-3);color:var(--muted);">
+        </div>
+      </div>
+      <div class="cs-row-grid cs-2col" style="margin-top: 12px;">
+        <div>
+          <div class="cs-field-label">Клиент / Бренд</div>
+          <input class="cs-input" readonly value="${escapeHtml(project.client || '—')}" style="background:var(--bg-3);color:var(--muted);">
+        </div>
+        <div>
+          <div class="cs-field-label">Артист (если клип)</div>
+          <input class="cs-input" readonly value="${escapeHtml(project.artist || '—')}" style="background:var(--bg-3);color:var(--muted);">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Главные роли крю (Director / DOP / Producer / Art) -->
+    <div class="cs-section">
+      <div class="cs-section-title">🎬 Главные позиции</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">Режиссёр (DIRECTOR)</div>
+          <input class="cs-input" data-cs="directorName" value="${escapeHtml(cs.directorName || '')}" placeholder="ФИО режиссёра">
+        </div>
+        <div>
+          <div class="cs-field-label">Оператор-постановщик (DOP)</div>
+          <input class="cs-input" data-cs="dopName" value="${escapeHtml(cs.dopName || '')}" placeholder="ФИО оператора">
+        </div>
+        <div>
+          <div class="cs-field-label">Продюсер</div>
+          <input class="cs-input" data-cs="producerName" value="${escapeHtml(cs.producerName || '')}" placeholder="ФИО продюсера">
+        </div>
+        <div>
+          <div class="cs-field-label">Арт-директор / Худ-постановщик</div>
+          <input class="cs-input" data-cs="artName" value="${escapeHtml(cs.artName || '')}" placeholder="ФИО арт-директора">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Тайминги -->
+    <div class="cs-section">
+      <div class="cs-section-title">⏰ Тайминги</div>
+      <div class="cs-row-grid cs-3col">
+        <div>
+          <div class="cs-field-label">Начало смены</div>
+          <input class="cs-input cs-time" type="time" data-cs="startShift" value="${escapeHtml(cs.startShift || '')}">
+        </div>
+        <div>
+          <div class="cs-field-label">Начало съёмки</div>
+          <input class="cs-input cs-time" type="time" data-cs="startShoot" value="${escapeHtml(cs.startShoot || '')}">
+        </div>
+        <div>
+          <div class="cs-field-label">Конец смены</div>
+          <input class="cs-input cs-time" type="time" data-cs="endShift" value="${escapeHtml(cs.endShift || '')}">
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Локация -->
+    <div class="cs-section">
+      <div class="cs-section-title">📍 Локация</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">Название локации</div>
+          <input class="cs-input" data-cs="locationName" value="${escapeHtml(cs.locationName || '')}" placeholder="AG Loft, павильон Атмосфера...">
+        </div>
+        <div>
+          <div class="cs-field-label">Адрес</div>
+          <input class="cs-input" data-cs="locationAddress" value="${escapeHtml(cs.locationAddress || '')}" placeholder="Улица, дом, корпус">
+        </div>
+      </div>
+      <div class="cs-row-grid cs-3col" style="margin-top: 12px;">
+        <div>
+          <div class="cs-field-label">Контакт на площадке — имя</div>
+          <input class="cs-input" data-cs="locationContactName" value="${escapeHtml(cs.locationContactName || '')}" placeholder="ФИО">
+        </div>
+        <div>
+          <div class="cs-field-label">Телефон</div>
+          <input class="cs-input" data-cs="locationContactPhone" value="${escapeHtml(cs.locationContactPhone || '')}" placeholder="+7 ___ ___ __ __">
+        </div>
+        <div>
+          <div class="cs-field-label">Telegram</div>
+          <input class="cs-input" data-cs="locationContactTelegram" value="${escapeHtml(cs.locationContactTelegram || '')}" placeholder="@username">
+        </div>
+      </div>
+      <div style="margin-top: 12px;">
+        <div class="cs-field-label">⚠ Важное (например: «с собой паспорт»)</div>
+        <input class="cs-input" data-cs="important" value="${escapeHtml(cs.important || '')}" placeholder="Что обязательно надо взять / помнить">
+      </div>
+    </div>
+
+    <!-- 5. Связь и среда -->
+    <div class="cs-section">
+      <div class="cs-section-title">📶 Связь, погода, парковка</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">Wi-Fi имя сети</div>
+          <input class="cs-input" data-cs="wifiName" value="${escapeHtml(cs.wifiName || '')}" placeholder="название сети">
+        </div>
+        <div>
+          <div class="cs-field-label">Wi-Fi пароль</div>
+          <input class="cs-input" data-cs="wifiPass" value="${escapeHtml(cs.wifiPass || '')}" placeholder="пароль">
+        </div>
+        <div>
+          <div class="cs-field-label">Погода день °C</div>
+          <input class="cs-input" data-cs="weatherDay" value="${escapeHtml(cs.weatherDay || '')}" placeholder="+18">
+        </div>
+        <div>
+          <div class="cs-field-label">Погода ночь °C</div>
+          <input class="cs-input" data-cs="weatherNight" value="${escapeHtml(cs.weatherNight || '')}" placeholder="+9">
+        </div>
+      </div>
+      <div style="margin-top: 12px;">
+        <div class="cs-field-label">Парковка / проезд</div>
+        <textarea class="cs-input cs-textarea" data-cs="parking" placeholder="Платная, 1500₽ / 1ч до приезда заказать пропуск...">${escapeHtml(cs.parking || '')}</textarea>
+      </div>
+    </div>
+
+    <!-- 6. Крю -->
+    <div class="cs-section">
+      <div class="cs-section-title">👥 Крю (съёмочная группа)</div>
+      ${renderPeopleTable('crew', cs.crew || [])}
+      <div class="cs-table-actions">
+        <button class="cs-add-row" onclick="addCsRow('crew')">＋ Добавить позицию</button>
+        <button class="cs-pull-team" onclick="pullCrewFromTeam()">⊕ Подтянуть всю команду из проекта</button>
+      </div>
+    </div>
+
+    <!-- 7. Кастинг / Клиент -->
+    <div class="cs-section">
+      <div class="cs-section-title">🎭 ${project.type === 'MV' ? 'Кастинг и артист' : 'Клиент, агентство и кастинг'}</div>
+      ${renderPeopleTable('cast', cs.cast || [])}
+      <div class="cs-table-actions">
+        <button class="cs-add-row" onclick="addCsRow('cast')">＋ Добавить позицию</button>
+        <button class="cs-pull-team" onclick="pullCastFromTeam()">⊕ Подтянуть актёров из проекта</button>
+      </div>
+    </div>
+  `;
+
+  // Bind input handlers
+  ed.querySelectorAll('input[data-cs], textarea[data-cs]').forEach(inp => {
+    inp.addEventListener('input', onCsInputChange);
+  });
+  ed.querySelectorAll('input.people-input').forEach(inp => {
+    inp.addEventListener('input', onCsPeopleInputChange);
+  });
+}
+
+function renderPeopleTable(kind, people) {
+  const rows = people.map((p, i) => `
+    <tr data-idx="${i}">
+      <td><input class="people-input" data-kind="${kind}" data-field="position" value="${escapeHtml(p.position || '')}" placeholder="Должность"></td>
+      <td><input class="people-input" data-kind="${kind}" data-field="name" value="${escapeHtml(p.name || '')}" placeholder="ФИО"></td>
+      <td><input class="people-input" data-kind="${kind}" data-field="phone" value="${escapeHtml(p.phone || '')}" placeholder="+7 ___ ___ __ __"></td>
+      <td><input class="people-input center" data-kind="${kind}" data-field="callTime" type="time" value="${escapeHtml(p.callTime || '')}"></td>
+      <td><button class="cs-del-btn-sm" onclick="deleteCsRow('${kind}', ${i})">×</button></td>
+    </tr>
+  `).join('');
+  return `
+    <table class="cs-people-table">
+      <thead>
+        <tr>
+          <th style="width: 30%;">Позиция</th>
+          <th style="width: 30%;">ФИО</th>
+          <th style="width: 22%;">Телефон</th>
+          <th style="width: 12%; text-align: center;">Вызов</th>
+          <th style="width: 6%;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows || '<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--muted);font-style:italic;font-size:12px;">Пока пусто. Нажми «+ Добавить позицию» или «Подтянуть из команды»</td></tr>'}
+      </tbody>
+    </table>
+  `;
+}
+
+function onCsInputChange(e) {
+  if (!_currentCsData) return;
+  const field = e.target.dataset.cs;
+  _currentCsData[field] = e.target.value;
+  scheduleCsSave();
+}
+
+function onCsPeopleInputChange(e) {
+  if (!_currentCsData) return;
+  const tr = e.target.closest('tr');
+  const idx = parseInt(tr.dataset.idx);
+  const kind = e.target.dataset.kind;
+  const field = e.target.dataset.field;
+  if (!_currentCsData[kind]) _currentCsData[kind] = [];
+  if (!_currentCsData[kind][idx]) _currentCsData[kind][idx] = {};
+  _currentCsData[kind][idx][field] = e.target.value;
+  scheduleCsSave();
+}
+
+function scheduleCsSave() {
+  clearTimeout(_csSaveTimer);
+  _csSaveTimer = setTimeout(() => saveCsNow(), 400);
+}
+
+function saveCsNow() {
+  if (!_currentProjectId || !_currentCsData) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  if (!project.callsheets) project.callsheets = {};
+  _currentCsData.updatedAt = new Date().toISOString();
+  project.callsheets[_currentCsDay] = _currentCsData;
+  DB.updateProject(_currentProjectId, { callsheets: project.callsheets });
+}
+
+function addCsRow(kind) {
+  if (!_currentCsData) return;
+  if (!_currentCsData[kind]) _currentCsData[kind] = [];
+  _currentCsData[kind].push({ position: '', name: '', phone: '', callTime: '' });
+  saveCsNow();
+  renderCallsheetEditor();
+}
+
+function deleteCsRow(kind, idx) {
+  if (!_currentCsData || !_currentCsData[kind]) return;
+  _currentCsData[kind].splice(idx, 1);
+  saveCsNow();
+  renderCallsheetEditor();
+}
+
+function pullCrewFromTeam() {
+  if (!_currentProjectId || !_currentCsData) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project || !project.team || project.team.length === 0) {
+    toast('В проекте пока нет участников', 'error');
+    return;
+  }
+  // Не дублируем уже добавленных
+  const existing = new Set((_currentCsData.crew || []).map(c => (c.name || '').toLowerCase()));
+  const actorRoles = ['Актёр главной роли', 'Актёр второго плана', 'АМС (массовка)', 'Танцор', 'Музыкант', 'Хореограф'];
+  let added = 0;
+  project.team.forEach(m => {
+    if (actorRoles.includes(m.role)) return; // актёры идут в кастинг
+    if (existing.has((m.name_ru || '').toLowerCase())) return;
+    _currentCsData.crew.push({
+      position: m.role || '',
+      name: m.name_ru || '',
+      phone: m.phone || '',
+      callTime: ''
+    });
+    added++;
+  });
+  saveCsNow();
+  renderCallsheetEditor();
+  toast(`Добавлено ${added} человек`, 'success');
+}
+
+function pullCastFromTeam() {
+  if (!_currentProjectId || !_currentCsData) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project || !project.team || project.team.length === 0) {
+    toast('В проекте пока нет участников', 'error');
+    return;
+  }
+  const existing = new Set((_currentCsData.cast || []).map(c => (c.name || '').toLowerCase()));
+  const actorRoles = ['Актёр главной роли', 'Актёр второго плана', 'АМС (массовка)', 'Танцор', 'Музыкант', 'Хореограф'];
+  let added = 0;
+  project.team.forEach(m => {
+    if (!actorRoles.includes(m.role)) return;
+    if (existing.has((m.name_ru || '').toLowerCase())) return;
+    _currentCsData.cast.push({
+      position: m.role || '',
+      name: m.name_ru || '',
+      phone: m.phone || '',
+      callTime: ''
+    });
+    added++;
+  });
+  saveCsNow();
+  renderCallsheetEditor();
+  toast(`Добавлено ${added} человек`, 'success');
+}
+
+/* ===== ЭКСПОРТ ВЫЗЫВНОГО ===== */
+function exportCallsheetToPdf() {
+  if (typeof window.jspdf === 'undefined') {
+    toast('jsPDF не загрузилась', 'error');
+    return;
+  }
+  if (!_currentProjectId || !_currentCsData) return;
+  const project = DB.getProject(_currentProjectId);
+  const cs = _currentCsData;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const RED = [232, 35, 29];
+  const DARK = [10, 9, 7];
+
+  // Header
+  doc.setFillColor(...RED);
+  doc.rect(0, 0, 210, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('ZALOVE PRODUCTION', 14, 14);
+
+  doc.setTextColor(...DARK);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('Вызывной · день ' + _currentCsDay + (project.days ? ' из ' + project.days : ''), 14, 32);
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(project.name + (cs.date ? ' · ' + formatDateRu(cs.date) : ''), 14, 39);
+
+  // Меta
+  let y = 48;
+  doc.setFontSize(9);
+  const metaPairs = [
+    ['Режиссёр', cs.directorName],
+    ['DOP', cs.dopName],
+    ['Продюсер', cs.producerName],
+    ['Арт', cs.artName],
+    ['Клиент', project.client || '—'],
+    ['Тип', project.type || '—']
+  ];
+  metaPairs.forEach(([lbl, val]) => {
+    if (!val) return;
+    doc.setTextColor(120, 120, 120);
+    doc.text(lbl + ':', 14, y);
+    doc.setTextColor(...DARK);
+    doc.text(String(val), 50, y);
+    y += 5;
+  });
+
+  // Таймнинги
+  y += 4;
+  doc.setFillColor(245, 245, 240);
+  doc.rect(14, y - 4, 182, 12, 'F');
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...DARK);
+  doc.text('ТАЙМИНГИ', 16, y + 2);
+  if (cs.startShift) doc.text('Начало смены: ' + cs.startShift, 60, y + 2);
+  if (cs.startShoot) doc.text('Съёмка: ' + cs.startShoot, 110, y + 2);
+  if (cs.endShift) doc.text('Конец: ' + cs.endShift, 160, y + 2);
+  y += 14;
+
+  // Локация
+  if (cs.locationName || cs.locationAddress) {
+    doc.setFillColor(255, 240, 240);
+    doc.rect(14, y - 4, 182, 18, 'F');
+    doc.setDrawColor(...RED);
+    doc.setLineWidth(0.5);
+    doc.line(14, y - 4, 14, y + 14);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('📍 ' + (cs.locationName || ''), 17, y + 2);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cs.locationAddress || '', 17, y + 7);
+    if (cs.locationContactName || cs.locationContactPhone) {
+      doc.text((cs.locationContactName || '') + ' · ' + (cs.locationContactPhone || ''), 17, y + 11);
+    }
+    y += 22;
+  }
+
+  // Wi-Fi / Погода / Парковка
+  if (cs.wifiName || cs.weatherDay || cs.parking) {
+    doc.setFontSize(9);
+    if (cs.wifiName) {
+      doc.text('Wi-Fi: ' + cs.wifiName + (cs.wifiPass ? ' / ' + cs.wifiPass : ''), 14, y);
+      y += 5;
+    }
+    if (cs.weatherDay || cs.weatherNight) {
+      doc.text('Погода: день ' + (cs.weatherDay || '?') + '°C · ночь ' + (cs.weatherNight || '?') + '°C', 14, y);
+      y += 5;
+    }
+    if (cs.parking) {
+      const parkLines = doc.splitTextToSize('Парковка: ' + cs.parking, 180);
+      doc.text(parkLines, 14, y);
+      y += parkLines.length * 4 + 2;
+    }
+  }
+  if (cs.important) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...RED);
+    doc.text('⚠ ' + cs.important, 14, y);
+    doc.setTextColor(...DARK);
+    doc.setFont('helvetica', 'normal');
+    y += 6;
+  }
+
+  // Крю table
+  if (cs.crew && cs.crew.length > 0) {
+    doc.autoTable({
+      head: [['Позиция', 'ФИО', 'Телефон', 'Вызов']],
+      body: cs.crew.map(p => [p.position || '', p.name || '', p.phone || '', p.callTime || '']),
+      startY: y + 2,
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: DARK, textColor: [255,255,255], fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 55 },
+        2: { cellWidth: 45 },
+        3: { cellWidth: 32, halign: 'center' }
+      },
+      margin: { left: 14, right: 14 },
+      didDrawPage: (data) => {
+        if (data.pageNumber === 1) {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...RED);
+          doc.text('КРЮ · ' + cs.crew.length + ' человек', 14, data.settings.startY - 2);
+          doc.setTextColor(...DARK);
+        }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // Кастинг table
+  if (cs.cast && cs.cast.length > 0) {
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.autoTable({
+      head: [['Позиция', 'ФИО', 'Телефон', 'Вызов']],
+      body: cs.cast.map(p => [p.position || '', p.name || '', p.phone || '', p.callTime || '']),
+      startY: y + 2,
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: RED, textColor: [255,255,255], fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 55 },
+        2: { cellWidth: 45 },
+        3: { cellWidth: 32, halign: 'center' }
+      },
+      margin: { left: 14, right: 14 },
+      didDrawPage: (data) => {
+        if (data.pageNumber === 1) {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...RED);
+          doc.text((project.type === 'MV' ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ И КАСТИНГ') + ' · ' + cs.cast.length + ' человек', 14, data.settings.startY - 2);
+          doc.setTextColor(...DARK);
+        }
+      }
+    });
+  }
+
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  doc.save(`Вызывной_${slug}_день${_currentCsDay}_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast('Вызывной PDF скачан', 'success');
+}
+
+function exportCallsheetToXlsx() {
+  if (typeof XLSX === 'undefined') { toast('XLSX не загрузилась', 'error'); return; }
+  if (!_currentProjectId || !_currentCsData) return;
+  const project = DB.getProject(_currentProjectId);
+  const cs = _currentCsData;
+  const RED = 'E8231D', DARK = '0A0907', LIGHT = 'F5F5F0';
+  const ws = {};
+  const merges = [];
+  const rows = [];
+
+  let r = 0;
+  const setCell = (row, col, val, style) => {
+    const addr = XLSX.utils.encode_cell({ r: row, c: col });
+    ws[addr] = { v: val, t: typeof val === 'number' ? 'n' : 's', s: style };
+  };
+  const title = {
+    font: { name: 'Arial', bold: true, sz: 18, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: RED } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const sectionHead = {
+    font: { name: 'Arial', bold: true, sz: 11, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: DARK } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const sectionRed = { ...sectionHead, fill: { fgColor: { rgb: RED } } };
+  const lbl = {
+    font: { name: 'Arial', bold: true, sz: 9, color: { rgb: '666666' } },
+    alignment: { horizontal: 'left' }
+  };
+  const val = {
+    font: { name: 'Arial', sz: 10, color: { rgb: DARK } },
+    alignment: { horizontal: 'left' }
+  };
+  const tHead = {
+    font: { name: 'Arial', bold: true, sz: 9, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: DARK } },
+    alignment: { horizontal: 'center' },
+    border: { top: {style:'thin',color:{rgb:DARK}}, bottom: {style:'thin',color:{rgb:DARK}}, left: {style:'thin',color:{rgb:DARK}}, right: {style:'thin',color:{rgb:DARK}} }
+  };
+  const tCell = {
+    font: { name: 'Arial', sz: 10 },
+    alignment: { vertical: 'center' },
+    border: { top: {style:'thin',color:{rgb:'E5E5E5'}}, bottom: {style:'thin',color:{rgb:'E5E5E5'}}, left: {style:'thin',color:{rgb:'E5E5E5'}}, right: {style:'thin',color:{rgb:'E5E5E5'}} }
+  };
+
+  // Title
+  setCell(r, 0, 'ZALOVE PRODUCTION', title);
+  merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+  rows.push({ hpt: 32 });
+  r++;
+
+  setCell(r, 0, 'Вызывной · день ' + _currentCsDay + ' · ' + (project.name || ''), {
+    font: { name: 'Arial', bold: true, sz: 13, color: { rgb: DARK } },
+    alignment: { horizontal: 'left' }
+  });
+  merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+  r++;
+  r++;
+
+  // Meta
+  const meta = [
+    ['Дата', cs.date ? formatDateRu(cs.date) : '—'],
+    ['Режиссёр', cs.directorName || '—'],
+    ['DOP', cs.dopName || '—'],
+    ['Продюсер', cs.producerName || '—'],
+    ['Арт', cs.artName || '—'],
+    ['Клиент', project.client || '—'],
+    ['Тип', project.type || '—']
+  ];
+  meta.forEach(([l, v]) => {
+    setCell(r, 0, l, lbl);
+    setCell(r, 1, v, val);
+    merges.push({ s: { r, c: 1 }, e: { r, c: 3 } });
+    r++;
+  });
+
+  r++;
+  // Times
+  setCell(r, 0, 'ТАЙМИНГИ', sectionHead);
+  merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+  r++;
+  setCell(r, 0, 'Начало смены', lbl); setCell(r, 1, cs.startShift || '—', val);
+  setCell(r, 2, 'Начало съёмки', lbl); setCell(r, 3, cs.startShoot || '—', val);
+  r++;
+  setCell(r, 0, 'Конец смены', lbl); setCell(r, 1, cs.endShift || '—', val);
+  r++;
+
+  // Location
+  r++;
+  setCell(r, 0, 'ЛОКАЦИЯ', sectionRed);
+  merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+  r++;
+  setCell(r, 0, 'Название', lbl); setCell(r, 1, cs.locationName || '—', val); merges.push({s:{r,c:1},e:{r,c:3}}); r++;
+  setCell(r, 0, 'Адрес', lbl); setCell(r, 1, cs.locationAddress || '—', val); merges.push({s:{r,c:1},e:{r,c:3}}); r++;
+  setCell(r, 0, 'Контакт', lbl); setCell(r, 1, (cs.locationContactName || '') + (cs.locationContactPhone ? ' · ' + cs.locationContactPhone : ''), val); merges.push({s:{r,c:1},e:{r,c:3}}); r++;
+  if (cs.locationContactTelegram) { setCell(r, 0, 'Telegram', lbl); setCell(r, 1, cs.locationContactTelegram, val); merges.push({s:{r,c:1},e:{r,c:3}}); r++; }
+  if (cs.important) { setCell(r, 0, '⚠ Важно', lbl); setCell(r, 1, cs.important, val); merges.push({s:{r,c:1},e:{r,c:3}}); r++; }
+
+  r++;
+  // Wi-Fi / weather / parking
+  if (cs.wifiName || cs.weatherDay || cs.parking) {
+    setCell(r, 0, 'СРЕДА', sectionHead); merges.push({s:{r,c:0},e:{r,c:3}}); r++;
+    if (cs.wifiName) { setCell(r, 0, 'Wi-Fi', lbl); setCell(r, 1, cs.wifiName + (cs.wifiPass ? ' / ' + cs.wifiPass : ''), val); r++; }
+    if (cs.weatherDay || cs.weatherNight) { setCell(r, 0, 'Погода', lbl); setCell(r, 1, 'день ' + (cs.weatherDay || '?') + '°C · ночь ' + (cs.weatherNight || '?') + '°C', val); r++; }
+    if (cs.parking) { setCell(r, 0, 'Парковка', lbl); setCell(r, 1, cs.parking, val); merges.push({s:{r,c:1},e:{r,c:3}}); r++; }
+    r++;
+  }
+
+  // Crew table
+  if (cs.crew && cs.crew.length > 0) {
+    setCell(r, 0, 'КРЮ · ' + cs.crew.length + ' ЧЕЛОВЕК', sectionHead); merges.push({s:{r,c:0},e:{r,c:3}}); r++;
+    setCell(r, 0, 'Позиция', tHead); setCell(r, 1, 'ФИО', tHead); setCell(r, 2, 'Телефон', tHead); setCell(r, 3, 'Вызов', tHead); r++;
+    cs.crew.forEach(p => {
+      setCell(r, 0, p.position || '', tCell);
+      setCell(r, 1, p.name || '', tCell);
+      setCell(r, 2, p.phone || '', tCell);
+      setCell(r, 3, p.callTime || '', { ...tCell, alignment: { horizontal: 'center' } });
+      r++;
+    });
+    r++;
+  }
+
+  // Cast table
+  if (cs.cast && cs.cast.length > 0) {
+    setCell(r, 0, (project.type === 'MV' ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ И КАСТИНГ') + ' · ' + cs.cast.length + ' ЧЕЛОВЕК', sectionRed); merges.push({s:{r,c:0},e:{r,c:3}}); r++;
+    setCell(r, 0, 'Позиция', tHead); setCell(r, 1, 'ФИО', tHead); setCell(r, 2, 'Телефон', tHead); setCell(r, 3, 'Вызов', tHead); r++;
+    cs.cast.forEach(p => {
+      setCell(r, 0, p.position || '', tCell);
+      setCell(r, 1, p.name || '', tCell);
+      setCell(r, 2, p.phone || '', tCell);
+      setCell(r, 3, p.callTime || '', { ...tCell, alignment: { horizontal: 'center' } });
+      r++;
+    });
+  }
+
+  ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: r, c: 3 } });
+  ws['!merges'] = merges;
+  ws['!rows'] = rows;
+  ws['!cols'] = [{ wch: 24 }, { wch: 32 }, { wch: 24 }, { wch: 16 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Вызывной');
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  XLSX.writeFile(wb, `Вызывной_${slug}_день${_currentCsDay}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Вызывной XLSX скачан', 'success');
+}
+
+/* ============================================================
    ВЫЗЫВНЫЕ (по числу съёмочных дней)
    ============================================================ */
 function renderCallsheetCard(project) {
@@ -7728,8 +8535,12 @@ function openCallsheetsList() {
       d.setDate(d.getDate() + i);
       dateStr = formatDateRu(d.toISOString().slice(0,10));
     }
+    const cs = (project.callsheets || {})[dayNum];
+    const filled = isCallsheetFilled(cs);
+    const crewCount = cs ? (cs.crew || []).length : 0;
+    const castCount = cs ? (cs.cast || []).length : 0;
     html += `
-      <div class="creative-card" onclick="openDoc('callsheet')">
+      <div class="creative-card ${filled ? 'uploaded' : ''}" onclick="openCallsheetEditor(${dayNum})">
         <div class="top">
           <div class="ico">⌚</div>
           <div class="type">День ${dayNum} из ${days}</div>
@@ -7737,11 +8548,10 @@ function openCallsheetsList() {
         <div class="ctitle">Вызывной · день ${dayNum}</div>
         <div class="author">${dateStr}</div>
         <div class="pending" style="text-align: left; color: var(--text-2); padding: 8px 0;">
-          📋 Тип: ${project.type === 'MV' ? 'музыкальный клип' : project.type === 'TVC' ? 'реклама' : project.type || '—'}<br>
-          🎬 Шаблон: ${project.type === 'MV' ? 'для клипа' : 'для рекламы'}
+          ${filled ? `✅ Заполнен · крю ${crewCount}, кастинг ${castCount}` : '— ещё не заполнен —'}
         </div>
         <div class="creative-actions">
-          <button onclick="event.stopPropagation(); openDoc('callsheet')">📄 Открыть</button>
+          <button onclick="event.stopPropagation(); openCallsheetEditor(${dayNum})">✎ Редактировать</button>
         </div>
       </div>`;
   }
@@ -8038,6 +8848,11 @@ function closeAll() {
   if (_estimateSaveTimer) {
     clearTimeout(_estimateSaveTimer);
     saveEstimateNow();
+  }
+  // Сохранить вызывной немедленно
+  if (_csSaveTimer) {
+    clearTimeout(_csSaveTimer);
+    saveCsNow();
   }
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
 }
