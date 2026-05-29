@@ -2489,52 +2489,66 @@ body.has-reel .theme-toggle { right: 158px; }
 .cs-people-table input:hover { border-color: var(--line); background: var(--bg-3); }
 .cs-people-table input:focus { outline: none; border-color: var(--brand-red); background: var(--bg-2); }
 .cs-del-btn-sm {
-  width: 22px; height: 22px;
-  background: transparent;
-  border: none;
-  color: var(--muted);
+  width: 26px; height: 26px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--text-2);
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 14px;
-  opacity: 0;
-  transition: opacity 0.15s;
+  font-weight: 700;
+  transition: all 0.15s;
 }
-.cs-people-table tr:hover .cs-del-btn-sm { opacity: 1; }
-.cs-del-btn-sm:hover { background: rgba(232,35,29,0.1); color: var(--brand-red); }
+.cs-del-btn-sm:hover {
+  background: var(--brand-red);
+  color: white;
+  border-color: var(--brand-red);
+  transform: scale(1.05);
+}
 
 .cs-table-actions {
   display: flex;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 10px;
 }
 .cs-add-row {
   flex: 1;
-  background: transparent;
-  border: 1px dashed var(--line-2);
-  padding: 7px;
-  color: var(--muted);
-  font-size: 10px;
+  background: var(--text);
+  border: 1px solid var(--text);
+  padding: 10px 14px;
+  color: white;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 5px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
+  transition: all 0.15s;
 }
-.cs-add-row:hover { border-color: var(--brand-red); color: var(--brand-red); border-style: solid; }
+.cs-add-row:hover {
+  background: #1a1a1a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
 .cs-pull-team {
-  background: rgba(232,35,29,0.08);
-  border: 1px solid rgba(232,35,29,0.3);
-  color: var(--brand-red);
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 10px;
+  background: var(--brand-red);
+  border: 1px solid var(--brand-red);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 5px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   white-space: nowrap;
+  transition: all 0.15s;
 }
-.cs-pull-team:hover { background: var(--brand-red); color: white; }
+.cs-pull-team:hover {
+  background: var(--brand-red-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(232,35,29,0.35);
+}
 
 /* Important note red-bordered */
 .cs-important-note {
@@ -7626,35 +7640,34 @@ async function exportEstimateToPdf() {
   if (!project) return;
   const est = ensureEstimate(project);
 
-  toast('Готовлю PDF...', 'success');
-  // Build print HTML
+  toast('Готовлю PDF (HD)...', 'success');
   const container = buildEstimatePrintHTML(project, est);
   document.body.appendChild(container);
   try {
     const canvas = await html2canvas(container, {
-      scale: 2,
+      scale: 3,
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
-      windowWidth: 794
+      windowWidth: 794,
+      letterRendering: true,
+      imageTimeout: 15000
     });
     document.body.removeChild(container);
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = pdfWidth;
-    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-    let heightLeft = imgHeight;
+    const ratio = canvas.height / canvas.width;
+    const imgHeight = imgWidth * ratio;
+    const totalPages = Math.ceil(imgHeight / pdfHeight);
+    const imgData = canvas.toDataURL('image/png');
     let position = 0;
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
-    while (heightLeft > 0) {
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       position -= pdfHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
     }
     const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
     pdf.save(`Смета_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
@@ -8373,35 +8386,36 @@ async function exportCallsheetToPdf() {
   if (!_currentProjectId || !_currentCsData) return;
   const project = DB.getProject(_currentProjectId);
   const cs = _currentCsData;
-  toast('Готовлю PDF...', 'success');
-  // Build print-ready HTML in an off-screen container
+  toast('Готовлю PDF (HD)...', 'success');
   const container = buildCallsheetPrintHTML(project, cs);
   document.body.appendChild(container);
   try {
     const canvas = await html2canvas(container, {
-      scale: 2,
+      scale: 3,
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
-      windowWidth: 794
+      windowWidth: 794,
+      letterRendering: true,
+      allowTaint: false,
+      imageTimeout: 15000
     });
     document.body.removeChild(container);
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = pdfWidth;
-    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-    let heightLeft = imgHeight;
+    const ratio = canvas.height / canvas.width;
+    const imgHeight = imgWidth * ratio;
+    const totalPages = Math.ceil(imgHeight / pdfHeight);
+    // Используем PNG для чёткости текста
+    const imgData = canvas.toDataURL('image/png');
     let position = 0;
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
-    while (heightLeft > 0) {
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       position -= pdfHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
     }
     const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
     pdf.save(`Вызывной_${slug}_день${_currentCsDay}_${new Date().toISOString().slice(0,10)}.pdf`);
