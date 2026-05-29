@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZALOVE PRODUCTION — Workspace</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -2365,6 +2367,88 @@ body.has-reel .theme-toggle { right: 158px; }
 .mood-option.selected { border-color: var(--brand-red); background: var(--bg-2); }
 .mood-option .mood-label { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
 
+/* Smeta promo card — главная смета, выделенный блок */
+.smeta-promo {
+  background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-paper) 100%);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--brand-red);
+  border-radius: 8px;
+  padding: 22px 26px;
+  margin-bottom: 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.smeta-promo:hover {
+  border-color: var(--brand-red);
+  box-shadow: 0 8px 24px rgba(232,35,29,0.15);
+  transform: translateY(-1px);
+}
+.smeta-promo::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(232,35,29,0.05), transparent 70%);
+  pointer-events: none;
+}
+.smeta-promo-icon {
+  width: 60px; height: 60px;
+  background: var(--brand-red);
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Anton', sans-serif;
+  font-size: 28px;
+  box-shadow: 0 6px 14px rgba(232,35,29,0.3);
+}
+.smeta-promo-content { min-width: 0; }
+.smeta-promo-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.smeta-promo-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 26px;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.smeta-promo-sub {
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.smeta-promo-stats {
+  text-align: right;
+}
+.smeta-promo-amount {
+  font-family: 'Anton', sans-serif;
+  font-size: 32px;
+  letter-spacing: -0.5px;
+  color: var(--brand-red);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.smeta-promo-amount.mask-value::after { font-size: 14px; }
+.smeta-promo-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
 /* Project total — крупный итоговый блок в смете */
 .project-total-card {
   background: linear-gradient(135deg, var(--brand-red), var(--brand-red-deep));
@@ -2794,7 +2878,33 @@ body.has-reel .theme-toggle { right: 158px; }
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-bottom: 8px;
 }
+.brand-actions {
+  display: flex;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+.brand-actions button {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.brand-actions button:hover { background: var(--bg-2); border-color: var(--text); color: var(--text); }
+.brand-actions button.posted-btn { background: rgba(22,163,74,0.1); color: #16a34a; border-color: rgba(22,163,74,0.3); }
+.brand-actions button.posted-btn:hover { background: #16a34a; color: white; border-color: #16a34a; }
+.brand-card.no-handle { opacity: 0.6; }
+.brand-card.no-handle .brand-handle { color: var(--brand-red); font-weight: 600; }
 .brand-meta .dot-stat {
   width: 6px; height: 6px;
   border-radius: 50%;
@@ -3172,8 +3282,9 @@ body.has-reel .theme-toggle { right: 158px; }
       </div>
 
       <!-- PERSONAL BRAND HEALTH -->
-      <div class="section-title">Личный бренд <span class="pill">АКТИВНОСТЬ ПО ПЛАТФОРМАМ · 10-БАЛЛЬНАЯ ШКАЛА</span></div>
-      <div class="brand-grid">
+      <div class="section-title">Личный бренд <span class="pill" id="brand-pill">шкала падает со временем · «Я запостил» обновляет</span></div>
+      <div class="brand-grid" id="brandGrid"></div>
+      <div class="brand-grid" style="display:none">
 
         <!-- Instagram -->
         <div class="brand-card">
@@ -3400,6 +3511,20 @@ body.has-reel .theme-toggle { right: 158px; }
         </div>
       </div>
 
+      <!-- SMETA PROMO BLOCK (главная смета — приоритетный блок) -->
+      <div class="smeta-promo financial" onclick="openDoc('estimate')">
+        <div class="smeta-promo-icon">₽</div>
+        <div class="smeta-promo-content">
+          <div class="smeta-promo-label">Смета проекта · 🔒 только продюсер</div>
+          <div class="smeta-promo-title">Открыть смету</div>
+          <div class="smeta-promo-sub" id="smeta-promo-sub">14 разделов · кликни чтобы редактировать</div>
+        </div>
+        <div class="smeta-promo-stats">
+          <div class="smeta-promo-amount mask-value" id="smeta-promo-amount">— ₽</div>
+          <div class="smeta-promo-count" id="smeta-promo-count">не заполнена</div>
+        </div>
+      </div>
+
       <!-- TEAM MEMBERS -->
       <div class="section-title">Участники проекта <span class="pill" id="team-count-pill">0 человек</span></div>
       <div class="team-members-section">
@@ -3503,14 +3628,6 @@ body.has-reel .theme-toggle { right: 158px; }
           <div class="doc-meta">Creative brief · 30+ полей</div>
         </div>
 
-        <div class="doc-card loaded financial-doc" onclick="openDoc('estimate')">
-          <div class="loaded-badge">XLSX</div>
-          <div class="doc-status status-loaded"></div>
-          <div class="doc-icon">₽</div>
-          <div class="doc-name">Смета проекта</div>
-          <div class="doc-meta">14 разделов · v.3</div>
-          <div class="private-badge">Только продюсер</div>
-        </div>
 
         <div class="doc-card loaded" onclick="openDoc('timing')">
           <div class="loaded-badge">XLSX</div>
@@ -3520,12 +3637,20 @@ body.has-reel .theme-toggle { right: 158px; }
           <div class="doc-meta">3 этапа · 44 дня</div>
         </div>
 
-        <div class="doc-card loaded" onclick="openDoc('ppm')">
-          <div class="loaded-badge">PPTX</div>
+        <div class="doc-card loaded" id="doc-card-ppm" onclick="openCreativeUpload('ppm')">
+          <div class="loaded-badge" id="ppm-badge">PDF / PPTX</div>
           <div class="doc-status status-loaded"></div>
           <div class="doc-icon">⎙</div>
           <div class="doc-name">ППМ Бук</div>
-          <div class="doc-meta">27 слайдов · v.2</div>
+          <div class="doc-meta" id="ppm-meta">Pre-Production Meeting</div>
+        </div>
+
+        <div class="doc-card loaded" id="doc-card-shootplan" onclick="openCreativeUpload('shooting_plan')">
+          <div class="loaded-badge" id="shootplan-badge">PDF / XLSX</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">🎬</div>
+          <div class="doc-name">Шутинг-план</div>
+          <div class="doc-meta" id="shootplan-meta">съёмочный план</div>
         </div>
 
         <div class="doc-card loaded" id="doc-card-callsheet" onclick="openCallsheetsList()">
@@ -3894,7 +4019,8 @@ body.has-reel .theme-toggle { right: 158px; }
       <div class="doc-footer-info" id="est-footer-info">Авто-сохранение при каждой правке</div>
       <div style="display: flex; gap: 6px;">
         <button class="btn-secondary btn" onclick="resetEstimate()">↺ Сбросить</button>
-        <button class="btn btn-dark" onclick="exportEstimateToXlsx()">⤓ Скачать XLSX</button>
+        <button class="btn btn-dark" onclick="exportEstimateToPdf()">⤓ PDF</button>
+        <button class="btn btn-dark" onclick="exportEstimateToXlsx()">⤓ XLSX</button>
         <button class="btn" onclick="closeAll()">💾 Закрыть</button>
       </div>
     </div>
@@ -4923,6 +5049,63 @@ body.has-reel .theme-toggle { right: 158px; }
         <button class="btn-secondary btn" id="cf-delete-btn" onclick="deleteCreativeMaterial()" style="display:none; color: var(--brand-red);">🗑 Удалить</button>
         <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
         <button class="btn" onclick="saveCreativeMaterial()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BRAND EDIT MODAL (настройки платформы) -->
+<div class="modal-overlay" id="m-brand-edit">
+  <div class="doc-overlay" style="width: 540px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon" id="be-icon">⊕</div>
+        <div>
+          <div class="doc-section-label">Платформа</div>
+          <div class="doc-header-title" id="be-title">Настройка</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="smart-fill">
+        <div class="sf-icon">📱</div>
+        <div class="sf-text">
+          <strong>Шкала падает со временем</strong>
+          Чем дольше ничего не постишь — тем краснее шкала. Нажми «Я запостил» когда выложишь контент → шкала вернётся в зелёный.
+        </div>
+      </div>
+      <div style="display: grid; gap: 14px;">
+        <div>
+          <label class="form-label">Никнейм / handle</label>
+          <input class="form-input" id="be-handle" placeholder="@username">
+        </div>
+        <div>
+          <label class="form-label">Ссылка на профиль</label>
+          <input class="form-input" id="be-url" placeholder="https://...">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label">Когда последний раз постил</label>
+            <input class="form-input" type="date" id="be-last">
+          </div>
+          <div>
+            <label class="form-label">Период «зелёной зоны» (дней)</label>
+            <input class="form-input" type="number" id="be-decay" min="1" max="365" placeholder="7">
+          </div>
+        </div>
+        <div style="background: var(--bg-3); padding: 10px 14px; border-radius: 4px; font-size: 11px; color: var(--text-2);">
+          <strong style="color: var(--text);">Подсказка по периодам:</strong><br>
+          Instagram / Threads / Shorts / Telegram → 3-7 дней (нужно часто)<br>
+          YouTube / LinkedIn → 14-30 дней (можно реже)
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">Сохранится в браузере</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="saveBrandPlatform()">💾 Сохранить</button>
       </div>
     </div>
   </div>
@@ -6279,7 +6462,7 @@ function formatBytes(bytes) {
 function renderCreative(project) {
   const grid = document.getElementById('creativeGrid');
   if (!grid) return;
-  grid.innerHTML = ['treatment', 'script', 'creative', 'track', 'ppm', 'shooting_plan'].map(k => creativeCardHTML(project, k)).join('');
+  grid.innerHTML = ['treatment', 'script', 'creative', 'track'].map(k => creativeCardHTML(project, k)).join('');
 }
 
 function openCreativeUpload(kind) {
@@ -6749,6 +6932,8 @@ function saveEstimateNow() {
   const grand = Math.round(sub * (1 + (est.taxPercent || 0) / 100));
   DB.updateProject(_currentProjectId, { estimate: est, budget: grand });
   renderStats();
+  const project = DB.getProject(_currentProjectId);
+  if (project) renderSmetaPromo(project);
 }
 
 function updateEstimateTotals(project, est) {
@@ -6811,85 +6996,372 @@ function exportEstimateToXlsx() {
   if (!project) return;
   const est = ensureEstimate(project);
 
-  // Подготавливаем данные для листа (массив массивов)
-  const aoa = [];
+  // ====== СТИЛИ ======
+  const RED = 'E8231D';
+  const DARK = '0A0907';
+  const LIGHT_GREY = 'F5F5F0';
+  const MID_GREY = 'D8D6D2';
+  const PAPER = 'FBF8F1';
 
-  // Шапка проекта
-  aoa.push(['ZALOVE PRODUCTION']);
-  aoa.push(['СМЕТА ПРОЕКТА · ' + (project.name || '')]);
-  aoa.push([]);
-  aoa.push(['PRODUCTION / ПРОДАКШН', 'ZALOVE Production']);
-  aoa.push(['PROJECT / ПРОЕКТ', project.name || '—']);
-  aoa.push(['TYPE / ТИП', project.type || '—']);
-  aoa.push(['CLIENT / КЛИЕНТ', project.client || '—']);
-  if (project.artist) aoa.push(['ARTIST / АРТИСТ', project.artist]);
-  aoa.push(['PRODUCER / ПРОДЮСЕР', 'Tabriz Zalov']);
-  aoa.push(['ИП', 'Залов Табриз Руслан-Оглы']);
-  aoa.push(['ИНН', '180204378651']);
-  aoa.push(['ОГРНИП', '324508100144670']);
-  aoa.push(['DATE / ДАТА', new Date().toLocaleDateString('ru-RU')]);
-  aoa.push([]);
+  const titleStyle = {
+    font: { name: 'Arial', bold: true, sz: 18, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: RED } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const subtitleStyle = {
+    font: { name: 'Arial', bold: true, sz: 14, color: { rgb: DARK } },
+    fill: { fgColor: { rgb: PAPER } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const metaLabelStyle = {
+    font: { name: 'Arial', bold: true, sz: 10, color: { rgb: '666666' } },
+    alignment: { horizontal: 'left' }
+  };
+  const metaValueStyle = {
+    font: { name: 'Arial', sz: 11, color: { rgb: DARK } },
+    alignment: { horizontal: 'left' }
+  };
+  const tableHeaderStyle = {
+    font: { name: 'Arial', bold: true, sz: 10, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: DARK } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: {
+      top: { style: 'thin', color: { rgb: DARK } },
+      bottom: { style: 'thin', color: { rgb: DARK } },
+      left: { style: 'thin', color: { rgb: DARK } },
+      right: { style: 'thin', color: { rgb: DARK } }
+    }
+  };
+  const sectionHeaderStyle = {
+    font: { name: 'Arial', bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: RED } },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  };
+  const rowStyle = {
+    font: { name: 'Arial', sz: 10 },
+    alignment: { vertical: 'center', wrapText: true },
+    border: {
+      top: { style: 'thin', color: { rgb: 'E5E5E5' } },
+      bottom: { style: 'thin', color: { rgb: 'E5E5E5' } },
+      left: { style: 'thin', color: { rgb: 'E5E5E5' } },
+      right: { style: 'thin', color: { rgb: 'E5E5E5' } }
+    }
+  };
+  const rowDescStyle = {
+    font: { name: 'Arial', sz: 9, italic: true, color: { rgb: '666666' } },
+    alignment: { vertical: 'center', wrapText: true },
+    border: rowStyle.border
+  };
+  const numStyle = {
+    ...rowStyle,
+    alignment: { horizontal: 'right', vertical: 'center' },
+    numFmt: '#,##0'
+  };
+  const priceStyle = {
+    ...numStyle,
+    font: { name: 'Arial', sz: 10, bold: true, color: { rgb: RED } }
+  };
+  const sectionTotalStyle = {
+    font: { name: 'Arial', bold: true, sz: 11, color: { rgb: DARK } },
+    fill: { fgColor: { rgb: LIGHT_GREY } },
+    alignment: { horizontal: 'right', vertical: 'center' },
+    numFmt: '#,##0" ₽"',
+    border: {
+      top: { style: 'medium', color: { rgb: DARK } },
+      bottom: { style: 'thin', color: { rgb: DARK } },
+      left: { style: 'thin', color: { rgb: MID_GREY } },
+      right: { style: 'thin', color: { rgb: MID_GREY } }
+    }
+  };
+  const sectionTotalLabelStyle = {
+    ...sectionTotalStyle,
+    alignment: { horizontal: 'right', vertical: 'center' },
+    font: { name: 'Arial', bold: true, sz: 11, color: { rgb: '666666' } }
+  };
+  const grandTotalStyle = {
+    font: { name: 'Arial', bold: true, sz: 16, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: RED } },
+    alignment: { horizontal: 'right', vertical: 'center' },
+    numFmt: '#,##0" ₽"',
+    border: {
+      top: { style: 'medium', color: { rgb: DARK } },
+      bottom: { style: 'medium', color: { rgb: DARK } },
+      left: { style: 'medium', color: { rgb: DARK } },
+      right: { style: 'medium', color: { rgb: DARK } }
+    }
+  };
+  const grandTotalLabelStyle = {
+    ...grandTotalStyle,
+    alignment: { horizontal: 'right', vertical: 'center' }
+  };
 
-  // Заголовок таблицы позиций
-  aoa.push(['ПОЗИЦИЯ', 'ОПИСАНИЕ УСЛУГИ', 'КОЛИЧЕСТВО', 'СМЕН', 'ЦЕНА', 'ИТОГО']);
-  aoa.push([]);
+  // ====== СБОР ДАННЫХ + СТИЛЕЙ ======
+  const ws = {};
+  const merges = [];
+  const rows = [];
 
-  // Разделы и строки
+  let r = 0;
+  const setCell = (row, col, val, style) => {
+    const addr = XLSX.utils.encode_cell({ r: row, c: col });
+    ws[addr] = { v: val, t: typeof val === 'number' ? 'n' : 's', s: style };
+  };
+
+  // Title row
+  setCell(r, 0, 'ZALOVE PRODUCTION', titleStyle);
+  merges.push({ s: { r, c: 0 }, e: { r, c: 5 } });
+  rows.push({ hpt: 32 });
+  r++;
+
+  // Subtitle
+  setCell(r, 0, 'СМЕТА ПРОЕКТА · ' + (project.name || ''), subtitleStyle);
+  merges.push({ s: { r, c: 0 }, e: { r, c: 5 } });
+  rows.push({ hpt: 22 });
+  r++;
+  r++; // blank
+
+  // Project meta (label + value)
+  const meta = [
+    ['PRODUCTION', 'ZALOVE Production'],
+    ['ПРОДЮСЕР', 'Tabriz Zalov'],
+    ['ИП', 'Залов Табриз Руслан-Оглы'],
+    ['ИНН', '180204378651'],
+    ['ОГРНИП', '324508100144670'],
+    ['ПРОЕКТ', project.name || '—'],
+    ['ТИП', project.type || '—'],
+    ['КЛИЕНТ', project.client || '—']
+  ];
+  if (project.artist) meta.push(['АРТИСТ', project.artist]);
+  meta.push(['ДАТА СМЕТЫ', new Date().toLocaleDateString('ru-RU')]);
+
+  meta.forEach(([lbl, val]) => {
+    setCell(r, 0, lbl, metaLabelStyle);
+    setCell(r, 1, val, metaValueStyle);
+    merges.push({ s: { r, c: 1 }, e: { r, c: 5 } });
+    r++;
+  });
+
+  r++; // blank
+
+  // Table header
+  const headers = ['ПОЗИЦИЯ', 'ОПИСАНИЕ', 'КОЛ-ВО', 'СМЕН', 'ЦЕНА ₽', 'ИТОГО ₽'];
+  headers.forEach((h, i) => setCell(r, i, h, tableHeaderStyle));
+  rows.push({ hpt: 22 });
+  r++;
+
+  // Sections
   let grandSum = 0;
   SMETA_TEMPLATE.forEach(tmpl => {
     const section = est.sections[tmpl.id];
     if (!section) return;
-    aoa.push([tmpl.n + ' · ' + tmpl.title.toUpperCase()]);
+    // Section header
+    setCell(r, 0, tmpl.n + ' · ' + tmpl.title.toUpperCase(), sectionHeaderStyle);
+    for (let c = 1; c <= 5; c++) setCell(r, c, '', sectionHeaderStyle);
+    merges.push({ s: { r, c: 0 }, e: { r, c: 5 } });
+    rows.push({ hpt: 22 });
+    r++;
+
     const allRows = [...(section.rows || []), ...(section.customRows || [])];
     let sectionSum = 0;
     allRows.forEach(row => {
       const total = calcRowTotal(row);
       sectionSum += total;
-      aoa.push([
-        row.name || '',
-        row.desc || '',
-        row.qty || '',
-        row.days || '',
-        Number(row.price) || '',
-        total > 0 ? total : ''
-      ]);
+      setCell(r, 0, row.name || '', rowStyle);
+      setCell(r, 1, row.desc || '', rowDescStyle);
+      setCell(r, 2, Number(row.qty) || '', numStyle);
+      setCell(r, 3, Number(row.days) || '', numStyle);
+      setCell(r, 4, Number(row.price) || '', priceStyle);
+      setCell(r, 5, total > 0 ? total : '', { ...numStyle, font: { name: 'Arial', sz: 10, bold: true }, numFmt: '#,##0" ₽"' });
+      r++;
     });
-    aoa.push(['', '', '', '', 'итого:', sectionSum]);
-    aoa.push([]);
+    // Section total
+    for (let c = 0; c <= 3; c++) setCell(r, c, '', rowStyle);
+    setCell(r, 4, 'ИТОГО ' + tmpl.title.toUpperCase() + ':', sectionTotalLabelStyle);
+    setCell(r, 5, sectionSum, sectionTotalStyle);
+    rows.push({ hpt: 20 });
+    r++;
+    r++; // blank
     grandSum += sectionSum;
   });
 
-  // Итоги
+  r++; // blank
+
+  // Grand totals
   const taxPct = est.taxPercent || 0;
   const taxAmount = Math.round(grandSum * taxPct / 100);
   const finalTotal = grandSum + taxAmount;
-  aoa.push(['', '', '', '', 'СУММА РАЗДЕЛОВ:', grandSum]);
-  aoa.push(['', '', '', '', 'НАЛОГ ' + taxPct + '%:', taxAmount]);
-  aoa.push(['', '', '', '', 'ИТОГО ОБЩАЯ СУММА С НАЛОГОМ:', finalTotal]);
 
-  // Создаём workbook
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  for (let c = 0; c <= 3; c++) setCell(r, c, '', rowStyle);
+  setCell(r, 4, 'СУММА РАЗДЕЛОВ', sectionTotalLabelStyle);
+  setCell(r, 5, grandSum, sectionTotalStyle);
+  r++;
+  for (let c = 0; c <= 3; c++) setCell(r, c, '', rowStyle);
+  setCell(r, 4, 'НАЛОГ ' + taxPct + '%', sectionTotalLabelStyle);
+  setCell(r, 5, taxAmount, sectionTotalStyle);
+  r++;
+  for (let c = 0; c <= 3; c++) setCell(r, c, '', rowStyle);
+  setCell(r, 4, 'ИТОГО С НАЛОГОМ', grandTotalLabelStyle);
+  setCell(r, 5, finalTotal, grandTotalStyle);
+  rows.push({ hpt: 32 });
+  r++;
 
-  // Ширина столбцов
+  // Set range
+  ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: r, c: 5 } });
+  ws['!merges'] = merges;
+  ws['!rows'] = rows;
   ws['!cols'] = [
-    { wch: 36 }, // позиция
-    { wch: 48 }, // описание
-    { wch: 13 }, // кол-во
-    { wch: 8 },  // смен
-    { wch: 14 }, // цена
-    { wch: 16 }  // итого
+    { wch: 38 },
+    { wch: 45 },
+    { wch: 10 },
+    { wch: 8 },
+    { wch: 14 },
+    { wch: 18 }
   ];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Смета');
 
-  // Filename
   const projectSlug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 40);
   const dateSlug = new Date().toISOString().slice(0, 10);
   const filename = `Смета_${projectSlug}_${dateSlug}.xlsx`;
 
   XLSX.writeFile(wb, filename);
   toast('Смета скачана: ' + filename, 'success');
+}
+
+function exportEstimateToPdf() {
+  if (typeof window.jspdf === 'undefined') {
+    toast('Библиотека jsPDF не загрузилась. Перезагрузите страницу.', 'error');
+    return;
+  }
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const est = ensureEstimate(project);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const RED = [232, 35, 29];
+  const DARK = [10, 9, 7];
+  const LIGHT = [245, 245, 240];
+
+  // Title block
+  doc.setFillColor(...RED);
+  doc.rect(0, 0, 210, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('ZALOVE PRODUCTION', 14, 14);
+
+  doc.setTextColor(...DARK);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Смета проекта · ' + (project.name || ''), 14, 32);
+
+  // Meta
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  const meta = [
+    ['Production', 'ZALOVE Production'],
+    ['Продюсер', 'Tabriz Zalov'],
+    ['ИП', 'Залов Табриз Руслан-Оглы'],
+    ['ИНН', '180204378651'],
+    ['ОГРНИП', '324508100144670'],
+    ['Тип', project.type || '—'],
+    ['Клиент', project.client || '—']
+  ];
+  if (project.artist) meta.push(['Артист', project.artist]);
+  meta.push(['Дата', new Date().toLocaleDateString('ru-RU')]);
+
+  let y = 40;
+  meta.forEach(([lbl, val]) => {
+    doc.setTextColor(120, 120, 120);
+    doc.text(lbl + ':', 14, y);
+    doc.setTextColor(...DARK);
+    doc.text(String(val), 50, y);
+    y += 5;
+  });
+
+  // Build sections table
+  const body = [];
+  let grandSum = 0;
+  SMETA_TEMPLATE.forEach(tmpl => {
+    const section = est.sections[tmpl.id];
+    if (!section) return;
+    // Section header row
+    body.push([{
+      content: tmpl.n + ' · ' + tmpl.title.toUpperCase(),
+      colSpan: 6,
+      styles: { fillColor: RED, textColor: [255,255,255], fontStyle: 'bold', fontSize: 9 }
+    }]);
+    const allRows = [...(section.rows || []), ...(section.customRows || [])];
+    let sectionSum = 0;
+    allRows.forEach(row => {
+      const total = calcRowTotal(row);
+      sectionSum += total;
+      body.push([
+        row.name || '',
+        row.desc || '',
+        row.qty ? String(row.qty) : '',
+        row.days ? String(row.days) : '',
+        Number(row.price) ? Number(row.price).toLocaleString('ru-RU') : '',
+        total > 0 ? total.toLocaleString('ru-RU') + ' ₽' : ''
+      ]);
+    });
+    body.push([{ content: '', colSpan: 4, styles: { fillColor: [245,245,240] } },
+      { content: 'итого:', styles: { halign: 'right', fontStyle: 'bold', fillColor: [245,245,240] } },
+      { content: sectionSum.toLocaleString('ru-RU') + ' ₽', styles: { halign: 'right', fontStyle: 'bold', fillColor: [245,245,240] } }
+    ]);
+    grandSum += sectionSum;
+  });
+
+  // Final totals as rows
+  const taxPct = est.taxPercent || 0;
+  const taxAmount = Math.round(grandSum * taxPct / 100);
+  const finalTotal = grandSum + taxAmount;
+  body.push([{ content: '', colSpan: 4 },
+    { content: 'СУММА РАЗДЕЛОВ', styles: { halign: 'right', fontStyle: 'bold' } },
+    { content: grandSum.toLocaleString('ru-RU') + ' ₽', styles: { halign: 'right', fontStyle: 'bold' } }
+  ]);
+  body.push([{ content: '', colSpan: 4 },
+    { content: 'НАЛОГ ' + taxPct + '%', styles: { halign: 'right' } },
+    { content: taxAmount.toLocaleString('ru-RU') + ' ₽', styles: { halign: 'right' } }
+  ]);
+  body.push([{ content: '', colSpan: 4 },
+    { content: 'ИТОГО С НАЛОГОМ', styles: { fillColor: RED, textColor: [255,255,255], fontStyle: 'bold', halign: 'right', fontSize: 12 } },
+    { content: finalTotal.toLocaleString('ru-RU') + ' ₽', styles: { fillColor: RED, textColor: [255,255,255], fontStyle: 'bold', halign: 'right', fontSize: 12 } }
+  ]);
+
+  doc.autoTable({
+    head: [['Позиция', 'Описание', 'Кол-во', 'Смен', 'Цена', 'Итого']],
+    body: body,
+    startY: y + 6,
+    styles: { font: 'helvetica', fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: DARK, textColor: [255,255,255], fontStyle: 'bold' },
+    columnStyles: {
+      0: { cellWidth: 50 },
+      1: { cellWidth: 56 },
+      2: { cellWidth: 14, halign: 'right' },
+      3: { cellWidth: 14, halign: 'right' },
+      4: { cellWidth: 24, halign: 'right' },
+      5: { cellWidth: 28, halign: 'right' }
+    },
+    margin: { left: 7, right: 7 },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.row.raw.length > 1) {
+        if (data.column.index === 5 && data.cell.text[0] && data.cell.text[0].includes('₽')) {
+          data.cell.styles.textColor = RED;
+          data.cell.styles.fontStyle = 'bold';
+        }
+      }
+    }
+  });
+
+  const projectSlug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 40);
+  const dateSlug = new Date().toISOString().slice(0, 10);
+  const filename = `Смета_${projectSlug}_${dateSlug}.pdf`;
+  doc.save(filename);
+  toast('Смета (PDF) скачана: ' + filename, 'success');
 }
 
 function resetEstimate() {
@@ -6900,6 +7372,174 @@ function resetEstimate() {
   renderEstimate(DB.getProject(_currentProjectId));
   toast('Смета сброшена', 'success');
 }
+
+/* ============================================================
+   ЛИЧНЫЙ БРЕНД — реальные шкалы с decay по времени
+   ============================================================ */
+const BRAND_PLATFORMS = [
+  { id: 'instagram', name: 'Instagram', handle: '@tabrizyzz', url: 'https://www.instagram.com/tabrizyzz/', icon: '◫', cls: 'brand-ig', decayDays: 7, defaultLast: -2 },
+  { id: 'threads', name: 'Threads', handle: '@tabrizyzz', url: 'https://www.threads.com/@tabrizyzz', icon: '@', cls: 'brand-th', decayDays: 5, defaultLast: -3 },
+  { id: 'telegram', name: 'Telegram канал', handle: '@tzalove', url: 'https://t.me/tzalove', icon: '✈', cls: 'brand-tg', decayDays: 3, defaultLast: -1 },
+  { id: 'linkedin', name: 'LinkedIn', handle: 'zalove', url: 'https://www.linkedin.com/in/zalove/', icon: 'in', cls: 'brand-li', decayDays: 21, defaultLast: -45 },
+  { id: 'youtube', name: 'YouTube / Shorts', handle: '@Tabrizyzz', url: 'https://www.youtube.com/@Tabrizyzz', icon: '▶', cls: 'brand-yt', decayDays: 14, defaultLast: -5 }
+];
+
+function loadBrandData() {
+  // Загружаем из DB и догружаем то чего нет
+  const data = DB.load();
+  let changed = false;
+  if (!data.brand) {
+    data.brand = {};
+    changed = true;
+  }
+  // Миграция: shorts → youtube (объединяем)
+  if (data.brand.shorts && !data.brand.youtube) {
+    data.brand.youtube = data.brand.shorts;
+    delete data.brand.shorts;
+    changed = true;
+  } else if (data.brand.shorts && data.brand.youtube) {
+    // Берём более свежий lastPost
+    const shortsLast = data.brand.shorts.lastPost || '';
+    const ytLast = data.brand.youtube.lastPost || '';
+    if (shortsLast > ytLast) data.brand.youtube.lastPost = shortsLast;
+    delete data.brand.shorts;
+    changed = true;
+  }
+  // Доинициализация платформ если их нет
+  const now = Date.now();
+  BRAND_PLATFORMS.forEach(p => {
+    if (!data.brand[p.id]) {
+      data.brand[p.id] = {
+        handle: p.handle,
+        url: p.url,
+        decayDays: p.decayDays,
+        lastPost: new Date(now + p.defaultLast * 86400000).toISOString().slice(0,10)
+      };
+      changed = true;
+    } else {
+      // Если у пользователя пустые поля — подставляем дефолты
+      if (!data.brand[p.id].handle && p.handle) { data.brand[p.id].handle = p.handle; changed = true; }
+      if (!data.brand[p.id].url && p.url) { data.brand[p.id].url = p.url; changed = true; }
+      if (!data.brand[p.id].decayDays) { data.brand[p.id].decayDays = p.decayDays; changed = true; }
+    }
+  });
+  if (changed) DB.save(data);
+  return data.brand;
+}
+
+function calcBrandScore(platform) {
+  if (!platform || !platform.lastPost) return 0;
+  const last = new Date(platform.lastPost);
+  if (isNaN(last)) return 0;
+  const daysSince = (Date.now() - last.getTime()) / 86400000;
+  const decay = platform.decayDays || 7;
+  const score = Math.max(0, Math.round(10 - (daysSince / decay) * 10));
+  return Math.min(10, score);
+}
+
+function relativeDate(iso) {
+  if (!iso) return 'давно';
+  const d = new Date(iso);
+  if (isNaN(d)) return 'давно';
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days === 0) return 'сегодня';
+  if (days === 1) return 'вчера';
+  if (days < 5) return days + ' дня назад';
+  if (days < 21) return days + ' дней назад';
+  if (days < 60) return Math.floor(days / 7) + ' нед. назад';
+  if (days < 365) return Math.floor(days / 30) + ' мес. назад';
+  return Math.floor(days / 365) + ' г. назад';
+}
+
+function renderBrandHealth() {
+  const grid = document.getElementById('brandGrid');
+  if (!grid) return;
+  const brand = loadBrandData();
+  grid.innerHTML = BRAND_PLATFORMS.map(p => {
+    const data = brand[p.id] || {};
+    const hasHandle = !!(data.handle || data.url);
+    const score = hasHandle ? calcBrandScore(data) : 0;
+    const last = relativeDate(data.lastPost);
+    const scoreCls = score >= 8 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
+    const dotCls = score >= 8 ? 'dot-green' : score >= 5 ? 'dot-amber' : 'dot-red';
+    let statusText;
+    if (!hasHandle) statusText = 'нажми чтобы добавить ссылку';
+    else if (score >= 9) statusText = 'огонь · ' + last;
+    else if (score >= 7) statusText = 'активен · ' + last;
+    else if (score >= 4) statusText = 'среднячок · ' + last;
+    else if (score >= 1) statusText = 'остываешь · ' + last;
+    else statusText = 'глухо · ' + last;
+
+    const segments = Array(10).fill('').map(() => '<span class="brand-segment"></span>').join('');
+
+    return `
+      <div class="brand-card ${!hasHandle ? 'no-handle' : ''}">
+        <div class="brand-card-header">
+          <div class="brand-icon ${p.cls}">${p.icon}</div>
+          <div class="brand-info">
+            <div class="brand-platform">${p.name}</div>
+            <div class="brand-handle">${data.handle || (hasHandle ? '—' : 'не настроено')}</div>
+          </div>
+          <div class="brand-score ${scoreCls}">
+            <span class="brand-num">${score}</span><span class="brand-of">/10</span>
+          </div>
+        </div>
+        <div class="brand-bar" data-score="${score}">${segments}</div>
+        <div class="brand-meta"><span class="dot-stat ${dotCls}"></span> ${statusText}</div>
+        <div class="brand-actions">
+          ${data.url ? `<button onclick="window.open('${data.url}', '_blank')">↗ Профиль</button>` : ''}
+          <button class="posted-btn" onclick="markBrandPosted('${p.id}')">✓ Я запостил</button>
+          <button onclick="openBrandEdit('${p.id}')">✎</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function markBrandPosted(platformId) {
+  const data = DB.load();
+  if (!data.brand) data.brand = {};
+  if (!data.brand[platformId]) data.brand[platformId] = {};
+  data.brand[platformId].lastPost = new Date().toISOString().slice(0,10);
+  DB.save(data);
+  renderBrandHealth();
+  toast('Засчитан пост! Шкала обновлена', 'success');
+}
+
+let _editingPlatformId = null;
+function openBrandEdit(platformId) {
+  _editingPlatformId = platformId;
+  const platform = BRAND_PLATFORMS.find(p => p.id === platformId);
+  if (!platform) return;
+  const data = (DB.load().brand || {})[platformId] || {};
+  closeAll();
+  document.getElementById('be-icon').textContent = platform.icon;
+  document.getElementById('be-title').textContent = 'Настройка · ' + platform.name;
+  document.getElementById('be-handle').value = data.handle || '';
+  document.getElementById('be-url').value = data.url || '';
+  document.getElementById('be-last').value = data.lastPost || '';
+  document.getElementById('be-decay').value = data.decayDays || platform.decayDays;
+  document.getElementById('m-brand-edit').classList.add('active');
+}
+
+function saveBrandPlatform() {
+  if (!_editingPlatformId) return;
+  const data = DB.load();
+  if (!data.brand) data.brand = {};
+  data.brand[_editingPlatformId] = {
+    handle: document.getElementById('be-handle').value.trim(),
+    url: document.getElementById('be-url').value.trim(),
+    lastPost: document.getElementById('be-last').value,
+    decayDays: Math.max(1, Number(document.getElementById('be-decay').value) || 7)
+  };
+  DB.save(data);
+  closeAll();
+  renderBrandHealth();
+  toast('Платформа обновлена', 'success');
+}
+
+// Рендерим бренд при загрузке + каждый час обновляем (decay)
+window.addEventListener('DOMContentLoaded', renderBrandHealth);
+setInterval(renderBrandHealth, 60 * 60 * 1000); // каждый час
 
 /* ============================================================
    ВЫЗЫВНЫЕ (по числу съёмочных дней)
@@ -7132,8 +7772,62 @@ window.openProjectDetail = function(id, idx) {
     renderCreative(project);
     renderIntegrations(project);
     renderCallsheetCard(project);
+    renderSmetaPromo(project);
+    renderDocCreativeCards(project);
   }
 };
+
+// Обновить промо-блок сметы (вверху проекта)
+function renderSmetaPromo(project) {
+  const est = ensureEstimate(project);
+  const sub = calcGrandTotal(est);
+  const grand = sub + sub * ((est.taxPercent || 0) / 100);
+  let filled = 0, total = 0;
+  Object.values(est.sections || {}).forEach(sec => {
+    const all = [...(sec.rows || []), ...(sec.customRows || [])];
+    total += all.length;
+    all.forEach(r => { if (Number(r.price) > 0) filled++; });
+  });
+  const amt = document.getElementById('smeta-promo-amount');
+  if (amt) amt.textContent = grand > 0 ? fmtRub(Math.round(grand)) : '— ₽';
+  const cnt = document.getElementById('smeta-promo-count');
+  if (cnt) cnt.textContent = grand > 0 ? (filled + ' / ' + total + ' позиций') : 'не заполнена';
+  const sub2 = document.getElementById('smeta-promo-sub');
+  if (sub2) sub2.textContent = grand > 0
+    ? ('Налог ' + (est.taxPercent || 0) + '% · кликни чтобы продолжить редактирование')
+    : '14 разделов · кликни чтобы начать заполнять';
+}
+
+// Обновить карточки ППМ и шутинг-плана в документации
+function renderDocCreativeCards(project) {
+  const c = project.creative || {};
+  // PPM
+  const ppmData = c.ppm;
+  const ppmBadge = document.getElementById('ppm-badge');
+  const ppmMeta = document.getElementById('ppm-meta');
+  if (ppmBadge && ppmMeta) {
+    if (ppmData && (ppmData.url || ppmData.fileKey)) {
+      ppmBadge.textContent = ppmData.fileKey ? 'ФАЙЛ' : 'ССЫЛКА';
+      ppmMeta.textContent = ppmData.name || 'Загружено';
+    } else {
+      ppmBadge.textContent = 'PDF / PPTX';
+      ppmMeta.textContent = 'Pre-Production Meeting';
+    }
+  }
+  // Shooting plan
+  const spData = c.shooting_plan;
+  const spBadge = document.getElementById('shootplan-badge');
+  const spMeta = document.getElementById('shootplan-meta');
+  if (spBadge && spMeta) {
+    if (spData && (spData.url || spData.fileKey)) {
+      spBadge.textContent = spData.fileKey ? 'ФАЙЛ' : 'ССЫЛКА';
+      spMeta.textContent = spData.name || 'Загружено';
+    } else {
+      spBadge.textContent = 'PDF / XLSX';
+      spMeta.textContent = 'съёмочный план';
+    }
+  }
+}
 
 /* ============================================================
    INIT
