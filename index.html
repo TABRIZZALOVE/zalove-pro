@@ -3392,6 +3392,159 @@ body.has-reel .theme-toggle { right: 158px; }
   font-size: 11px;
   margin-right: 4px;
 }
+
+/* ===== ОБЛОЖКИ ПРОЕКТОВ (фото артиста / продукта поверх постера) ===== */
+.poster.has-cover {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+.poster.has-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.85) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+.poster.has-cover > * { position: relative; z-index: 2; }
+.poster.has-cover .poster-tag,
+.poster.has-cover .mood-icon,
+.poster.has-cover .poster-title,
+.poster.has-cover .poster-slate,
+.poster.has-cover .poster-num {
+  text-shadow: 0 1px 3px rgba(0,0,0,0.65);
+}
+.poster.has-cover .poster-num {
+  color: rgba(255,255,255,0.4);
+}
+
+/* Кнопка «обложка» в углу карточки */
+.cover-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.cover-btn:hover { transform: scale(1.1); background: var(--brand-red, #e8231d); }
+.project-card:hover .cover-btn { opacity: 1; }
+
+/* ===== МОДАЛКА ПОИСКА ОБЛОЖКИ ===== */
+.cover-search-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: var(--bg-2, #f5f5f0);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+.cover-search-tab {
+  flex: 1;
+  padding: 9px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted, #888);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cover-search-tab.active {
+  background: white;
+  color: var(--ink, #0a0907);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.cover-search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cover-search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+}
+.cover-search-results {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  min-height: 200px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.cover-result {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--bg-2, #f5f5f0) center/cover no-repeat;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.15s;
+}
+.cover-result:hover {
+  transform: scale(1.04);
+  border-color: var(--brand-red, #e8231d);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+.cover-result .label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  color: white;
+  padding: 16px 8px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.cover-search-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--muted, #888);
+  font-size: 13px;
+  padding: 40px 20px;
+}
+.cover-alt-block {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-2, #e5e5e5);
+  display: grid;
+  gap: 10px;
+}
+.cover-alt-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted, #888);
+}
+.cover-alt-row input[type=text] {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 4px;
+  font-size: 13px;
+}
 </style>
 </head>
 <body>
@@ -5430,6 +5583,51 @@ body.has-reel .theme-toggle { right: 158px; }
   </div>
 </div>
 
+<!-- ===== ОБЛОЖКА ПРОЕКТА (поиск + загрузка) ===== -->
+<div class="modal-overlay" id="m-cover-search">
+  <div class="doc-overlay" style="width: 720px; max-height: 92vh;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">📷</div>
+        <div>
+          <div class="doc-section-label" id="cover-search-subtitle">Обложка проекта</div>
+          <div class="doc-header-title">Поиск обложки</div>
+        </div>
+      </div>
+      <button class="modal-close-x" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="cover-search-tabs">
+        <button class="cover-search-tab" data-cover-tab="artist" onclick="setCoverTab('artist')">🎤 Фото артиста</button>
+        <button class="cover-search-tab" data-cover-tab="album" onclick="setCoverTab('album')">💿 Арт трека/альбома</button>
+        <button class="cover-search-tab" data-cover-tab="brand" onclick="setCoverTab('brand')">🛍 Бренд / продукт</button>
+      </div>
+      <div class="cover-search-bar">
+        <input type="text" id="cover-search-input" class="cover-search-input" placeholder="Например: JONY, MERCEDES, iPhone 16…" onkeydown="if(event.key==='Enter') runCoverSearch()">
+        <button class="btn" onclick="runCoverSearch()">🔍 Найти</button>
+      </div>
+      <div class="cover-search-results" id="cover-search-results">
+        <div class="cover-search-state">Введи запрос и нажми «Найти»</div>
+      </div>
+      <div class="cover-alt-block">
+        <div class="cover-alt-row">
+          <span style="white-space:nowrap;">Или URL:</span>
+          <input type="text" id="cover-url-input" placeholder="https://..." onkeydown="if(event.key==='Enter') applyCoverUrl()">
+          <button class="btn-secondary btn" onclick="applyCoverUrl()">Применить</button>
+        </div>
+        <div class="cover-alt-row">
+          <span style="white-space:nowrap;">Или файл:</span>
+          <input type="file" id="cover-file-input" accept="image/*" onchange="applyCoverFile(this.files[0])" style="flex:1;">
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="cover-current-info">—</div>
+      <button class="btn-secondary btn" onclick="removeCover()" id="cover-remove-btn" style="display:none;">🗑 Убрать обложку</button>
+    </div>
+  </div>
+</div>
+
 <!-- INTEGRATION FORM MODAL (для музыкальных клипов) -->
 <div class="modal-overlay" id="m-integration">
   <div class="doc-overlay" style="width: 700px;">
@@ -6108,17 +6306,23 @@ function projectCardHTML(p, idx) {
     '<div class="frozen-snow-flake" style="left: 85%; animation-duration: 4.2s; animation-delay: 1.5s;">❄</div>'
   ].join('') : '';
 
+  // Обложка: если задана — используем как фон-картинку
+  const coverUrl = p.coverImage || '';
+  const hasCover = !!coverUrl;
+  const posterStyle = hasCover ? `background-image: url('${coverUrl.replace(/'/g, "\\'")}');` : '';
+
   return `
     <div class="project-card ${isFrozen ? 'frozen' : ''}" data-project-id="${p.id}" onclick="openProjectDetail('${p.id}', ${idx + 1})">
       <div class="card-actions">
         <button class="btn-edit" onclick="event.stopPropagation(); openProjectForm('${p.id}')" title="Редактировать">✎</button>
         <button onclick="event.stopPropagation(); deleteProjectConfirm('${p.id}', '${escapeHtml(p.name)}')" title="Удалить">×</button>
       </div>
+      <button class="cover-btn" onclick="event.stopPropagation(); openCoverSearch('${p.id}')" title="Сменить обложку">📷</button>
       ${isFrozen ? '<div class="frozen-icicles"></div>' : ''}
       ${isFrozen ? '<div class="frozen-badge">заморожен</div>' : ''}
       ${snowflakes}
       ${isFrozen ? '<div class="frozen-snowflake">❄</div>' : ''}
-      <div class="poster ${p.poster || 'poster-1'}">
+      <div class="poster ${p.poster || 'poster-1'} ${hasCover ? 'has-cover' : ''}" style="${posterStyle}">
         <div class="poster-tag ${status.cls}">${status.txt}</div>
         <div class="mood-icon ${mood.cls}" title="${mood.title}">${mood.emoji}</div>
         <div class="poster-title">${escapeHtml(p.client || p.artist || '')}</div>
@@ -7627,9 +7831,9 @@ function buildEstimatePrintHTML(project, est) {
   c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
 
   let html = `
-    <div style="background:#3c3c3c;color:white;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;">
-      <img src="logo.png" alt="ZALOVE" style="height:42px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
-      <div style="font-size:11px;color:#ccc;letter-spacing:1px;text-transform:uppercase;">Смета · ${new Date().toLocaleDateString('ru-RU')}</div>
+    <div style="background:#ffffff;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
+      <img src="logo.png" alt="ZALOVE" style="height:26px;width:auto;" crossorigin="anonymous">
+      <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;">Смета · ${new Date().toLocaleDateString('ru-RU')}</div>
     </div>
     <div style="padding:24px 40px;">
       <div style="font-size:32px;font-weight:900;letter-spacing:-1px;">СМЕТА ПРОЕКТА</div>
@@ -8091,7 +8295,8 @@ function ensureCallsheet(project, dayNum) {
     const director = getProjectTeamMember(project, 'Режиссёр');
     const dop = getProjectTeamMember(project, 'Оператор-постановщик (DOP)');
     const producer = getProjectTeamMember(project, 'Линейный продюсер', 'Исполнительный продюсер', 'Генеральный продюсер');
-    const art = getProjectTeamMember(project, 'Арт-директор', 'Художник-постановщик');
+    const art = getProjectTeamMember(project, 'Арт-директор');
+    const productionDesigner = getProjectTeamMember(project, 'Художник-постановщик');
 
     let date = '';
     if (project.startDate) {
@@ -8105,6 +8310,7 @@ function ensureCallsheet(project, dayNum) {
       dopName: dop?.name_ru || '',
       producerName: producer?.name_ru || 'Табриз Залов',
       artName: art?.name_ru || '',
+      productionDesignerName: productionDesigner?.name_ru || '',
       wifiName: '',
       wifiPass: '',
       weatherDay: '',
@@ -8196,7 +8402,7 @@ function renderCallsheetEditor() {
       </div>
     </div>
 
-    <!-- 2. Главные роли крю (Director / DOP / Producer / Art) -->
+    <!-- 2. Главные роли крю (Director / DOP / Producer / Art / Production Designer) -->
     <div class="cs-section">
       <div class="cs-section-title">🎬 Главные позиции</div>
       <div class="cs-row-grid cs-2col">
@@ -8209,12 +8415,16 @@ function renderCallsheetEditor() {
           <input class="cs-input" data-cs="dopName" value="${escapeHtml(cs.dopName || '')}" placeholder="ФИО оператора">
         </div>
         <div>
-          <div class="cs-field-label">Продюсер</div>
+          <div class="cs-field-label">Продюсер (PRODUCER)</div>
           <input class="cs-input" data-cs="producerName" value="${escapeHtml(cs.producerName || '')}" placeholder="ФИО продюсера">
         </div>
         <div>
-          <div class="cs-field-label">Арт-директор / Худ-постановщик</div>
+          <div class="cs-field-label">Арт-директор (ART DIRECTOR)</div>
           <input class="cs-input" data-cs="artName" value="${escapeHtml(cs.artName || '')}" placeholder="ФИО арт-директора">
+        </div>
+        <div>
+          <div class="cs-field-label">Художник-постановщик (PRODUCTION DESIGNER)</div>
+          <input class="cs-input" data-cs="productionDesignerName" value="${escapeHtml(cs.productionDesignerName || '')}" placeholder="ФИО худ-постановщика">
         </div>
       </div>
     </div>
@@ -8521,13 +8731,13 @@ function buildCallsheetPrintHTML(project, cs) {
   const c = document.createElement('div');
   c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
 
-  // Brand header — logo вместо текста (серый фон как в заголовке таблицы)
+  // Brand header — компактный, на белом
   let html = `
-    <div style="background:#3c3c3c;color:white;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;">
-      <img src="logo.png" alt="ZALOVE" style="height:42px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+    <div style="background:#ffffff;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
+      <img src="logo.png" alt="ZALOVE" style="height:26px;width:auto;" crossorigin="anonymous">
       <div style="text-align:right;">
-        ${cs.date ? `<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
-        <div style="font-size:11px;color:#ccc;margin-top:2px;letter-spacing:1px;text-transform:uppercase;">День ${_currentCsDay}${project.days ? ' из ' + project.days : ''}</div>
+        ${cs.date ? `<div style="font-size:16px;font-weight:700;color:#0a0907;letter-spacing:0.3px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
+        <div style="font-size:10px;color:#888;margin-top:2px;letter-spacing:1px;text-transform:uppercase;">День ${_currentCsDay}${project.days ? ' из ' + project.days : ''}</div>
       </div>
     </div>`;
 
@@ -8548,7 +8758,7 @@ function buildCallsheetPrintHTML(project, cs) {
   if ((cs.directorName || '').trim()) roleItems.push({ lbl: 'РЕЖИССЁР', val: cs.directorName });
   if ((cs.dopName || '').trim()) roleItems.push({ lbl: 'DOP', val: cs.dopName });
   if ((cs.producerName || '').trim()) roleItems.push({ lbl: 'ПРОДЮСЕР', val: cs.producerName });
-  if ((cs.artName || '').trim()) roleItems.push({ lbl: 'АРТ', val: cs.artName });
+  if ((cs.artName || '').trim()) roleItems.push({ lbl: 'АРТ-ДИРЕКТОР', val: cs.artName });
   if (roleItems.length > 0) {
     html += `
       <div style="margin:0 40px;background:#f5f5f0;padding:14px 18px;display:grid;grid-template-columns:repeat(${roleItems.length},1fr);gap:14px;border-radius:4px;">
@@ -8613,6 +8823,7 @@ function buildCallsheetPrintHTML(project, cs) {
   }
 
   // Crew — фильтр: не дублируем тех, кто уже в "Главных позициях" вверху
+  // Худ-постановщик (Production Designer) — отдельная роль, должен попасть в общий список КРЮ
   const TOP_ROLES = new Set([
     'Режиссёр',
     'Оператор-постановщик (DOP)',
@@ -8620,8 +8831,7 @@ function buildCallsheetPrintHTML(project, cs) {
     'Исполнительный продюсер',
     'Линейный продюсер',
     'Креативный продюсер',
-    'Арт-директор',
-    'Художник-постановщик'
+    'Арт-директор'
   ]);
   const topNames = new Set([cs.directorName, cs.dopName, cs.producerName, cs.artName].filter(n => n && n.trim()).map(n => n.trim().toLowerCase()));
   const filteredCrew = (cs.crew || []).filter(p => {
@@ -9596,6 +9806,201 @@ function closeAll() {
     saveCsNow();
   }
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+/* ===== ПОИСК ОБЛОЖКИ ПРОЕКТА ===== */
+let _coverProjectId = null;
+let _coverTab = 'artist';
+
+function openCoverSearch(projectId) {
+  const project = DB.getProject(projectId);
+  if (!project) return;
+  _coverProjectId = projectId;
+  // Дефолтный таб: MV → артист, AD → бренд
+  _coverTab = (project.type === 'MV' || project.type === 'mv' || (project.type || '').toLowerCase().includes('клип')) ? 'artist' : 'brand';
+  // Дефолтный запрос: artist для MV, client/name для AD
+  const defaultQuery = _coverTab === 'artist'
+    ? (project.artist || project.name || '')
+    : (project.client || project.name || '');
+  document.getElementById('cover-search-input').value = defaultQuery;
+  document.getElementById('cover-url-input').value = '';
+  document.getElementById('cover-file-input').value = '';
+  document.getElementById('cover-search-subtitle').textContent =
+    'Обложка · ' + (project.name || 'проект');
+  // Текущий URL
+  const info = document.getElementById('cover-current-info');
+  const removeBtn = document.getElementById('cover-remove-btn');
+  if (project.coverImage) {
+    info.textContent = 'Обложка установлена';
+    removeBtn.style.display = '';
+  } else {
+    info.textContent = 'Обложка не задана';
+    removeBtn.style.display = 'none';
+  }
+  // Подсветить активный таб
+  updateCoverTabs();
+  // Открыть модалку
+  document.getElementById('m-cover-search').classList.add('active');
+  // Автопоиск, если есть запрос
+  if (defaultQuery.trim()) {
+    runCoverSearch();
+  } else {
+    document.getElementById('cover-search-results').innerHTML =
+      '<div class="cover-search-state">Введи запрос и нажми «Найти»</div>';
+  }
+}
+
+function setCoverTab(tab) {
+  _coverTab = tab;
+  updateCoverTabs();
+  // Пересчитать запрос, если поле пустое
+  const input = document.getElementById('cover-search-input');
+  if (!input.value.trim()) {
+    const project = DB.getProject(_coverProjectId);
+    if (project) {
+      input.value = tab === 'brand' ? (project.client || project.name || '') : (project.artist || project.name || '');
+    }
+  }
+  if (input.value.trim()) runCoverSearch();
+}
+
+function updateCoverTabs() {
+  document.querySelectorAll('.cover-search-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.coverTab === _coverTab);
+  });
+}
+
+async function runCoverSearch() {
+  const query = document.getElementById('cover-search-input').value.trim();
+  const out = document.getElementById('cover-search-results');
+  if (!query) {
+    out.innerHTML = '<div class="cover-search-state">Введи запрос</div>';
+    return;
+  }
+  out.innerHTML = '<div class="cover-search-state">Поиск…</div>';
+  try {
+    let results = [];
+    if (_coverTab === 'artist') {
+      results = await searchITunesArtist(query);
+    } else if (_coverTab === 'album') {
+      results = await searchITunesAlbum(query);
+    } else if (_coverTab === 'brand') {
+      results = await searchWikipediaImages(query);
+    }
+    if (!results || results.length === 0) {
+      out.innerHTML = '<div class="cover-search-state">Ничего не нашлось. Попробуй другой запрос или вкладку.</div>';
+      return;
+    }
+    out.innerHTML = results.map(r => `
+      <div class="cover-result" style="background-image:url('${r.url.replace(/'/g, "\\'")}');" onclick="selectCover('${r.url.replace(/'/g, "\\'")}')" title="${escapeHtml(r.label || '')}">
+        ${r.label ? `<div class="label">${escapeHtml(r.label)}</div>` : ''}
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error(e);
+    out.innerHTML = '<div class="cover-search-state">Ошибка поиска: ' + escapeHtml(e.message || 'unknown') + '</div>';
+  }
+}
+
+/* iTunes Search API — фото артистов через альбомы (берём artworkUrl от треков) */
+async function searchITunesArtist(query) {
+  // Сначала ищем артиста, потом его альбомы
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=musicArtist&limit=8`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const artists = (data.results || []).filter(a => a.artistId);
+  if (artists.length === 0) {
+    // Fallback: поищем сразу треки и возьмём artwork
+    return await searchITunesAlbum(query);
+  }
+  // Для каждого артиста — берём первый альбом и его artwork как «фото артиста»
+  const allResults = [];
+  for (const artist of artists.slice(0, 4)) {
+    try {
+      const lookupUrl = `https://itunes.apple.com/lookup?id=${artist.artistId}&entity=album&limit=3`;
+      const r2 = await fetch(lookupUrl);
+      const d2 = await r2.json();
+      const albums = (d2.results || []).filter(x => x.collectionType === 'Album' || x.artworkUrl100);
+      albums.forEach(a => {
+        if (a.artworkUrl100) {
+          allResults.push({
+            url: a.artworkUrl100.replace('100x100', '1200x1200'),
+            label: artist.artistName + (a.collectionName ? ' · ' + a.collectionName : '')
+          });
+        }
+      });
+    } catch (_) {}
+  }
+  return allResults.slice(0, 16);
+}
+
+/* iTunes Search API — обложки альбомов/треков */
+async function searchITunesAlbum(query) {
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=16`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return (data.results || [])
+    .filter(a => a.artworkUrl100)
+    .map(a => ({
+      url: a.artworkUrl100.replace('100x100', '1200x1200'),
+      label: (a.artistName || '') + ' · ' + (a.collectionName || '')
+    }));
+}
+
+/* Wikipedia API — поиск изображений по бренду/продукту */
+async function searchWikipediaImages(query) {
+  // Сначала RU, потом EN
+  const langs = ['ru', 'en'];
+  const allResults = [];
+  for (const lang of langs) {
+    try {
+      const url = `https://${lang}.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&piprop=original|thumbnail&pithumbsize=400&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=10&origin=*`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const pages = data.query?.pages || {};
+      Object.values(pages).forEach(p => {
+        const img = p.original?.source || p.thumbnail?.source;
+        if (img) {
+          allResults.push({ url: img, label: p.title });
+        }
+      });
+      if (allResults.length >= 8) break;
+    } catch (_) {}
+  }
+  return allResults.slice(0, 16);
+}
+
+function selectCover(url) {
+  if (!_coverProjectId || !url) return;
+  DB.updateProject(_coverProjectId, { coverImage: url });
+  renderProjects();
+  toast('Обложка сохранена ✓', 'success');
+  closeAll();
+}
+
+function applyCoverUrl() {
+  const url = document.getElementById('cover-url-input').value.trim();
+  if (!url) { toast('Введи URL', 'error'); return; }
+  if (!/^https?:\/\//i.test(url)) { toast('URL должен начинаться с http(s)://', 'error'); return; }
+  selectCover(url);
+}
+
+function applyCoverFile(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { toast('Только изображения', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024) { toast('Файл больше 5 МБ — сожми его', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => selectCover(e.target.result);
+  reader.onerror = () => toast('Не удалось прочитать файл', 'error');
+  reader.readAsDataURL(file);
+}
+
+function removeCover() {
+  if (!_coverProjectId) return;
+  DB.updateProject(_coverProjectId, { coverImage: '' });
+  renderProjects();
+  toast('Обложка убрана', 'success');
+  closeAll();
 }
 
 // ===== ROLE / PRIVACY TOGGLE =====
