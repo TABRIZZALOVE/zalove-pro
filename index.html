@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -7528,9 +7529,96 @@ function exportEstimateToXlsx() {
   toast('Смета скачана: ' + filename, 'success');
 }
 
-function exportEstimateToPdf() {
-  if (typeof window.jspdf === 'undefined') {
-    toast('Библиотека jsPDF не загрузилась. Перезагрузите страницу.', 'error');
+function buildEstimatePrintHTML(project, est) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
+
+  let html = `
+    <div style="background:#0a0907;color:white;padding:24px 40px;">
+      <div style="font-size:26px;font-weight:900;letter-spacing:1px;">ZALOVE PRODUCTION</div>
+      <div style="font-size:11px;color:#ccc;margin-top:4px;">ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670</div>
+    </div>
+    <div style="padding:24px 40px;">
+      <div style="font-size:32px;font-weight:900;letter-spacing:-1px;">СМЕТА ПРОЕКТА</div>
+      <div style="font-size:16px;color:#444;margin-top:6px;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}${project.type ? ' · ' + escapeHtml(project.type) : ''}</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;">Дата сметы: ${new Date().toLocaleDateString('ru-RU')}</div>
+    </div>`;
+
+  let grandSum = 0;
+  SMETA_TEMPLATE.forEach(tmpl => {
+    const section = est.sections[tmpl.id];
+    if (!section) return;
+    const allRows = [...(section.rows || []), ...(section.customRows || [])];
+    let sectionSum = 0;
+    let rowsHtml = '';
+    allRows.forEach((row, i) => {
+      const total = calcRowTotal(row);
+      sectionSum += total;
+      if (total === 0 && !row.price) return; // пропускаем пустые
+      rowsHtml += `
+        <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #e5e5e5;">
+          <td style="padding:7px 12px;font-weight:600;">${escapeHtml(row.name || '')}</td>
+          <td style="padding:7px 12px;color:#666;font-size:11px;">${escapeHtml(row.desc || '')}</td>
+          <td style="padding:7px 12px;text-align:right;font-family:monospace;font-size:11px;">${row.qty || ''}</td>
+          <td style="padding:7px 12px;text-align:right;font-family:monospace;font-size:11px;">${row.days || ''}</td>
+          <td style="padding:7px 12px;text-align:right;font-family:monospace;color:#e8231d;font-weight:600;">${row.price ? Number(row.price).toLocaleString('ru-RU') : ''}</td>
+          <td style="padding:7px 12px;text-align:right;font-family:monospace;font-weight:700;">${total > 0 ? total.toLocaleString('ru-RU') + ' ₽' : ''}</td>
+        </tr>`;
+    });
+    grandSum += sectionSum;
+    if (sectionSum === 0) return; // пропускаем целиком пустые разделы
+    html += `
+      <div style="margin:0 40px 16px;">
+        <div style="background:#e8231d;color:white;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
+          <div style="font-size:13px;font-weight:800;letter-spacing:0.5px;">${tmpl.n} · ${escapeHtml(tmpl.title.toUpperCase())}</div>
+          <div style="font-family:monospace;font-size:13px;font-weight:700;">${sectionSum.toLocaleString('ru-RU')} ₽</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;background:white;">
+          <thead>
+            <tr style="background:#3c3c3c;color:white;">
+              <th style="text-align:left;padding:7px 12px;font-weight:700;font-size:10px;letter-spacing:0.5px;">ПОЗИЦИЯ</th>
+              <th style="text-align:left;padding:7px 12px;font-weight:700;font-size:10px;letter-spacing:0.5px;">ОПИСАНИЕ</th>
+              <th style="text-align:right;padding:7px 12px;font-weight:700;font-size:10px;letter-spacing:0.5px;width:8%;">К-ВО</th>
+              <th style="text-align:right;padding:7px 12px;font-weight:700;font-size:10px;letter-spacing:0.5px;width:8%;">СМЕН</th>
+              <th style="text-align:right;padding:7px 12px;font-weight:700;font-size:10px;letter-spacing:0.5px;width:14%;">ЦЕНА</th>
+              <th style="text-align:right;padding:7px 12px;font-weight:700;font-size:10px;letter-spacing:0.5px;width:18%;">ИТОГО</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
+  });
+
+  // Totals
+  const taxPct = est.taxPercent || 0;
+  const taxAmount = Math.round(grandSum * taxPct / 100);
+  const finalTotal = grandSum + taxAmount;
+  html += `
+    <div style="margin:24px 40px 0;background:#f5f5f0;padding:18px 22px;border-radius:6px;">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;">
+        <span style="color:#666;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:11px;">Сумма разделов</span>
+        <span style="font-family:monospace;font-weight:700;">${grandSum.toLocaleString('ru-RU')} ₽</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-top:1px dashed #ccc;">
+        <span style="color:#666;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:11px;">Налог ${taxPct}%</span>
+        <span style="font-family:monospace;font-weight:700;">${taxAmount.toLocaleString('ru-RU')} ₽</span>
+      </div>
+    </div>
+    <div style="margin:14px 40px 40px;background:linear-gradient(135deg,#e8231d,#b81812);color:white;padding:24px 28px;border-radius:8px;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.85);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:6px;">Итого с налогом</div>
+      <div style="font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1;">${finalTotal.toLocaleString('ru-RU')} ₽</div>
+    </div>
+    <div style="margin:0 40px 24px;padding-top:14px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center;">
+      ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · сгенерирована ${new Date().toLocaleDateString('ru-RU')}
+    </div>`;
+
+  c.innerHTML = html;
+  return c;
+}
+
+async function exportEstimateToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились. Перезагрузите страницу.', 'error');
     return;
   }
   if (!_currentProjectId) return;
@@ -7538,6 +7626,48 @@ function exportEstimateToPdf() {
   if (!project) return;
   const est = ensureEstimate(project);
 
+  toast('Готовлю PDF...', 'success');
+  // Build print HTML
+  const container = buildEstimatePrintHTML(project, est);
+  document.body.appendChild(container);
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: 794
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+    while (heightLeft > 0) {
+      position -= pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+    const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`Смета_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('Смета PDF скачана ✓', 'success');
+    return;
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка генерации PDF: ' + e.message, 'error');
+    return;
+  }
+
+  // (старый код ниже — никогда не выполнится, оставлено для истории)
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -8235,42 +8365,234 @@ function pullCastFromTeam() {
 }
 
 /* ===== ЭКСПОРТ ВЫЗЫВНОГО ===== */
-function exportCallsheetToPdf() {
-  if (typeof window.jspdf === 'undefined') {
-    toast('jsPDF не загрузилась', 'error');
+async function exportCallsheetToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились, обновите страницу', 'error');
     return;
   }
   if (!_currentProjectId || !_currentCsData) return;
   const project = DB.getProject(_currentProjectId);
   const cs = _currentCsData;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const RED = [232, 35, 29];
-  const RED_LIGHT = [255, 230, 230];
-  const DARK = [10, 9, 7];
-  const GREY = [120, 120, 120];
-  const LIGHT_BG = [245, 245, 240];
-  const isMV = project.type === 'MV';
-
-  // === HEADER BAR ===
-  doc.setFillColor(...DARK);
-  doc.rect(0, 0, 210, 26, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text('ZALOVE PRODUCTION', 14, 12);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('ИП Залов Табриз Руслан-Оглы · ИНН 180204378651', 14, 19);
-  // Date top-right
-  if (cs.date) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text(formatDateRu(cs.date), 196, 14, { align: 'right' });
+  toast('Готовлю PDF...', 'success');
+  // Build print-ready HTML in an off-screen container
+  const container = buildCallsheetPrintHTML(project, cs);
+  document.body.appendChild(container);
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: 794
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+    while (heightLeft > 0) {
+      position -= pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+    const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`Вызывной_${slug}_день${_currentCsDay}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('Вызывной PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка генерации PDF: ' + e.message, 'error');
   }
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.text('День ' + _currentCsDay + (project.days ? ' из ' + project.days : ''), 196, 20, { align: 'right' });
+}
+
+function buildCallsheetPrintHTML(project, cs) {
+  const isMV = project.type === 'MV';
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
+
+  // Brand header
+  let html = `
+    <div style="background:#0a0907;color:white;padding:24px 40px;display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-size:26px;font-weight:900;letter-spacing:1px;">ZALOVE PRODUCTION</div>
+        <div style="font-size:11px;color:#ccc;margin-top:4px;">ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670</div>
+      </div>
+      <div style="text-align:right;">
+        ${cs.date ? `<div style="font-size:20px;font-weight:700;color:#fff;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
+        <div style="font-size:11px;color:#ccc;margin-top:2px;">День ${_currentCsDay}${project.days ? ' из ' + project.days : ''}</div>
+      </div>
+    </div>`;
+
+  // Title
+  html += `
+    <div style="padding:32px 40px 16px;">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1;">ВЫЗЫВНОЙ</div>
+        <div style="background:${isMV ? '#e8231d' : '#1d4ed8'};color:white;padding:7px 14px;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:1px;">${isMV ? 'МУЗ. КЛИП' : 'РЕКЛАМА'}</div>
+      </div>
+      <div style="font-size:16px;color:#444;margin-top:8px;">
+        ${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}${project.artist ? ' (' + escapeHtml(project.artist) + ')' : ''}
+      </div>
+    </div>`;
+
+  // Roles strip
+  html += `
+    <div style="margin:0 40px;background:#f5f5f0;padding:14px 18px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;border-radius:4px;">
+      <div>
+        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">РЕЖИССЁР</div>
+        <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(cs.directorName || '—')}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">DOP</div>
+        <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(cs.dopName || '—')}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">ПРОДЮСЕР</div>
+        <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(cs.producerName || '—')}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">АРТ</div>
+        <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(cs.artName || '—')}</div>
+      </div>
+    </div>`;
+
+  // Times
+  if (cs.startShift || cs.startShoot || cs.endShift) {
+    html += `
+      <div style="margin:16px 40px 0;background:#0a0907;color:white;padding:18px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;border-radius:4px;">
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:#b8b8b8;font-weight:700;letter-spacing:1.5px;">НАЧАЛО СМЕНЫ</div>
+          <div style="font-size:30px;font-weight:900;margin-top:6px;line-height:1;">${escapeHtml(cs.startShift || '—:—')}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:#b8b8b8;font-weight:700;letter-spacing:1.5px;">НАЧАЛО СЪЁМКИ</div>
+          <div style="font-size:30px;font-weight:900;margin-top:6px;line-height:1;">${escapeHtml(cs.startShoot || '—:—')}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:#b8b8b8;font-weight:700;letter-spacing:1.5px;">КОНЕЦ СМЕНЫ</div>
+          <div style="font-size:30px;font-weight:900;margin-top:6px;line-height:1;">${escapeHtml(cs.endShift || '—:—')}</div>
+        </div>
+      </div>`;
+  }
+
+  // Location
+  if (cs.locationName || cs.locationAddress) {
+    let contactLine = '';
+    if (cs.locationContactName) contactLine += escapeHtml(cs.locationContactName);
+    if (cs.locationContactPhone) contactLine += (contactLine ? ' · ' : '') + escapeHtml(cs.locationContactPhone);
+    if (cs.locationContactTelegram) contactLine += (contactLine ? ' · ' : '') + escapeHtml(cs.locationContactTelegram);
+    html += `
+      <div style="margin:16px 40px 0;background:#fff0f0;border-left:5px solid #e8231d;padding:16px 20px;border-radius:4px;">
+        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">ГДЕ СНИМАЕМ</div>
+        <div style="font-size:20px;font-weight:700;margin-top:4px;">${escapeHtml(cs.locationName || '—')}</div>
+        ${cs.locationAddress ? `<div style="font-size:13px;margin-top:4px;color:#333;">${escapeHtml(cs.locationAddress)}</div>` : ''}
+        ${contactLine ? `<div style="font-size:12px;color:#666;margin-top:6px;">${contactLine}</div>` : ''}
+      </div>`;
+  }
+
+  // Info line
+  const infoParts = [];
+  if (cs.wifiName) infoParts.push(`Wi-Fi: <b>${escapeHtml(cs.wifiName)}</b>${cs.wifiPass ? ' / ' + escapeHtml(cs.wifiPass) : ''}`);
+  if (cs.weatherDay || cs.weatherNight) infoParts.push(`Погода: ${escapeHtml(cs.weatherDay || '?')}°C / ${escapeHtml(cs.weatherNight || '?')}°C`);
+  if (infoParts.length > 0) {
+    html += `<div style="margin:12px 40px 0;font-size:12px;color:#444;">${infoParts.join(' &nbsp; · &nbsp; ')}</div>`;
+  }
+  if (cs.parking) {
+    html += `<div style="margin:6px 40px 0;font-size:11px;color:#666;">Парковка: ${escapeHtml(cs.parking)}</div>`;
+  }
+  if (cs.important) {
+    html += `
+      <div style="margin:14px 40px 0;background:#e8231d;color:white;padding:14px 18px;font-size:14px;font-weight:700;letter-spacing:1px;border-radius:4px;">
+        ⚠ &nbsp; ${escapeHtml(cs.important.toUpperCase())}
+      </div>`;
+  }
+
+  // Crew
+  if (cs.crew && cs.crew.length > 0) {
+    html += `
+      <div style="margin:28px 40px 0;">
+        <div style="background:#0a0907;color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
+          <div style="font-size:15px;font-weight:800;letter-spacing:1px;">КРЮ · СЪЁМОЧНАЯ ГРУППА</div>
+          <div style="font-size:12px;">${cs.crew.length} человек</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;background:white;">
+          <thead>
+            <tr style="background:#3c3c3c;color:white;">
+              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:30%;">ПОЗИЦИЯ</th>
+              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:35%;">ФИО</th>
+              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:25%;">ТЕЛЕФОН</th>
+              <th style="text-align:center;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:10%;">ВЫЗОВ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cs.crew.map((p, i) => `
+              <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #e5e5e5;">
+                <td style="padding:9px 14px;font-weight:700;">${escapeHtml(p.position || '')}</td>
+                <td style="padding:9px 14px;">${escapeHtml(p.name || '')}</td>
+                <td style="padding:9px 14px;color:#444;font-family:monospace;">${escapeHtml(p.phone || '')}</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:700;font-family:monospace;">${escapeHtml(p.callTime || '')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // Cast
+  if (cs.cast && cs.cast.length > 0) {
+    html += `
+      <div style="margin:24px 40px 0;">
+        <div style="background:#e8231d;color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
+          <div style="font-size:16px;font-weight:800;letter-spacing:1px;">${isMV ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ, АГЕНТСТВО И КАСТИНГ'}</div>
+          <div style="background:white;color:#e8231d;padding:5px 12px;border-radius:3px;font-size:11px;font-weight:800;letter-spacing:0.5px;">${isMV ? 'МУЗ. КЛИП' : 'РЕКЛАМА'} · ${cs.cast.length} ЧЕЛ.</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;background:white;">
+          <thead>
+            <tr style="background:#c81e19;color:white;">
+              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:30%;">ПОЗИЦИЯ</th>
+              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:35%;">ФИО</th>
+              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:25%;">ТЕЛЕФОН</th>
+              <th style="text-align:center;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:10%;">ВЫЗОВ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cs.cast.map((p, i) => `
+              <tr style="background:${i % 2 ? '#fff5f5' : '#ffffff'};border-bottom:1px solid #e5e5e5;">
+                <td style="padding:9px 14px;font-weight:700;">${escapeHtml(p.position || '')}</td>
+                <td style="padding:9px 14px;">${escapeHtml(p.name || '')}</td>
+                <td style="padding:9px 14px;color:#444;font-family:monospace;">${escapeHtml(p.phone || '')}</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:700;color:#e8231d;font-family:monospace;">${escapeHtml(p.callTime || '')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // Footer
+  html += `
+    <div style="margin:40px 40px 24px;padding-top:14px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center;">
+      ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · день ${_currentCsDay} · сгенерирован ${new Date().toLocaleDateString('ru-RU')}
+    </div>`;
+
+  c.innerHTML = html;
+  return c;
+}
+
+// Stub старой функции (после рефакторинга больше не вызывается)
+function _oldExportCallsheetPdfStub() {
+  const project = DB.getProject(_currentProjectId);
+  const cs = _currentCsData;
+  const isMV = project.type === 'MV';
+  // === HEADER BAR ===
 
   // === BIG "ВЫЗЫВНОЙ" TITLE ===
   let y = 38;
