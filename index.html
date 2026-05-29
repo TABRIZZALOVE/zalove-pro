@@ -4336,8 +4336,8 @@ body.has-reel .theme-toggle { right: 158px; }
         </div>
       </div>
       <div class="doc-actions-h">
-        <button class="btn btn-dark">⤓ XLSX</button>
-        <button class="btn-secondary btn">⎙ PDF</button>
+        <button class="btn btn-dark" onclick="exportEstimateToXlsx()">⤓ XLSX</button>
+        <button class="btn btn-dark" onclick="exportEstimateToPdf()">⎙ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
@@ -7548,14 +7548,13 @@ function buildEstimatePrintHTML(project, est) {
   c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
 
   let html = `
-    <div style="background:#0a0907;color:white;padding:24px 40px;">
-      <div style="font-size:26px;font-weight:900;letter-spacing:1px;">ZALOVE PRODUCTION</div>
-      <div style="font-size:11px;color:#ccc;margin-top:4px;">ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670</div>
+    <div style="background:#0a0907;color:white;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;">
+      <img src="logo.png" alt="ZALOVE" style="height:42px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+      <div style="font-size:11px;color:#ccc;letter-spacing:1px;text-transform:uppercase;">Смета · ${new Date().toLocaleDateString('ru-RU')}</div>
     </div>
     <div style="padding:24px 40px;">
       <div style="font-size:32px;font-weight:900;letter-spacing:-1px;">СМЕТА ПРОЕКТА</div>
       <div style="font-size:16px;color:#444;margin-top:6px;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}${project.type ? ' · ' + escapeHtml(project.type) : ''}</div>
-      <div style="font-size:11px;color:#888;margin-top:4px;">Дата сметы: ${new Date().toLocaleDateString('ru-RU')}</div>
     </div>`;
 
   let grandSum = 0;
@@ -7622,8 +7621,9 @@ function buildEstimatePrintHTML(project, est) {
       <div style="font-size:11px;color:rgba(255,255,255,0.85);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:6px;">Итого с налогом</div>
       <div style="font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1;">${finalTotal.toLocaleString('ru-RU')} ₽</div>
     </div>
-    <div style="margin:0 40px 24px;padding-top:14px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center;">
-      ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · сгенерирована ${new Date().toLocaleDateString('ru-RU')}
+    <div style="margin:0 40px 24px;padding-top:14px;border-top:1px solid #ddd;font-size:9px;color:#999;text-align:center;line-height:1.5;">
+      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670<br>
+      ${escapeHtml(project.name || '')} · сгенерирована ${new Date().toLocaleDateString('ru-RU')}
     </div>`;
 
   c.innerHTML = html;
@@ -7644,6 +7644,11 @@ async function exportEstimateToPdf() {
   const container = buildEstimatePrintHTML(project, est);
   document.body.appendChild(container);
   try {
+    // Ожидаем загрузку всех картинок (логотип)
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise((res) => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
+    }));
     const canvas = await html2canvas(container, {
       scale: 3,
       useCORS: true,
@@ -8390,6 +8395,11 @@ async function exportCallsheetToPdf() {
   const container = buildCallsheetPrintHTML(project, cs);
   document.body.appendChild(container);
   try {
+    // Ожидаем загрузку всех картинок (логотип)
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise((res) => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
+    }));
     const canvas = await html2canvas(container, {
       scale: 3,
       useCORS: true,
@@ -8432,16 +8442,13 @@ function buildCallsheetPrintHTML(project, cs) {
   const c = document.createElement('div');
   c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
 
-  // Brand header
+  // Brand header — logo вместо текста
   let html = `
-    <div style="background:#0a0907;color:white;padding:24px 40px;display:flex;justify-content:space-between;align-items:flex-start;">
-      <div>
-        <div style="font-size:26px;font-weight:900;letter-spacing:1px;">ZALOVE PRODUCTION</div>
-        <div style="font-size:11px;color:#ccc;margin-top:4px;">ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670</div>
-      </div>
+    <div style="background:#0a0907;color:white;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;">
+      <img src="logo.png" alt="ZALOVE" style="height:42px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
       <div style="text-align:right;">
-        ${cs.date ? `<div style="font-size:20px;font-weight:700;color:#fff;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
-        <div style="font-size:11px;color:#ccc;margin-top:2px;">День ${_currentCsDay}${project.days ? ' из ' + project.days : ''}</div>
+        ${cs.date ? `<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
+        <div style="font-size:11px;color:#ccc;margin-top:2px;letter-spacing:1px;text-transform:uppercase;">День ${_currentCsDay}${project.days ? ' из ' + project.days : ''}</div>
       </div>
     </div>`;
 
@@ -8593,8 +8600,9 @@ function buildCallsheetPrintHTML(project, cs) {
 
   // Footer
   html += `
-    <div style="margin:40px 40px 24px;padding-top:14px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center;">
-      ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · день ${_currentCsDay} · сгенерирован ${new Date().toLocaleDateString('ru-RU')}
+    <div style="margin:40px 40px 24px;padding-top:14px;border-top:1px solid #ddd;font-size:9px;color:#999;text-align:center;line-height:1.5;">
+      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670<br>
+      ${escapeHtml(project.name || '')} · день ${_currentCsDay} · сгенерирован ${new Date().toLocaleDateString('ru-RU')}
     </div>`;
 
   c.innerHTML = html;
