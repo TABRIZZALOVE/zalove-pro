@@ -3393,6 +3393,257 @@ body.has-reel .theme-toggle { right: 158px; }
   margin-right: 4px;
 }
 
+/* ===== РЕДАКТОР ТАЙМИНГА ===== */
+.timing-toolbar {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  background: var(--bg-2, #f5f5f0);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+.timing-toolbar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.timing-toolbar-field label {
+  font-size: 10px;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.timing-toolbar-field input {
+  padding: 7px 10px;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  font-family: inherit;
+}
+.timing-toolbar-info {
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--muted, #888);
+  margin-left: auto;
+}
+.timing-toolbar-info b { color: var(--ink, #0a0907); }
+
+.timing-stage {
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line-2, #e5e5e5);
+}
+.timing-stage-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-2, #e5e5e5);
+}
+.timing-stage-name {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--ink, #0a0907);
+  padding: 4px 0;
+  outline: none;
+}
+.timing-stage-name:focus {
+  background: rgba(255,255,255,0.5);
+  border-radius: 3px;
+  padding: 4px 6px;
+}
+.timing-stage-count {
+  font-size: 11px;
+  color: var(--muted, #888);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.timing-btn-add {
+  padding: 6px 12px;
+  border: 1px dashed var(--muted, #888);
+  background: transparent;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ink, #0a0907);
+  transition: all 0.15s;
+}
+.timing-btn-add:hover {
+  background: var(--ink, #0a0907);
+  color: white;
+  border-color: var(--ink, #0a0907);
+}
+
+.timing-process-list { padding: 4px 0; }
+.timing-process-head {
+  display: grid;
+  grid-template-columns: 1fr 130px 130px 130px 1fr 32px;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: #fafafa;
+  border-bottom: 1px solid var(--line-2, #e5e5e5);
+}
+.timing-process-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 130px 130px 1fr 32px;
+  gap: 8px;
+  padding: 6px 14px;
+  align-items: center;
+  border-bottom: 1px solid #f3f3ee;
+  transition: background 0.1s;
+}
+.timing-process-row:hover { background: #fafaf7; }
+.timing-input {
+  padding: 6px 9px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-size: 12px;
+  background: transparent;
+  font-family: inherit;
+  width: 100%;
+  outline: none;
+  color: var(--ink, #0a0907);
+}
+.timing-input:hover { background: white; border-color: var(--line-2, #e5e5e5); }
+.timing-input:focus { background: white; border-color: var(--ink, #0a0907); }
+.timing-input-name { font-weight: 600; }
+.timing-type { font-size: 11px; cursor: pointer; }
+.timing-row-del {
+  width: 24px; height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted, #888);
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.timing-process-row:hover .timing-row-del { opacity: 1; }
+.timing-row-del:hover { background: #fee2e2; color: #991b1b; }
+
+/* Mini Gantt visual */
+.gantt-visual-wrap {
+  margin-top: 22px;
+  background: white;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.gantt-visual-title {
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--line-2, #e5e5e5);
+  background: #fafafa;
+}
+.gantt-visual-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.gantt-visual { min-width: 100%; }
+.gantt-proc-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #f3f3ee;
+}
+.gantt-proc-row.gantt-header {
+  background: #fafafa;
+  border-bottom: 1px solid var(--line-2, #e5e5e5);
+  position: sticky; top: 0; z-index: 2;
+}
+.gantt-proc-label {
+  flex: 0 0 220px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-right: 1px solid var(--line-2, #e5e5e5);
+  display: flex;
+  align-items: center;
+}
+.gantt-header-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.gantt-header-row { display: flex; }
+.gantt-day-h {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 2px 0;
+  font-size: 9px;
+  color: var(--muted, #888);
+  border-right: 1px solid #f3f3ee;
+}
+.gantt-day-h.weekend { background: #fafafa; }
+.gantt-day-h.month-start { background: #ebebeb; }
+.gantt-day-h .gantt-month-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--ink, #0a0907);
+  text-transform: uppercase;
+}
+.gantt-day-h .gantt-day-num {
+  font-size: 10px;
+  font-weight: 600;
+}
+.gantt-track {
+  position: relative;
+  height: 100%;
+  min-height: 24px;
+  background: repeating-linear-gradient(90deg, transparent, transparent calc(var(--day-w, 16px) - 1px), #f3f3ee calc(var(--day-w, 16px) - 1px), #f3f3ee var(--day-w, 16px));
+}
+.gantt-bar {
+  position: absolute;
+  top: 4px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--ink, #0a0907);
+  cursor: pointer;
+  transition: filter 0.15s;
+  z-index: 1;
+}
+.gantt-bar:hover { filter: brightness(1.1); }
+.gantt-bar.crit { background: #e8231d !important; }
+.gantt-bar.approval { background: repeating-linear-gradient(45deg, #f59e0b 0, #f59e0b 4px, #fbbf24 4px, #fbbf24 8px) !important; }
+.gantt-empty {
+  margin-top: 18px;
+  padding: 30px 20px;
+  background: #fafafa;
+  border: 1px dashed var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  text-align: center;
+  color: var(--muted, #888);
+  font-size: 12px;
+}
+
 /* ===== ОБЛОЖКИ ПРОЕКТОВ (фото артиста / продукта поверх постера) ===== */
 .poster.has-cover {
   background-size: cover !important;
@@ -4590,47 +4841,29 @@ body.has-reel .theme-toggle { right: 158px; }
   </div>
 </div>
 
-<!-- TIMING -->
+<!-- TIMING — РЕДАКТИРУЕМЫЙ ТАЙМИНГ ПРОЕКТА -->
 <div class="modal-overlay" id="m-timing">
-  <div class="doc-overlay">
+  <div class="doc-overlay" style="width: 1100px; max-width: 96vw; max-height: 94vh;">
     <div class="doc-header">
       <div class="doc-header-l">
         <div class="doc-header-icon">◷</div>
         <div>
-          <div class="doc-section-label">Документ · из вашего шаблона</div>
-          <div class="doc-header-title">Тайминг · 44 дня</div>
+          <div class="doc-section-label" id="timing-subtitle">Тайминг проекта · авто-сохранение</div>
+          <div class="doc-header-title" id="timing-title">Тайминг проекта</div>
         </div>
       </div>
       <div class="doc-actions-h">
-        <button class="btn btn-dark">⤓ XLSX</button>
-        <button class="btn-secondary btn">📅 В GCal</button>
+        <button class="btn btn-dark" onclick="exportTimingToPdf()">⤓ PDF</button>
+        <button class="btn btn-dark" onclick="exportTimingToXlsx()">⤓ XLSX</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
-    <div class="doc-body">
-      <div class="smart-fill">
-        <div class="sf-icon">⚡</div>
-        <div class="sf-text">
-          <strong>Из шаблона «тайминг проекта»</strong>
-          3 этапа · 28 процессов. Даты автоматически рассчитываются от старта проекта.
-        </div>
-      </div>
-      <div class="gantt-wrap">
-        <table class="gantt-table" id="ganttTable"></table>
-        <div class="gantt-legend">
-          <span><i style="background: var(--text);"></i> рабочие дни</span>
-          <span><i style="background: var(--bg-3);"></i> выходные</span>
-          <span><i style="background: rgba(232,35,29,0.25);"></i> дни согласования</span>
-          <span><i style="background: var(--brand-red);"></i> критические дни</span>
-        </div>
-      </div>
+    <div class="doc-body" id="timing-editor-root">
+      <!-- Динамически отрисуется renderTimingEditor() -->
     </div>
     <div class="doc-footer">
-      <div class="doc-footer-info">TIMING-2026 · 44 ДНЯ · 3 ЭТАПА · 28 ПРОЦЕССОВ</div>
-      <div style="display: flex; gap: 6px;">
-        <button class="btn-secondary btn">Сохранить</button>
-        <button class="btn">⚡ Sync в Google Calendar</button>
-      </div>
+      <div class="doc-footer-info" id="timing-footer-info">—</div>
+      <button class="btn-secondary btn" onclick="resetTimingToDefaults()" title="Восстановить процессы по умолчанию">↺ Шаблон</button>
     </div>
   </div>
 </div>
@@ -5913,6 +6146,11 @@ function openDoc(type) {
   // Вызывной — открываем редактор
   if (type === 'callsheet' && _currentProjectId) {
     openCallsheetEditor(1);
+    return;
+  }
+  // Тайминг — открываем редактор
+  if (type === 'timing' && _currentProjectId) {
+    openTimingEditor();
     return;
   }
   const map = {
@@ -9790,6 +10028,561 @@ function renderDocCreativeCards(project) {
 }
 
 /* ============================================================
+   ТАЙМИНГ ПРОЕКТА — РЕДАКТОР + ЭКСПОРТ
+   ============================================================ */
+const TIMING_DEFAULT_STAGES = [
+  {
+    id: 'preprod', name: 'Препродакшн', color: '#1d4ed8',
+    processes: [
+      'Согласование и выбор креатива',
+      'Тритмент',
+      'Раскадровка и бордоматик',
+      'Подготовка задников CG/AI',
+      'Подборка локаций',
+      'Скаут локаций',
+      'Согласование локации',
+      'Кастинг',
+      'Презентация костюм',
+      'Доработка по костюмам',
+      'Презентация реквизит',
+      'Презентация грим',
+      'Pre-PPM',
+      'Доработки после PPM',
+      'PPM'
+    ]
+  },
+  {
+    id: 'prod', name: 'Продакшн', color: '#e8231d',
+    processes: [
+      'Освоение локаций',
+      'Съёмочные дни',
+      'Выгрузка исходников на жд'
+    ]
+  },
+  {
+    id: 'post', name: 'Постпродакшн', color: '#059669',
+    processes: [
+      'Линейный монтаж и утверждение',
+      'CG / AI',
+      'Утверждение трека',
+      'Утверждение диктора',
+      'Работа со звуком',
+      'Клинап',
+      'Цветокоррекция',
+      'Сдача финала'
+    ]
+  }
+];
+
+let _timingSaveTimer = null;
+let _timingProject = null;
+
+function newTimingId() {
+  return 'tp_' + Math.random().toString(36).slice(2, 9);
+}
+
+function buildDefaultTiming(project) {
+  // Стартовая дата = сегодня (или дата дедлайна минус 6 недель — позже)
+  const startDate = new Date().toISOString().slice(0, 10);
+  return {
+    startDate,
+    stages: TIMING_DEFAULT_STAGES.map(st => ({
+      id: st.id,
+      name: st.name,
+      color: st.color,
+      processes: st.processes.map(name => ({
+        id: newTimingId(),
+        name,
+        startDate: '',
+        endDate: '',
+        type: name.toLowerCase().includes('сдача') || name.toLowerCase().includes('ppm') ? 'critical'
+          : name.toLowerCase().includes('согласование') || name.toLowerCase().includes('утверждение') ? 'approval'
+          : 'work',
+        notes: ''
+      }))
+    }))
+  };
+}
+
+function ensureTiming(project) {
+  if (!project.timing || !project.timing.stages) {
+    project.timing = buildDefaultTiming(project);
+    DB.updateProject(project.id, { timing: project.timing });
+  }
+  return project.timing;
+}
+
+function openTimingEditor() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  _timingProject = project;
+  ensureTiming(project);
+  document.getElementById('timing-title').textContent = 'Тайминг · ' + (project.name || 'проект');
+  document.getElementById('timing-subtitle').textContent = 'Тайминг проекта · авто-сохранение';
+  renderTimingEditor();
+  document.getElementById('m-timing').classList.add('active');
+}
+
+function renderTimingEditor() {
+  const project = _timingProject;
+  if (!project) return;
+  const t = ensureTiming(project);
+  const root = document.getElementById('timing-editor-root');
+
+  // Подсчёт процессов и общей длительности
+  let totalProcesses = 0;
+  let earliest = null, latest = null;
+  t.stages.forEach(st => {
+    st.processes.forEach(p => {
+      totalProcesses++;
+      if (p.startDate) {
+        const d = new Date(p.startDate);
+        if (!earliest || d < earliest) earliest = d;
+      }
+      if (p.endDate) {
+        const d = new Date(p.endDate);
+        if (!latest || d > latest) latest = d;
+      }
+    });
+  });
+  const totalDays = (earliest && latest) ? Math.ceil((latest - earliest) / 86400000) + 1 : 0;
+  document.getElementById('timing-footer-info').textContent =
+    totalProcesses + ' процессов · ' + t.stages.length + ' этапа' +
+    (totalDays ? ' · ' + totalDays + ' дн.' : '');
+
+  let html = `
+    <div class="timing-toolbar">
+      <div class="timing-toolbar-field">
+        <label>Старт проекта</label>
+        <input type="date" data-timing-meta="startDate" value="${escapeHtml(t.startDate || '')}">
+      </div>
+      <div class="timing-toolbar-info">
+        ${earliest ? '<span>Первая дата: <b>' + formatTimingDate(earliest) + '</b></span>' : ''}
+        ${latest ? '<span>Сдача: <b>' + formatTimingDate(latest) + '</b></span>' : ''}
+      </div>
+    </div>
+  `;
+
+  // Этапы и процессы
+  t.stages.forEach((stage, sIdx) => {
+    html += `
+      <div class="timing-stage" data-stage-id="${stage.id}" style="border-left: 4px solid ${stage.color};">
+        <div class="timing-stage-head" style="background: ${hexToRgba(stage.color, 0.08)};">
+          <input class="timing-stage-name" data-stage-name="${stage.id}" value="${escapeHtml(stage.name)}" placeholder="Этап">
+          <span class="timing-stage-count">${stage.processes.length} процессов</span>
+          <button class="timing-btn-add" onclick="addTimingProcess('${stage.id}')">＋ процесс</button>
+        </div>
+        <div class="timing-process-list">
+          <div class="timing-process-head">
+            <div>Процесс</div>
+            <div>Начало</div>
+            <div>Окончание</div>
+            <div>Тип</div>
+            <div>Примечание</div>
+            <div></div>
+          </div>
+          ${stage.processes.map((p, pIdx) => `
+            <div class="timing-process-row" data-stage="${stage.id}" data-proc="${p.id}">
+              <input class="timing-input timing-input-name" data-field="name" value="${escapeHtml(p.name)}" placeholder="Название процесса">
+              <input class="timing-input" type="date" data-field="startDate" value="${escapeHtml(p.startDate || '')}">
+              <input class="timing-input" type="date" data-field="endDate" value="${escapeHtml(p.endDate || '')}">
+              <select class="timing-input timing-type" data-field="type" data-current="${p.type || 'work'}">
+                <option value="work" ${p.type === 'work' ? 'selected' : ''}>● работа</option>
+                <option value="critical" ${p.type === 'critical' ? 'selected' : ''}>● критич.</option>
+                <option value="approval" ${p.type === 'approval' ? 'selected' : ''}>● согласов.</option>
+              </select>
+              <input class="timing-input" data-field="notes" value="${escapeHtml(p.notes || '')}" placeholder="—">
+              <button class="timing-row-del" onclick="deleteTimingProcess('${stage.id}', '${p.id}')" title="Удалить">×</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  });
+
+  // Мини-Gantt
+  html += renderGanttVisual(t);
+
+  root.innerHTML = html;
+
+  // Подключаем обработчики
+  root.querySelectorAll('input[data-timing-meta]').forEach(el => {
+    el.addEventListener('input', onTimingMetaChange);
+  });
+  root.querySelectorAll('input[data-stage-name]').forEach(el => {
+    el.addEventListener('input', onTimingStageNameChange);
+  });
+  root.querySelectorAll('.timing-process-row input, .timing-process-row select').forEach(el => {
+    el.addEventListener('input', onTimingProcessChange);
+    el.addEventListener('change', onTimingProcessChange);
+  });
+}
+
+function formatTimingDate(d) {
+  if (!(d instanceof Date)) d = new Date(d);
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
+}
+
+function hexToRgba(hex, alpha) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!m) return hex;
+  const r = parseInt(m[1], 16), g = parseInt(m[2], 16), b = parseInt(m[3], 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function renderGanttVisual(timing) {
+  // Собрать все даты, определить диапазон
+  const allDates = [];
+  timing.stages.forEach(s => s.processes.forEach(p => {
+    if (p.startDate) allDates.push(new Date(p.startDate));
+    if (p.endDate) allDates.push(new Date(p.endDate));
+  }));
+  if (allDates.length === 0) {
+    return `<div class="gantt-empty">Заполни даты процессов — здесь появится визуальный Gantt.</div>`;
+  }
+  const minDate = new Date(Math.min(...allDates));
+  const maxDate = new Date(Math.max(...allDates));
+  const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
+  const dayW = Math.max(14, Math.min(28, 900 / totalDays));
+
+  // Заголовок: дни и месяца
+  let header = '<div class="gantt-header-row">';
+  for (let i = 0; i < totalDays; i++) {
+    const d = new Date(minDate);
+    d.setDate(d.getDate() + i);
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const isFirst = d.getDate() === 1 || i === 0;
+    header += `<div class="gantt-day-h ${isWeekend ? 'weekend' : ''} ${isFirst ? 'month-start' : ''}" style="width:${dayW}px;" title="${d.toLocaleDateString('ru-RU')}">
+      ${isFirst ? '<div class="gantt-month-label">' + d.toLocaleDateString('ru-RU', { month: 'short' }).toUpperCase() + '</div>' : ''}
+      <div class="gantt-day-num">${d.getDate()}</div>
+    </div>`;
+  }
+  header += '</div>';
+
+  // Строки: этапы и процессы
+  let rows = '';
+  timing.stages.forEach(stage => {
+    stage.processes.forEach(p => {
+      let bar = '';
+      if (p.startDate && p.endDate) {
+        const s = new Date(p.startDate);
+        const e = new Date(p.endDate);
+        const offset = Math.round((s - minDate) / 86400000);
+        const len = Math.max(1, Math.round((e - s) / 86400000) + 1);
+        const barClass = p.type === 'critical' ? 'crit' : p.type === 'approval' ? 'approval' : 'work';
+        bar = `<div class="gantt-bar ${barClass}" style="left:${offset * dayW}px;width:${len * dayW - 2}px;background:${p.type === 'work' ? stage.color : ''};" title="${escapeHtml(p.name)}: ${formatTimingDate(s)} → ${formatTimingDate(e)}"></div>`;
+      }
+      rows += `
+        <div class="gantt-proc-row" style="height:24px;">
+          <div class="gantt-proc-label" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+          <div class="gantt-track" style="width:${totalDays * dayW}px;">${bar}</div>
+        </div>`;
+    });
+  });
+
+  return `
+    <div class="gantt-visual-wrap">
+      <div class="gantt-visual-title">📊 Визуальный Gantt</div>
+      <div class="gantt-visual-scroll">
+        <div class="gantt-visual">
+          <div class="gantt-proc-row gantt-header" style="height:34px;">
+            <div class="gantt-proc-label gantt-header-label">Процесс</div>
+            ${header}
+          </div>
+          ${rows}
+        </div>
+      </div>
+    </div>`;
+}
+
+function onTimingMetaChange(e) {
+  const field = e.target.dataset.timingMeta;
+  _timingProject.timing[field] = e.target.value;
+  scheduleTimingSave();
+}
+
+function onTimingStageNameChange(e) {
+  const stageId = e.target.dataset.stageName;
+  const stage = _timingProject.timing.stages.find(s => s.id === stageId);
+  if (stage) {
+    stage.name = e.target.value;
+    scheduleTimingSave();
+  }
+}
+
+function onTimingProcessChange(e) {
+  const row = e.target.closest('.timing-process-row');
+  if (!row) return;
+  const stageId = row.dataset.stage;
+  const procId = row.dataset.proc;
+  const field = e.target.dataset.field;
+  const stage = _timingProject.timing.stages.find(s => s.id === stageId);
+  if (!stage) return;
+  const proc = stage.processes.find(p => p.id === procId);
+  if (!proc) return;
+  proc[field] = e.target.value;
+  scheduleTimingSave(field === 'startDate' || field === 'endDate' || field === 'type');
+}
+
+function scheduleTimingSave(rerender = false) {
+  if (_timingSaveTimer) clearTimeout(_timingSaveTimer);
+  _timingSaveTimer = setTimeout(() => {
+    saveTimingNow();
+    if (rerender) renderTimingEditor();
+  }, rerender ? 600 : 400);
+}
+
+function saveTimingNow() {
+  if (!_timingProject) return;
+  DB.updateProject(_timingProject.id, { timing: _timingProject.timing });
+}
+
+function addTimingProcess(stageId) {
+  const stage = _timingProject.timing.stages.find(s => s.id === stageId);
+  if (!stage) return;
+  stage.processes.push({
+    id: newTimingId(),
+    name: 'Новый процесс',
+    startDate: '',
+    endDate: '',
+    type: 'work',
+    notes: ''
+  });
+  saveTimingNow();
+  renderTimingEditor();
+}
+
+function deleteTimingProcess(stageId, procId) {
+  if (!confirm('Удалить этот процесс?')) return;
+  const stage = _timingProject.timing.stages.find(s => s.id === stageId);
+  if (!stage) return;
+  stage.processes = stage.processes.filter(p => p.id !== procId);
+  saveTimingNow();
+  renderTimingEditor();
+}
+
+function resetTimingToDefaults() {
+  if (!confirm('Восстановить процессы из шаблона? Все текущие даты и изменения будут потеряны.')) return;
+  _timingProject.timing = buildDefaultTiming(_timingProject);
+  saveTimingNow();
+  renderTimingEditor();
+  toast('Тайминг сброшен к шаблону', 'success');
+}
+
+/* ===== ЭКСПОРТ ТАЙМИНГА В XLSX ===== */
+function exportTimingToXlsx() {
+  if (typeof window.XLSX === 'undefined') {
+    toast('XLSX не загрузился, обновите страницу', 'error');
+    return;
+  }
+  const project = _timingProject;
+  if (!project) return;
+  const t = ensureTiming(project);
+  const XLSX = window.XLSX;
+  const wb = XLSX.utils.book_new();
+
+  // Лист 1: Структура (как в шаблоне)
+  const rows = [];
+  rows.push(['', 'Этап', 'Процесс', 'Начало', 'Окончание', 'Тип', 'Примечание']);
+  t.stages.forEach(stage => {
+    rows.push(['', stage.name, '', '', '', '', '']);
+    stage.processes.forEach(p => {
+      rows.push(['', '', p.name, p.startDate || '', p.endDate || '',
+        p.type === 'work' ? 'рабочий' : p.type === 'critical' ? 'критический' : 'согласование',
+        p.notes || '']);
+    });
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{ wch: 2 }, { wch: 18 }, { wch: 38 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 26 }];
+
+  // Стилизация заголовка
+  if (ws['B1']) ws['B1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
+  if (ws['C1']) ws['C1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
+  if (ws['D1']) ws['D1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
+  if (ws['E1']) ws['E1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
+  if (ws['F1']) ws['F1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
+  if (ws['G1']) ws['G1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Тайминг');
+
+  // Лист 2: Gantt (по дням)
+  if (t.stages.some(s => s.processes.some(p => p.startDate && p.endDate))) {
+    const allDates = [];
+    t.stages.forEach(s => s.processes.forEach(p => {
+      if (p.startDate) allDates.push(new Date(p.startDate));
+      if (p.endDate) allDates.push(new Date(p.endDate));
+    }));
+    if (allDates.length) {
+      const minD = new Date(Math.min(...allDates));
+      const maxD = new Date(Math.max(...allDates));
+      const totalDays = Math.ceil((maxD - minD) / 86400000) + 1;
+      const ganttRows = [];
+      // Шапка дат
+      const headerRow = ['Этап', 'Процесс'];
+      for (let i = 0; i < totalDays; i++) {
+        const d = new Date(minD);
+        d.setDate(d.getDate() + i);
+        headerRow.push(d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
+      }
+      ganttRows.push(headerRow);
+      // Строки процессов
+      t.stages.forEach(stage => {
+        stage.processes.forEach(p => {
+          const row = [stage.name, p.name];
+          for (let i = 0; i < totalDays; i++) {
+            const d = new Date(minD);
+            d.setDate(d.getDate() + i);
+            if (p.startDate && p.endDate) {
+              const s = new Date(p.startDate);
+              const e = new Date(p.endDate);
+              if (d >= s && d <= e) {
+                row.push(p.type === 'critical' ? '🔴' : p.type === 'approval' ? '🟡' : '■');
+              } else {
+                row.push('');
+              }
+            } else {
+              row.push('');
+            }
+          }
+          ganttRows.push(row);
+        });
+      });
+      const wsGantt = XLSX.utils.aoa_to_sheet(ganttRows);
+      wsGantt['!cols'] = [{ wch: 16 }, { wch: 32 }, ...Array(totalDays).fill({ wch: 4 })];
+      XLSX.utils.book_append_sheet(wb, wsGantt, 'Gantt');
+    }
+  }
+
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  XLSX.writeFile(wb, `Тайминг_${slug}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Тайминг XLSX скачан ✓', 'success');
+}
+
+/* ===== ЭКСПОРТ ТАЙМИНГА В PDF ===== */
+async function exportTimingToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились, обновите страницу', 'error');
+    return;
+  }
+  const project = _timingProject;
+  if (!project) return;
+  const t = ensureTiming(project);
+  toast('Готовлю PDF...', 'success');
+  const container = buildTimingPrintHTML(project, t);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
+    }));
+    const canvas = await html2canvas(container, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: 1100,
+      letterRendering: true,
+      allowTaint: false,
+      imageTimeout: 15000
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pdfWidth;
+    const ratio = canvas.height / canvas.width;
+    const imgHeight = imgWidth * ratio;
+    const totalPages = Math.ceil(imgHeight / pdfHeight);
+    const imgData = canvas.toDataURL('image/png');
+    let position = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      position -= pdfHeight;
+    }
+    const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`Тайминг_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('Тайминг PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка генерации PDF: ' + e.message, 'error');
+  }
+}
+
+function buildTimingPrintHTML(project, t) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:1100px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
+
+  // Шапка
+  let html = `
+    <div style="background:#ffffff;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
+      <img src="logo.png" alt="ZALOVE" style="height:26px;width:auto;" crossorigin="anonymous">
+      <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;">Тайминг · ${new Date().toLocaleDateString('ru-RU')}</div>
+    </div>
+  `;
+
+  // Title
+  html += `
+    <div style="padding:24px 40px 8px;">
+      <div style="font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1;">ТАЙМИНГ ПРОЕКТА</div>
+      <div style="font-size:14px;color:#444;margin-top:6px;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}</div>
+    </div>
+  `;
+
+  // Этапы
+  t.stages.forEach(stage => {
+    if (stage.processes.length === 0) return;
+    html += `
+      <div style="margin:18px 40px 0;border-left:4px solid ${stage.color};background:#fafafa;border-radius:4px;overflow:hidden;">
+        <div style="background:${hexToRgba(stage.color, 0.12)};padding:10px 18px;font-weight:800;text-transform:uppercase;letter-spacing:1px;font-size:13px;">${escapeHtml(stage.name)} · ${stage.processes.length}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead>
+            <tr style="background:#f0f0eb;color:#555;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">
+              <th style="text-align:left;padding:8px 14px;width:42%;">Процесс</th>
+              <th style="text-align:center;padding:8px 14px;width:14%;">Начало</th>
+              <th style="text-align:center;padding:8px 14px;width:14%;">Окончание</th>
+              <th style="text-align:center;padding:8px 14px;width:14%;">Тип</th>
+              <th style="text-align:left;padding:8px 14px;width:16%;">Примечание</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${stage.processes.map(p => `
+              <tr style="border-top:1px solid #e8e8e3;">
+                <td style="padding:8px 14px;font-weight:600;">${escapeHtml(p.name)}</td>
+                <td style="text-align:center;padding:8px 14px;">${p.startDate ? formatTimingDate(p.startDate) : '—'}</td>
+                <td style="text-align:center;padding:8px 14px;">${p.endDate ? formatTimingDate(p.endDate) : '—'}</td>
+                <td style="text-align:center;padding:8px 14px;">
+                  <span style="display:inline-block;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;${
+                    p.type === 'critical' ? 'background:#fee2e2;color:#991b1b;'
+                    : p.type === 'approval' ? 'background:#fef3c7;color:#92400e;'
+                    : 'background:#dbeafe;color:#1e40af;'
+                  }">${p.type === 'critical' ? 'КРИТ' : p.type === 'approval' ? 'СОГЛ' : 'РАБ'}</span>
+                </td>
+                <td style="padding:8px 14px;color:#666;">${escapeHtml(p.notes || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+
+  // Footer
+  html += `
+    <div style="margin:40px 40px 24px;padding-top:14px;border-top:1px solid #e5e5e5;font-size:10px;color:#888;letter-spacing:0.5px;">
+      ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · Тайминг проекта · сгенерировано ${new Date().toLocaleDateString('ru-RU')}
+    </div>
+  `;
+
+  c.innerHTML = html;
+  return c;
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 renderProjects();
@@ -9804,6 +10597,11 @@ function closeAll() {
   if (_csSaveTimer) {
     clearTimeout(_csSaveTimer);
     saveCsNow();
+  }
+  // Сохранить тайминг немедленно
+  if (_timingSaveTimer) {
+    clearTimeout(_timingSaveTimer);
+    saveTimingNow();
   }
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
 }
