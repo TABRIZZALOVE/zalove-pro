@@ -2884,8 +2884,8 @@ body.has-reel .theme-toggle { right: 158px; }
 /* Estimate editable */
 .est-row-edit {
   display: grid;
-  grid-template-columns: 1.5fr 2fr 70px 70px 130px 110px 28px;
-  gap: 10px;
+  grid-template-columns: 1.3fr 1.3fr 50px 50px 95px 100px 110px 75px 22px;
+  gap: 8px;
   padding: 8px 0;
   border-bottom: 1px dashed var(--line);
   font-size: 12px;
@@ -2977,8 +2977,8 @@ body.has-reel .theme-toggle { right: 158px; }
 
 .est-headers {
   display: grid;
-  grid-template-columns: 1.5fr 2fr 70px 70px 130px 110px 28px;
-  gap: 10px;
+  grid-template-columns: 1.3fr 1.3fr 50px 50px 95px 100px 110px 75px 22px;
+  gap: 8px;
   padding: 6px 16px 4px;
   font-family: 'Inter', sans-serif;
   font-size: 9px;
@@ -2990,6 +2990,187 @@ body.has-reel .theme-toggle { right: 158px; }
   border-bottom: 1px solid var(--line);
 }
 .est-headers .h-num { text-align: right; }
+
+/* Факт-ячейка и δ */
+.est-row-edit .fact-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.12s;
+  user-select: none;
+}
+.est-row-edit .fact-cell:hover { background: var(--bg-3); }
+.est-row-edit .fact-cell.zero { color: var(--muted); font-weight: 400; }
+.est-row-edit .fact-cell.over { color: #d63838; }
+.est-row-edit .fact-cell.save { color: #059669; }
+.est-row-edit .fact-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.est-row-edit .fact-cell.over .fact-badge { background: rgba(214,56,56,0.15); color: #d63838; }
+.est-row-edit .fact-cell.save .fact-badge { background: rgba(5,150,105,0.15); color: #059669; }
+.est-row-edit .delta-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+}
+.est-row-edit .delta-cell.over { color: #d63838; }
+.est-row-edit .delta-cell.save { color: #059669; }
+.est-row-edit .delta-cell.zero { color: var(--muted); font-weight: 400; }
+
+/* Popup журнала расходов */
+.est-fact-popup {
+  position: fixed;
+  z-index: 1600;
+  width: 400px;
+  background: white;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  display: none;
+  overflow: hidden;
+}
+.est-fact-popup.active { display: block; }
+.est-fact-pop-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid #ececec;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.est-fact-pop-head .l { flex: 1; min-width: 0; }
+.est-fact-pop-head .t {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink, #0a0907);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.est-fact-pop-head .m {
+  font-size: 11px;
+  color: var(--muted, #888);
+  margin-top: 2px;
+}
+.est-fact-pop-close {
+  width: 26px; height: 26px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--muted, #888);
+  border-radius: 3px;
+}
+.est-fact-pop-close:hover { background: #f3f3ee; }
+.est-fact-pop-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+.est-fact-pop-headers {
+  display: grid;
+  grid-template-columns: 70px 1fr 80px 22px;
+  gap: 8px;
+  padding: 7px 14px;
+  background: #fafafa;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #ececec;
+}
+.est-fact-pop-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 80px 22px;
+  gap: 8px;
+  padding: 6px 14px;
+  align-items: center;
+  border-bottom: 1px solid #f3f3ee;
+}
+.est-fact-pop-row:last-child { border-bottom: none; }
+.est-fact-pop-row input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 12px;
+  font-family: inherit;
+  border-radius: 3px;
+  outline: none;
+}
+.est-fact-pop-row input:hover { background: #f5f5f0; }
+.est-fact-pop-row input:focus { background: white; border-color: var(--ink, #0a0907); }
+.est-fact-pop-row input.date { font-size: 11px; color: var(--muted, #888); }
+.est-fact-pop-row input.sum {
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+  font-weight: 600;
+  color: var(--brand-red, #e8231d);
+}
+.est-fact-pop-row .del-x {
+  width: 22px; height: 22px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted, #888);
+  font-size: 14px;
+  border-radius: 3px;
+  opacity: 0;
+}
+.est-fact-pop-row:hover .del-x { opacity: 1; }
+.est-fact-pop-row .del-x:hover { background: #fee2e2; color: #991b1b; }
+.est-fact-pop-empty {
+  padding: 24px 14px;
+  text-align: center;
+  color: var(--muted, #888);
+  font-size: 12px;
+  font-style: italic;
+}
+.est-fact-pop-foot {
+  padding: 10px 14px;
+  background: #fafafa;
+  border-top: 1px solid #ececec;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.est-fact-pop-add {
+  padding: 6px 12px;
+  background: var(--ink, #0a0907);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.est-fact-pop-add:hover { opacity: 0.85; }
+.est-fact-pop-totals {
+  font-size: 11px;
+  color: var(--muted, #888);
+}
+.est-fact-pop-totals b { color: var(--ink, #0a0907); }
 
 /* Integrations (для музыкальных клипов) */
 .integrations-section { margin-bottom: 28px; }
@@ -4879,6 +5060,10 @@ body.has-reel .theme-toggle { right: 158px; }
         </div>
       </div>
 
+      <div class="timing-link-bar" id="est-link-bar" style="margin-bottom: 12px;">
+        <!-- renderEstimate() заполнит -->
+      </div>
+
       <div class="est-meta" id="est-meta-grid">
         <!-- Динамически из проекта -->
       </div>
@@ -4989,6 +5174,28 @@ body.has-reel .theme-toggle { right: 158px; }
         <button class="btn-secondary btn" onclick="resetTimingToDefaults()" title="Сбросить к шаблону">↺ Шаблон</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Журнал расходов в строке сметы (попап) -->
+<div id="est-fact-popup" class="est-fact-popup">
+  <div class="est-fact-pop-head">
+    <div class="l">
+      <div class="t" id="fact-pop-title">Расходы</div>
+      <div class="m" id="fact-pop-subtitle">—</div>
+    </div>
+    <button class="est-fact-pop-close" onclick="closeFactPopup()">×</button>
+  </div>
+  <div class="est-fact-pop-headers">
+    <div>Дата</div>
+    <div>Комментарий</div>
+    <div style="text-align:right;">Сумма ₽</div>
+    <div></div>
+  </div>
+  <div class="est-fact-pop-list" id="fact-pop-list"></div>
+  <div class="est-fact-pop-foot">
+    <div class="est-fact-pop-totals" id="fact-pop-totals">—</div>
+    <button class="est-fact-pop-add" onclick="addFactEntry()">＋ расход</button>
   </div>
 </div>
 
@@ -7733,8 +7940,6 @@ function calcRowTotal(row) {
   // Цена — основной фактор. Если её нет — строка пустая
   const p = Number(row.price) || 0;
   if (!p) return 0;
-  // Если кол-во или дни не указаны (пусто, null, 0, NaN) — считаем как 1
-  // (чтобы пустая цена работала как «просто цена», а не 0×0×цена)
   const qn = Number(row.qty);
   const dn = Number(row.days);
   const q = (!qn || isNaN(qn)) ? 1 : qn;
@@ -7742,13 +7947,31 @@ function calcRowTotal(row) {
   return q * d * p;
 }
 
+function calcRowFact(row) {
+  if (!row.entries || !row.entries.length) return 0;
+  return row.entries.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+}
+
+function calcRowDelta(row) {
+  return calcRowFact(row) - calcRowTotal(row);
+}
+
 function calcSectionTotal(section) {
   const allRows = [...(section.rows || []), ...(section.customRows || [])];
   return allRows.reduce((s, r) => s + calcRowTotal(r), 0);
 }
 
+function calcSectionFact(section) {
+  const allRows = [...(section.rows || []), ...(section.customRows || [])];
+  return allRows.reduce((s, r) => s + calcRowFact(r), 0);
+}
+
 function calcGrandTotal(est) {
   return Object.values(est.sections || {}).reduce((s, sec) => s + calcSectionTotal(sec), 0);
+}
+
+function calcGrandFact(est) {
+  return Object.values(est.sections || {}).reduce((s, sec) => s + calcSectionFact(sec), 0);
 }
 
 function fmtRub(n) {
@@ -7766,6 +7989,32 @@ function renderEstimate(project) {
 
   // Title
   document.getElementById('est-project-title').textContent = 'Смета · ' + project.name;
+
+  // Ссылка на внешнюю смету
+  const extLink = est.externalLink || '';
+  document.getElementById('est-link-bar').innerHTML = `
+    <div class="timing-link-bar-l">
+      <span class="t-link-ico">🔗</span>
+      <span class="t-link-label">Ссылка на внешнюю смету</span>
+      <input type="url" id="est-ext-link" class="t-link-input" placeholder="https://... (Google Sheets / Notion)" value="${escapeHtml(extLink)}">
+    </div>
+    <div class="timing-link-bar-r">
+      ${extLink ? `<a href="${escapeHtml(extLink)}" target="_blank" rel="noopener" class="t-link-open">↗ открыть</a>` : ''}
+      ${extLink ? '<button class="t-link-clear" onclick="clearEstimateLink()" title="Убрать ссылку">×</button>' : ''}
+    </div>
+  `;
+  document.getElementById('est-ext-link').addEventListener('input', (e) => {
+    est.externalLink = e.target.value.trim();
+    clearTimeout(_estimateSaveTimer);
+    _estimateSaveTimer = setTimeout(() => saveEstimateNow(), 400);
+  });
+  document.getElementById('est-ext-link').addEventListener('blur', (e) => {
+    const val = e.target.value.trim();
+    if ((!!val) !== (!!extLink)) {
+      // перерисовать, чтобы появилась/исчезла кнопка "открыть"
+      renderEstimate(DB.getProject(_currentProjectId));
+    }
+  });
 
   // Meta grid
   const metaItems = [
@@ -7823,7 +8072,7 @@ function renderEstSection(tmpl, est) {
       </div>
       <div class="est-rows-edit">
         <div class="est-headers">
-          <div>ПОЗИЦИЯ</div><div>ОПИСАНИЕ</div><div class="h-num">КОЛ-ВО</div><div class="h-num">ДНЕЙ</div><div class="h-num">ЦЕНА ₽</div><div class="h-num">ИТОГО</div><div></div>
+          <div>ПОЗИЦИЯ</div><div>ОПИСАНИЕ</div><div class="h-num">К-ВО</div><div class="h-num">ДНЕЙ</div><div class="h-num">ЦЕНА</div><div class="h-num">ПЛАН</div><div class="h-num">ФАКТ</div><div class="h-num">Δ</div><div></div>
         </div>
         ${allRows.map((r, i) => renderEstRow(tmpl.id, r, i, i >= section.rows.length)).join('')}
         <button class="est-add-row-btn" onclick="addEstimateRow('${tmpl.id}')">＋ Добавить свою позицию</button>
@@ -7833,6 +8082,24 @@ function renderEstSection(tmpl, est) {
 
 function renderEstRow(sid, row, idx, isCustom) {
   const total = calcRowTotal(row);
+  const fact = calcRowFact(row);
+  const delta = fact - total;
+  const entriesCount = (row.entries || []).length;
+  // Цветовая логика для факта
+  let factCls = 'zero';
+  if (fact > 0) {
+    if (total > 0 && fact > total) factCls = 'over';
+    else if (total > 0 && fact <= total) factCls = 'save';
+    else factCls = 'over'; // факт без плана = неучтённый расход
+  }
+  // Δ
+  let deltaCls = 'zero';
+  let deltaTxt = '—';
+  if (fact > 0 || total > 0) {
+    if (delta > 0) { deltaCls = 'over'; deltaTxt = '+' + fmtRub(delta); }
+    else if (delta < 0) { deltaCls = 'save'; deltaTxt = '−' + fmtRub(-delta); }
+    else { deltaCls = 'zero'; deltaTxt = '0'; }
+  }
   return `
     <div class="est-row-edit" data-row-id="${row.id}" data-sid="${sid}">
       <div class="name">${escapeHtml(row.name)}</div>
@@ -7841,6 +8108,11 @@ function renderEstRow(sid, row, idx, isCustom) {
       <input class="est-input days" type="number" min="0" value="${row.days || ''}" placeholder="—" data-field="days">
       <input class="est-input price" type="number" min="0" value="${row.price || ''}" placeholder="—" data-field="price">
       <div class="row-total ${total === 0 ? 'zero' : ''}" data-row-total>${fmtRub(total)}</div>
+      <div class="fact-cell ${factCls}" data-row-fact onclick="openFactPopup(event, '${sid}','${row.id}')" title="Журнал расходов — клик для редактирования">
+        <span>${fact > 0 ? fmtRub(fact) : '—'}</span>
+        ${entriesCount > 0 ? `<span class="fact-badge">${entriesCount}</span>` : ''}
+      </div>
+      <div class="delta-cell ${deltaCls}" data-row-delta>${deltaTxt}</div>
       ${isCustom ? `<button class="est-del-btn" onclick="deleteEstimateRow('${sid}','${row.id}')" title="Удалить">×</button>` : '<div></div>'}
     </div>`;
 }
@@ -7876,6 +8148,8 @@ function onEstimateInputChange(e) {
       totalEl.textContent = fmtRub(total);
       totalEl.classList.toggle('zero', total === 0);
     }
+    // Обновить Δ строки
+    refreshRowFactDelta(rowEl, row);
     // Обновить сумму раздела
     const sumEl = document.querySelector(`[data-sum="${sid}"]`);
     const secTotal = calcSectionTotal(section);
@@ -7904,15 +8178,248 @@ function saveEstimateNow() {
   if (project) renderSmetaPromo(project);
 }
 
+function clearEstimateLink() {
+  if (!_currentEstimate) return;
+  _currentEstimate.externalLink = '';
+  saveEstimateNow();
+  const project = DB.getProject(_currentProjectId);
+  if (project) renderEstimate(project);
+}
+
+/* ===== ЖУРНАЛ РАСХОДОВ В СТРОКЕ СМЕТЫ ===== */
+let _factPopRow = null; // { sid, rid }
+
+function getEstRow(sid, rid) {
+  if (!_currentEstimate) return null;
+  const section = _currentEstimate.sections[sid];
+  if (!section) return null;
+  let row = section.rows.find(r => r.id === rid);
+  if (!row) row = (section.customRows || []).find(r => r.id === rid);
+  return row;
+}
+
+function openFactPopup(event, sid, rid) {
+  if (event) event.stopPropagation();
+  const row = getEstRow(sid, rid);
+  if (!row) return;
+  if (!row.entries) row.entries = [];
+  _factPopRow = { sid, rid };
+  document.getElementById('fact-pop-title').textContent = row.name || 'Расходы';
+  renderFactPopup();
+  // Позиционируем рядом со строкой
+  const cellEl = event && event.currentTarget;
+  const pop = document.getElementById('est-fact-popup');
+  pop.classList.add('active');
+  // Расчёт позиции (после того как display:block)
+  requestAnimationFrame(() => {
+    const popRect = pop.getBoundingClientRect();
+    const cellRect = cellEl ? cellEl.getBoundingClientRect() : null;
+    let left, top;
+    if (cellRect) {
+      // Сверху или снизу от ячейки в зависимости от пространства
+      const spaceBelow = window.innerHeight - cellRect.bottom;
+      const spaceAbove = cellRect.top;
+      // Слева от ячейки, чтобы попап не залез за правый край
+      left = cellRect.right - popRect.width;
+      if (left < 12) left = cellRect.left;
+      if (left + popRect.width > window.innerWidth - 12) left = window.innerWidth - popRect.width - 12;
+      if (spaceBelow >= popRect.height + 8) {
+        top = cellRect.bottom + 6;
+      } else if (spaceAbove >= popRect.height + 8) {
+        top = cellRect.top - popRect.height - 6;
+      } else {
+        top = Math.max(12, (window.innerHeight - popRect.height) / 2);
+      }
+    } else {
+      left = (window.innerWidth - popRect.width) / 2;
+      top = (window.innerHeight - popRect.height) / 2;
+    }
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  });
+}
+
+function closeFactPopup() {
+  document.getElementById('est-fact-popup').classList.remove('active');
+  _factPopRow = null;
+}
+
+function renderFactPopup() {
+  if (!_factPopRow) return;
+  const row = getEstRow(_factPopRow.sid, _factPopRow.rid);
+  if (!row) return;
+  if (!row.entries) row.entries = [];
+  const total = calcRowTotal(row);
+  const fact = calcRowFact(row);
+  const delta = fact - total;
+  // Подзаголовок
+  let deltaText = '';
+  if (total > 0 || fact > 0) {
+    if (delta > 0) deltaText = `<span style="color:#d63838;font-weight:700;"> · перерасход ${fmtRub(delta)}</span>`;
+    else if (delta < 0) deltaText = `<span style="color:#059669;font-weight:700;"> · экономия ${fmtRub(-delta)}</span>`;
+  }
+  document.getElementById('fact-pop-subtitle').innerHTML =
+    `План <b>${fmtRub(total)}</b> · Факт <b>${fmtRub(fact)}</b>${deltaText}`;
+  document.getElementById('fact-pop-totals').innerHTML =
+    `${row.entries.length} ${row.entries.length === 1 ? 'расход' : (row.entries.length < 5 && row.entries.length > 1 ? 'расхода' : 'расходов')} · Σ <b>${fmtRub(fact)}</b>`;
+
+  const list = document.getElementById('fact-pop-list');
+  if (row.entries.length === 0) {
+    list.innerHTML = '<div class="est-fact-pop-empty">Расходов пока нет. Нажми «＋ расход» чтобы добавить.</div>';
+  } else {
+    list.innerHTML = row.entries.map(e => `
+      <div class="est-fact-pop-row" data-entry-id="${e.id}">
+        <input type="date" class="date" data-fld="date" value="${escapeHtml(e.date || '')}">
+        <input type="text" class="cm" data-fld="comment" value="${escapeHtml(e.comment || '')}" placeholder="Комментарий">
+        <input type="number" class="sum" data-fld="amount" value="${e.amount || ''}" placeholder="0" min="0" step="50">
+        <button class="del-x" onclick="deleteFactEntry('${e.id}')">×</button>
+      </div>
+    `).join('');
+    // Обработчики ввода
+    list.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', onFactEntryInput);
+    });
+  }
+}
+
+function onFactEntryInput(e) {
+  if (!_factPopRow) return;
+  const row = getEstRow(_factPopRow.sid, _factPopRow.rid);
+  if (!row || !row.entries) return;
+  const entryEl = e.target.closest('.est-fact-pop-row');
+  const id = entryEl.dataset.entryId;
+  const entry = row.entries.find(x => x.id === id);
+  if (!entry) return;
+  const fld = e.target.dataset.fld;
+  if (fld === 'amount') {
+    entry.amount = e.target.value === '' ? 0 : Number(e.target.value);
+  } else {
+    entry[fld] = e.target.value;
+  }
+  // Обновляем footer и саму строку в смете
+  const sub = document.getElementById('fact-pop-subtitle');
+  const tot = document.getElementById('fact-pop-totals');
+  // Перерисуем только текстовые блоки (не список — иначе слетит фокус)
+  const total = calcRowTotal(row);
+  const fact = calcRowFact(row);
+  const delta = fact - total;
+  let deltaText = '';
+  if (total > 0 || fact > 0) {
+    if (delta > 0) deltaText = `<span style="color:#d63838;font-weight:700;"> · перерасход ${fmtRub(delta)}</span>`;
+    else if (delta < 0) deltaText = `<span style="color:#059669;font-weight:700;"> · экономия ${fmtRub(-delta)}</span>`;
+  }
+  sub.innerHTML = `План <b>${fmtRub(total)}</b> · Факт <b>${fmtRub(fact)}</b>${deltaText}`;
+  tot.innerHTML = `${row.entries.length} ${row.entries.length === 1 ? 'расход' : (row.entries.length < 5 ? 'расхода' : 'расходов')} · Σ <b>${fmtRub(fact)}</b>`;
+  // Обновляем ячейку «Факт» и Δ в самой смете
+  const rowEl = document.querySelector(`.est-row-edit[data-row-id="${row.id}"]`);
+  if (rowEl) refreshRowFactDelta(rowEl, row);
+  // Debounced save
+  clearTimeout(_estimateSaveTimer);
+  _estimateSaveTimer = setTimeout(() => saveEstimateNow(), 400);
+}
+
+function addFactEntry() {
+  if (!_factPopRow) return;
+  const row = getEstRow(_factPopRow.sid, _factPopRow.rid);
+  if (!row) return;
+  if (!row.entries) row.entries = [];
+  const today = new Date().toISOString().slice(0, 10);
+  row.entries.push({
+    id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    date: today,
+    comment: '',
+    amount: 0
+  });
+  renderFactPopup();
+  saveEstimateNow();
+  // Фокус на новую строку — комментарий
+  setTimeout(() => {
+    const list = document.getElementById('fact-pop-list');
+    const inputs = list.querySelectorAll('.est-fact-pop-row input.cm');
+    const last = inputs[inputs.length - 1];
+    if (last) last.focus();
+  }, 50);
+}
+
+function deleteFactEntry(entryId) {
+  if (!_factPopRow) return;
+  const row = getEstRow(_factPopRow.sid, _factPopRow.rid);
+  if (!row || !row.entries) return;
+  row.entries = row.entries.filter(e => e.id !== entryId);
+  renderFactPopup();
+  saveEstimateNow();
+  const rowEl = document.querySelector(`.est-row-edit[data-row-id="${row.id}"]`);
+  if (rowEl) refreshRowFactDelta(rowEl, row);
+}
+
+function refreshRowFactDelta(rowEl, row) {
+  const total = calcRowTotal(row);
+  const fact = calcRowFact(row);
+  const delta = fact - total;
+  const entriesCount = (row.entries || []).length;
+  // Факт-ячейка
+  const factEl = rowEl.querySelector('[data-row-fact]');
+  if (factEl) {
+    factEl.classList.remove('zero', 'over', 'save');
+    let factCls = 'zero';
+    if (fact > 0) {
+      if (total > 0 && fact > total) factCls = 'over';
+      else if (total > 0 && fact <= total) factCls = 'save';
+      else factCls = 'over';
+    }
+    factEl.classList.add(factCls);
+    factEl.innerHTML = `<span>${fact > 0 ? fmtRub(fact) : '—'}</span>${entriesCount > 0 ? `<span class="fact-badge">${entriesCount}</span>` : ''}`;
+  }
+  // Δ-ячейка
+  const deltaEl = rowEl.querySelector('[data-row-delta]');
+  if (deltaEl) {
+    deltaEl.classList.remove('zero', 'over', 'save');
+    let deltaCls = 'zero';
+    let deltaTxt = '—';
+    if (fact > 0 || total > 0) {
+      if (delta > 0) { deltaCls = 'over'; deltaTxt = '+' + fmtRub(delta); }
+      else if (delta < 0) { deltaCls = 'save'; deltaTxt = '−' + fmtRub(-delta); }
+      else { deltaCls = 'zero'; deltaTxt = '0'; }
+    }
+    deltaEl.classList.add(deltaCls);
+    deltaEl.textContent = deltaTxt;
+  }
+}
+
+// Закрыть попап по клику вне него
+document.addEventListener('click', (e) => {
+  const pop = document.getElementById('est-fact-popup');
+  if (!pop || !pop.classList.contains('active')) return;
+  if (pop.contains(e.target)) return;
+  if (e.target.closest('.fact-cell')) return;
+  closeFactPopup();
+});
+// Esc — закрыть
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const pop = document.getElementById('est-fact-popup');
+    if (pop && pop.classList.contains('active')) closeFactPopup();
+  }
+});
+
 function updateEstimateTotals(project, est) {
   const sub = calcGrandTotal(est);
   const taxPct = est.taxPercent || 0;
   const taxAmount = sub * (taxPct / 100);
   const grand = sub + taxAmount;
+  const factTotal = calcGrandFact(est);
+  const deltaTotal = factTotal - sub;
   document.getElementById('est-subtotal').textContent = fmtRub(sub);
   document.getElementById('est-tax-amount').textContent = fmtRub(taxAmount);
   document.getElementById('est-grand').textContent = fmtRub(grand);
-  document.getElementById('est-footer-info').textContent = 'Авто-сохранение · Сумма: ' + fmtRub(grand);
+  // Подсветим перерасход в футере
+  let footerExtra = '';
+  if (factTotal > 0 || deltaTotal !== 0) {
+    if (deltaTotal > 0) footerExtra = ` · <span style="color:#d63838;font-weight:700;">Факт: ${fmtRub(factTotal)} (+${fmtRub(deltaTotal)})</span>`;
+    else if (deltaTotal < 0) footerExtra = ` · <span style="color:#059669;font-weight:700;">Факт: ${fmtRub(factTotal)} (−${fmtRub(-deltaTotal)})</span>`;
+    else footerExtra = ` · Факт: ${fmtRub(factTotal)}`;
+  }
+  document.getElementById('est-footer-info').innerHTML = 'Авто-сохранение · План: ' + fmtRub(grand) + footerExtra;
 
   // Крупный итоговый блок
   document.getElementById('ptc-amount').textContent = fmtRub(grand);
