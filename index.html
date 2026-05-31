@@ -3393,256 +3393,265 @@ body.has-reel .theme-toggle { right: 158px; }
   margin-right: 4px;
 }
 
-/* ===== РЕДАКТОР ТАЙМИНГА ===== */
+/* ===== ТАЙМИНГ: МАТРИЦА ===== */
 .timing-toolbar {
   display: flex;
   gap: 18px;
-  align-items: center;
+  align-items: flex-end;
   flex-wrap: wrap;
-  padding: 14px 18px;
+  padding: 12px 16px;
   background: var(--bg-2, #f5f5f0);
   border-radius: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
-.timing-toolbar-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.timing-toolbar-field { display: flex; flex-direction: column; gap: 4px; }
 .timing-toolbar-field label {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted, #888);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 700;
 }
 .timing-toolbar-field input {
-  padding: 7px 10px;
+  padding: 6px 9px;
   border: 1px solid var(--line-2, #e5e5e5);
   border-radius: 4px;
   font-size: 13px;
   background: white;
   font-family: inherit;
 }
-.timing-toolbar-info {
-  display: flex;
-  gap: 18px;
-  font-size: 12px;
-  color: var(--muted, #888);
+.timing-legend {
+  display: flex; gap: 14px;
+  font-size: 11px;
+  color: var(--ink, #0a0907);
+  margin-left: 12px;
+}
+.timing-legend span { display: flex; align-items: center; gap: 5px; font-weight: 600; }
+.timing-legend i.cl {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border-radius: 2px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+.timing-legend i.cl-work { background: #0a0907; }
+.timing-legend i.cl-crit { background: #e8231d; }
+.timing-legend i.cl-appr { background: #fbbf24; }
+.timing-hint {
   margin-left: auto;
+  font-size: 10px;
+  color: var(--muted, #888);
+  font-style: italic;
 }
-.timing-toolbar-info b { color: var(--ink, #0a0907); }
 
-.timing-stage {
+.timing-grid-wrap {
+  overflow: auto;
+  max-height: 65vh;
   background: white;
-  border-radius: 6px;
-  margin-bottom: 14px;
-  overflow: hidden;
   border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
 }
-.timing-stage-head {
+.timing-grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+  font-family: inherit;
+  font-size: 11px;
+}
+.timing-grid th, .timing-grid td {
+  border-right: 1px solid #ececec;
+  border-bottom: 1px solid #f0f0eb;
+  padding: 0;
+}
+.timing-grid thead th {
+  background: #0a0907;
+  color: white;
+  padding: 4px 6px;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+.timing-grid th.t-corner {
+  width: 130px;
+  text-align: left;
+  z-index: 5;
+  left: 0;
+  position: sticky;
+}
+.timing-grid th.t-proc-h {
+  width: 200px;
+  text-align: left;
+  z-index: 5;
+  left: 130px;
+  position: sticky;
+}
+.timing-grid th.t-month {
+  background: #0a0907;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  border-right: 1px solid #444;
+}
+.timing-grid th.t-day {
+  width: 22px;
+  min-width: 22px;
+  font-size: 9px;
+  padding: 3px 0;
+  font-weight: 700;
+}
+.timing-grid th.t-dow {
+  width: 22px;
+  min-width: 22px;
+  font-size: 7px;
+  padding: 2px 0;
+  color: #bbb;
+  font-weight: 600;
+}
+.timing-grid th.t-day.weekend,
+.timing-grid th.t-dow.weekend { background: #3a3a3a; }
+
+.timing-grid td.t-stage {
+  width: 130px;
+  min-width: 130px;
+  padding: 4px 6px;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.timing-grid td.t-stage .t-stage-name {
+  width: calc(100% - 22px);
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-transform: uppercase;
+  color: var(--ink, #0a0907);
+  outline: none;
+  font-weight: 800;
+  padding: 2px 0;
+}
+.timing-grid td.t-stage .t-stage-name:focus { background: white; border-radius: 2px; padding: 2px 4px; }
+.timing-grid td.t-stage .t-add-proc {
+  width: 18px; height: 18px;
+  margin-left: 4px;
+  border: 1px solid rgba(0,0,0,0.2);
+  background: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.timing-grid td.t-stage .t-add-proc:hover { background: #0a0907; color: white; border-color: #0a0907; }
+.timing-grid td.t-proc {
+  width: 200px;
+  min-width: 200px;
+  padding: 4px 8px;
+  background: #fafafa;
+  position: sticky;
+  left: 130px;
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line-2, #e5e5e5);
+  gap: 4px;
 }
-.timing-stage-name {
+.timing-grid td.t-proc .t-proc-name {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--ink, #0a0907);
-  padding: 4px 0;
-  outline: none;
-}
-.timing-stage-name:focus {
-  background: rgba(255,255,255,0.5);
-  border-radius: 3px;
-  padding: 4px 6px;
-}
-.timing-stage-count {
+  font: inherit;
   font-size: 11px;
-  color: var(--muted, #888);
   font-weight: 600;
-  white-space: nowrap;
+  outline: none;
+  padding: 2px 0;
+  color: var(--ink, #0a0907);
 }
-.timing-btn-add {
-  padding: 6px 12px;
+.timing-grid td.t-proc .t-proc-name:focus { background: white; border-radius: 2px; padding: 2px 4px; }
+.timing-grid td.t-proc .t-proc-del {
+  width: 18px; height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--muted, #888);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+  padding: 0;
+}
+.timing-grid tr:hover td.t-proc .t-proc-del { opacity: 1; }
+.timing-grid td.t-proc .t-proc-del:hover { background: #fee2e2; color: #991b1b; }
+.timing-grid td.t-empty {
+  background: #fafafa;
+  text-align: center;
+  padding: 8px;
+  color: var(--muted, #888);
+  font-style: italic;
+}
+.timing-grid td.t-empty .t-add-proc-row {
   border: 1px dashed var(--muted, #888);
   background: transparent;
+  padding: 4px 12px;
   border-radius: 3px;
   font-size: 11px;
-  font-weight: 600;
   cursor: pointer;
   color: var(--ink, #0a0907);
-  transition: all 0.15s;
 }
-.timing-btn-add:hover {
-  background: var(--ink, #0a0907);
-  color: white;
-  border-color: var(--ink, #0a0907);
-}
+.timing-grid td.t-empty .t-add-proc-row:hover { background: #0a0907; color: white; border-color: #0a0907; }
 
-.timing-process-list { padding: 4px 0; }
-.timing-process-head {
-  display: grid;
-  grid-template-columns: 1fr 130px 130px 130px 1fr 32px;
-  gap: 8px;
-  padding: 6px 14px;
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--muted, #888);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  background: #fafafa;
-  border-bottom: 1px solid var(--line-2, #e5e5e5);
-}
-.timing-process-row {
-  display: grid;
-  grid-template-columns: 1fr 130px 130px 130px 1fr 32px;
-  gap: 8px;
-  padding: 6px 14px;
-  align-items: center;
-  border-bottom: 1px solid #f3f3ee;
-  transition: background 0.1s;
-}
-.timing-process-row:hover { background: #fafaf7; }
-.timing-input {
-  padding: 6px 9px;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  font-size: 12px;
-  background: transparent;
-  font-family: inherit;
-  width: 100%;
-  outline: none;
-  color: var(--ink, #0a0907);
-}
-.timing-input:hover { background: white; border-color: var(--line-2, #e5e5e5); }
-.timing-input:focus { background: white; border-color: var(--ink, #0a0907); }
-.timing-input-name { font-weight: 600; }
-.timing-type { font-size: 11px; cursor: pointer; }
-.timing-row-del {
-  width: 24px; height: 24px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--muted, #888);
-  font-size: 16px;
+.timing-grid td.t-cell {
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
-}
-.timing-process-row:hover .timing-row-del { opacity: 1; }
-.timing-row-del:hover { background: #fee2e2; color: #991b1b; }
-
-/* Mini Gantt visual */
-.gantt-visual-wrap {
-  margin-top: 22px;
-  background: white;
-  border: 1px solid var(--line-2, #e5e5e5);
-  border-radius: 6px;
-  overflow: hidden;
-}
-.gantt-visual-title {
-  padding: 12px 18px;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--line-2, #e5e5e5);
-  background: #fafafa;
-}
-.gantt-visual-scroll {
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-.gantt-visual { min-width: 100%; }
-.gantt-proc-row {
-  display: flex;
-  align-items: stretch;
-  border-bottom: 1px solid #f3f3ee;
-}
-.gantt-proc-row.gantt-header {
-  background: #fafafa;
-  border-bottom: 1px solid var(--line-2, #e5e5e5);
-  position: sticky; top: 0; z-index: 2;
-}
-.gantt-proc-label {
-  flex: 0 0 220px;
-  padding: 6px 14px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-right: 1px solid var(--line-2, #e5e5e5);
-  display: flex;
-  align-items: center;
-}
-.gantt-header-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--muted, #888);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.gantt-header-row { display: flex; }
-.gantt-day-h {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 2px 0;
-  font-size: 9px;
-  color: var(--muted, #888);
-  border-right: 1px solid #f3f3ee;
-}
-.gantt-day-h.weekend { background: #fafafa; }
-.gantt-day-h.month-start { background: #ebebeb; }
-.gantt-day-h .gantt-month-label {
-  font-size: 8px;
-  font-weight: 800;
-  color: var(--ink, #0a0907);
-  text-transform: uppercase;
-}
-.gantt-day-h .gantt-day-num {
-  font-size: 10px;
-  font-weight: 600;
-}
-.gantt-track {
   position: relative;
-  height: 100%;
-  min-height: 24px;
-  background: repeating-linear-gradient(90deg, transparent, transparent calc(var(--day-w, 16px) - 1px), #f3f3ee calc(var(--day-w, 16px) - 1px), #f3f3ee var(--day-w, 16px));
+  transition: filter 0.1s;
 }
-.gantt-bar {
-  position: absolute;
-  top: 4px;
-  height: 16px;
-  border-radius: 3px;
-  background: var(--ink, #0a0907);
-  cursor: pointer;
-  transition: filter 0.15s;
-  z-index: 1;
-}
-.gantt-bar:hover { filter: brightness(1.1); }
-.gantt-bar.crit { background: #e8231d !important; }
-.gantt-bar.approval { background: repeating-linear-gradient(45deg, #f59e0b 0, #f59e0b 4px, #fbbf24 4px, #fbbf24 8px) !important; }
-.gantt-empty {
-  margin-top: 18px;
-  padding: 30px 20px;
-  background: #fafafa;
-  border: 1px dashed var(--line-2, #e5e5e5);
+.timing-grid td.t-cell:hover { filter: brightness(0.85); }
+.timing-grid td.t-cell.weekend { background: #f3f3ee; }
+.timing-grid td.t-cell.tc-work { background: #0a0907; }
+.timing-grid td.t-cell.tc-critical { background: #e8231d; }
+.timing-grid td.t-cell.tc-approval { background: #fbbf24; }
+
+/* Popover */
+.timing-cell-pop {
+  position: fixed;
+  z-index: 1500;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: white;
+  border: 1px solid #d0d0d0;
   border-radius: 6px;
-  text-align: center;
-  color: var(--muted, #888);
-  font-size: 12px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.18);
 }
+.timing-cell-pop .tc-opt {
+  width: 30px; height: 30px;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+.timing-cell-pop .tc-opt:hover { transform: scale(1.08); }
+.timing-cell-pop .tc-work { background: #0a0907; }
+.timing-cell-pop .tc-crit { background: #e8231d; }
+.timing-cell-pop .tc-appr { background: #fbbf24; color: #0a0907; }
+.timing-cell-pop .tc-clear { background: white; color: #888; border-color: #ccc; }
 
 /* ===== ОБЛОЖКИ ПРОЕКТОВ (фото артиста / продукта поверх постера) ===== */
 .poster.has-cover {
@@ -4841,14 +4850,14 @@ body.has-reel .theme-toggle { right: 158px; }
   </div>
 </div>
 
-<!-- TIMING — РЕДАКТИРУЕМЫЙ ТАЙМИНГ ПРОЕКТА -->
+<!-- TIMING — МАТРИЧНЫЙ ТАЙМИНГ ПРОЕКТА -->
 <div class="modal-overlay" id="m-timing">
-  <div class="doc-overlay" style="width: 1100px; max-width: 96vw; max-height: 94vh;">
+  <div class="doc-overlay" style="width: 1340px; max-width: 98vw; max-height: 96vh;">
     <div class="doc-header">
       <div class="doc-header-l">
         <div class="doc-header-icon">◷</div>
         <div>
-          <div class="doc-section-label" id="timing-subtitle">Тайминг проекта · авто-сохранение</div>
+          <div class="doc-section-label" id="timing-subtitle">Тайминг проекта · клик по ячейке = цвет</div>
           <div class="doc-header-title" id="timing-title">Тайминг проекта</div>
         </div>
       </div>
@@ -4858,14 +4867,25 @@ body.has-reel .theme-toggle { right: 158px; }
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
-    <div class="doc-body" id="timing-editor-root">
-      <!-- Динамически отрисуется renderTimingEditor() -->
+    <div class="doc-body" id="timing-editor-root" style="padding-bottom: 6px;">
+      <!-- renderTimingEditor() -->
     </div>
     <div class="doc-footer">
       <div class="doc-footer-info" id="timing-footer-info">—</div>
-      <button class="btn-secondary btn" onclick="resetTimingToDefaults()" title="Восстановить процессы по умолчанию">↺ Шаблон</button>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-secondary btn" onclick="addTimingStageFromUI()" title="Добавить пустой этап">＋ этап</button>
+        <button class="btn-secondary btn" onclick="resetTimingToDefaults()" title="Сбросить к шаблону">↺ Шаблон</button>
+      </div>
     </div>
   </div>
+</div>
+
+<!-- Popover выбора цвета ячейки -->
+<div id="timing-cell-pop" class="timing-cell-pop" style="display:none;">
+  <button data-cell-color="work" class="tc-opt tc-work" title="Рабочий день">■</button>
+  <button data-cell-color="critical" class="tc-opt tc-crit" title="Критический">▲</button>
+  <button data-cell-color="approval" class="tc-opt tc-appr" title="Согласование">◆</button>
+  <button data-cell-color="" class="tc-opt tc-clear" title="Стереть">×</button>
 </div>
 
 <!-- RELEASE -->
@@ -10082,10 +10102,10 @@ function newTimingId() {
 }
 
 function buildDefaultTiming(project) {
-  // Стартовая дата = сегодня (или дата дедлайна минус 6 недель — позже)
   const startDate = new Date().toISOString().slice(0, 10);
   return {
     startDate,
+    totalDays: 42,
     stages: TIMING_DEFAULT_STAGES.map(st => ({
       id: st.id,
       name: st.name,
@@ -10093,11 +10113,7 @@ function buildDefaultTiming(project) {
       processes: st.processes.map(name => ({
         id: newTimingId(),
         name,
-        startDate: '',
-        endDate: '',
-        type: name.toLowerCase().includes('сдача') || name.toLowerCase().includes('ppm') ? 'critical'
-          : name.toLowerCase().includes('согласование') || name.toLowerCase().includes('утверждение') ? 'approval'
-          : 'work',
+        cells: {},
         notes: ''
       }))
     }))
@@ -10108,8 +10124,49 @@ function ensureTiming(project) {
   if (!project.timing || !project.timing.stages) {
     project.timing = buildDefaultTiming(project);
     DB.updateProject(project.id, { timing: project.timing });
+    return project.timing;
   }
+  // Миграция: если у процессов есть старые startDate/endDate, преобразуем в cells
+  let migrated = false;
+  project.timing.stages.forEach(stage => {
+    stage.processes.forEach(p => {
+      if (!p.cells) p.cells = {};
+      if (p.startDate && p.endDate && Object.keys(p.cells).length === 0) {
+        const s = new Date(p.startDate);
+        const e = new Date(p.endDate);
+        const type = p.type || 'work';
+        for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+          p.cells[d.toISOString().slice(0, 10)] = type;
+        }
+        migrated = true;
+      }
+      delete p.startDate;
+      delete p.endDate;
+      delete p.type;
+    });
+  });
+  if (!project.timing.totalDays) {
+    project.timing.totalDays = 42;
+    migrated = true;
+  }
+  if (migrated) DB.updateProject(project.id, { timing: project.timing });
   return project.timing;
+}
+
+// Дата → формат YYYY-MM-DD
+function timingDateKey(d) {
+  if (typeof d === 'string') return d;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Парс YYYY-MM-DD без сдвига часовых поясов
+function timingParseDate(s) {
+  if (!s) return null;
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
 }
 
 function openTimingEditor() {
@@ -10119,112 +10176,18 @@ function openTimingEditor() {
   _timingProject = project;
   ensureTiming(project);
   document.getElementById('timing-title').textContent = 'Тайминг · ' + (project.name || 'проект');
-  document.getElementById('timing-subtitle').textContent = 'Тайминг проекта · авто-сохранение';
+  document.getElementById('timing-subtitle').textContent = 'Клик по ячейке → выбери цвет';
   renderTimingEditor();
+  setupTimingCellPop();
   document.getElementById('m-timing').classList.add('active');
 }
 
-function renderTimingEditor() {
-  const project = _timingProject;
-  if (!project) return;
-  const t = ensureTiming(project);
-  const root = document.getElementById('timing-editor-root');
-
-  // Подсчёт процессов и общей длительности
-  let totalProcesses = 0;
-  let earliest = null, latest = null;
-  t.stages.forEach(st => {
-    st.processes.forEach(p => {
-      totalProcesses++;
-      if (p.startDate) {
-        const d = new Date(p.startDate);
-        if (!earliest || d < earliest) earliest = d;
-      }
-      if (p.endDate) {
-        const d = new Date(p.endDate);
-        if (!latest || d > latest) latest = d;
-      }
-    });
-  });
-  const totalDays = (earliest && latest) ? Math.ceil((latest - earliest) / 86400000) + 1 : 0;
-  document.getElementById('timing-footer-info').textContent =
-    totalProcesses + ' процессов · ' + t.stages.length + ' этапа' +
-    (totalDays ? ' · ' + totalDays + ' дн.' : '');
-
-  let html = `
-    <div class="timing-toolbar">
-      <div class="timing-toolbar-field">
-        <label>Старт проекта</label>
-        <input type="date" data-timing-meta="startDate" value="${escapeHtml(t.startDate || '')}">
-      </div>
-      <div class="timing-toolbar-info">
-        ${earliest ? '<span>Первая дата: <b>' + formatTimingDate(earliest) + '</b></span>' : ''}
-        ${latest ? '<span>Сдача: <b>' + formatTimingDate(latest) + '</b></span>' : ''}
-      </div>
-    </div>
-  `;
-
-  // Этапы и процессы
-  t.stages.forEach((stage, sIdx) => {
-    html += `
-      <div class="timing-stage" data-stage-id="${stage.id}" style="border-left: 4px solid ${stage.color};">
-        <div class="timing-stage-head" style="background: ${hexToRgba(stage.color, 0.08)};">
-          <input class="timing-stage-name" data-stage-name="${stage.id}" value="${escapeHtml(stage.name)}" placeholder="Этап">
-          <span class="timing-stage-count">${stage.processes.length} процессов</span>
-          <button class="timing-btn-add" onclick="addTimingProcess('${stage.id}')">＋ процесс</button>
-        </div>
-        <div class="timing-process-list">
-          <div class="timing-process-head">
-            <div>Процесс</div>
-            <div>Начало</div>
-            <div>Окончание</div>
-            <div>Тип</div>
-            <div>Примечание</div>
-            <div></div>
-          </div>
-          ${stage.processes.map((p, pIdx) => `
-            <div class="timing-process-row" data-stage="${stage.id}" data-proc="${p.id}">
-              <input class="timing-input timing-input-name" data-field="name" value="${escapeHtml(p.name)}" placeholder="Название процесса">
-              <input class="timing-input" type="date" data-field="startDate" value="${escapeHtml(p.startDate || '')}">
-              <input class="timing-input" type="date" data-field="endDate" value="${escapeHtml(p.endDate || '')}">
-              <select class="timing-input timing-type" data-field="type" data-current="${p.type || 'work'}">
-                <option value="work" ${p.type === 'work' ? 'selected' : ''}>● работа</option>
-                <option value="critical" ${p.type === 'critical' ? 'selected' : ''}>● критич.</option>
-                <option value="approval" ${p.type === 'approval' ? 'selected' : ''}>● согласов.</option>
-              </select>
-              <input class="timing-input" data-field="notes" value="${escapeHtml(p.notes || '')}" placeholder="—">
-              <button class="timing-row-del" onclick="deleteTimingProcess('${stage.id}', '${p.id}')" title="Удалить">×</button>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  });
-
-  // Мини-Gantt
-  html += renderGanttVisual(t);
-
-  root.innerHTML = html;
-
-  // Подключаем обработчики
-  root.querySelectorAll('input[data-timing-meta]').forEach(el => {
-    el.addEventListener('input', onTimingMetaChange);
-  });
-  root.querySelectorAll('input[data-stage-name]').forEach(el => {
-    el.addEventListener('input', onTimingStageNameChange);
-  });
-  root.querySelectorAll('.timing-process-row input, .timing-process-row select').forEach(el => {
-    el.addEventListener('input', onTimingProcessChange);
-    el.addEventListener('change', onTimingProcessChange);
-  });
-}
-
+/* ===== ВСПОМОГАТЕЛЬНЫЕ ===== */
 function formatTimingDate(d) {
-  if (!(d instanceof Date)) d = new Date(d);
-  if (isNaN(d)) return '';
+  if (typeof d === 'string') d = timingParseDate(d);
+  if (!(d instanceof Date) || isNaN(d)) return '';
   return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
 }
-
 function hexToRgba(hex, alpha) {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!m) return hex;
@@ -10232,77 +10195,173 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function renderGanttVisual(timing) {
-  // Собрать все даты, определить диапазон
-  const allDates = [];
-  timing.stages.forEach(s => s.processes.forEach(p => {
-    if (p.startDate) allDates.push(new Date(p.startDate));
-    if (p.endDate) allDates.push(new Date(p.endDate));
+/* ===== МАТРИЧНЫЙ РЕНДЕР ТАЙМИНГА ===== */
+function renderTimingEditor() {
+  const project = _timingProject;
+  if (!project) return;
+  const t = ensureTiming(project);
+  const root = document.getElementById('timing-editor-root');
+
+  if (!t.startDate) t.startDate = new Date().toISOString().slice(0, 10);
+  if (!t.totalDays || t.totalDays < 7) t.totalDays = 42;
+
+  const startDate = timingParseDate(t.startDate);
+  const totalDays = Math.min(180, Math.max(7, parseInt(t.totalDays, 10) || 42));
+
+  // Считаем процессы и заполненность
+  let totalProcesses = 0, filledCells = 0;
+  t.stages.forEach(s => s.processes.forEach(p => {
+    totalProcesses++;
+    filledCells += Object.keys(p.cells || {}).length;
   }));
-  if (allDates.length === 0) {
-    return `<div class="gantt-empty">Заполни даты процессов — здесь появится визуальный Gantt.</div>`;
-  }
-  const minDate = new Date(Math.min(...allDates));
-  const maxDate = new Date(Math.max(...allDates));
-  const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
-  const dayW = Math.max(14, Math.min(28, 900 / totalDays));
+  document.getElementById('timing-footer-info').textContent =
+    `${totalProcesses} процессов · ${t.stages.length} этапа · ${totalDays} дн. · закрашено: ${filledCells}`;
 
-  // Заголовок: дни и месяца
-  let header = '<div class="gantt-header-row">';
+  // ---- Шапка-управление ----
+  let html = `
+    <div class="timing-toolbar">
+      <div class="timing-toolbar-field">
+        <label>Старт проекта</label>
+        <input type="date" id="t-start" value="${escapeHtml(t.startDate || '')}">
+      </div>
+      <div class="timing-toolbar-field">
+        <label>Дней в шкале</label>
+        <input type="number" id="t-days" min="7" max="180" step="7" value="${totalDays}" style="width:90px;">
+      </div>
+      <div class="timing-legend">
+        <span><i class="cl cl-work"></i> работа</span>
+        <span><i class="cl cl-crit"></i> критический</span>
+        <span><i class="cl cl-appr"></i> согласование</span>
+      </div>
+      <div class="timing-hint">Клик по ячейке → выбери цвет</div>
+    </div>
+  `;
+
+  // ---- Шапка дат (месяца + дни) ----
+  const days = [];
   for (let i = 0; i < totalDays; i++) {
-    const d = new Date(minDate);
+    const d = new Date(startDate);
     d.setDate(d.getDate() + i);
-    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const isFirst = d.getDate() === 1 || i === 0;
-    header += `<div class="gantt-day-h ${isWeekend ? 'weekend' : ''} ${isFirst ? 'month-start' : ''}" style="width:${dayW}px;" title="${d.toLocaleDateString('ru-RU')}">
-      ${isFirst ? '<div class="gantt-month-label">' + d.toLocaleDateString('ru-RU', { month: 'short' }).toUpperCase() + '</div>' : ''}
-      <div class="gantt-day-num">${d.getDate()}</div>
-    </div>`;
+    days.push(d);
   }
-  header += '</div>';
 
-  // Строки: этапы и процессы
-  let rows = '';
-  timing.stages.forEach(stage => {
-    stage.processes.forEach(p => {
-      let bar = '';
-      if (p.startDate && p.endDate) {
-        const s = new Date(p.startDate);
-        const e = new Date(p.endDate);
-        const offset = Math.round((s - minDate) / 86400000);
-        const len = Math.max(1, Math.round((e - s) / 86400000) + 1);
-        const barClass = p.type === 'critical' ? 'crit' : p.type === 'approval' ? 'approval' : 'work';
-        bar = `<div class="gantt-bar ${barClass}" style="left:${offset * dayW}px;width:${len * dayW - 2}px;background:${p.type === 'work' ? stage.color : ''};" title="${escapeHtml(p.name)}: ${formatTimingDate(s)} → ${formatTimingDate(e)}"></div>`;
-      }
-      rows += `
-        <div class="gantt-proc-row" style="height:24px;">
-          <div class="gantt-proc-label" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
-          <div class="gantt-track" style="width:${totalDays * dayW}px;">${bar}</div>
-        </div>`;
-    });
+  // Группировка месяцев для верхней строки
+  const monthGroups = [];
+  let curMonth = null;
+  days.forEach((d, idx) => {
+    const mkey = d.getFullYear() + '-' + d.getMonth();
+    if (!curMonth || curMonth.key !== mkey) {
+      curMonth = { key: mkey, label: d.toLocaleDateString('ru-RU', { month: 'long' }).toUpperCase(), span: 1, startIdx: idx };
+      monthGroups.push(curMonth);
+    } else {
+      curMonth.span++;
+    }
   });
 
-  return `
-    <div class="gantt-visual-wrap">
-      <div class="gantt-visual-title">📊 Визуальный Gantt</div>
-      <div class="gantt-visual-scroll">
-        <div class="gantt-visual">
-          <div class="gantt-proc-row gantt-header" style="height:34px;">
-            <div class="gantt-proc-label gantt-header-label">Процесс</div>
-            ${header}
-          </div>
-          ${rows}
-        </div>
-      </div>
-    </div>`;
+  let monthRow = '';
+  monthGroups.forEach(mg => {
+    monthRow += `<th class="t-month" colspan="${mg.span}">${escapeHtml(mg.label)}</th>`;
+  });
+
+  let dayRow = '';
+  days.forEach(d => {
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    dayRow += `<th class="t-day ${isWeekend ? 'weekend' : ''}" title="${d.toLocaleDateString('ru-RU', { weekday: 'long' })}">${d.getDate()}</th>`;
+  });
+
+  let dowRow = '';
+  const DOW_RU = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+  days.forEach(d => {
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    dowRow += `<th class="t-dow ${isWeekend ? 'weekend' : ''}">${DOW_RU[d.getDay()]}</th>`;
+  });
+
+  html += `
+    <div class="timing-grid-wrap">
+      <table class="timing-grid">
+        <thead>
+          <tr>
+            <th class="t-corner" rowspan="3">Этап</th>
+            <th class="t-proc-h" rowspan="3">Процесс</th>
+            ${monthRow}
+          </tr>
+          <tr>${dayRow}</tr>
+          <tr>${dowRow}</tr>
+        </thead>
+        <tbody>
+  `;
+
+  // ---- Строки процессов ----
+  t.stages.forEach(stage => {
+    const stageRows = stage.processes.length || 1;
+    stage.processes.forEach((p, pIdx) => {
+      html += `<tr data-stage="${stage.id}" data-proc="${p.id}">`;
+      if (pIdx === 0) {
+        html += `<td class="t-stage" rowspan="${stageRows}" style="background:${hexToRgba(stage.color, 0.12)};border-left:3px solid ${stage.color};">
+          <input class="t-stage-name" data-stage-name="${stage.id}" value="${escapeHtml(stage.name)}">
+          <button class="t-add-proc" onclick="addTimingProcess('${stage.id}')" title="Добавить процесс">＋</button>
+        </td>`;
+      }
+      html += `<td class="t-proc">
+        <input class="t-proc-name" data-field="name" value="${escapeHtml(p.name)}" placeholder="Процесс">
+        <button class="t-proc-del" onclick="deleteTimingProcess('${stage.id}', '${p.id}')" title="Удалить">×</button>
+      </td>`;
+      days.forEach(d => {
+        const key = timingDateKey(d);
+        const v = (p.cells && p.cells[key]) || '';
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        html += `<td class="t-cell ${v ? 'tc-' + v : ''} ${isWeekend ? 'weekend' : ''}" data-date="${key}" title="${d.toLocaleDateString('ru-RU')} ${escapeHtml(p.name)}"></td>`;
+      });
+      html += `</tr>`;
+    });
+    // Если этап пустой — добавим строку «нет процессов»
+    if (stage.processes.length === 0) {
+      html += `<tr data-stage="${stage.id}">
+        <td class="t-stage" style="background:${hexToRgba(stage.color, 0.12)};border-left:3px solid ${stage.color};">
+          <input class="t-stage-name" data-stage-name="${stage.id}" value="${escapeHtml(stage.name)}">
+          <button class="t-add-proc" onclick="addTimingProcess('${stage.id}')" title="Добавить процесс">＋</button>
+        </td>
+        <td class="t-proc t-empty" colspan="${totalDays + 1}">
+          <button class="t-add-proc-row" onclick="addTimingProcess('${stage.id}')">＋ добавить процесс</button>
+        </td>
+      </tr>`;
+    }
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  root.innerHTML = html;
+
+  // ---- Подключаем обработчики ----
+  document.getElementById('t-start').addEventListener('change', onTimingStartChange);
+  document.getElementById('t-days').addEventListener('change', onTimingDaysChange);
+  root.querySelectorAll('input[data-stage-name]').forEach(el => {
+    el.addEventListener('input', onTimingStageNameChange);
+  });
+  root.querySelectorAll('.t-proc-name').forEach(el => {
+    el.addEventListener('input', onTimingProcessNameChange);
+  });
+  root.querySelectorAll('.t-cell').forEach(el => {
+    el.addEventListener('click', onTimingCellClick);
+  });
 }
 
-function onTimingMetaChange(e) {
-  const field = e.target.dataset.timingMeta;
-  _timingProject.timing[field] = e.target.value;
-  scheduleTimingSave();
+/* ===== ИЗМЕНЕНИЯ ===== */
+function onTimingStartChange(e) {
+  _timingProject.timing.startDate = e.target.value;
+  saveTimingNow();
+  renderTimingEditor();
 }
-
+function onTimingDaysChange(e) {
+  const v = parseInt(e.target.value, 10);
+  _timingProject.timing.totalDays = Math.min(180, Math.max(7, v || 42));
+  saveTimingNow();
+  renderTimingEditor();
+}
 function onTimingStageNameChange(e) {
   const stageId = e.target.dataset.stageName;
   const stage = _timingProject.timing.stages.find(s => s.id === stageId);
@@ -10311,19 +10370,99 @@ function onTimingStageNameChange(e) {
     scheduleTimingSave();
   }
 }
-
-function onTimingProcessChange(e) {
-  const row = e.target.closest('.timing-process-row');
+function onTimingProcessNameChange(e) {
+  const row = e.target.closest('tr');
   if (!row) return;
-  const stageId = row.dataset.stage;
-  const procId = row.dataset.proc;
-  const field = e.target.dataset.field;
-  const stage = _timingProject.timing.stages.find(s => s.id === stageId);
+  const stage = _timingProject.timing.stages.find(s => s.id === row.dataset.stage);
   if (!stage) return;
-  const proc = stage.processes.find(p => p.id === procId);
+  const proc = stage.processes.find(p => p.id === row.dataset.proc);
   if (!proc) return;
-  proc[field] = e.target.value;
-  scheduleTimingSave(field === 'startDate' || field === 'endDate' || field === 'type');
+  proc.name = e.target.value;
+  scheduleTimingSave();
+}
+
+/* ===== POPOVER ВЫБОРА ЦВЕТА ===== */
+let _timingPopCell = null;
+function onTimingCellClick(e) {
+  const cell = e.target.closest('.t-cell');
+  if (!cell) return;
+  _timingPopCell = cell;
+  const pop = document.getElementById('timing-cell-pop');
+  const rect = cell.getBoundingClientRect();
+  pop.style.display = 'flex';
+  // позиционируем над ячейкой
+  pop.style.left = Math.max(8, Math.min(window.innerWidth - 200, rect.left + rect.width / 2 - 88)) + 'px';
+  pop.style.top = (rect.top - pop.offsetHeight - 6) + 'px';
+  // если не помещается сверху — снизу
+  if (rect.top - pop.offsetHeight - 6 < 8) {
+    pop.style.top = (rect.bottom + 6) + 'px';
+  }
+}
+function setupTimingCellPop() {
+  const pop = document.getElementById('timing-cell-pop');
+  if (!pop || pop.dataset.wired) return;
+  pop.dataset.wired = '1';
+  pop.querySelectorAll('button[data-cell-color]').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (!_timingPopCell) return;
+      const color = btn.dataset.cellColor;
+      const row = _timingPopCell.closest('tr');
+      const date = _timingPopCell.dataset.date;
+      const stage = _timingProject.timing.stages.find(s => s.id === row.dataset.stage);
+      const proc = stage?.processes.find(p => p.id === row.dataset.proc);
+      if (!proc) return;
+      if (!proc.cells) proc.cells = {};
+      // Снимаем все возможные классы
+      _timingPopCell.classList.remove('tc-work', 'tc-critical', 'tc-approval');
+      if (color) {
+        proc.cells[date] = color;
+        _timingPopCell.classList.add('tc-' + color);
+      } else {
+        delete proc.cells[date];
+      }
+      saveTimingNow();
+      // Обновим футер
+      let totalProcesses = 0, filled = 0;
+      _timingProject.timing.stages.forEach(s => s.processes.forEach(p => {
+        totalProcesses++; filled += Object.keys(p.cells || {}).length;
+      }));
+      document.getElementById('timing-footer-info').textContent =
+        `${totalProcesses} процессов · ${_timingProject.timing.stages.length} этапа · ${_timingProject.timing.totalDays} дн. · закрашено: ${filled}`;
+      pop.style.display = 'none';
+      _timingPopCell = null;
+    });
+  });
+  // Клик вне попапа — закрыть
+  document.addEventListener('click', (ev) => {
+    if (pop.style.display === 'none') return;
+    if (pop.contains(ev.target)) return;
+    if (ev.target.closest('.t-cell')) return; // клик на новую ячейку
+    pop.style.display = 'none';
+    _timingPopCell = null;
+  });
+  // Esc — закрыть
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && pop.style.display !== 'none') {
+      pop.style.display = 'none';
+      _timingPopCell = null;
+    }
+  });
+}
+
+function addTimingStageFromUI() {
+  const name = prompt('Имя нового этапа:', 'Новый этап');
+  if (!name) return;
+  const colors = ['#7c3aed', '#0891b2', '#f59e0b', '#db2777', '#0d9488'];
+  const color = colors[_timingProject.timing.stages.length % colors.length];
+  _timingProject.timing.stages.push({
+    id: 'st_' + Math.random().toString(36).slice(2, 8),
+    name,
+    color,
+    processes: []
+  });
+  saveTimingNow();
+  renderTimingEditor();
 }
 
 function scheduleTimingSave(rerender = false) {
@@ -10345,9 +10484,7 @@ function addTimingProcess(stageId) {
   stage.processes.push({
     id: newTimingId(),
     name: 'Новый процесс',
-    startDate: '',
-    endDate: '',
-    type: 'work',
+    cells: {},
     notes: ''
   });
   saveTimingNow();
@@ -10371,7 +10508,7 @@ function resetTimingToDefaults() {
   toast('Тайминг сброшен к шаблону', 'success');
 }
 
-/* ===== ЭКСПОРТ ТАЙМИНГА В XLSX ===== */
+/* ===== ЭКСПОРТ ТАЙМИНГА В XLSX (матрица как в шаблоне) ===== */
 function exportTimingToXlsx() {
   if (typeof window.XLSX === 'undefined') {
     toast('XLSX не загрузился, обновите страницу', 'error');
@@ -10383,77 +10520,93 @@ function exportTimingToXlsx() {
   const XLSX = window.XLSX;
   const wb = XLSX.utils.book_new();
 
-  // Лист 1: Структура (как в шаблоне)
+  const startDate = timingParseDate(t.startDate);
+  const totalDays = Math.min(180, Math.max(7, parseInt(t.totalDays, 10) || 42));
+  const days = [];
+  for (let i = 0; i < totalDays; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+
+  // Цвета для разных типов
+  const TYPE_FILL = {
+    work: '0A0907',
+    critical: 'E8231D',
+    approval: 'FBBF24'
+  };
+
+  // Шапка
   const rows = [];
-  rows.push(['', 'Этап', 'Процесс', 'Начало', 'Окончание', 'Тип', 'Примечание']);
+  // Месяцы
+  const monthRow = ['', ''];
+  const dayRow = ['Этап', 'Процесс'];
+  const dowRow = ['', ''];
+  days.forEach(d => {
+    monthRow.push(d.toLocaleDateString('ru-RU', { month: 'short' }));
+    dayRow.push(String(d.getDate()));
+    const DOW_RU = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+    dowRow.push(DOW_RU[d.getDay()]);
+  });
+  rows.push(monthRow);
+  rows.push(dayRow);
+  rows.push(dowRow);
+
+  // Тело
+  const cellStyles = [];
+  let rIdx = 3; // 0-indexed строка для следующей записи
   t.stages.forEach(stage => {
-    rows.push(['', stage.name, '', '', '', '', '']);
     stage.processes.forEach(p => {
-      rows.push(['', '', p.name, p.startDate || '', p.endDate || '',
-        p.type === 'work' ? 'рабочий' : p.type === 'critical' ? 'критический' : 'согласование',
-        p.notes || '']);
+      const row = [stage.name, p.name];
+      days.forEach((d, dIdx) => {
+        const key = timingDateKey(d);
+        const v = (p.cells && p.cells[key]) || '';
+        row.push(v ? '■' : '');
+        if (v) {
+          cellStyles.push({ r: rIdx, c: 2 + dIdx, fill: TYPE_FILL[v] || '0A0907' });
+        }
+      });
+      rows.push(row);
+      rIdx++;
     });
   });
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{ wch: 2 }, { wch: 18 }, { wch: 38 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 26 }];
 
-  // Стилизация заголовка
-  if (ws['B1']) ws['B1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
-  if (ws['C1']) ws['C1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
-  if (ws['D1']) ws['D1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
-  if (ws['E1']) ws['E1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
-  if (ws['F1']) ws['F1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
-  if (ws['G1']) ws['G1'].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center' } };
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{ wch: 18 }, { wch: 34 }, ...Array(totalDays).fill({ wch: 4 })];
+  ws['!rows'] = [{ hpt: 16 }, { hpt: 18 }, { hpt: 16 }, ...Array(rows.length - 3).fill({ hpt: 18 })];
+
+  // Стилизация заголовков
+  const hdrFill = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0A0907' } }, alignment: { horizontal: 'center', vertical: 'center' } };
+  if (ws['A2']) ws['A2'].s = hdrFill;
+  if (ws['B2']) ws['B2'].s = hdrFill;
+  days.forEach((d, dIdx) => {
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const monthCell = XLSX.utils.encode_cell({ r: 0, c: 2 + dIdx });
+    const dayCell = XLSX.utils.encode_cell({ r: 1, c: 2 + dIdx });
+    const dowCell = XLSX.utils.encode_cell({ r: 2, c: 2 + dIdx });
+    const hdrCellStyle = {
+      font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 9 },
+      fill: { fgColor: { rgb: isWeekend ? '3a3a3a' : '0A0907' } },
+      alignment: { horizontal: 'center', vertical: 'center' }
+    };
+    if (ws[monthCell]) ws[monthCell].s = hdrCellStyle;
+    if (ws[dayCell]) ws[dayCell].s = hdrCellStyle;
+    if (ws[dowCell]) ws[dowCell].s = hdrCellStyle;
+  });
+
+  // Стилизация закрашенных ячеек
+  cellStyles.forEach(({ r, c, fill }) => {
+    const addr = XLSX.utils.encode_cell({ r, c });
+    if (ws[addr]) {
+      ws[addr].s = {
+        font: { color: { rgb: fill } },  // невидимый текст того же цвета
+        fill: { fgColor: { rgb: fill } },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+    }
+  });
 
   XLSX.utils.book_append_sheet(wb, ws, 'Тайминг');
-
-  // Лист 2: Gantt (по дням)
-  if (t.stages.some(s => s.processes.some(p => p.startDate && p.endDate))) {
-    const allDates = [];
-    t.stages.forEach(s => s.processes.forEach(p => {
-      if (p.startDate) allDates.push(new Date(p.startDate));
-      if (p.endDate) allDates.push(new Date(p.endDate));
-    }));
-    if (allDates.length) {
-      const minD = new Date(Math.min(...allDates));
-      const maxD = new Date(Math.max(...allDates));
-      const totalDays = Math.ceil((maxD - minD) / 86400000) + 1;
-      const ganttRows = [];
-      // Шапка дат
-      const headerRow = ['Этап', 'Процесс'];
-      for (let i = 0; i < totalDays; i++) {
-        const d = new Date(minD);
-        d.setDate(d.getDate() + i);
-        headerRow.push(d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
-      }
-      ganttRows.push(headerRow);
-      // Строки процессов
-      t.stages.forEach(stage => {
-        stage.processes.forEach(p => {
-          const row = [stage.name, p.name];
-          for (let i = 0; i < totalDays; i++) {
-            const d = new Date(minD);
-            d.setDate(d.getDate() + i);
-            if (p.startDate && p.endDate) {
-              const s = new Date(p.startDate);
-              const e = new Date(p.endDate);
-              if (d >= s && d <= e) {
-                row.push(p.type === 'critical' ? '🔴' : p.type === 'approval' ? '🟡' : '■');
-              } else {
-                row.push('');
-              }
-            } else {
-              row.push('');
-            }
-          }
-          ganttRows.push(row);
-        });
-      });
-      const wsGantt = XLSX.utils.aoa_to_sheet(ganttRows);
-      wsGantt['!cols'] = [{ wch: 16 }, { wch: 32 }, ...Array(totalDays).fill({ wch: 4 })];
-      XLSX.utils.book_append_sheet(wb, wsGantt, 'Gantt');
-    }
-  }
 
   const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
   XLSX.writeFile(wb, `Тайминг_${slug}_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -10514,67 +10667,105 @@ async function exportTimingToPdf() {
 }
 
 function buildTimingPrintHTML(project, t) {
+  const startDate = timingParseDate(t.startDate);
+  const totalDays = Math.min(180, Math.max(7, parseInt(t.totalDays, 10) || 42));
+  const days = [];
+  for (let i = 0; i < totalDays; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+  // Адаптивная ширина: помещаем всё в 1500px
+  const cellW = Math.max(14, Math.min(26, Math.floor(1200 / totalDays)));
+  const containerW = 240 + totalDays * cellW + 60;
+
   const c = document.createElement('div');
-  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:1100px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.4;';
+  c.style.cssText = `position:absolute;left:-9999px;top:0;width:${containerW}px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.3;`;
+
+  const TYPE_BG = { work: '#0a0907', critical: '#e8231d', approval: '#fbbf24' };
 
   // Шапка
   let html = `
-    <div style="background:#ffffff;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
-      <img src="logo.png" alt="ZALOVE" style="height:26px;width:auto;" crossorigin="anonymous">
+    <div style="background:#ffffff;padding:14px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
+      <img src="logo.png" alt="ZALOVE" style="height:24px;width:auto;" crossorigin="anonymous">
       <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;">Тайминг · ${new Date().toLocaleDateString('ru-RU')}</div>
     </div>
-  `;
-
-  // Title
-  html += `
-    <div style="padding:24px 40px 8px;">
-      <div style="font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1;">ТАЙМИНГ ПРОЕКТА</div>
-      <div style="font-size:14px;color:#444;margin-top:6px;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}</div>
+    <div style="padding:18px 30px 8px;">
+      <div style="font-size:24px;font-weight:900;letter-spacing:-0.5px;line-height:1;">ТАЙМИНГ ПРОЕКТА</div>
+      <div style="font-size:13px;color:#444;margin-top:4px;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''} · с ${formatTimingDate(startDate)}, ${totalDays} дн.</div>
     </div>
   `;
 
-  // Этапы
-  t.stages.forEach(stage => {
-    if (stage.processes.length === 0) return;
-    html += `
-      <div style="margin:18px 40px 0;border-left:4px solid ${stage.color};background:#fafafa;border-radius:4px;overflow:hidden;">
-        <div style="background:${hexToRgba(stage.color, 0.12)};padding:10px 18px;font-weight:800;text-transform:uppercase;letter-spacing:1px;font-size:13px;">${escapeHtml(stage.name)} · ${stage.processes.length}</div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px;">
-          <thead>
-            <tr style="background:#f0f0eb;color:#555;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">
-              <th style="text-align:left;padding:8px 14px;width:42%;">Процесс</th>
-              <th style="text-align:center;padding:8px 14px;width:14%;">Начало</th>
-              <th style="text-align:center;padding:8px 14px;width:14%;">Окончание</th>
-              <th style="text-align:center;padding:8px 14px;width:14%;">Тип</th>
-              <th style="text-align:left;padding:8px 14px;width:16%;">Примечание</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${stage.processes.map(p => `
-              <tr style="border-top:1px solid #e8e8e3;">
-                <td style="padding:8px 14px;font-weight:600;">${escapeHtml(p.name)}</td>
-                <td style="text-align:center;padding:8px 14px;">${p.startDate ? formatTimingDate(p.startDate) : '—'}</td>
-                <td style="text-align:center;padding:8px 14px;">${p.endDate ? formatTimingDate(p.endDate) : '—'}</td>
-                <td style="text-align:center;padding:8px 14px;">
-                  <span style="display:inline-block;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;${
-                    p.type === 'critical' ? 'background:#fee2e2;color:#991b1b;'
-                    : p.type === 'approval' ? 'background:#fef3c7;color:#92400e;'
-                    : 'background:#dbeafe;color:#1e40af;'
-                  }">${p.type === 'critical' ? 'КРИТ' : p.type === 'approval' ? 'СОГЛ' : 'РАБ'}</span>
-                </td>
-                <td style="padding:8px 14px;color:#666;">${escapeHtml(p.notes || '—')}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
+  // Группы месяцев
+  const monthGroups = [];
+  let curMonth = null;
+  days.forEach((d, idx) => {
+    const mkey = d.getFullYear() + '-' + d.getMonth();
+    if (!curMonth || curMonth.key !== mkey) {
+      curMonth = { key: mkey, label: d.toLocaleDateString('ru-RU', { month: 'short' }).toUpperCase(), span: 1 };
+      monthGroups.push(curMonth);
+    } else curMonth.span++;
   });
 
-  // Footer
+  let monthRow = '';
+  monthGroups.forEach(mg => {
+    monthRow += `<th colspan="${mg.span}" style="background:#0a0907;color:white;font-size:9px;letter-spacing:1px;padding:4px 0;border-right:1px solid #444;">${escapeHtml(mg.label)}</th>`;
+  });
+  let dayRowHtml = '';
+  let dowRowHtml = '';
+  const DOW_RU = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+  days.forEach(d => {
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    dayRowHtml += `<th style="background:${isWeekend ? '#3a3a3a' : '#0a0907'};color:white;font-size:9px;width:${cellW}px;min-width:${cellW}px;padding:3px 0;border-right:1px solid #333;">${d.getDate()}</th>`;
+    dowRowHtml += `<th style="background:${isWeekend ? '#3a3a3a' : '#0a0907'};color:#bbb;font-size:7px;font-weight:600;letter-spacing:0.5px;padding:2px 0;border-right:1px solid #333;">${DOW_RU[d.getDay()]}</th>`;
+  });
+
   html += `
-    <div style="margin:40px 40px 24px;padding-top:14px;border-top:1px solid #e5e5e5;font-size:10px;color:#888;letter-spacing:0.5px;">
-      ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · Тайминг проекта · сгенерировано ${new Date().toLocaleDateString('ru-RU')}
+    <div style="padding:0 30px 20px;">
+      <table style="border-collapse:collapse;width:100%;font-family:inherit;">
+        <thead>
+          <tr>
+            <th rowspan="3" style="background:#0a0907;color:white;font-size:10px;padding:6px 8px;text-align:left;width:120px;">Этап</th>
+            <th rowspan="3" style="background:#0a0907;color:white;font-size:10px;padding:6px 8px;text-align:left;width:120px;">Процесс</th>
+            ${monthRow}
+          </tr>
+          <tr>${dayRowHtml}</tr>
+          <tr>${dowRowHtml}</tr>
+        </thead>
+        <tbody>
+  `;
+
+  t.stages.forEach(stage => {
+    if (stage.processes.length === 0) return;
+    stage.processes.forEach((p, pIdx) => {
+      html += `<tr style="border-top:1px solid #e8e8e3;">`;
+      if (pIdx === 0) {
+        html += `<td rowspan="${stage.processes.length}" style="background:${hexToRgba(stage.color, 0.12)};border-left:3px solid ${stage.color};padding:6px 8px;font-size:10px;font-weight:800;text-transform:uppercase;vertical-align:middle;">${escapeHtml(stage.name)}</td>`;
+      }
+      html += `<td style="padding:5px 8px;font-size:10px;font-weight:600;background:#fafafa;">${escapeHtml(p.name)}</td>`;
+      days.forEach(d => {
+        const key = timingDateKey(d);
+        const v = (p.cells && p.cells[key]) || '';
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        const bg = v ? TYPE_BG[v] : (isWeekend ? '#f3f3ee' : '#ffffff');
+        html += `<td style="background:${bg};border-right:1px solid #ececec;height:18px;"></td>`;
+      });
+      html += `</tr>`;
+    });
+  });
+
+  html += `
+        </tbody>
+      </table>
+      <div style="display:flex;gap:18px;margin-top:14px;font-size:10px;color:#444;">
+        <span style="display:flex;align-items:center;gap:6px;"><i style="display:inline-block;width:12px;height:12px;background:#0a0907;"></i> работа</span>
+        <span style="display:flex;align-items:center;gap:6px;"><i style="display:inline-block;width:12px;height:12px;background:#e8231d;"></i> критический</span>
+        <span style="display:flex;align-items:center;gap:6px;"><i style="display:inline-block;width:12px;height:12px;background:#fbbf24;"></i> согласование</span>
+        <span style="display:flex;align-items:center;gap:6px;"><i style="display:inline-block;width:12px;height:12px;background:#f3f3ee;border:1px solid #ddd;"></i> выходной</span>
+      </div>
+    </div>
+    <div style="margin:0 30px 18px;padding-top:10px;border-top:1px solid #e5e5e5;font-size:9px;color:#888;letter-spacing:0.5px;">
+      ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · Тайминг · ${new Date().toLocaleDateString('ru-RU')}
     </div>
   `;
 
