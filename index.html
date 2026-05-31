@@ -3574,6 +3574,380 @@ body.has-reel .theme-toggle { right: 158px; }
   margin-right: 4px;
 }
 
+/* ===== ШУТИНГ-ПЛАН ===== */
+.sp-day {
+  background: white;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.sp-day-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #0a0907 0%, #1a1815 100%);
+  color: white;
+  cursor: pointer;
+  user-select: none;
+}
+.sp-day-num {
+  width: 26px; height: 26px;
+  background: var(--brand-red, #e8231d);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.sp-day-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.sp-day-title input {
+  background: transparent;
+  border: none;
+  font: inherit;
+  color: white;
+  width: 240px;
+  outline: none;
+}
+.sp-day-title input::placeholder { color: rgba(255,255,255,0.5); }
+.sp-day-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.3px;
+}
+.sp-day-arrow {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  transition: transform 0.15s;
+}
+.sp-day.open .sp-day-arrow { transform: rotate(90deg); }
+.sp-day-del {
+  width: 26px; height: 26px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.sp-day-del:hover { background: var(--brand-red, #e8231d); color: white; }
+.sp-day-body { display: none; padding: 14px; }
+.sp-day.open .sp-day-body { display: block; }
+
+.sp-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.sp-meta-field { display: flex; flex-direction: column; gap: 4px; }
+.sp-meta-field label {
+  font-size: 9px;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.sp-meta-field input,
+.sp-meta-field textarea {
+  padding: 6px 9px;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  background: white;
+  width: 100%;
+  box-sizing: border-box;
+}
+.sp-meta-field input:focus,
+.sp-meta-field textarea:focus { outline: none; border-color: #0a0907; }
+
+.sp-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 4px;
+  margin-top: 8px;
+}
+.sp-table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  font-size: 11px;
+}
+.sp-table th,
+.sp-table td {
+  border: 1px solid #e8e8e3;
+  padding: 0;
+  vertical-align: middle;
+}
+.sp-table th {
+  background: #fafafa;
+  font-size: 9px;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 7px 8px;
+  font-weight: 700;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+.sp-table td {
+  background: white;
+}
+.sp-table input,
+.sp-table textarea {
+  width: 100%;
+  border: none;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 11px;
+  background: transparent;
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+  min-height: 28px;
+}
+.sp-table input:focus,
+.sp-table textarea:focus {
+  background: #fff8e1;
+  box-shadow: inset 0 0 0 1.5px var(--brand-red, #e8231d);
+}
+.sp-table tr:hover td { background: #fcfcfa; }
+.sp-row-num {
+  text-align: center;
+  color: var(--muted, #888);
+  font-weight: 600;
+  width: 30px;
+  padding: 4px;
+  background: #f5f5f0 !important;
+}
+.sp-row-del-btn {
+  width: 24px;
+  border: none;
+  background: transparent;
+  color: var(--muted, #888);
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0;
+}
+.sp-table tr:hover .sp-row-del-btn { opacity: 1; }
+.sp-row-del-btn:hover { background: #fee2e2; color: #991b1b; }
+.sp-add-row {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed #c8c8c8;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink, #0a0907);
+  cursor: pointer;
+  margin-top: 8px;
+}
+.sp-add-row:hover { border-color: var(--ink, #0a0907); background: #fafafa; }
+
+/* ===== ППМ-БУК ===== */
+.ppm-section {
+  background: white;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.ppm-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  background: linear-gradient(135deg, #fafafa, #f5f5f0);
+  border-bottom: 1px solid transparent;
+}
+.ppm-section-head:hover { background: linear-gradient(135deg, #f3f3ee, #ebebe6); }
+.ppm-section.open .ppm-section-head { border-bottom-color: var(--line-2, #e5e5e5); }
+.ppm-section-num {
+  width: 24px; height: 24px;
+  background: #0a0907;
+  color: white;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.ppm-section.custom .ppm-section-num { background: #7c3aed; }
+.ppm-section-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.ppm-section-title input {
+  background: transparent;
+  border: none;
+  font: inherit;
+  text-transform: uppercase;
+  width: 100%;
+  outline: none;
+}
+.ppm-section-title input:focus { background: white; border-radius: 3px; padding: 2px 4px; }
+.ppm-section-count {
+  font-size: 11px;
+  color: var(--muted, #888);
+  font-weight: 600;
+}
+.ppm-section-arrow {
+  font-size: 10px;
+  color: var(--muted, #888);
+  transition: transform 0.15s;
+}
+.ppm-section.open .ppm-section-arrow { transform: rotate(90deg); }
+.ppm-section-del {
+  width: 24px; height: 24px;
+  border: none; background: transparent;
+  color: var(--muted, #888);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.ppm-section-del:hover { background: #fee2e2; color: #991b1b; }
+.ppm-section-body {
+  display: none;
+  padding: 14px;
+}
+.ppm-section.open .ppm-section-body { display: block; }
+
+/* Поля внутри секции */
+.ppm-grid {
+  display: grid;
+  gap: 10px;
+}
+.ppm-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.ppm-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.ppm-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.ppm-field { display: flex; flex-direction: column; gap: 4px; }
+.ppm-field label {
+  font-size: 9px;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.ppm-field input,
+.ppm-field textarea,
+.ppm-field select {
+  padding: 8px 10px;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  background: white;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.ppm-field input:focus,
+.ppm-field textarea:focus,
+.ppm-field select:focus {
+  outline: none;
+  border-color: #0a0907;
+}
+.ppm-field textarea { min-height: 64px; line-height: 1.5; }
+
+/* Карточки элементов в секциях */
+.ppm-items {
+  display: grid;
+  gap: 12px;
+}
+.ppm-items.cols-1 { grid-template-columns: 1fr; }
+.ppm-items.cols-2 { grid-template-columns: 1fr 1fr; }
+.ppm-items.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.ppm-item {
+  background: #fafafa;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  padding: 12px;
+  position: relative;
+}
+.ppm-item-del {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 22px; height: 22px;
+  border: none;
+  background: rgba(255,255,255,0.85);
+  color: var(--muted, #888);
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+}
+.ppm-item:hover .ppm-item-del { opacity: 1; }
+.ppm-item-del:hover { background: #fee2e2; color: #991b1b; }
+
+/* Загрузка картинок */
+.ppm-image-slot {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #f0f0eb;
+  border: 1.5px dashed #c8c8c8;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted, #888);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.15s;
+  font-size: 11px;
+}
+.ppm-image-slot:hover { border-color: #0a0907; color: #0a0907; }
+.ppm-image-slot.has-image { border-style: solid; padding: 0; }
+.ppm-image-slot img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.ppm-image-slot .icon { font-size: 22px; margin-bottom: 4px; }
+.ppm-image-slot input[type=file] { display: none; }
+.ppm-image-replace {
+  position: absolute;
+  bottom: 6px; right: 6px;
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.75);
+  color: white;
+  font-size: 10px;
+  border-radius: 3px;
+  opacity: 0;
+  pointer-events: none;
+}
+.ppm-image-slot.has-image:hover .ppm-image-replace { opacity: 1; }
+
+.ppm-add-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px dashed var(--muted, #888);
+  background: transparent;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #0a0907);
+  cursor: pointer;
+  margin-top: 10px;
+}
+.ppm-add-btn:hover { border-color: #0a0907; background: #f5f5f0; }
+
 /* ===== БРИФ КЛИЕНТА ===== */
 .brief-section {
   background: white;
@@ -4851,20 +5225,20 @@ body.has-reel .theme-toggle { right: 158px; }
           <div class="doc-meta">3 этапа · 44 дня</div>
         </div>
 
-        <div class="doc-card loaded" id="doc-card-ppm" onclick="openCreativeUpload('ppm')">
-          <div class="loaded-badge" id="ppm-badge">PDF / PPTX</div>
+        <div class="doc-card loaded" id="doc-card-ppm" onclick="openDoc('ppm')">
+          <div class="loaded-badge" id="ppm-badge">редактор</div>
           <div class="doc-status status-loaded"></div>
           <div class="doc-icon">⎙</div>
           <div class="doc-name">ППМ Бук</div>
-          <div class="doc-meta" id="ppm-meta">Pre-Production Meeting</div>
+          <div class="doc-meta" id="ppm-meta">10 секций + кастомные</div>
         </div>
 
-        <div class="doc-card loaded" id="doc-card-shootplan" onclick="openCreativeUpload('shooting_plan')">
-          <div class="loaded-badge" id="shootplan-badge">PDF / XLSX</div>
+        <div class="doc-card loaded" id="doc-card-shootplan" onclick="openDoc('shootplan')">
+          <div class="loaded-badge" id="shootplan-badge">редактор</div>
           <div class="doc-status status-loaded"></div>
           <div class="doc-icon">🎬</div>
           <div class="doc-name">Шутинг-план</div>
-          <div class="doc-meta" id="shootplan-meta">съёмочный план</div>
+          <div class="doc-meta" id="shootplan-meta">по дням съёмок</div>
         </div>
 
         <div class="doc-card loaded" id="doc-card-callsheet" onclick="openCallsheetsList()">
@@ -5555,50 +5929,55 @@ body.has-reel .theme-toggle { right: 158px; }
 </div>
 
 <!-- PPM BOOK -->
+<!-- ШУТИНГ-ПЛАН — РЕДАКТОР -->
+<div class="modal-overlay" id="m-shootplan">
+  <div class="doc-overlay" style="width: 1240px; max-width: 98vw; max-height: 94vh;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">🎬</div>
+        <div>
+          <div class="doc-section-label" id="sp-subtitle">Шутинг-план · авто-сохранение</div>
+          <div class="doc-header-title" id="sp-title">Шутинг-план</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark" onclick="exportShootplanToPdf()">⤓ PDF</button>
+        <button class="btn btn-dark" onclick="exportShootplanToXlsx()">⤓ XLSX</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body" id="shootplan-editor-root">
+      <!-- renderShootplanEditor() -->
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="sp-footer-info">—</div>
+      <button class="btn-secondary btn" onclick="shootplanAddDay()">＋ день</button>
+    </div>
+  </div>
+</div>
+
+<!-- PPM BOOK — РЕДАКТОР -->
 <div class="modal-overlay" id="m-ppm">
-  <div class="doc-overlay">
+  <div class="doc-overlay" style="width: 1100px; max-width: 96vw; max-height: 94vh;">
     <div class="doc-header">
       <div class="doc-header-l">
         <div class="doc-header-icon">⎙</div>
         <div>
-          <div class="doc-section-label">Документ · из вашего шаблона</div>
-          <div class="doc-header-title">ППМ Бук · 27 слайдов</div>
+          <div class="doc-section-label" id="ppm-subtitle">ППМ-бук · авто-сохранение</div>
+          <div class="doc-header-title" id="ppm-title">ППМ-бук</div>
         </div>
       </div>
       <div class="doc-actions-h">
-        <button class="btn btn-dark">⤓ Keynote</button>
-        <button class="btn btn-dark">⤓ PPTX</button>
-        <button class="btn-secondary btn">⎙ PDF</button>
+        <button class="btn btn-dark" onclick="exportPpmToPdf()">⤓ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
-    <div class="doc-body">
-      <div class="smart-fill">
-        <div class="sf-icon">⚡</div>
-        <div class="sf-text">
-          <strong>Из шаблона «шаблон PPM Book.pptx»</strong>
-          ZALOVE PRODUCTION × <span style="color: var(--brand-red); font-weight: 700;">Клиент</span>. 27 слайдов · структура из вашего шаблона.
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-        <div class="creative-card uploaded"><div class="top"><div class="ico">1</div><div class="type">Cover</div></div><div class="ctitle">Обложка</div><div class="author">проект, дата PPM, съёмки</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">2</div><div class="type">Раскадровка</div></div><div class="ctitle">Storyboard ×3</div><div class="author">слайды 2-4 · 6 кадров на сцену</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">3</div><div class="type">Локация</div></div><div class="ctitle">Locations ×2</div><div class="author">фото, адрес, разрешения</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">4</div><div class="type">Кастинг</div></div><div class="ctitle">ГГ · 2-й · Доп</div><div class="author">main + back-up, видеопроба</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">5</div><div class="type">Костюмы</div></div><div class="ctitle">Costumes ×3</div><div class="author">6 опций × 3 героя</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">6</div><div class="type">Грим/Волосы</div></div><div class="ctitle">Hair & Makeup ×2</div><div class="author">референсы, описание</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">7</div><div class="type">Оформление</div></div><div class="ctitle">Floor plan ×2</div><div class="author">схема, детали</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">8</div><div class="type">Реквизит</div></div><div class="ctitle">Props ×4</div><div class="author">постеры, мебель, наполнение, ручной</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">9</div><div class="type">Музыка</div></div><div class="ctitle">Music</div><div class="author">треки, лицензии, реко-комментарий</div></div>
-        <div class="creative-card uploaded"><div class="top"><div class="ico">10</div><div class="type">Съём. план</div></div><div class="ctitle">Shoot plan ×2</div><div class="author">день 1 / день 2: время, сцены, кадры</div></div>
-      </div>
+    <div class="doc-body" id="ppm-editor-root">
+      <!-- renderPpmEditor() -->
     </div>
     <div class="doc-footer">
-      <div class="doc-footer-info">PPM-NEB-2026 · 27 СЛАЙДОВ · v.2</div>
-      <div style="display: flex; gap: 6px;">
-        <button class="btn-secondary btn">🍎 Открыть в Keynote</button>
-        <button class="btn">⚡ Открыть в PowerPoint</button>
-      </div>
+      <div class="doc-footer-info" id="ppm-footer-info">—</div>
+      <button class="btn-secondary btn" onclick="ppmAddCustomSection()" title="Добавить произвольную секцию">＋ свой раздел</button>
     </div>
   </div>
 </div>
@@ -6604,6 +6983,16 @@ function openDoc(type) {
   // Бриф — открываем редактор
   if (type === 'brief' && _currentProjectId) {
     openBriefEditor();
+    return;
+  }
+  // ППМ-бук — открываем редактор
+  if (type === 'ppm' && _currentProjectId) {
+    openPpmEditor();
+    return;
+  }
+  // Шутинг-план — открываем редактор
+  if (type === 'shootplan' && _currentProjectId) {
+    openShootplanEditor();
     return;
   }
   const map = {
@@ -7783,7 +8172,48 @@ function creativeCardHTML(project, kind) {
   const type = CREATIVE_TYPES[kind];
   const data = (project.creative || {})[kind];
   const hasAny = data && (data.url || data.fileKey);
+  // Для ППМ и шутинг-плана: главный клик ведёт в наш редактор, прикрепление — отдельная кнопка
+  const editorKinds = { 'ppm': "openDoc('ppm')", 'shooting_plan': "openDoc('shootplan')" };
+  const mainClick = editorKinds[kind] || `openCreativeUpload('${kind}')`;
   if (!hasAny) {
+    if (kind === 'ppm') {
+      const ppm = project.ppm || {};
+      const itemCount = (ppm.storyboard || []).length + (ppm.locations || []).length + (ppm.cast || []).length + (ppm.costumes || []).length;
+      const hasEditor = itemCount > 0 || ppm.cover?.logline || ppm.externalLink;
+      return `
+        <div class="creative-card ${hasEditor ? 'uploaded' : ''}" onclick="${mainClick}">
+          <div class="top">
+            <div class="ico">${type.icon}</div>
+            <div class="type">${type.name}</div>
+          </div>
+          <div class="ctitle">${type.name}</div>
+          <div class="author">${hasEditor ? itemCount + ' элементов в редакторе' : 'редактор · 10 секций'}</div>
+          ${!hasEditor ? '<div class="pending">— нажмите чтобы начать редактировать —</div>' : ''}
+          <div class="creative-actions">
+            <button style="border-color: var(--brand-red); color: var(--brand-red);">✎ Редактор</button>
+            <button onclick="event.stopPropagation(); openCreativeUpload('${kind}')">📎 Файл</button>
+          </div>
+        </div>`;
+    }
+    if (kind === 'shooting_plan') {
+      const sp = project.shootplan || {};
+      const totalRows = (sp.days || []).reduce((s, d) => s + ((d.rows || []).length), 0);
+      const hasEditor = totalRows > 0 || sp.externalLink;
+      return `
+        <div class="creative-card ${hasEditor ? 'uploaded' : ''}" onclick="${mainClick}">
+          <div class="top">
+            <div class="ico">${type.icon}</div>
+            <div class="type">${type.name}</div>
+          </div>
+          <div class="ctitle">${type.name}</div>
+          <div class="author">${hasEditor ? (sp.days || []).length + ' дн. · ' + totalRows + ' строк' : 'редактор по дням'}</div>
+          ${!hasEditor ? '<div class="pending">— нажмите чтобы начать —</div>' : ''}
+          <div class="creative-actions">
+            <button style="border-color: var(--brand-red); color: var(--brand-red);">✎ Редактор</button>
+            <button onclick="event.stopPropagation(); openCreativeUpload('${kind}')">📎 Файл</button>
+          </div>
+        </div>`;
+    }
     return `
       <div class="creative-card" onclick="openCreativeUpload('${kind}')">
         <div class="top">
@@ -7813,7 +8243,7 @@ function creativeCardHTML(project, kind) {
   actions.push(`<button onclick="event.stopPropagation(); openCreativeUpload('${kind}')">↻</button>`);
 
   return `
-    <div class="creative-card uploaded" onclick="openCreativeUpload('${kind}')">
+    <div class="creative-card uploaded" onclick="${mainClick}">
       <div class="top">
         <div class="ico">${type.icon}</div>
         <div class="type">${type.name}</div>
@@ -10840,32 +11270,1413 @@ function renderSmetaPromo(project) {
 // Обновить карточки ППМ и шутинг-плана в документации
 function renderDocCreativeCards(project) {
   const c = project.creative || {};
-  // PPM
-  const ppmData = c.ppm;
+  // PPM — теперь показываем статус нашего редактора
   const ppmBadge = document.getElementById('ppm-badge');
   const ppmMeta = document.getElementById('ppm-meta');
   if (ppmBadge && ppmMeta) {
-    if (ppmData && (ppmData.url || ppmData.fileKey)) {
-      ppmBadge.textContent = ppmData.fileKey ? 'ФАЙЛ' : 'ССЫЛКА';
-      ppmMeta.textContent = ppmData.name || 'Загружено';
+    const ppm = project.ppm;
+    let count = 0;
+    if (ppm) {
+      count = (ppm.storyboard || []).length + (ppm.locations || []).length + (ppm.cast || []).length
+            + (ppm.costumes || []).length + (ppm.makeup || []).length + (ppm.decor || []).length
+            + ((ppm.props || {}).posters || []).length + ((ppm.props || {}).furniture || []).length
+            + ((ppm.props || {}).table || []).length + ((ppm.props || {}).handheld || []).length
+            + ((ppm.music || {}).tracks || []).length + (ppm.shootPlan || []).length;
+      (ppm.customSections || []).forEach(cs => count += (cs.items || []).length);
+    }
+    if (count > 0) {
+      ppmBadge.textContent = 'РЕДАКТОР';
+      ppmMeta.textContent = count + ' элементов';
+    } else if (ppm && ppm.externalLink) {
+      ppmBadge.textContent = 'ССЫЛКА';
+      ppmMeta.textContent = 'внешний ППМ';
     } else {
-      ppmBadge.textContent = 'PDF / PPTX';
-      ppmMeta.textContent = 'Pre-Production Meeting';
+      ppmBadge.textContent = 'РЕДАКТОР';
+      ppmMeta.textContent = '10 секций + свои';
     }
   }
-  // Shooting plan
-  const spData = c.shooting_plan;
+  // Shooting plan — теперь редактор
   const spBadge = document.getElementById('shootplan-badge');
   const spMeta = document.getElementById('shootplan-meta');
   if (spBadge && spMeta) {
-    if (spData && (spData.url || spData.fileKey)) {
-      spBadge.textContent = spData.fileKey ? 'ФАЙЛ' : 'ССЫЛКА';
-      spMeta.textContent = spData.name || 'Загружено';
+    const sp = project.shootplan || {};
+    const totalRows = (sp.days || []).reduce((s, d) => s + ((d.rows || []).length), 0);
+    if (totalRows > 0) {
+      spBadge.textContent = 'РЕДАКТОР';
+      spMeta.textContent = (sp.days || []).length + ' дн. · ' + totalRows + ' строк';
+    } else if (sp.externalLink) {
+      spBadge.textContent = 'ССЫЛКА';
+      spMeta.textContent = 'внешний шутинг';
     } else {
-      spBadge.textContent = 'PDF / XLSX';
-      spMeta.textContent = 'съёмочный план';
+      spBadge.textContent = 'РЕДАКТОР';
+      spMeta.textContent = 'по дням съёмок';
     }
   }
+}
+
+/* ============================================================
+   ШУТИНГ-ПЛАН — РЕДАКТОР + ЭКСПОРТ
+   ============================================================ */
+const SP_COLUMNS = [
+  { key: 'time', label: 'Время', w: 80 },
+  { key: 'scene', label: 'Сцена', w: 70 },
+  { key: 'frame', label: 'Кадры', w: 90 },
+  { key: 'location', label: 'Локация', w: 140 },
+  { key: 'cast', label: 'Актёры', w: 130 },
+  { key: 'costume', label: 'Костюм', w: 110 },
+  { key: 'light', label: 'Свет', w: 110 },
+  { key: 'camera', label: 'Камера / оптика', w: 130 },
+  { key: 'sound', label: 'Звук', w: 90 },
+  { key: 'props', label: 'Реквизит', w: 130 },
+  { key: 'notes', label: 'Заметки', w: 170 }
+];
+
+let _spProject = null;
+let _spSaveTimer = null;
+let _spOpenDays = new Set();
+
+function newSpId(prefix) { return (prefix || 'sp') + '_' + Math.random().toString(36).slice(2, 9); }
+
+function ensureShootplan(project) {
+  if (!project.shootplan) project.shootplan = {};
+  const sp = project.shootplan;
+  sp.externalLink = sp.externalLink || '';
+  sp.days = Array.isArray(sp.days) ? sp.days : [];
+  return sp;
+}
+
+function openShootplanEditor() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  _spProject = project;
+  const sp = ensureShootplan(project);
+  // Если нет дней — создаём один пустой
+  if (sp.days.length === 0) {
+    sp.days.push(createShootplanDay(1));
+  }
+  // Открыть первый день
+  if (_spOpenDays.size === 0 && sp.days[0]) _spOpenDays.add(sp.days[0].id);
+  document.getElementById('sp-title').textContent = 'Шутинг-план · ' + (project.name || 'проект');
+  renderShootplanEditor();
+  document.getElementById('m-shootplan').classList.add('active');
+}
+
+function createShootplanDay(num) {
+  return {
+    id: newSpId('day'),
+    title: 'День ' + num,
+    date: '',
+    callTime: '',
+    locationName: '',
+    address: '',
+    contact: '',
+    weather: '',
+    notes: '',
+    rows: [createShootplanRow()]
+  };
+}
+function createShootplanRow() {
+  const row = { id: newSpId('row') };
+  SP_COLUMNS.forEach(c => row[c.key] = '');
+  return row;
+}
+
+function scheduleShootplanSave() {
+  clearTimeout(_spSaveTimer);
+  _spSaveTimer = setTimeout(saveShootplanNow, 400);
+}
+function saveShootplanNow() {
+  if (!_spProject) return;
+  DB.updateProject(_spProject.id, { shootplan: _spProject.shootplan });
+}
+
+function renderShootplanEditor() {
+  const sp = ensureShootplan(_spProject);
+  const root = document.getElementById('shootplan-editor-root');
+  // Подсчёт
+  let totalRows = 0;
+  sp.days.forEach(d => totalRows += (d.rows || []).length);
+  document.getElementById('sp-footer-info').textContent =
+    `${sp.days.length} ${sp.days.length === 1 ? 'день' : 'дня'} · ${totalRows} строк`;
+
+  const extLink = sp.externalLink || '';
+  let html = `
+    <div class="timing-link-bar" style="margin-bottom: 12px;">
+      <div class="timing-link-bar-l">
+        <span class="t-link-ico">🔗</span>
+        <span class="t-link-label">Ссылка на внешний шутинг-план</span>
+        <input type="url" id="sp-ext-link" class="t-link-input" placeholder="https://... (Google Docs / Notion)" value="${escapeHtml(extLink)}">
+      </div>
+      <div class="timing-link-bar-r">
+        ${extLink ? `<a href="${escapeHtml(extLink)}" target="_blank" rel="noopener" class="t-link-open">↗ открыть</a>` : ''}
+        ${extLink ? `<button class="t-link-clear" onclick="clearShootplanLink()">×</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  sp.days.forEach((day, di) => {
+    const isOpen = _spOpenDays.has(day.id);
+    const rowsCount = (day.rows || []).length;
+    html += `
+      <div class="sp-day ${isOpen ? 'open' : ''}" data-day-idx="${di}" data-day-id="${day.id}">
+        <div class="sp-day-head">
+          <div class="sp-day-num">${di + 1}</div>
+          <div class="sp-day-title">
+            <input data-day-fld="title" data-day-idx="${di}" value="${escapeHtml(day.title || '')}" placeholder="День ${di + 1}">
+          </div>
+          <div class="sp-day-meta">${day.date ? formatDateRu(day.date) : 'без даты'} · ${rowsCount} ${rowsCount === 1 ? 'строка' : 'строк'}</div>
+          <div class="sp-day-arrow">▶</div>
+          <button class="sp-day-del" onclick="event.stopPropagation(); shootplanDeleteDay(${di})" title="Удалить день">×</button>
+        </div>
+        <div class="sp-day-body">
+          <div class="sp-meta-grid">
+            <div class="sp-meta-field"><label>Дата</label><input type="date" data-day-fld="date" data-day-idx="${di}" value="${escapeHtml(day.date || '')}"></div>
+            <div class="sp-meta-field"><label>Call time</label><input type="time" data-day-fld="callTime" data-day-idx="${di}" value="${escapeHtml(day.callTime || '')}"></div>
+            <div class="sp-meta-field"><label>Локация дня</label><input type="text" data-day-fld="locationName" data-day-idx="${di}" value="${escapeHtml(day.locationName || '')}"></div>
+            <div class="sp-meta-field"><label>Адрес</label><input type="text" data-day-fld="address" data-day-idx="${di}" value="${escapeHtml(day.address || '')}"></div>
+            <div class="sp-meta-field"><label>Контакт локации</label><input type="text" data-day-fld="contact" data-day-idx="${di}" value="${escapeHtml(day.contact || '')}"></div>
+            <div class="sp-meta-field"><label>Погода</label><input type="text" data-day-fld="weather" data-day-idx="${di}" value="${escapeHtml(day.weather || '')}" placeholder="—"></div>
+          </div>
+          <div class="sp-table-wrap">
+            <table class="sp-table">
+              <thead>
+                <tr>
+                  <th class="sp-row-num">#</th>
+                  ${SP_COLUMNS.map(c => `<th style="min-width:${c.w}px;">${escapeHtml(c.label)}</th>`).join('')}
+                  <th style="width:24px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(day.rows || []).map((row, ri) => `
+                  <tr data-row-idx="${ri}">
+                    <td class="sp-row-num">${ri + 1}</td>
+                    ${SP_COLUMNS.map(c => `
+                      <td><input data-row-fld="${c.key}" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(row[c.key] || '')}"></td>
+                    `).join('')}
+                    <td><button class="sp-row-del-btn" onclick="shootplanDeleteRow(${di}, ${ri})">×</button></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          <button class="sp-add-row" onclick="shootplanAddRow(${di})">＋ строка</button>
+          <div class="sp-meta-field" style="margin-top:10px;">
+            <label>Заметки по дню</label>
+            <textarea data-day-fld="notes" data-day-idx="${di}" rows="2">${escapeHtml(day.notes || '')}</textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  root.innerHTML = html;
+
+  // Обработчики
+  const linkEl = document.getElementById('sp-ext-link');
+  if (linkEl) {
+    linkEl.addEventListener('input', e => { _spProject.shootplan.externalLink = e.target.value.trim(); scheduleShootplanSave(); });
+    linkEl.addEventListener('blur', e => {
+      const val = e.target.value.trim();
+      if ((!!val) !== (!!extLink)) renderShootplanEditor();
+    });
+  }
+  root.querySelectorAll('.sp-day-head').forEach(head => {
+    head.addEventListener('click', e => {
+      if (e.target.tagName === 'INPUT' || e.target.closest('.sp-day-del')) return;
+      const day = head.closest('.sp-day');
+      const id = day.dataset.dayId;
+      if (_spOpenDays.has(id)) _spOpenDays.delete(id);
+      else _spOpenDays.add(id);
+      day.classList.toggle('open');
+    });
+  });
+  root.querySelectorAll('[data-day-fld]').forEach(el => {
+    el.addEventListener('input', e => {
+      const di = +e.target.dataset.dayIdx;
+      _spProject.shootplan.days[di][e.target.dataset.dayFld] = e.target.value;
+      scheduleShootplanSave();
+    });
+  });
+  root.querySelectorAll('[data-row-fld]').forEach(el => {
+    el.addEventListener('input', e => {
+      const di = +e.target.dataset.dayIdx;
+      const ri = +e.target.dataset.rowIdx;
+      _spProject.shootplan.days[di].rows[ri][e.target.dataset.rowFld] = e.target.value;
+      scheduleShootplanSave();
+    });
+  });
+}
+
+function shootplanAddDay() {
+  if (!_spProject) return;
+  const sp = ensureShootplan(_spProject);
+  const num = sp.days.length + 1;
+  const day = createShootplanDay(num);
+  sp.days.push(day);
+  _spOpenDays.add(day.id);
+  saveShootplanNow();
+  renderShootplanEditor();
+}
+function shootplanDeleteDay(di) {
+  if (!confirm('Удалить этот день со всеми строками?')) return;
+  _spProject.shootplan.days.splice(di, 1);
+  saveShootplanNow();
+  renderShootplanEditor();
+}
+function shootplanAddRow(di) {
+  _spProject.shootplan.days[di].rows.push(createShootplanRow());
+  saveShootplanNow();
+  renderShootplanEditor();
+}
+function shootplanDeleteRow(di, ri) {
+  _spProject.shootplan.days[di].rows.splice(ri, 1);
+  saveShootplanNow();
+  renderShootplanEditor();
+}
+function clearShootplanLink() {
+  _spProject.shootplan.externalLink = '';
+  saveShootplanNow();
+  renderShootplanEditor();
+}
+
+/* ===== ЭКСПОРТ ШУТИНГ-ПЛАНА В PDF ===== */
+async function exportShootplanToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  if (!_spProject) return;
+  const sp = ensureShootplan(_spProject);
+  if (sp.days.length === 0) { toast('Сначала добавь хотя бы один день', 'error'); return; }
+  toast('Готовлю PDF...', 'success');
+  const container = buildShootplanPrintHTML(_spProject, sp);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
+    }));
+    const canvas = await html2canvas(container, {
+      scale: 2.5, useCORS: true, backgroundColor: '#ffffff', logging: false,
+      windowWidth: 1240, letterRendering: true, allowTaint: false
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const imgW = pdfW;
+    const ratio = canvas.height / canvas.width;
+    const imgH = imgW * ratio;
+    const totalPages = Math.ceil(imgH / pdfH);
+    const imgData = canvas.toDataURL('image/png');
+    let pos = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pos -= pdfH;
+    }
+    const slug = (_spProject.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`Шутинг_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('Шутинг-план PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка PDF: ' + e.message, 'error');
+  }
+}
+
+function buildShootplanPrintHTML(project, sp) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:1240px;background:#fff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;line-height:1.4;';
+  let html = `
+    <div style="background:#fff;padding:14px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
+      <img src="logo.png" alt="ZALOVE" style="height:24px;width:auto;" crossorigin="anonymous">
+      <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;">Шутинг-план · ${new Date().toLocaleDateString('ru-RU')}</div>
+    </div>
+    <div style="padding:20px 30px 8px;">
+      <div style="font-size:26px;font-weight:900;letter-spacing:-0.5px;">ШУТИНГ-ПЛАН</div>
+      <div style="font-size:13px;color:#444;margin-top:4px;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}</div>
+    </div>
+  `;
+  sp.days.forEach((day, di) => {
+    html += `
+      <div style="margin:18px 30px;page-break-inside:avoid;">
+        <div style="background:#0a0907;color:white;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
+          <div style="font-size:14px;font-weight:800;letter-spacing:0.5px;">${escapeHtml(day.title || 'День ' + (di + 1))}${day.date ? ' · ' + formatDateRu(day.date) : ''}</div>
+          <div style="font-size:11px;color:#bbb;">${day.callTime ? 'Сбор: ' + escapeHtml(day.callTime) : ''}${day.locationName ? ' · ' + escapeHtml(day.locationName) : ''}</div>
+        </div>
+        ${day.address || day.contact || day.weather ? `<div style="padding:8px 14px;background:#fafafa;border:1px solid #ececec;border-top:none;font-size:11px;display:flex;gap:18px;color:#555;">${day.address ? '<span>📍 ' + escapeHtml(day.address) + '</span>' : ''}${day.contact ? '<span>📞 ' + escapeHtml(day.contact) + '</span>' : ''}${day.weather ? '<span>🌤 ' + escapeHtml(day.weather) + '</span>' : ''}</div>` : ''}
+        <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #ececec;border-top:none;">
+          <thead>
+            <tr style="background:#f5f5f0;color:#555;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;">
+              <th style="padding:6px 4px;border-right:1px solid #ececec;width:25px;">#</th>
+              ${SP_COLUMNS.map(col => `<th style="padding:6px 8px;border-right:1px solid #ececec;text-align:left;">${escapeHtml(col.label)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${(day.rows || []).map((row, ri) => `
+              <tr style="border-top:1px solid #ececec;">
+                <td style="padding:5px 4px;border-right:1px solid #ececec;text-align:center;color:#888;font-weight:600;background:#fafafa;">${ri + 1}</td>
+                ${SP_COLUMNS.map(col => `<td style="padding:5px 8px;border-right:1px solid #ececec;vertical-align:top;">${escapeHtml(row[col.key] || '—')}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ${day.notes ? `<div style="margin-top:8px;padding:8px 12px;background:#fffaf0;border-left:3px solid #fbbf24;font-size:11px;color:#444;">📝 ${escapeHtml(day.notes)}</div>` : ''}
+      </div>
+    `;
+  });
+  html += `<div style="margin:30px 30px 20px;padding-top:10px;border-top:1px solid #e5e5e5;font-size:9px;color:#888;letter-spacing:0.5px;">
+    ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · Шутинг-план · ${new Date().toLocaleDateString('ru-RU')}
+  </div>`;
+  c.innerHTML = html;
+  return c;
+}
+
+/* ===== ЭКСПОРТ ШУТИНГ-ПЛАНА В XLSX ===== */
+function exportShootplanToXlsx() {
+  if (typeof window.XLSX === 'undefined') {
+    toast('XLSX не загрузился', 'error'); return;
+  }
+  if (!_spProject) return;
+  const sp = ensureShootplan(_spProject);
+  if (sp.days.length === 0) { toast('Сначала добавь хотя бы один день', 'error'); return; }
+  const XLSX = window.XLSX;
+  const wb = XLSX.utils.book_new();
+  sp.days.forEach((day, di) => {
+    const rows = [];
+    rows.push([day.title || 'День ' + (di + 1), '', '', '', '', '', '', '', '', '', '', '']);
+    rows.push(['Дата', day.date || '', 'Сбор', day.callTime || '', 'Локация', day.locationName || '', 'Адрес', day.address || '', 'Контакт', day.contact || '', 'Погода', day.weather || '']);
+    rows.push([]);
+    rows.push(['#', ...SP_COLUMNS.map(c => c.label)]);
+    (day.rows || []).forEach((row, ri) => {
+      rows.push([ri + 1, ...SP_COLUMNS.map(c => row[c.key] || '')]);
+    });
+    if (day.notes) {
+      rows.push([]);
+      rows.push(['Заметки:', day.notes]);
+    }
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 5 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 18 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 12 }, { wch: 20 }, { wch: 24 }];
+    const sheetName = (day.title || 'День ' + (di + 1)).slice(0, 28);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+  const slug = (_spProject.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  XLSX.writeFile(wb, `Шутинг_${slug}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Шутинг-план XLSX скачан ✓', 'success');
+}
+
+/* ============================================================
+   ППМ-БУК — РЕДАКТОР + ЭКСПОРТ
+   ============================================================ */
+let _ppmProject = null;
+let _ppmSaveTimer = null;
+let _ppmOpenSections = new Set(['cover', 'storyboard', 'locations', 'cast']);
+
+function newPpmId(prefix) { return (prefix || 'p') + '_' + Math.random().toString(36).slice(2, 9); }
+
+// Resize картинки → data URL JPEG
+function resizeImageToDataUrl(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) return reject(new Error('Не изображение'));
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', quality || 0.82);
+          resolve(dataUrl);
+        } catch (err) { reject(err); }
+      };
+      img.onerror = () => reject(new Error('Ошибка загрузки изображения'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function ensurePpm(project) {
+  if (!project.ppm) project.ppm = {};
+  const p = project.ppm;
+  p.externalLink = p.externalLink || '';
+  p.cover = p.cover || { ppmDate: '', shootFrom: '', shootTo: '', director: '', producer: '', logline: '' };
+  p.storyboard = Array.isArray(p.storyboard) ? p.storyboard : [];
+  p.locations = Array.isArray(p.locations) ? p.locations : [];
+  p.cast = Array.isArray(p.cast) ? p.cast : [];
+  p.costumes = Array.isArray(p.costumes) ? p.costumes : [];
+  p.makeup = Array.isArray(p.makeup) ? p.makeup : [];
+  p.decor = Array.isArray(p.decor) ? p.decor : [];
+  p.props = p.props || {
+    posters: [],
+    furniture: [],
+    table: [],
+    handheld: []
+  };
+  if (!Array.isArray(p.props.posters)) p.props.posters = [];
+  if (!Array.isArray(p.props.furniture)) p.props.furniture = [];
+  if (!Array.isArray(p.props.table)) p.props.table = [];
+  if (!Array.isArray(p.props.handheld)) p.props.handheld = [];
+  p.music = p.music || { recommendation: '', tracks: [] };
+  if (!Array.isArray(p.music.tracks)) p.music.tracks = [];
+  p.shootPlan = Array.isArray(p.shootPlan) ? p.shootPlan : [];
+  p.customSections = Array.isArray(p.customSections) ? p.customSections : [];
+  return p;
+}
+
+function openPpmEditor() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  _ppmProject = project;
+  ensurePpm(project);
+  document.getElementById('ppm-title').textContent = 'ППМ-бук · ' + (project.name || 'проект');
+  renderPpmEditor();
+  document.getElementById('m-ppm').classList.add('active');
+}
+
+function isPpmSectionOpen(id) { return _ppmOpenSections.has(id); }
+function togglePpmSection(id) {
+  if (_ppmOpenSections.has(id)) _ppmOpenSections.delete(id);
+  else _ppmOpenSections.add(id);
+  renderPpmEditor();
+}
+
+function schedulePpmSave() {
+  clearTimeout(_ppmSaveTimer);
+  _ppmSaveTimer = setTimeout(savePpmNow, 400);
+}
+function savePpmNow() {
+  if (!_ppmProject) return;
+  DB.updateProject(_ppmProject.id, { ppm: _ppmProject.ppm });
+}
+
+function renderPpmEditor() {
+  const p = ensurePpm(_ppmProject);
+  const root = document.getElementById('ppm-editor-root');
+  let totalItems = p.storyboard.length + p.locations.length + p.cast.length + p.costumes.length + p.makeup.length + p.decor.length + p.props.posters.length + p.props.furniture.length + p.props.table.length + p.props.handheld.length + p.music.tracks.length + p.shootPlan.length;
+  p.customSections.forEach(cs => totalItems += (cs.items || []).length);
+  document.getElementById('ppm-footer-info').textContent =
+    `${totalItems} элементов · ${p.customSections.length} своих секций · авто-сохранение`;
+
+  const extLink = p.externalLink || '';
+  let html = `
+    <div class="timing-link-bar" style="margin-bottom: 12px;">
+      <div class="timing-link-bar-l">
+        <span class="t-link-ico">🔗</span>
+        <span class="t-link-label">Ссылка на внешний ППМ</span>
+        <input type="url" id="ppm-ext-link" class="t-link-input" placeholder="https://... (Keynote / Figma / Google Slides)" value="${escapeHtml(extLink)}">
+      </div>
+      <div class="timing-link-bar-r">
+        ${extLink ? `<a href="${escapeHtml(extLink)}" target="_blank" rel="noopener" class="t-link-open">↗ открыть</a>` : ''}
+        ${extLink ? `<button class="t-link-clear" onclick="clearPpmLink()">×</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  html += ppmSection(1, 'cover', 'Обложка', false, renderPpmCover(p.cover));
+  html += ppmSection(2, 'storyboard', 'Раскадровка', false, renderPpmStoryboard(p.storyboard), p.storyboard.length);
+  html += ppmSection(3, 'locations', 'Локации', false, renderPpmLocations(p.locations), p.locations.length);
+  html += ppmSection(4, 'cast', 'Кастинг', false, renderPpmCast(p.cast), p.cast.length);
+  html += ppmSection(5, 'costumes', 'Костюмы', false, renderPpmCostumes(p.costumes, p.cast), p.costumes.length);
+  html += ppmSection(6, 'makeup', 'Грим и волосы', false, renderPpmMakeup(p.makeup, p.cast), p.makeup.length);
+  html += ppmSection(7, 'decor', 'Оформление локации', false, renderPpmDecor(p.decor), p.decor.length);
+  html += ppmSection(8, 'props', 'Реквизит', false, renderPpmProps(p.props));
+  html += ppmSection(9, 'music', 'Музыкальное сопровождение', false, renderPpmMusic(p.music), p.music.tracks.length);
+  html += ppmSection(10, 'shootPlan', 'Съёмочный план', false, renderPpmShootPlan(p.shootPlan), p.shootPlan.length);
+
+  // Кастомные секции
+  p.customSections.forEach((cs, idx) => {
+    html += ppmSection(11 + idx, 'custom-' + cs.id, cs.title, true, renderPpmCustom(cs, idx), (cs.items || []).length);
+  });
+
+  root.innerHTML = html;
+  // Линк
+  const linkEl = document.getElementById('ppm-ext-link');
+  if (linkEl) {
+    linkEl.addEventListener('input', e => { _ppmProject.ppm.externalLink = e.target.value.trim(); schedulePpmSave(); });
+    linkEl.addEventListener('blur', e => {
+      const val = e.target.value.trim();
+      if ((!!val) !== (!!extLink)) renderPpmEditor();
+    });
+  }
+  // Сворачивание
+  root.querySelectorAll('.ppm-section-head').forEach(head => {
+    head.addEventListener('click', (ev) => {
+      if (ev.target.tagName === 'INPUT' || ev.target.closest('.ppm-section-del')) return;
+      togglePpmSection(head.closest('.ppm-section').dataset.psec);
+    });
+  });
+}
+
+function ppmSection(num, id, title, isCustom, bodyHtml, count) {
+  const open = isPpmSectionOpen(id);
+  const titleHtml = isCustom
+    ? `<input class="ppm-section-title-input" data-custom-title="${id.replace('custom-', '')}" value="${escapeHtml(title)}">`
+    : escapeHtml(title);
+  const delBtn = isCustom
+    ? `<button class="ppm-section-del" onclick="event.stopPropagation(); ppmDeleteCustomSection('${id.replace('custom-', '')}')" title="Удалить секцию">×</button>`
+    : '';
+  return `
+    <div class="ppm-section ${open ? 'open' : ''} ${isCustom ? 'custom' : ''}" data-psec="${id}">
+      <div class="ppm-section-head">
+        <div class="ppm-section-num">${num}</div>
+        <div class="ppm-section-title">${titleHtml}</div>
+        ${typeof count === 'number' ? `<div class="ppm-section-count">${count}</div>` : ''}
+        <div class="ppm-section-arrow">▶</div>
+        ${delBtn}
+      </div>
+      <div class="ppm-section-body">${bodyHtml}</div>
+    </div>
+  `;
+}
+
+/* ===== ОБЛОЖКА ===== */
+function renderPpmCover(c) {
+  return `
+    <div class="ppm-grid cols-3">
+      <div class="ppm-field"><label>Дата PPM</label><input type="date" data-pf="cover.ppmDate" value="${escapeHtml(c.ppmDate || '')}"></div>
+      <div class="ppm-field"><label>Съёмки с</label><input type="date" data-pf="cover.shootFrom" value="${escapeHtml(c.shootFrom || '')}"></div>
+      <div class="ppm-field"><label>Съёмки до</label><input type="date" data-pf="cover.shootTo" value="${escapeHtml(c.shootTo || '')}"></div>
+      <div class="ppm-field"><label>Режиссёр</label><input type="text" data-pf="cover.director" value="${escapeHtml(c.director || '')}"></div>
+      <div class="ppm-field"><label>Продюсер</label><input type="text" data-pf="cover.producer" value="${escapeHtml(c.producer || '')}"></div>
+      <div class="ppm-field"><label>Логлайн / описание</label><textarea data-pf="cover.logline" rows="2">${escapeHtml(c.logline || '')}</textarea></div>
+    </div>
+    <script>setTimeout(() => { document.querySelectorAll('[data-pf^="cover."]').forEach(el => el.addEventListener('input', onPpmFieldChange)); }, 0);<\/script>
+  `;
+}
+
+/* ===== РАСКАДРОВКА ===== */
+function renderPpmStoryboard(items) {
+  return `
+    <div class="ppm-items cols-3" id="ppm-storyboard-list">
+      ${items.map((f, i) => `
+        <div class="ppm-item" data-storyboard-idx="${i}">
+          <button class="ppm-item-del" onclick="ppmDeleteStoryboard(${i})">×</button>
+          ${ppmImageSlot('storyboard.' + i + '.image', f.image, 'кадр ' + (i + 1))}
+          <div class="ppm-field" style="margin-top:8px;">
+            <input type="text" class="ppm-sb-caption" data-sb-idx="${i}" value="${escapeHtml(f.caption || '')}" placeholder="Описание кадра">
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddStoryboard()">＋ кадр</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('.ppm-sb-caption').forEach(el => el.addEventListener('input', e => {
+        _ppmProject.ppm.storyboard[+e.target.dataset.sbIdx].caption = e.target.value;
+        schedulePpmSave();
+      }));
+    }, 0);<\/script>
+  `;
+}
+function ppmAddStoryboard() {
+  _ppmProject.ppm.storyboard.push({ id: newPpmId('sb'), image: '', caption: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteStoryboard(i) {
+  _ppmProject.ppm.storyboard.splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== ЛОКАЦИИ ===== */
+function renderPpmLocations(items) {
+  return `
+    <div class="ppm-items cols-1">
+      ${items.map((loc, i) => `
+        <div class="ppm-item" data-loc-idx="${i}">
+          <button class="ppm-item-del" onclick="ppmDeleteLocation(${i})">×</button>
+          <div style="display:grid;grid-template-columns:200px 1fr;gap:14px;">
+            ${ppmImageSlot('locations.' + i + '.image', loc.image, 'фото локации')}
+            <div class="ppm-grid cols-2">
+              <div class="ppm-field"><label>Название</label><input type="text" data-loc-fld="name" data-loc-idx="${i}" value="${escapeHtml(loc.name || '')}" placeholder="Локация #${i + 1}"></div>
+              <div class="ppm-field"><label>Адрес</label><input type="text" data-loc-fld="address" data-loc-idx="${i}" value="${escapeHtml(loc.address || '')}"></div>
+              <div class="ppm-field"><label>Контакт / цена / условия</label><textarea data-loc-fld="contact" data-loc-idx="${i}" rows="2">${escapeHtml(loc.contact || '')}</textarea></div>
+              <div class="ppm-field"><label>Разрешения</label><textarea data-loc-fld="permissions" data-loc-idx="${i}" rows="2">${escapeHtml(loc.permissions || '')}</textarea></div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddLocation()">＋ локация</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-loc-fld]').forEach(el => el.addEventListener('input', e => {
+        _ppmProject.ppm.locations[+e.target.dataset.locIdx][e.target.dataset.locFld] = e.target.value;
+        schedulePpmSave();
+      }));
+    }, 0);<\/script>
+  `;
+}
+function ppmAddLocation() {
+  _ppmProject.ppm.locations.push({ id: newPpmId('loc'), image: '', name: '', address: '', contact: '', permissions: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteLocation(i) {
+  _ppmProject.ppm.locations.splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== КАСТИНГ ===== */
+const PPM_CAST_CATEGORIES = ['Главный герой', 'Второй герой', 'Кастинг (доп)', 'Массовка'];
+function renderPpmCast(items) {
+  return `
+    <div class="ppm-items cols-2">
+      ${items.map((a, i) => `
+        <div class="ppm-item" data-cast-idx="${i}">
+          <button class="ppm-item-del" onclick="ppmDeleteCast(${i})">×</button>
+          <div style="display:grid;grid-template-columns:140px 1fr;gap:12px;">
+            ${ppmImageSlot('cast.' + i + '.image', a.image, 'фото')}
+            <div class="ppm-grid">
+              <div class="ppm-field"><label>Категория</label>
+                <select data-cast-fld="category" data-cast-idx="${i}">
+                  ${PPM_CAST_CATEGORIES.map(c => `<option value="${escapeHtml(c)}" ${a.category === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="ppm-field"><label>Имя</label><input type="text" data-cast-fld="name" data-cast-idx="${i}" value="${escapeHtml(a.name || '')}"></div>
+              <div class="ppm-grid cols-3">
+                <div class="ppm-field"><label>Рост</label><input type="text" data-cast-fld="height" data-cast-idx="${i}" value="${escapeHtml(a.height || '')}"></div>
+                <div class="ppm-field"><label>Размер</label><input type="text" data-cast-fld="size" data-cast-idx="${i}" value="${escapeHtml(a.size || '')}"></div>
+                <div class="ppm-field"><label>Обувь</label><input type="text" data-cast-fld="shoes" data-cast-idx="${i}" value="${escapeHtml(a.shoes || '')}"></div>
+              </div>
+              <div class="ppm-field"><label>Контакт</label><input type="text" data-cast-fld="contact" data-cast-idx="${i}" value="${escapeHtml(a.contact || '')}"></div>
+              <div class="ppm-field"><label>Заметки</label><textarea data-cast-fld="notes" data-cast-idx="${i}" rows="2">${escapeHtml(a.notes || '')}</textarea></div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddCast()">＋ актёр</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-cast-fld]').forEach(el => {
+        const handler = e => {
+          _ppmProject.ppm.cast[+e.target.dataset.castIdx][e.target.dataset.castFld] = e.target.value;
+          schedulePpmSave();
+        };
+        el.addEventListener('input', handler);
+        el.addEventListener('change', handler);
+      });
+    }, 0);<\/script>
+  `;
+}
+function ppmAddCast() {
+  _ppmProject.ppm.cast.push({ id: newPpmId('act'), image: '', category: 'Главный герой', name: '', height: '', size: '', shoes: '', contact: '', notes: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteCast(i) {
+  _ppmProject.ppm.cast.splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== КОСТЮМЫ ===== */
+function renderPpmCostumes(items, cast) {
+  const castOptions = cast.map((a, ci) => `<option value="${a.id}">${escapeHtml(a.name || ('Актёр #' + (ci + 1)))}</option>`).join('');
+  return `
+    <div class="ppm-items cols-1">
+      ${items.map((co, i) => {
+        const actor = cast.find(a => a.id === co.castId);
+        return `
+        <div class="ppm-item" data-co-idx="${i}">
+          <button class="ppm-item-del" onclick="ppmDeleteCostume(${i})">×</button>
+          <div class="ppm-grid cols-2" style="margin-bottom:10px;">
+            <div class="ppm-field"><label>Актёр</label>
+              <select data-co-fld="castId" data-co-idx="${i}">
+                <option value="">— не привязан —</option>
+                ${cast.map((a, ci) => `<option value="${a.id}" ${a.id === co.castId ? 'selected' : ''}>${escapeHtml(a.name || ('Актёр #' + (ci + 1)))} · ${escapeHtml(a.category || '')}</option>`).join('')}
+              </select>
+            </div>
+            <div class="ppm-field"><label>Описание / комментарий</label><input type="text" data-co-fld="description" data-co-idx="${i}" value="${escapeHtml(co.description || '')}"></div>
+          </div>
+          <div class="ppm-grid cols-3">
+            ${[0, 1, 2].map(optIdx => `
+              <div class="ppm-field">
+                <label>Опция ${optIdx + 1}</label>
+                ${ppmImageSlot('costumes.' + i + '.options.' + optIdx + '.image', (co.options && co.options[optIdx]) ? co.options[optIdx].image : '', 'опция ' + (optIdx + 1))}
+                <input type="text" data-co-opt="${optIdx}" data-co-idx="${i}" data-co-opt-fld="caption" value="${escapeHtml((co.options && co.options[optIdx]) ? co.options[optIdx].caption || '' : '')}" placeholder="комментарий" style="margin-top:6px;">
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddCostume()">＋ образ</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-co-fld]').forEach(el => {
+        const h = e => {
+          _ppmProject.ppm.costumes[+e.target.dataset.coIdx][e.target.dataset.coFld] = e.target.value;
+          schedulePpmSave();
+        };
+        el.addEventListener('input', h); el.addEventListener('change', h);
+      });
+      document.querySelectorAll('[data-co-opt]').forEach(el => {
+        el.addEventListener('input', e => {
+          const idx = +e.target.dataset.coIdx;
+          const opt = +e.target.dataset.coOpt;
+          if (!_ppmProject.ppm.costumes[idx].options) _ppmProject.ppm.costumes[idx].options = [{}, {}, {}];
+          if (!_ppmProject.ppm.costumes[idx].options[opt]) _ppmProject.ppm.costumes[idx].options[opt] = {};
+          _ppmProject.ppm.costumes[idx].options[opt][e.target.dataset.coOptFld] = e.target.value;
+          schedulePpmSave();
+        });
+      });
+    }, 0);<\/script>
+  `;
+}
+function ppmAddCostume() {
+  _ppmProject.ppm.costumes.push({ id: newPpmId('co'), castId: '', description: '', options: [{ image: '', caption: '' }, { image: '', caption: '' }, { image: '', caption: '' }] });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteCostume(i) {
+  _ppmProject.ppm.costumes.splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== ГРИМ И ВОЛОСЫ ===== */
+function renderPpmMakeup(items, cast) {
+  return `
+    <div class="ppm-items cols-1">
+      ${items.map((m, i) => `
+        <div class="ppm-item" data-mu-idx="${i}">
+          <button class="ppm-item-del" onclick="ppmDeleteMakeup(${i})">×</button>
+          <div class="ppm-grid cols-2" style="margin-bottom:10px;">
+            <div class="ppm-field"><label>Актёр</label>
+              <select data-mu-fld="castId" data-mu-idx="${i}">
+                <option value="">— не привязан —</option>
+                ${cast.map((a, ci) => `<option value="${a.id}" ${a.id === m.castId ? 'selected' : ''}>${escapeHtml(a.name || ('Актёр #' + (ci + 1)))}</option>`).join('')}
+              </select>
+            </div>
+            <div class="ppm-field"><label>Описание</label><textarea data-mu-fld="description" data-mu-idx="${i}" rows="2">${escapeHtml(m.description || '')}</textarea></div>
+          </div>
+          <div class="ppm-grid cols-2">
+            <div class="ppm-field">
+              <label>Грим (референс)</label>
+              ${ppmImageSlot('makeup.' + i + '.makeupRef', m.makeupRef, 'грим')}
+            </div>
+            <div class="ppm-field">
+              <label>Волосы (референс)</label>
+              ${ppmImageSlot('makeup.' + i + '.hairRef', m.hairRef, 'волосы')}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddMakeup()">＋ грим/волосы</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-mu-fld]').forEach(el => {
+        const h = e => {
+          _ppmProject.ppm.makeup[+e.target.dataset.muIdx][e.target.dataset.muFld] = e.target.value;
+          schedulePpmSave();
+        };
+        el.addEventListener('input', h); el.addEventListener('change', h);
+      });
+    }, 0);<\/script>
+  `;
+}
+function ppmAddMakeup() {
+  _ppmProject.ppm.makeup.push({ id: newPpmId('mu'), castId: '', description: '', makeupRef: '', hairRef: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteMakeup(i) {
+  _ppmProject.ppm.makeup.splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== ОФОРМЛЕНИЕ ЛОКАЦИИ ===== */
+function renderPpmDecor(items) {
+  return `
+    <div class="ppm-items cols-1">
+      ${items.map((d, i) => `
+        <div class="ppm-item" data-dec-idx="${i}">
+          <button class="ppm-item-del" onclick="ppmDeleteDecor(${i})">×</button>
+          <div class="ppm-field" style="margin-bottom:10px;">
+            <label>Название / локация</label>
+            <input type="text" data-dec-fld="name" data-dec-idx="${i}" value="${escapeHtml(d.name || '')}" placeholder="Например: гостиная — основной кадр">
+          </div>
+          <div class="ppm-grid cols-3">
+            <div class="ppm-field"><label>Floor plan / dressing</label>${ppmImageSlot('decor.' + i + '.floorplan', d.floorplan, 'план/dressing')}</div>
+            <div class="ppm-field"><label>Деталь 1</label>${ppmImageSlot('decor.' + i + '.detail1', d.detail1, 'деталь 1')}</div>
+            <div class="ppm-field"><label>Деталь 2</label>${ppmImageSlot('decor.' + i + '.detail2', d.detail2, 'деталь 2')}</div>
+          </div>
+          <div class="ppm-field" style="margin-top:10px;">
+            <label>Примечания</label>
+            <textarea data-dec-fld="notes" data-dec-idx="${i}" rows="2">${escapeHtml(d.notes || '')}</textarea>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddDecor()">＋ оформление</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-dec-fld]').forEach(el => el.addEventListener('input', e => {
+        _ppmProject.ppm.decor[+e.target.dataset.decIdx][e.target.dataset.decFld] = e.target.value;
+        schedulePpmSave();
+      }));
+    }, 0);<\/script>
+  `;
+}
+function ppmAddDecor() {
+  _ppmProject.ppm.decor.push({ id: newPpmId('dec'), name: '', floorplan: '', detail1: '', detail2: '', notes: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteDecor(i) {
+  _ppmProject.ppm.decor.splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== РЕКВИЗИТ ===== */
+const PPM_PROPS_CATEGORIES = [
+  { key: 'posters', label: 'Постеры / графика' },
+  { key: 'furniture', label: 'Мебель / декор' },
+  { key: 'table', label: 'Наполнение стола' },
+  { key: 'handheld', label: 'Ручной реквизит' }
+];
+function renderPpmProps(props) {
+  return PPM_PROPS_CATEGORIES.map(cat => `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#444;margin-bottom:6px;">${cat.label} <span style="color:#888;">· ${props[cat.key].length}</span></div>
+      <div class="ppm-items cols-3">
+        ${props[cat.key].map((item, i) => `
+          <div class="ppm-item" data-prop-cat="${cat.key}" data-prop-idx="${i}">
+            <button class="ppm-item-del" onclick="ppmDeleteProp('${cat.key}', ${i})">×</button>
+            ${ppmImageSlot('props.' + cat.key + '.' + i + '.image', item.image, cat.label.toLowerCase())}
+            <input type="text" data-prop-fld="caption" data-prop-cat="${cat.key}" data-prop-idx="${i}" value="${escapeHtml(item.caption || '')}" placeholder="Описание" style="margin-top:6px;">
+          </div>
+        `).join('')}
+      </div>
+      <button class="ppm-add-btn" onclick="ppmAddProp('${cat.key}')" style="margin-top:6px;">＋ ${cat.label.toLowerCase()}</button>
+    </div>
+  `).join('') + `
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-prop-fld]').forEach(el => el.addEventListener('input', e => {
+        const cat = e.target.dataset.propCat;
+        const idx = +e.target.dataset.propIdx;
+        _ppmProject.ppm.props[cat][idx][e.target.dataset.propFld] = e.target.value;
+        schedulePpmSave();
+      }));
+    }, 0);<\/script>
+  `;
+}
+function ppmAddProp(cat) {
+  _ppmProject.ppm.props[cat].push({ id: newPpmId('pr'), image: '', caption: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteProp(cat, i) {
+  _ppmProject.ppm.props[cat].splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== МУЗЫКА ===== */
+function renderPpmMusic(music) {
+  return `
+    <div class="ppm-field" style="margin-bottom:14px;">
+      <label>Общая рекомендация (DIR RECO)</label>
+      <textarea data-pf="music.recommendation" rows="2">${escapeHtml(music.recommendation || '')}</textarea>
+    </div>
+    <div class="ppm-items cols-2">
+      ${music.tracks.map((t, i) => `
+        <div class="ppm-item" data-track-idx="${i}">
+          <button class="ppm-item-del" onclick="ppmDeleteTrack(${i})">×</button>
+          <div class="ppm-grid">
+            <div class="ppm-field"><label>Название трека</label><input type="text" data-tr-fld="title" data-tr-idx="${i}" value="${escapeHtml(t.title || '')}"></div>
+            <div class="ppm-field"><label>Исполнитель</label><input type="text" data-tr-fld="artist" data-tr-idx="${i}" value="${escapeHtml(t.artist || '')}"></div>
+            <div class="ppm-field"><label>Лицензия / статус прав</label><input type="text" data-tr-fld="license" data-tr-idx="${i}" value="${escapeHtml(t.license || '')}"></div>
+            <div class="ppm-field"><label>Ссылка</label><input type="url" data-tr-fld="url" data-tr-idx="${i}" value="${escapeHtml(t.url || '')}" placeholder="https://"></div>
+            <div class="ppm-field"><label>Комментарий</label><textarea data-tr-fld="notes" data-tr-idx="${i}" rows="2">${escapeHtml(t.notes || '')}</textarea></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddTrack()">＋ трек</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-pf="music.recommendation"]').forEach(el => el.addEventListener('input', onPpmFieldChange));
+      document.querySelectorAll('[data-tr-fld]').forEach(el => el.addEventListener('input', e => {
+        _ppmProject.ppm.music.tracks[+e.target.dataset.trIdx][e.target.dataset.trFld] = e.target.value;
+        schedulePpmSave();
+      }));
+    }, 0);<\/script>
+  `;
+}
+function ppmAddTrack() {
+  _ppmProject.ppm.music.tracks.push({ id: newPpmId('tr'), title: '', artist: '', license: '', url: '', notes: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteTrack(i) {
+  _ppmProject.ppm.music.tracks.splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== СЪЁМОЧНЫЙ ПЛАН ===== */
+function renderPpmShootPlan(days) {
+  return `
+    <div class="ppm-items cols-1">
+      ${days.map((day, di) => `
+        <div class="ppm-item" data-day-idx="${di}">
+          <button class="ppm-item-del" onclick="ppmDeleteShootDay(${di})">×</button>
+          <div class="ppm-grid cols-2" style="margin-bottom:10px;">
+            <div class="ppm-field"><label>День</label><input type="text" data-day-fld="title" data-day-idx="${di}" value="${escapeHtml(day.title || ('День ' + (di + 1)))}"></div>
+            <div class="ppm-field"><label>Дата</label><input type="date" data-day-fld="date" data-day-idx="${di}" value="${escapeHtml(day.date || '')}"></div>
+          </div>
+          <table class="brief-list-table" style="margin-top:8px;">
+            <thead><tr><th style="width:80px;">Время</th><th style="width:60px;">Сцена</th><th>Кадры</th><th>Локация</th><th>Актёры</th><th>Техника</th><th style="width:24px;"></th></tr></thead>
+            <tbody>
+              ${(day.rows || []).map((r, ri) => `
+                <tr data-row-idx="${ri}">
+                  <td><input data-sp-fld="time" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(r.time || '')}"></td>
+                  <td><input data-sp-fld="scene" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(r.scene || '')}"></td>
+                  <td><input data-sp-fld="frames" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(r.frames || '')}"></td>
+                  <td><input data-sp-fld="location" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(r.location || '')}"></td>
+                  <td><input data-sp-fld="cast" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(r.cast || '')}"></td>
+                  <td><input data-sp-fld="tech" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(r.tech || '')}"></td>
+                  <td><button class="t-link-clear" onclick="ppmDeleteShootRow(${di}, ${ri})">×</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <button class="t-link-open" style="background:transparent;color:#0a0907;border:1px dashed #ccc;margin-top:6px;" onclick="ppmAddShootRow(${di})">＋ строка</button>
+        </div>
+      `).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddShootDay()">＋ день</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-day-fld]').forEach(el => el.addEventListener('input', e => {
+        _ppmProject.ppm.shootPlan[+e.target.dataset.dayIdx][e.target.dataset.dayFld] = e.target.value;
+        schedulePpmSave();
+      }));
+      document.querySelectorAll('[data-sp-fld]').forEach(el => el.addEventListener('input', e => {
+        const di = +e.target.dataset.dayIdx;
+        const ri = +e.target.dataset.rowIdx;
+        if (!_ppmProject.ppm.shootPlan[di].rows) _ppmProject.ppm.shootPlan[di].rows = [];
+        _ppmProject.ppm.shootPlan[di].rows[ri][e.target.dataset.spFld] = e.target.value;
+        schedulePpmSave();
+      }));
+    }, 0);<\/script>
+  `;
+}
+function ppmAddShootDay() {
+  _ppmProject.ppm.shootPlan.push({ id: newPpmId('sd'), title: 'День ' + (_ppmProject.ppm.shootPlan.length + 1), date: '', rows: [{ id: newPpmId('sr'), time: '', scene: '', frames: '', location: '', cast: '', tech: '' }] });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteShootDay(di) {
+  _ppmProject.ppm.shootPlan.splice(di, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmAddShootRow(di) {
+  if (!_ppmProject.ppm.shootPlan[di].rows) _ppmProject.ppm.shootPlan[di].rows = [];
+  _ppmProject.ppm.shootPlan[di].rows.push({ id: newPpmId('sr'), time: '', scene: '', frames: '', location: '', cast: '', tech: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteShootRow(di, ri) {
+  _ppmProject.ppm.shootPlan[di].rows.splice(ri, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== КАСТОМНЫЕ СЕКЦИИ ===== */
+function renderPpmCustom(cs, csIdx) {
+  return `
+    <div class="ppm-field" style="margin-bottom:10px;">
+      <label>Описание секции</label>
+      <textarea data-cs-fld="description" data-cs-idx="${csIdx}" rows="2">${escapeHtml(cs.description || '')}</textarea>
+    </div>
+    <div class="ppm-items cols-3">
+      ${(cs.items || []).map((item, i) => `
+        <div class="ppm-item" data-cs-item-idx="${i}">
+          <button class="ppm-item-del" onclick="ppmDeleteCustomItem('${cs.id}', ${i})">×</button>
+          ${ppmImageSlot('customSections.' + csIdx + '.items.' + i + '.image', item.image, 'фото')}
+          <input type="text" data-cs-item-fld="caption" data-cs-id="${cs.id}" data-cs-item-idx="${i}" value="${escapeHtml(item.caption || '')}" placeholder="Подпись" style="margin-top:6px;">
+        </div>
+      `).join('')}
+    </div>
+    <button class="ppm-add-btn" onclick="ppmAddCustomItem('${cs.id}')">＋ элемент</button>
+    <script>setTimeout(() => {
+      document.querySelectorAll('[data-cs-fld]').forEach(el => el.addEventListener('input', e => {
+        _ppmProject.ppm.customSections[+e.target.dataset.csIdx][e.target.dataset.csFld] = e.target.value;
+        schedulePpmSave();
+      }));
+      document.querySelectorAll('[data-cs-item-fld]').forEach(el => el.addEventListener('input', e => {
+        const csId = e.target.dataset.csId;
+        const idx = +e.target.dataset.csItemIdx;
+        const cs = _ppmProject.ppm.customSections.find(x => x.id === csId);
+        if (cs && cs.items[idx]) {
+          cs.items[idx][e.target.dataset.csItemFld] = e.target.value;
+          schedulePpmSave();
+        }
+      }));
+      document.querySelectorAll('[data-custom-title]').forEach(el => el.addEventListener('input', e => {
+        const id = e.target.dataset.customTitle;
+        const cs = _ppmProject.ppm.customSections.find(x => x.id === id);
+        if (cs) { cs.title = e.target.value; schedulePpmSave(); }
+      }));
+    }, 0);<\/script>
+  `;
+}
+function ppmAddCustomSection() {
+  if (!_ppmProject) return;
+  const cs = {
+    id: newPpmId('cs'),
+    title: 'Новая секция',
+    description: '',
+    items: []
+  };
+  _ppmProject.ppm.customSections.push(cs);
+  _ppmOpenSections.add('custom-' + cs.id);
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteCustomSection(id) {
+  if (!confirm('Удалить эту секцию со всем содержимым?')) return;
+  _ppmProject.ppm.customSections = _ppmProject.ppm.customSections.filter(x => x.id !== id);
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmAddCustomItem(csId) {
+  const cs = _ppmProject.ppm.customSections.find(x => x.id === csId);
+  if (!cs) return;
+  if (!cs.items) cs.items = [];
+  cs.items.push({ id: newPpmId('it'), image: '', caption: '' });
+  savePpmNow();
+  renderPpmEditor();
+}
+function ppmDeleteCustomItem(csId, i) {
+  const cs = _ppmProject.ppm.customSections.find(x => x.id === csId);
+  if (!cs || !cs.items) return;
+  cs.items.splice(i, 1);
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== УНИВЕРСАЛЬНЫЙ image slot + onPpmFieldChange ===== */
+function ppmImageSlot(path, value, placeholder) {
+  const hasImage = !!value;
+  return `
+    <label class="ppm-image-slot ${hasImage ? 'has-image' : ''}">
+      ${hasImage ? `<img src="${value}" alt="">` : `<div class="icon">📷</div><div>${escapeHtml(placeholder || 'фото')}</div>`}
+      ${hasImage ? '<div class="ppm-image-replace">заменить</div>' : ''}
+      <input type="file" accept="image/*" data-ppm-image="${path}">
+    </label>
+  `;
+}
+
+function onPpmFieldChange(e) {
+  const path = e.target.dataset.pf;
+  const parts = path.split('.');
+  let obj = _ppmProject.ppm;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!obj[parts[i]] || typeof obj[parts[i]] !== 'object') obj[parts[i]] = {};
+    obj = obj[parts[i]];
+  }
+  obj[parts[parts.length - 1]] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  schedulePpmSave();
+}
+
+// Глобальный delegation для upload картинок (один listener)
+document.addEventListener('change', async (e) => {
+  if (e.target.matches('input[data-ppm-image]')) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const path = e.target.dataset.ppmImage;
+    try {
+      const dataUrl = await resizeImageToDataUrl(file, 1200, 0.82);
+      // path как: storyboard.0.image | locations.0.image | cast.0.image | costumes.0.options.0.image
+      const parts = path.split('.');
+      let obj = _ppmProject.ppm;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const k = parts[i];
+        // Если числовой — индекс
+        if (/^\d+$/.test(k)) {
+          obj = obj[parseInt(k, 10)];
+        } else {
+          if (!obj[k]) obj[k] = {};
+          obj = obj[k];
+        }
+      }
+      const lastKey = parts[parts.length - 1];
+      obj[lastKey] = dataUrl;
+      savePpmNow();
+      renderPpmEditor();
+      toast('Фото загружено ✓', 'success');
+    } catch (err) {
+      toast('Не удалось загрузить: ' + err.message, 'error');
+    }
+  }
+});
+
+function clearPpmLink() {
+  _ppmProject.ppm.externalLink = '';
+  savePpmNow();
+  renderPpmEditor();
+}
+
+/* ===== ЭКСПОРТ ППМ В PDF ===== */
+async function exportPpmToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  if (!_ppmProject) return;
+  const p = ensurePpm(_ppmProject);
+  toast('Готовлю ППМ PDF...', 'success');
+  const container = buildPpmPrintHTML(_ppmProject, p);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 5000); });
+    }));
+    const canvas = await html2canvas(container, {
+      scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
+      windowWidth: 1100, letterRendering: true, allowTaint: false, imageTimeout: 20000
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const imgW = pdfW;
+    const ratio = canvas.height / canvas.width;
+    const imgH = imgW * ratio;
+    const totalPages = Math.ceil(imgH / pdfH);
+    const imgData = canvas.toDataURL('image/jpeg', 0.88);
+    let pos = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pos -= pdfH;
+    }
+    const slug = (_ppmProject.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`ППМ_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('ППМ PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка PDF: ' + e.message, 'error');
+  }
+}
+
+function buildPpmPrintHTML(project, p) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:1100px;background:#fff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;line-height:1.45;';
+
+  const cover = p.cover;
+  let html = `
+    <div style="background:#0a0907;color:white;padding:40px;display:flex;justify-content:space-between;align-items:flex-end;height:300px;">
+      <div>
+        <img src="logo.png" style="height:30px;width:auto;filter:brightness(0) invert(1);margin-bottom:30px;" crossorigin="anonymous">
+        <div style="font-size:50px;font-weight:900;letter-spacing:-1px;line-height:0.95;">PPM BOOK</div>
+        <div style="font-size:18px;color:#bbb;margin-top:8px;letter-spacing:1px;">${escapeHtml((project.name || '').toUpperCase())}</div>
+        ${project.client ? `<div style="font-size:14px;color:#888;margin-top:4px;">× ${escapeHtml(project.client)}</div>` : ''}
+      </div>
+      <div style="text-align:right;font-size:11px;color:#aaa;letter-spacing:1px;text-transform:uppercase;">
+        ${cover.ppmDate ? `<div>PPM: ${formatDateRu(cover.ppmDate)}</div>` : ''}
+        ${cover.shootFrom ? `<div style="margin-top:4px;">Съёмки: ${formatDateRu(cover.shootFrom)}${cover.shootTo ? ' — ' + formatDateRu(cover.shootTo) : ''}</div>` : ''}
+        ${cover.director ? `<div style="margin-top:4px;">Режиссёр: ${escapeHtml(cover.director)}</div>` : ''}
+        ${cover.producer ? `<div style="margin-top:4px;">Продюсер: ${escapeHtml(cover.producer)}</div>` : ''}
+      </div>
+    </div>
+    ${cover.logline ? `<div style="padding:24px 40px;font-size:14px;font-style:italic;color:#444;border-bottom:1px solid #ececec;">${escapeHtml(cover.logline)}</div>` : ''}
+  `;
+
+  function secHead(num, title) {
+    return `<div style="padding:30px 40px 8px;font-size:11px;font-weight:800;letter-spacing:2px;color:#888;text-transform:uppercase;">${num}. ${escapeHtml(title)}</div>`;
+  }
+
+  if (p.storyboard.length > 0) {
+    html += secHead('02', 'Раскадровка');
+    html += `<div style="padding:0 40px 20px;display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;">${p.storyboard.map((f, i) => `
+      <div style="background:#fafafa;border:1px solid #ececec;border-radius:4px;overflow:hidden;">
+        <div style="aspect-ratio:16/9;background:#e8e8e3;display:flex;align-items:center;justify-content:center;">${f.image ? `<img src="${f.image}" style="width:100%;height:100%;object-fit:cover;">` : '<span style="color:#999;font-size:11px;">[ кадр ' + (i + 1) + ' ]</span>'}</div>
+        <div style="padding:8px 10px;font-size:11px;">${escapeHtml(f.caption || '—')}</div>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  if (p.locations.length > 0) {
+    html += secHead('03', 'Локации');
+    html += `<div style="padding:0 40px 20px;">${p.locations.map((loc, i) => `
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:18px;margin-bottom:18px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;">
+        <div style="aspect-ratio:4/3;background:#e8e8e3;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${loc.image ? `<img src="${loc.image}" style="width:100%;height:100%;object-fit:cover;">` : '<span style="color:#999;font-size:11px;">[ фото ]</span>'}</div>
+        <div style="font-size:11px;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px;">${escapeHtml(loc.name || 'Локация #' + (i + 1))}</div>
+          ${loc.address ? `<div><b>Адрес:</b> ${escapeHtml(loc.address)}</div>` : ''}
+          ${loc.contact ? `<div style="margin-top:4px;"><b>Контакт / условия:</b> ${escapeHtml(loc.contact)}</div>` : ''}
+          ${loc.permissions ? `<div style="margin-top:4px;"><b>Разрешения:</b> ${escapeHtml(loc.permissions)}</div>` : ''}
+        </div>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  if (p.cast.length > 0) {
+    html += secHead('04', 'Кастинг');
+    html += `<div style="padding:0 40px 20px;display:grid;grid-template-columns:repeat(2, 1fr);gap:14px;">${p.cast.map((a, i) => `
+      <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:12px;">
+        <div style="aspect-ratio:3/4;background:#e8e8e3;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${a.image ? `<img src="${a.image}" style="width:100%;height:100%;object-fit:cover;">` : '<span style="color:#999;font-size:10px;">[ фото ]</span>'}</div>
+        <div style="font-size:11px;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#888;text-transform:uppercase;">${escapeHtml(a.category || 'актёр')}</div>
+          <div style="font-size:15px;font-weight:800;margin-top:2px;">${escapeHtml(a.name || '—')}</div>
+          ${a.height || a.size || a.shoes ? `<div style="margin-top:6px;color:#555;">Рост: ${escapeHtml(a.height || '—')} · Размер: ${escapeHtml(a.size || '—')} · Обувь: ${escapeHtml(a.shoes || '—')}</div>` : ''}
+          ${a.contact ? `<div style="margin-top:3px;color:#555;"><b>Контакт:</b> ${escapeHtml(a.contact)}</div>` : ''}
+          ${a.notes ? `<div style="margin-top:3px;color:#555;font-style:italic;">${escapeHtml(a.notes)}</div>` : ''}
+        </div>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  if (p.costumes.length > 0) {
+    html += secHead('05', 'Костюмы');
+    html += `<div style="padding:0 40px 20px;">${p.costumes.map((co, i) => {
+      const actor = p.cast.find(a => a.id === co.castId);
+      return `<div style="margin-bottom:18px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;">
+        <div style="font-size:12px;font-weight:700;margin-bottom:8px;">${actor ? escapeHtml(actor.name + ' · ' + (actor.category || '')) : 'Образ #' + (i + 1)}${co.description ? ` <span style="color:#666;font-weight:400;">— ${escapeHtml(co.description)}</span>` : ''}</div>
+        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;">
+          ${[0, 1, 2].map(idx => {
+            const opt = (co.options || [])[idx] || {};
+            return `<div>
+              <div style="aspect-ratio:3/4;background:#e8e8e3;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${opt.image ? `<img src="${opt.image}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="color:#999;font-size:10px;">[ опция ${idx + 1} ]</span>`}</div>
+              ${opt.caption ? `<div style="font-size:10px;margin-top:4px;">${escapeHtml(opt.caption)}</div>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  if (p.makeup.length > 0) {
+    html += secHead('06', 'Грим и волосы');
+    html += `<div style="padding:0 40px 20px;">${p.makeup.map((m, i) => {
+      const actor = p.cast.find(a => a.id === m.castId);
+      return `<div style="margin-bottom:14px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;">
+        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ГРИМ</div><div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${m.makeupRef ? `<img src="${m.makeupRef}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div></div>
+        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ВОЛОСЫ</div><div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${m.hairRef ? `<img src="${m.hairRef}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div></div>
+        <div style="font-size:11px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px;">${actor ? escapeHtml(actor.name) : '—'}</div>
+          <div style="white-space:pre-wrap;color:#444;">${escapeHtml(m.description || '—')}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  if (p.decor.length > 0) {
+    html += secHead('07', 'Оформление локации');
+    html += `<div style="padding:0 40px 20px;">${p.decor.map(d => `
+      <div style="margin-bottom:18px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;">
+        ${d.name ? `<div style="font-size:13px;font-weight:700;margin-bottom:8px;">${escapeHtml(d.name)}</div>` : ''}
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;">
+          <div style="aspect-ratio:4/3;background:#e8e8e3;border-radius:4px;overflow:hidden;">${d.floorplan ? `<img src="${d.floorplan}" style="width:100%;height:100%;object-fit:cover;">` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:10px;">[ floor plan ]</div>'}</div>
+          <div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${d.detail1 ? `<img src="${d.detail1}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div>
+          <div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${d.detail2 ? `<img src="${d.detail2}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div>
+        </div>
+        ${d.notes ? `<div style="margin-top:8px;font-size:11px;color:#555;">${escapeHtml(d.notes)}</div>` : ''}
+      </div>
+    `).join('')}</div>`;
+  }
+
+  const hasProps = PPM_PROPS_CATEGORIES.some(cat => p.props[cat.key].length > 0);
+  if (hasProps) {
+    html += secHead('08', 'Реквизит');
+    html += `<div style="padding:0 40px 20px;">${PPM_PROPS_CATEGORIES.map(cat => {
+      if (p.props[cat.key].length === 0) return '';
+      return `<div style="margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">${cat.label}</div>
+        <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:8px;">${p.props[cat.key].map(item => `
+          <div>
+            <div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:3px;overflow:hidden;">${item.image ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div>
+            ${item.caption ? `<div style="font-size:9px;margin-top:3px;color:#555;">${escapeHtml(item.caption)}</div>` : ''}
+          </div>
+        `).join('')}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  if (p.music.tracks.length > 0 || p.music.recommendation) {
+    html += secHead('09', 'Музыкальное сопровождение');
+    html += `<div style="padding:0 40px 20px;">
+      ${p.music.recommendation ? `<div style="background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:12px;margin-bottom:12px;font-size:11px;font-style:italic;color:#444;">${escapeHtml(p.music.recommendation)}</div>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">${p.music.tracks.map(t => `
+        <div style="background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:12px;font-size:11px;">
+          <div style="font-size:14px;font-weight:700;">${escapeHtml(t.title || '—')}</div>
+          <div style="color:#666;margin-top:2px;">${escapeHtml(t.artist || '—')}</div>
+          ${t.license ? `<div style="margin-top:6px;color:#444;"><b>Лицензия:</b> ${escapeHtml(t.license)}</div>` : ''}
+          ${t.url ? `<div style="margin-top:3px;color:#1e40af;">🔗 ${escapeHtml(t.url)}</div>` : ''}
+          ${t.notes ? `<div style="margin-top:5px;color:#666;font-style:italic;">${escapeHtml(t.notes)}</div>` : ''}
+        </div>
+      `).join('')}</div>
+    </div>`;
+  }
+
+  if (p.shootPlan.length > 0) {
+    html += secHead('10', 'Съёмочный план');
+    html += `<div style="padding:0 40px 20px;">${p.shootPlan.map(day => `
+      <div style="margin-bottom:16px;">
+        <div style="background:#0a0907;color:white;padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;border-radius:4px 4px 0 0;">${escapeHtml(day.title || 'День')} ${day.date ? '· ' + formatDateRu(day.date) : ''}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;background:#fafafa;border:1px solid #ececec;border-top:none;">
+          <thead><tr style="background:#f0f0eb;color:#555;font-size:9px;letter-spacing:0.4px;">
+            <th style="padding:6px 8px;text-align:left;width:80px;">Время</th>
+            <th style="padding:6px 8px;text-align:left;width:60px;">Сцена</th>
+            <th style="padding:6px 8px;text-align:left;">Кадры</th>
+            <th style="padding:6px 8px;text-align:left;">Локация</th>
+            <th style="padding:6px 8px;text-align:left;">Актёры</th>
+            <th style="padding:6px 8px;text-align:left;">Техника</th>
+          </tr></thead>
+          <tbody>${(day.rows || []).map(r => `
+            <tr style="border-top:1px solid #ececec;">
+              <td style="padding:5px 8px;font-weight:700;">${escapeHtml(r.time || '—')}</td>
+              <td style="padding:5px 8px;">${escapeHtml(r.scene || '—')}</td>
+              <td style="padding:5px 8px;">${escapeHtml(r.frames || '—')}</td>
+              <td style="padding:5px 8px;">${escapeHtml(r.location || '—')}</td>
+              <td style="padding:5px 8px;">${escapeHtml(r.cast || '—')}</td>
+              <td style="padding:5px 8px;">${escapeHtml(r.tech || '—')}</td>
+            </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  // Кастомные секции
+  p.customSections.forEach((cs, csi) => {
+    html += secHead(String(11 + csi).padStart(2, '0'), cs.title || 'Своя секция');
+    html += `<div style="padding:0 40px 20px;">
+      ${cs.description ? `<div style="font-size:11px;color:#555;margin-bottom:10px;font-style:italic;">${escapeHtml(cs.description)}</div>` : ''}
+      <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;">
+        ${(cs.items || []).map(item => `
+          <div>
+            <div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${item.image ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div>
+            ${item.caption ? `<div style="font-size:10px;margin-top:4px;color:#444;">${escapeHtml(item.caption)}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  });
+
+  html += `<div style="margin:40px 40px 24px;padding-top:14px;border-top:1px solid #e5e5e5;text-align:center;font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;">
+    Спасибо · ZALOVE PRODUCTION × ${escapeHtml(project.client || project.artist || '')} · ${new Date().toLocaleDateString('ru-RU')}
+  </div>`;
+
+  c.innerHTML = html;
+  return c;
 }
 
 /* ============================================================
@@ -12523,6 +14334,16 @@ function closeAll() {
   if (_briefSaveTimer) {
     clearTimeout(_briefSaveTimer);
     saveBriefNow();
+  }
+  // Сохранить ППМ немедленно
+  if (_ppmSaveTimer) {
+    clearTimeout(_ppmSaveTimer);
+    savePpmNow();
+  }
+  // Сохранить шутинг-план немедленно
+  if (_spSaveTimer) {
+    clearTimeout(_spSaveTimer);
+    saveShootplanNow();
   }
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
 }
