@@ -3574,6 +3574,141 @@ body.has-reel .theme-toggle { right: 158px; }
   margin-right: 4px;
 }
 
+/* ===== БРИФ КЛИЕНТА ===== */
+.brief-section {
+  background: white;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.brief-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+  user-select: none;
+  background: #fafafa;
+  border-bottom: 1px solid transparent;
+  transition: background 0.12s;
+}
+.brief-section-head:hover { background: #f3f3ee; }
+.brief-section.open .brief-section-head { border-bottom-color: var(--line-2, #e5e5e5); }
+.brief-section-num {
+  width: 22px; height: 22px;
+  background: var(--ink, #0a0907);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.brief-section-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--ink, #0a0907);
+}
+.brief-section-arrow {
+  font-size: 10px;
+  color: var(--muted, #888);
+  transition: transform 0.15s;
+}
+.brief-section.open .brief-section-arrow { transform: rotate(90deg); }
+.brief-section-body {
+  display: none;
+  padding: 14px;
+}
+.brief-section.open .brief-section-body { display: block; }
+.brief-grid {
+  display: grid;
+  gap: 10px;
+}
+.brief-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.brief-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.brief-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.brief-field { display: flex; flex-direction: column; gap: 4px; }
+.brief-field label {
+  font-size: 9px;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.brief-field input,
+.brief-field textarea,
+.brief-field select {
+  padding: 8px 10px;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  background: white;
+  color: var(--ink, #0a0907);
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.brief-field input:focus,
+.brief-field textarea:focus,
+.brief-field select:focus {
+  outline: none;
+  border-color: var(--ink, #0a0907);
+}
+.brief-field textarea { min-height: 64px; line-height: 1.5; }
+.brief-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.brief-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 16px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.12s;
+}
+.brief-chip:hover { border-color: var(--ink, #0a0907); }
+.brief-chip.active {
+  background: var(--ink, #0a0907);
+  color: white;
+  border-color: var(--ink, #0a0907);
+}
+.brief-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.brief-list-table th, .brief-list-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line-2, #e5e5e5);
+  text-align: left;
+}
+.brief-list-table th {
+  background: #fafafa;
+  font-size: 9px;
+  color: var(--muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.brief-list-table input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-size: 12px;
+  background: transparent;
+}
+.brief-list-table input:hover { background: white; border-color: var(--line-2, #e5e5e5); }
+.brief-list-table input:focus { background: white; border-color: var(--ink, #0a0907); outline: none; }
+
 /* ===== ТАЙМИНГ: МАТРИЦА ===== */
 .timing-link-bar {
   display: flex;
@@ -5395,52 +5530,26 @@ body.has-reel .theme-toggle { right: 158px; }
 
 <!-- BRIEF -->
 <div class="modal-overlay" id="m-brief">
-  <div class="doc-overlay">
+  <div class="doc-overlay" style="width: 1040px; max-width: 96vw; max-height: 94vh;">
     <div class="doc-header">
       <div class="doc-header-l">
         <div class="doc-header-icon">✎</div>
         <div>
-          <div class="doc-section-label">Документ · из вашего шаблона</div>
-          <div class="doc-header-title">Бриф клиента · Creative brief</div>
+          <div class="doc-section-label" id="brief-subtitle">Бриф клиента · авто-сохранение</div>
+          <div class="doc-header-title" id="brief-title">Бриф клиента</div>
         </div>
       </div>
       <div class="doc-actions-h">
-        <button class="btn btn-dark">⤓ DOCX</button>
-        <button class="btn-secondary btn">📨 Отправить клиенту</button>
+        <button class="btn btn-dark" onclick="exportBriefToPdf()">⤓ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
-    <div class="doc-body">
-      <div class="smart-fill">
-        <div class="sf-icon">⚡</div>
-        <div class="sf-text">
-          <strong>Из шаблона «шаблон бриф клиента.docx»</strong>
-          ~30 полей: бренд/артист, ToV, цели, KPI, референсы, площадки, ограничения
-        </div>
-      </div>
-      <div class="paper">
-        <h1>Бриф клиента</h1>
-        <h2>Client brief · Production brief</h2>
-        <div class="paper-row">
-          <div><b>Название проекта: <span class="var">Nebula</span></b></div>
-          <div><b>Тип: <span class="var">☐ Клип  ☑ Реклама  ☐ Иное</span></b></div>
-          <div><b>Дата: <span class="var">18.05.2026</span></b></div>
-        </div>
-        <p><b>1. КОНТАКТЫ КЛИЕНТА</b> · ФИО / Telegram / e-mail / лицо принимающее решение</p>
-        <p><b>2. О БРЕНДЕ / АРТИСТЕ</b> · кто, чем известен, прошлые проекты, портфолио</p>
-        <p><b>3. ЦЕЛИ ПРОЕКТА</b> · главная цель + доп. цели + KPI / метрики успеха</p>
-        <p><b>4. СООБЩЕНИЕ</b> · главное message + reasons to believe + CTA</p>
-        <p><b>5. ТОН И СТИЛЬ</b> · кинематографично / документально / игриво / премиум / драйв / лирично / стрит / арт</p>
-        <p><b>6. РЕФЕРЕНСЫ</b> · ссылки на ролики, что нравится / анти-референсы</p>
-        <p><b>7. ОГРАНИЧЕНИЯ</b> · юридические, нормативные, NDA</p>
-        <p><b>8. ПЛОЩАДКИ</b> · ТВ · YouTube/Rutube · Соцсети · Кино · DOOH · сайт · иное</p>
-        <p><b>9. БЮДЖЕТ И СРОКИ</b> · ориентир, дедлайн сдачи финала</p>
-        <p style="margin-top: 18px; color: var(--muted); font-style: italic; font-size: 11px;">Полная форма содержит 30+ полей. Здесь — сводка разделов.</p>
-      </div>
+    <div class="doc-body" id="brief-editor-root">
+      <!-- renderBriefEditor() -->
     </div>
     <div class="doc-footer">
-      <div class="doc-footer-info">BRIEF-NEB-2026 · 30+ ПОЛЕЙ · v.2</div>
-      <button class="btn">⚡ Сгенерировать DOCX</button>
+      <div class="doc-footer-info" id="brief-footer-info">—</div>
+      <button class="btn-secondary btn" onclick="briefAutofillFromProject()" title="Подтянуть данные из карточки проекта">↻ из проекта</button>
     </div>
   </div>
 </div>
@@ -6492,6 +6601,11 @@ function openDoc(type) {
     openTimingEditor();
     return;
   }
+  // Бриф — открываем редактор
+  if (type === 'brief' && _currentProjectId) {
+    openBriefEditor();
+    return;
+  }
   const map = {
     estimate: 'm-estimate',
     callsheet: 'm-callsheet',
@@ -6510,7 +6624,95 @@ function openDoc(type) {
     'add-member': 'm-add-member',
     placeholder: 'm-placeholder'
   };
-  document.getElementById(map[type] || 'm-new').classList.add('active');
+  const modalId = map[type] || 'm-new';
+  // Инжектируем линк-бар во все «плоские» документы (где нет своего редактора)
+  injectDocLinkBar(modalId, type);
+  document.getElementById(modalId).classList.add('active');
+}
+
+/* ===== УНИВЕРСАЛЬНЫЙ ИНЖЕКТОР «ССЫЛКИ НА ВНЕШНИЙ ДОКУМЕНТ» ===== */
+const DOC_LINK_LABELS = {
+  release: 'локейшн-релиз',
+  ppm: 'ППМ-бук',
+  nda: 'NDA',
+  risks: 'матрицу рисков',
+  report: 'прод-рапорт',
+  postprod: 'ТЗ постпрод',
+  'sub-est': 'смету подрядчика',
+  'creative-treatment': 'тритмент',
+  'creative-script': 'сценарий',
+  'creative-upload': 'креатив'
+};
+
+function injectDocLinkBar(modalId, docKey) {
+  // Не вставляем для модалок с собственным редактором (там уже есть свой линк-бар)
+  const skip = new Set(['m-estimate', 'm-callsheet', 'm-timing', 'm-brief', 'm-placeholder', 'm-new']);
+  if (skip.has(modalId)) return;
+  if (!DOC_LINK_LABELS[docKey]) return;
+  if (!_currentProjectId) return;
+
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+  const body = modal.querySelector('.doc-body');
+  if (!body) return;
+
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  if (!project.externalLinks) project.externalLinks = {};
+  const link = project.externalLinks[docKey] || '';
+  const label = DOC_LINK_LABELS[docKey];
+
+  // Удаляем существующий бар (вдруг повторное открытие)
+  const existing = body.querySelector('.doc-link-bar');
+  if (existing) existing.remove();
+
+  // Создаём бар (использует те же CSS-классы, что и тайминг)
+  const bar = document.createElement('div');
+  bar.className = 'timing-link-bar doc-link-bar';
+  bar.style.marginBottom = '12px';
+  bar.innerHTML = `
+    <div class="timing-link-bar-l">
+      <span class="t-link-ico">🔗</span>
+      <span class="t-link-label">Ссылка на ${label}</span>
+      <input type="url" class="t-link-input doc-link-input" placeholder="https://... (Google Docs / Notion / Drive)" value="${escapeHtml(link)}">
+    </div>
+    <div class="timing-link-bar-r">
+      ${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="t-link-open">↗ открыть</a>` : ''}
+      ${link ? `<button class="t-link-clear" data-clear-doc="${docKey}" title="Убрать ссылку">×</button>` : ''}
+    </div>
+  `;
+  body.insertBefore(bar, body.firstChild);
+
+  // Обработчики
+  const input = bar.querySelector('.doc-link-input');
+  let saveTimer = null;
+  input.addEventListener('input', (e) => {
+    const v = e.target.value.trim();
+    const pr = DB.getProject(_currentProjectId);
+    if (!pr.externalLinks) pr.externalLinks = {};
+    pr.externalLinks[docKey] = v;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      DB.updateProject(_currentProjectId, { externalLinks: pr.externalLinks });
+    }, 400);
+  });
+  input.addEventListener('blur', (e) => {
+    const v = e.target.value.trim();
+    if ((!!v) !== (!!link)) {
+      // перерисовать, чтобы появилась/исчезла кнопка "открыть"
+      injectDocLinkBar(modalId, docKey);
+    }
+  });
+  const clearBtn = bar.querySelector('button[data-clear-doc]');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const pr = DB.getProject(_currentProjectId);
+      if (!pr.externalLinks) pr.externalLinks = {};
+      pr.externalLinks[docKey] = '';
+      DB.updateProject(_currentProjectId, { externalLinks: pr.externalLinks });
+      injectDocLinkBar(modalId, docKey);
+    });
+  }
 }
 
 // Watermark на документах отключён — пересекался с кнопкой закрытия
@@ -10667,6 +10869,780 @@ function renderDocCreativeCards(project) {
 }
 
 /* ============================================================
+   БРИФ КЛИЕНТА — РЕДАКТОР + ЭКСПОРТ
+   ============================================================ */
+const BRIEF_TONES = [
+  ['cinematic', 'Кинематографично'],
+  ['documentary', 'Документально'],
+  ['playful', 'Игриво/иронично'],
+  ['premium', 'Серьёзно/премиум'],
+  ['drive', 'Драйв/динамика'],
+  ['lyric', 'Лирично/эмоц.'],
+  ['street', 'Стрит/нативно'],
+  ['art', 'Сюр/арт']
+];
+const BRIEF_PLATFORMS = [
+  ['tv', 'ТВ'],
+  ['youtube', 'YouTube/Rutube'],
+  ['social', 'Соцсети (IG, TG, VK, TikTok)'],
+  ['cinema', 'Кинотеатры'],
+  ['dooh', 'Наружка / DOOH'],
+  ['site', 'Сайт / лендинг'],
+  ['internal', 'Внутренние комм.']
+];
+const BRIEF_DEFAULT_TIMELINE = [
+  'Подписание договора', 'Утверждение креатива', 'PPM',
+  'Съёмки', 'Драфт монтажа', 'Финальная сдача мастера'
+];
+const BRIEF_DEFAULT_APPROVALS = [
+  'Креатив / трактмент', 'Сценарий', 'Кастинг',
+  'Локации / костюмы', 'Финальный монтаж', 'Финальный мастер'
+];
+
+let _briefProject = null;
+let _briefSaveTimer = null;
+let _briefOpenSections = new Set(['header', 'contacts', 'brand', 'essence']);
+
+function ensureBrief(project) {
+  if (!project.brief) project.brief = {};
+  const b = project.brief;
+  b.externalLink = b.externalLink || '';
+  b.header = b.header || {};
+  b.contacts = b.contacts || {};
+  b.brand = b.brand || {};
+  b.essence = b.essence || {};
+  b.goals = b.goals || {};
+  b.audience = b.audience || {};
+  b.message = b.message || {};
+  b.style = b.style || { tones: [] };
+  if (!Array.isArray(b.style.tones)) b.style.tones = [];
+  b.mandatory = b.mandatory || {};
+  b.distribution = b.distribution || { platforms: [], formats: [] };
+  if (!Array.isArray(b.distribution.platforms)) b.distribution.platforms = [];
+  if (!Array.isArray(b.distribution.formats)) b.distribution.formats = [];
+  if (b.distribution.formats.length === 0) {
+    b.distribution.formats = [
+      { format: '', where: '', requirements: '' },
+      { format: '', where: '', requirements: '' }
+    ];
+  }
+  b.timeline = Array.isArray(b.timeline) ? b.timeline : null;
+  if (!b.timeline || b.timeline.length === 0) {
+    b.timeline = BRIEF_DEFAULT_TIMELINE.map(s => ({ stage: s, date: '', strict: false }));
+  }
+  b.budget = b.budget || {};
+  b.approvals = Array.isArray(b.approvals) ? b.approvals : null;
+  if (!b.approvals || b.approvals.length === 0) {
+    b.approvals = BRIEF_DEFAULT_APPROVALS.map(s => ({ stage: s, who: '', deadline: '', channel: '' }));
+  }
+  b.rights = b.rights || {};
+  b.extra = b.extra || '';
+  b.signatures = b.signatures || {};
+  return b;
+}
+
+function openBriefEditor() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  _briefProject = project;
+  ensureBrief(project);
+  document.getElementById('brief-title').textContent = 'Бриф · ' + (project.name || 'проект');
+  renderBriefEditor();
+  document.getElementById('m-brief').classList.add('active');
+}
+
+function isBriefSectionOpen(id) { return _briefOpenSections.has(id); }
+function toggleBriefSection(id) {
+  if (_briefOpenSections.has(id)) _briefOpenSections.delete(id);
+  else _briefOpenSections.add(id);
+  renderBriefEditor();
+}
+
+function renderBriefEditor() {
+  const b = ensureBrief(_briefProject);
+  const root = document.getElementById('brief-editor-root');
+  // Счётчик заполненных полей (примерно)
+  let filled = 0, total = 0;
+  function checkFields(obj) {
+    Object.values(obj || {}).forEach(v => {
+      if (typeof v === 'string') { total++; if (v.trim()) filled++; }
+    });
+  }
+  ['header', 'contacts', 'brand', 'essence', 'goals', 'audience', 'message', 'mandatory', 'budget', 'rights', 'signatures']
+    .forEach(k => checkFields(b[k]));
+  total++; if (b.extra) filled++;
+  document.getElementById('brief-footer-info').textContent =
+    `Заполнено ${filled} из ~${total} полей · авто-сохранение`;
+
+  const extLink = b.externalLink || '';
+  let html = `
+    <div class="timing-link-bar" style="margin-bottom: 12px;">
+      <div class="timing-link-bar-l">
+        <span class="t-link-ico">🔗</span>
+        <span class="t-link-label">Ссылка на внешний бриф</span>
+        <input type="url" id="brief-ext-link" class="t-link-input" placeholder="https://... (Notion / Google Docs / Figma)" value="${escapeHtml(extLink)}">
+      </div>
+      <div class="timing-link-bar-r">
+        ${extLink ? `<a href="${escapeHtml(extLink)}" target="_blank" rel="noopener" class="t-link-open">↗ открыть</a>` : ''}
+        ${extLink ? `<button class="t-link-clear" onclick="clearBriefLink()" title="Убрать ссылку">×</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  // 1. Шапка
+  html += briefSection(1, 'header', 'Шапка', `
+    <div class="brief-grid cols-4">
+      <div class="brief-field">
+        <label>Дата брифа</label>
+        <input type="date" data-bf="header.date" value="${escapeHtml(b.header.date || '')}">
+      </div>
+      <div class="brief-field">
+        <label>Тип проекта</label>
+        <select data-bf="header.type">
+          <option value="">—</option>
+          <option value="ad" ${b.header.type === 'ad' ? 'selected' : ''}>Реклама</option>
+          <option value="mv" ${b.header.type === 'mv' ? 'selected' : ''}>Клип</option>
+          <option value="other" ${b.header.type === 'other' ? 'selected' : ''}>Иное</option>
+        </select>
+      </div>
+      <div class="brief-field">
+        <label>Бренд / артист</label>
+        <input type="text" data-bf="header.brand" value="${escapeHtml(b.header.brand || '')}" placeholder="Из проекта">
+      </div>
+      <div class="brief-field">
+        <label>Внутренний код</label>
+        <input type="text" data-bf="header.code" value="${escapeHtml(b.header.code || '')}" placeholder="—">
+      </div>
+    </div>
+  `);
+
+  // 2. Контакты клиента
+  html += briefSection(2, 'contacts', 'Контакты со стороны клиента', `
+    <div class="brief-grid cols-4">
+      <div class="brief-field"><label>Компания</label><input type="text" data-bf="contacts.company" value="${escapeHtml(b.contacts.company || '')}"></div>
+      <div class="brief-field"><label>ИНН / ОГРН</label><input type="text" data-bf="contacts.inn" value="${escapeHtml(b.contacts.inn || '')}"></div>
+      <div class="brief-field"><label>Сайт / соцсети</label><input type="text" data-bf="contacts.site" value="${escapeHtml(b.contacts.site || '')}"></div>
+      <div class="brief-field"><label>Город</label><input type="text" data-bf="contacts.city" value="${escapeHtml(b.contacts.city || '')}"></div>
+      <div class="brief-field"><label>Контактное лицо</label><input type="text" data-bf="contacts.contactName" value="${escapeHtml(b.contacts.contactName || '')}"></div>
+      <div class="brief-field"><label>Должность</label><input type="text" data-bf="contacts.contactRole" value="${escapeHtml(b.contacts.contactRole || '')}"></div>
+      <div class="brief-field"><label>Телефон</label><input type="text" data-bf="contacts.contactPhone" value="${escapeHtml(b.contacts.contactPhone || '')}"></div>
+      <div class="brief-field"><label>E-mail</label><input type="email" data-bf="contacts.contactEmail" value="${escapeHtml(b.contacts.contactEmail || '')}"></div>
+      <div class="brief-field"><label>ЛПР (ФИО)</label><input type="text" data-bf="contacts.decisionMaker" value="${escapeHtml(b.contacts.decisionMaker || '')}"></div>
+      <div class="brief-field"><label>Должность ЛПР</label><input type="text" data-bf="contacts.dmRole" value="${escapeHtml(b.contacts.dmRole || '')}"></div>
+      <div class="brief-field"><label>Финальный согласующий</label><input type="text" data-bf="contacts.finalApprover" value="${escapeHtml(b.contacts.finalApprover || '')}"></div>
+      <div class="brief-field"><label>Юрист / правовая сторона</label><input type="text" data-bf="contacts.legal" value="${escapeHtml(b.contacts.legal || '')}"></div>
+    </div>
+  `);
+
+  // 3. О бренде / артисте
+  html += briefSection(3, 'brand', 'О бренде / артисте', `
+    <div class="brief-grid">
+      <div class="brief-field"><label>Что за бренд / артист (2-3 предложения)</label><textarea data-bf="brand.about" rows="3">${escapeHtml(b.brand.about || '')}</textarea></div>
+      <div class="brief-field"><label>Tone of voice и позиционирование</label><textarea data-bf="brand.tone" rows="2">${escapeHtml(b.brand.tone || '')}</textarea></div>
+      <div class="brief-field"><label>Прошлые проекты / референсы из портфолио (ссылки)</label><textarea data-bf="brand.portfolio" rows="2">${escapeHtml(b.brand.portfolio || '')}</textarea></div>
+    </div>
+  `);
+
+  // 4. Суть проекта
+  html += briefSection(4, 'essence', 'Что именно делаем (суть проекта)', `
+    <div class="brief-grid">
+      <div class="brief-field"><label>Краткое описание (1-2 предложения)</label><textarea data-bf="essence.description" rows="2">${escapeHtml(b.essence.description || '')}</textarea></div>
+      <div class="brief-field"><label>Что должен почувствовать / понять / сделать зритель</label><textarea data-bf="essence.feeling" rows="2">${escapeHtml(b.essence.feeling || '')}</textarea></div>
+    </div>
+    <div class="brief-grid cols-4" style="margin-top:10px;">
+      <div class="brief-field"><label>Хронометраж</label><input type="text" data-bf="essence.duration" value="${escapeHtml(b.essence.duration || '')}" placeholder="30 сек / 2 мин"></div>
+      <div class="brief-field"><label>Доп. версии (cutdowns)</label><input type="text" data-bf="essence.cutdowns" value="${escapeHtml(b.essence.cutdowns || '')}" placeholder="6 / 15 / 30"></div>
+      <div class="brief-field"><label>Соотношение сторон</label><input type="text" data-bf="essence.aspectRatio" value="${escapeHtml(b.essence.aspectRatio || '')}" placeholder="16:9 / 9:16 / 1:1"></div>
+      <div class="brief-field"><label>Язык / субтитры</label><input type="text" data-bf="essence.language" value="${escapeHtml(b.essence.language || '')}" placeholder="RU / EN"></div>
+      <div class="brief-field"><label>Кол-во мастеров</label><input type="text" data-bf="essence.masters" value="${escapeHtml(b.essence.masters || '')}"></div>
+      <div class="brief-field"><label>Тех. требования</label><input type="text" data-bf="essence.techReqs" value="${escapeHtml(b.essence.techReqs || '')}"></div>
+      <div class="brief-field"><label>Звук</label><input type="text" data-bf="essence.sound" value="${escapeHtml(b.essence.sound || '')}" placeholder="Стерео / 5.1"></div>
+      <div class="brief-field"><label>Графика / титры / лого</label><input type="text" data-bf="essence.graphics" value="${escapeHtml(b.essence.graphics || '')}"></div>
+    </div>
+  `);
+
+  // 5. Цели и KPI
+  html += briefSection(5, 'goals', 'Цели проекта и KPI', `
+    <div class="brief-grid">
+      <div class="brief-field"><label>Главная цель (одна, самая важная)</label><textarea data-bf="goals.main" rows="2">${escapeHtml(b.goals.main || '')}</textarea></div>
+      <div class="brief-field"><label>Дополнительные цели</label><textarea data-bf="goals.additional" rows="2">${escapeHtml(b.goals.additional || '')}</textarea></div>
+      <div class="brief-field"><label>Как будем измерять успех (KPI / метрики)</label><textarea data-bf="goals.kpi" rows="2">${escapeHtml(b.goals.kpi || '')}</textarea></div>
+    </div>
+  `);
+
+  // 6. ЦА
+  html += briefSection(6, 'audience', 'Целевая аудитория', `
+    <div class="brief-grid cols-4">
+      <div class="brief-field"><label>Возраст (ядро)</label><input type="text" data-bf="audience.age" value="${escapeHtml(b.audience.age || '')}"></div>
+      <div class="brief-field"><label>Пол</label><input type="text" data-bf="audience.gender" value="${escapeHtml(b.audience.gender || '')}"></div>
+      <div class="brief-field"><label>География</label><input type="text" data-bf="audience.geo" value="${escapeHtml(b.audience.geo || '')}"></div>
+      <div class="brief-field"><label>Доход / соц. статус</label><input type="text" data-bf="audience.income" value="${escapeHtml(b.audience.income || '')}"></div>
+      <div class="brief-field"><label>Интересы / образ жизни</label><input type="text" data-bf="audience.interests" value="${escapeHtml(b.audience.interests || '')}"></div>
+      <div class="brief-field"><label>Где живёт онлайн</label><input type="text" data-bf="audience.online" value="${escapeHtml(b.audience.online || '')}" placeholder="IG / TG / TikTok / YT"></div>
+      <div class="brief-field"><label>Барьеры (что мешает)</label><input type="text" data-bf="audience.barriers" value="${escapeHtml(b.audience.barriers || '')}"></div>
+      <div class="brief-field"><label>Инсайт (что важно для ЦА)</label><input type="text" data-bf="audience.insight" value="${escapeHtml(b.audience.insight || '')}"></div>
+    </div>
+  `);
+
+  // 7. Сообщение
+  html += briefSection(7, 'message', 'Сообщение и обещание бренда', `
+    <div class="brief-grid">
+      <div class="brief-field"><label>Главное сообщение (одной фразой)</label><textarea data-bf="message.main" rows="2">${escapeHtml(b.message.main || '')}</textarea></div>
+      <div class="brief-field"><label>Поддерживающие аргументы (reasons to believe)</label><textarea data-bf="message.reasons" rows="3">${escapeHtml(b.message.reasons || '')}</textarea></div>
+      <div class="brief-field"><label>Call to action</label><textarea data-bf="message.cta" rows="2">${escapeHtml(b.message.cta || '')}</textarea></div>
+    </div>
+  `);
+
+  // 8. Стилистика
+  html += briefSection(8, 'style', 'Стилистика, тон и референсы', `
+    <div class="brief-field"><label>Желаемый тон ролика (можно несколько)</label>
+      <div class="brief-chips" data-bf-chips="style.tones">
+        ${BRIEF_TONES.map(([k, label]) => `
+          <div class="brief-chip ${b.style.tones.includes(k) ? 'active' : ''}" data-chip="${k}">${escapeHtml(label)}</div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="brief-grid" style="margin-top:12px;">
+      <div class="brief-field"><label>Референсы (ссылки на ролики/клипы, что нравится и почему)</label><textarea data-bf="style.refs" rows="3">${escapeHtml(b.style.refs || '')}</textarea></div>
+      <div class="brief-field"><label>Анти-референсы (что точно НЕ хотим)</label><textarea data-bf="style.antiRefs" rows="2">${escapeHtml(b.style.antiRefs || '')}</textarea></div>
+    </div>
+  `);
+
+  // 9. Обязательные элементы
+  html += briefSection(9, 'mandatory', 'Обязательные элементы и ограничения', `
+    <div class="brief-grid cols-2">
+      <div class="brief-field"><label>✓ Обязательно включить (mandatories)</label><textarea data-bf="mandatory.must" rows="3">${escapeHtml(b.mandatory.must || '')}</textarea></div>
+      <div class="brief-field"><label>✗ Нельзя показывать / использовать</label><textarea data-bf="mandatory.mustNot" rows="3">${escapeHtml(b.mandatory.mustNot || '')}</textarea></div>
+    </div>
+    <div class="brief-grid" style="margin-top:10px;">
+      <div class="brief-field"><label>Юридические / нормативные ограничения (алкоголь, фарма, 18+ и т.д.)</label><textarea data-bf="mandatory.legal" rows="2">${escapeHtml(b.mandatory.legal || '')}</textarea></div>
+    </div>
+  `);
+
+  // 10. Дистрибуция
+  html += briefSection(10, 'distribution', 'Дистрибуция и форматы', `
+    <div class="brief-field"><label>Где будет жить ролик</label>
+      <div class="brief-chips" data-bf-chips="distribution.platforms">
+        ${BRIEF_PLATFORMS.map(([k, label]) => `
+          <div class="brief-chip ${b.distribution.platforms.includes(k) ? 'active' : ''}" data-chip="${k}">${escapeHtml(label)}</div>
+        `).join('')}
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <table class="brief-list-table" id="brief-formats-table">
+        <thead><tr><th style="width:30px;">№</th><th>Формат / версия</th><th>Где публикуется</th><th>Требования</th><th style="width:30px;"></th></tr></thead>
+        <tbody>
+          ${b.distribution.formats.map((f, i) => `
+            <tr data-bf-format="${i}">
+              <td>${i + 1}</td>
+              <td><input data-bf-fmt-field="format" value="${escapeHtml(f.format || '')}" placeholder="—"></td>
+              <td><input data-bf-fmt-field="where" value="${escapeHtml(f.where || '')}" placeholder="—"></td>
+              <td><input data-bf-fmt-field="requirements" value="${escapeHtml(f.requirements || '')}" placeholder="—"></td>
+              <td><button class="t-link-clear" onclick="deleteBriefFormat(${i})" title="Удалить">×</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <button class="t-link-open" style="background:transparent;color:var(--ink,#0a0907);border:1px dashed #ccc;margin-top:8px;" onclick="addBriefFormat()">＋ строка формата</button>
+    </div>
+  `);
+
+  // 11. Сроки
+  html += briefSection(11, 'timeline', 'Сроки и дедлайны', `
+    <table class="brief-list-table">
+      <thead><tr><th>Этап</th><th style="width:160px;">Желаемая дата</th><th style="width:130px;">Жёсткий дедлайн?</th><th style="width:30px;"></th></tr></thead>
+      <tbody>
+        ${b.timeline.map((t, i) => `
+          <tr data-bf-timeline="${i}">
+            <td><input data-bf-tl-field="stage" value="${escapeHtml(t.stage || '')}" placeholder="—"></td>
+            <td><input type="date" data-bf-tl-field="date" value="${escapeHtml(t.date || '')}"></td>
+            <td><label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="checkbox" data-bf-tl-field="strict" ${t.strict ? 'checked' : ''}>да</label></td>
+            <td><button class="t-link-clear" onclick="deleteBriefTimeline(${i})" title="Удалить">×</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <button class="t-link-open" style="background:transparent;color:var(--ink,#0a0907);border:1px dashed #ccc;margin-top:8px;" onclick="addBriefTimeline()">＋ этап</button>
+  `);
+
+  // 12. Бюджет
+  html += briefSection(12, 'budget', 'Бюджет', `
+    <div class="brief-grid cols-4">
+      <div class="brief-field"><label>Общий бюджет проекта</label><input type="text" data-bf="budget.total" value="${escapeHtml(b.budget.total || '')}" placeholder="₽"></div>
+      <div class="brief-field"><label>С НДС / без НДС</label>
+        <select data-bf="budget.vat"><option value="">—</option><option value="with" ${b.budget.vat === 'with' ? 'selected' : ''}>С НДС</option><option value="without" ${b.budget.vat === 'without' ? 'selected' : ''}>Без НДС</option></select>
+      </div>
+      <div class="brief-field"><label>Постоплата / предоплата</label><input type="text" data-bf="budget.payment" value="${escapeHtml(b.budget.payment || '')}"></div>
+      <div class="brief-field"><label>Бюджет фиксированный?</label>
+        <select data-bf="budget.fixed"><option value="">—</option><option value="fixed" ${b.budget.fixed === 'fixed' ? 'selected' : ''}>Да</option><option value="range" ${b.budget.fixed === 'range' ? 'selected' : ''}>Есть вилка</option></select>
+      </div>
+      <div class="brief-field"><label>Что включено в бюджет</label><input type="text" data-bf="budget.includes" value="${escapeHtml(b.budget.includes || '')}"></div>
+      <div class="brief-field"><label>Что НЕ включено</label><input type="text" data-bf="budget.excludes" value="${escapeHtml(b.budget.excludes || '')}"></div>
+      <div class="brief-field"><label>Источник средств / закупка</label><input type="text" data-bf="budget.source" value="${escapeHtml(b.budget.source || '')}"></div>
+      <div class="brief-field"><label>Тип договора</label>
+        <select data-bf="budget.contractType"><option value="">—</option><option value="ip-ip" ${b.budget.contractType === 'ip-ip' ? 'selected' : ''}>ИП-ИП</option><option value="ip-smz" ${b.budget.contractType === 'ip-smz' ? 'selected' : ''}>ИП-СМЗ</option><option value="other" ${b.budget.contractType === 'other' ? 'selected' : ''}>Иное</option></select>
+      </div>
+    </div>
+  `);
+
+  // 13. Согласования
+  html += briefSection(13, 'approvals', 'Согласования: кто и что утверждает', `
+    <table class="brief-list-table">
+      <thead><tr><th>Этап</th><th>Кто (ФИО)</th><th style="width:130px;">Срок</th><th>Канал</th><th style="width:30px;"></th></tr></thead>
+      <tbody>
+        ${b.approvals.map((a, i) => `
+          <tr data-bf-approval="${i}">
+            <td><input data-bf-ap-field="stage" value="${escapeHtml(a.stage || '')}"></td>
+            <td><input data-bf-ap-field="who" value="${escapeHtml(a.who || '')}"></td>
+            <td><input data-bf-ap-field="deadline" value="${escapeHtml(a.deadline || '')}"></td>
+            <td><input data-bf-ap-field="channel" value="${escapeHtml(a.channel || '')}" placeholder="TG / email / звонок"></td>
+            <td><button class="t-link-clear" onclick="deleteBriefApproval(${i})" title="Удалить">×</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <button class="t-link-open" style="background:transparent;color:var(--ink,#0a0907);border:1px dashed #ccc;margin-top:8px;" onclick="addBriefApproval()">＋ согласование</button>
+  `);
+
+  // 14. Права
+  html += briefSection(14, 'rights', 'Права и юридические моменты', `
+    <div class="brief-grid cols-4">
+      <div class="brief-field"><label>Срок действия прав</label><input type="text" data-bf="rights.term" value="${escapeHtml(b.rights.term || '')}"></div>
+      <div class="brief-field"><label>Территория</label><input type="text" data-bf="rights.territory" value="${escapeHtml(b.rights.territory || '')}"></div>
+      <div class="brief-field"><label>Эксклюзив / неэксклюзив</label>
+        <select data-bf="rights.exclusivity"><option value="">—</option><option value="excl" ${b.rights.exclusivity === 'excl' ? 'selected' : ''}>Эксклюзив</option><option value="non" ${b.rights.exclusivity === 'non' ? 'selected' : ''}>Неэксклюзив</option></select>
+      </div>
+      <div class="brief-field"><label>Право переделки / монтажа</label>
+        <select data-bf="rights.editRight"><option value="">—</option><option value="yes" ${b.rights.editRight === 'yes' ? 'selected' : ''}>Да</option><option value="no" ${b.rights.editRight === 'no' ? 'selected' : ''}>Нет</option></select>
+      </div>
+      <div class="brief-field"><label>Музыка: лицензия / оригинал</label><input type="text" data-bf="rights.music" value="${escapeHtml(b.rights.music || '')}"></div>
+      <div class="brief-field"><label>Закадровый голос: права</label><input type="text" data-bf="rights.voice" value="${escapeHtml(b.rights.voice || '')}"></div>
+      <div class="brief-field"><label>Логотипы / графика клиента</label><input type="text" data-bf="rights.logos" value="${escapeHtml(b.rights.logos || '')}"></div>
+      <div class="brief-field"><label>NDA / коммерч. тайна</label>
+        <select data-bf="rights.nda"><option value="">—</option><option value="signed" ${b.rights.nda === 'signed' ? 'selected' : ''}>Подписан</option><option value="needed" ${b.rights.nda === 'needed' ? 'selected' : ''}>Требуется</option><option value="no" ${b.rights.nda === 'no' ? 'selected' : ''}>Нет</option></select>
+      </div>
+    </div>
+  `);
+
+  // 15. Доп. инфо
+  html += briefSection(15, 'extra', 'Дополнительная информация / комментарии', `
+    <div class="brief-field"><textarea data-bf="extra" rows="4">${escapeHtml(b.extra || '')}</textarea></div>
+  `);
+
+  root.innerHTML = html;
+
+  // ----- Обработчики -----
+  // Ссылка
+  const linkEl = document.getElementById('brief-ext-link');
+  if (linkEl) {
+    linkEl.addEventListener('input', e => { _briefProject.brief.externalLink = e.target.value.trim(); scheduleBriefSave(); });
+    linkEl.addEventListener('blur', e => {
+      const val = e.target.value.trim();
+      if ((!!val) !== (!!extLink)) renderBriefEditor();
+    });
+  }
+  // Сворачивание секций
+  root.querySelectorAll('.brief-section-head').forEach(head => {
+    head.addEventListener('click', () => {
+      const sec = head.closest('.brief-section');
+      toggleBriefSection(sec.dataset.bsec);
+    });
+  });
+  // Поля
+  root.querySelectorAll('[data-bf]').forEach(el => {
+    el.addEventListener('input', onBriefFieldChange);
+    el.addEventListener('change', onBriefFieldChange);
+  });
+  // Чипы
+  root.querySelectorAll('.brief-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const wrap = chip.closest('[data-bf-chips]');
+      const path = wrap.dataset.bfChips;
+      const arr = getBriefByPath(path);
+      const k = chip.dataset.chip;
+      const idx = arr.indexOf(k);
+      if (idx >= 0) arr.splice(idx, 1); else arr.push(k);
+      chip.classList.toggle('active');
+      scheduleBriefSave();
+    });
+  });
+  // Таблица форматов
+  root.querySelectorAll('[data-bf-format]').forEach(row => {
+    const idx = parseInt(row.dataset.bfFormat, 10);
+    row.querySelectorAll('input[data-bf-fmt-field]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        _briefProject.brief.distribution.formats[idx][inp.dataset.bfFmtField] = inp.value;
+        scheduleBriefSave();
+      });
+    });
+  });
+  // Таблица timeline
+  root.querySelectorAll('[data-bf-timeline]').forEach(row => {
+    const idx = parseInt(row.dataset.bfTimeline, 10);
+    row.querySelectorAll('input[data-bf-tl-field]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const f = inp.dataset.bfTlField;
+        _briefProject.brief.timeline[idx][f] = inp.type === 'checkbox' ? inp.checked : inp.value;
+        scheduleBriefSave();
+      });
+      inp.addEventListener('change', () => {
+        const f = inp.dataset.bfTlField;
+        _briefProject.brief.timeline[idx][f] = inp.type === 'checkbox' ? inp.checked : inp.value;
+        scheduleBriefSave();
+      });
+    });
+  });
+  // Таблица approvals
+  root.querySelectorAll('[data-bf-approval]').forEach(row => {
+    const idx = parseInt(row.dataset.bfApproval, 10);
+    row.querySelectorAll('input[data-bf-ap-field]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        _briefProject.brief.approvals[idx][inp.dataset.bfApField] = inp.value;
+        scheduleBriefSave();
+      });
+    });
+  });
+}
+
+function briefSection(num, id, title, bodyHtml) {
+  const open = isBriefSectionOpen(id);
+  return `
+    <div class="brief-section ${open ? 'open' : ''}" data-bsec="${id}">
+      <div class="brief-section-head">
+        <div class="brief-section-num">${num}</div>
+        <div class="brief-section-title">${escapeHtml(title)}</div>
+        <div class="brief-section-arrow">▶</div>
+      </div>
+      <div class="brief-section-body">${bodyHtml}</div>
+    </div>
+  `;
+}
+
+function getBriefByPath(path) {
+  const parts = path.split('.');
+  let obj = _briefProject.brief;
+  for (let i = 0; i < parts.length; i++) {
+    if (obj[parts[i]] === undefined) obj[parts[i]] = (i === parts.length - 1) ? '' : {};
+    if (i === parts.length - 1) return obj[parts[i]];
+    obj = obj[parts[i]];
+  }
+  return obj;
+}
+function setBriefByPath(path, value) {
+  const parts = path.split('.');
+  let obj = _briefProject.brief;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!obj[parts[i]] || typeof obj[parts[i]] !== 'object') obj[parts[i]] = {};
+    obj = obj[parts[i]];
+  }
+  obj[parts[parts.length - 1]] = value;
+}
+
+function onBriefFieldChange(e) {
+  const el = e.target;
+  const path = el.dataset.bf;
+  let value;
+  if (el.type === 'checkbox') value = el.checked;
+  else value = el.value;
+  setBriefByPath(path, value);
+  scheduleBriefSave();
+}
+
+function scheduleBriefSave() {
+  clearTimeout(_briefSaveTimer);
+  _briefSaveTimer = setTimeout(() => saveBriefNow(), 400);
+}
+function saveBriefNow() {
+  if (!_briefProject) return;
+  DB.updateProject(_briefProject.id, { brief: _briefProject.brief });
+}
+
+function addBriefFormat() {
+  _briefProject.brief.distribution.formats.push({ format: '', where: '', requirements: '' });
+  saveBriefNow();
+  renderBriefEditor();
+}
+function deleteBriefFormat(i) {
+  _briefProject.brief.distribution.formats.splice(i, 1);
+  saveBriefNow();
+  renderBriefEditor();
+}
+function addBriefTimeline() {
+  _briefProject.brief.timeline.push({ stage: '', date: '', strict: false });
+  saveBriefNow();
+  renderBriefEditor();
+}
+function deleteBriefTimeline(i) {
+  _briefProject.brief.timeline.splice(i, 1);
+  saveBriefNow();
+  renderBriefEditor();
+}
+function addBriefApproval() {
+  _briefProject.brief.approvals.push({ stage: '', who: '', deadline: '', channel: '' });
+  saveBriefNow();
+  renderBriefEditor();
+}
+function deleteBriefApproval(i) {
+  _briefProject.brief.approvals.splice(i, 1);
+  saveBriefNow();
+  renderBriefEditor();
+}
+
+function clearBriefLink() {
+  if (!_briefProject) return;
+  _briefProject.brief.externalLink = '';
+  saveBriefNow();
+  renderBriefEditor();
+}
+
+function briefAutofillFromProject() {
+  if (!_briefProject) return;
+  const p = _briefProject;
+  const b = ensureBrief(p);
+  // Шапка
+  if (!b.header.brand) b.header.brand = p.artist || p.client || '';
+  if (!b.header.type) {
+    const t = (p.type || '').toLowerCase();
+    if (t.includes('mv') || t.includes('клип')) b.header.type = 'mv';
+    else if (t.includes('ad') || t.includes('реклам')) b.header.type = 'ad';
+  }
+  // Бренд / контакты
+  if (!b.brand.about) b.brand.about = p.artist || p.client || '';
+  if (!b.contacts.company) b.contacts.company = p.client || '';
+  // Сроки
+  if (p.deadline && b.timeline) {
+    const finalRow = b.timeline.find(t => t.stage.toLowerCase().includes('финал') || t.stage.toLowerCase().includes('сдача'));
+    if (finalRow && !finalRow.date) finalRow.date = p.deadline;
+  }
+  // Бюджет
+  if (p.budget && !b.budget.total) b.budget.total = String(p.budget);
+  saveBriefNow();
+  renderBriefEditor();
+  toast('Поля подтянуты из проекта', 'success');
+}
+
+/* ===== ЭКСПОРТ БРИФА В PDF ===== */
+async function exportBriefToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  if (!_briefProject) return;
+  const b = ensureBrief(_briefProject);
+  toast('Готовлю PDF...', 'success');
+  const container = buildBriefPrintHTML(_briefProject, b);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
+    }));
+    const canvas = await html2canvas(container, {
+      scale: 2.5, useCORS: true, backgroundColor: '#ffffff', logging: false,
+      windowWidth: 794, letterRendering: true, allowTaint: false, imageTimeout: 15000
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const imgW = pdfW;
+    const ratio = canvas.height / canvas.width;
+    const imgH = imgW * ratio;
+    const totalPages = Math.ceil(imgH / pdfH);
+    const imgData = canvas.toDataURL('image/png');
+    let pos = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pos -= pdfH;
+    }
+    const slug = (_briefProject.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`Бриф_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('Бриф PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка PDF: ' + e.message, 'error');
+  }
+}
+
+function buildBriefPrintHTML(project, b) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#fff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;line-height:1.45;';
+  const typeLabel = b.header.type === 'mv' ? 'Клип' : b.header.type === 'ad' ? 'Реклама' : (b.header.type === 'other' ? 'Иное' : '—');
+  function sec(title, body) {
+    return `<div style="margin:18px 36px 0;page-break-inside:avoid;">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:#0a0907;padding:8px 14px;border-radius:4px 4px 0 0;">${title}</div>
+      <div style="border:1px solid #ececec;border-top:none;padding:12px 14px;font-size:11px;border-radius:0 0 4px 4px;">${body}</div>
+    </div>`;
+  }
+  function field(label, value) {
+    return `<div style="margin-bottom:6px;"><span style="font-weight:700;color:#555;font-size:10px;letter-spacing:0.3px;text-transform:uppercase;">${escapeHtml(label)}: </span><span>${escapeHtml(value || '—')}</span></div>`;
+  }
+  function fieldRow(items) {
+    return `<div style="display:grid;grid-template-columns:repeat(${items.length},1fr);gap:8px;margin-bottom:6px;">${items.map(([l, v]) => `
+      <div><div style="font-weight:700;color:#888;font-size:9px;letter-spacing:0.3px;text-transform:uppercase;margin-bottom:2px;">${escapeHtml(l)}</div><div style="font-size:11px;">${escapeHtml(v || '—')}</div></div>`).join('')}</div>`;
+  }
+  function block(label, value) {
+    return `<div style="margin-bottom:8px;">
+      <div style="font-weight:700;color:#888;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;">${escapeHtml(label)}</div>
+      <div style="font-size:11px;white-space:pre-wrap;">${escapeHtml(value || '—')}</div></div>`;
+  }
+  const toneLabels = b.style.tones.map(k => (BRIEF_TONES.find(t => t[0] === k) || [k, k])[1]).join(', ') || '—';
+  const platLabels = b.distribution.platforms.map(k => (BRIEF_PLATFORMS.find(t => t[0] === k) || [k, k])[1]).join(', ') || '—';
+
+  let html = `
+    <div style="background:#fff;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
+      <img src="logo.png" alt="ZALOVE" style="height:26px;width:auto;" crossorigin="anonymous">
+      <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;">Бриф клиента · ${new Date().toLocaleDateString('ru-RU')}</div>
+    </div>
+    <div style="padding:28px 36px 6px;">
+      <div style="font-size:30px;font-weight:900;letter-spacing:-0.5px;line-height:1;">БРИФ КЛИЕНТА</div>
+      <div style="font-size:13px;color:#444;margin-top:6px;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''} · ${escapeHtml(typeLabel)}</div>
+    </div>
+    ${b.externalLink ? `<div style="margin:12px 36px 0;padding:8px 12px;background:#eef2ff;border-radius:4px;font-size:10px;color:#4338ca;">🔗 Внешний бриф: ${escapeHtml(b.externalLink)}</div>` : ''}
+  `;
+
+  html += sec('1. Шапка', fieldRow([
+    ['Дата брифа', formatDateRu(b.header.date) || b.header.date],
+    ['Тип', typeLabel],
+    ['Бренд/артист', b.header.brand],
+    ['Внутренний код', b.header.code]
+  ]));
+
+  html += sec('2. Контакты со стороны клиента', `
+    ${fieldRow([['Компания', b.contacts.company], ['ИНН/ОГРН', b.contacts.inn], ['Сайт/соцсети', b.contacts.site], ['Город', b.contacts.city]])}
+    ${fieldRow([['Контактное лицо', b.contacts.contactName], ['Должность', b.contacts.contactRole], ['Телефон', b.contacts.contactPhone], ['E-mail', b.contacts.contactEmail]])}
+    ${fieldRow([['ЛПР', b.contacts.decisionMaker], ['Должность ЛПР', b.contacts.dmRole], ['Финальный согласующий', b.contacts.finalApprover], ['Юрист', b.contacts.legal]])}
+  `);
+
+  html += sec('3. О бренде / артисте', `
+    ${block('О бренде / артисте', b.brand.about)}
+    ${block('Tone of voice', b.brand.tone)}
+    ${block('Портфолио', b.brand.portfolio)}
+  `);
+
+  html += sec('4. Суть проекта', `
+    ${block('Краткое описание', b.essence.description)}
+    ${block('Что должен почувствовать зритель', b.essence.feeling)}
+    ${fieldRow([['Хронометраж', b.essence.duration], ['Cutdowns', b.essence.cutdowns], ['AR', b.essence.aspectRatio], ['Язык', b.essence.language]])}
+    ${fieldRow([['Мастеров', b.essence.masters], ['Тех. треб.', b.essence.techReqs], ['Звук', b.essence.sound], ['Графика', b.essence.graphics]])}
+  `);
+
+  html += sec('5. Цели проекта и KPI', `
+    ${block('Главная цель', b.goals.main)}
+    ${block('Доп. цели', b.goals.additional)}
+    ${block('KPI / метрики', b.goals.kpi)}
+  `);
+
+  html += sec('6. Целевая аудитория', `
+    ${fieldRow([['Возраст', b.audience.age], ['Пол', b.audience.gender], ['География', b.audience.geo], ['Доход', b.audience.income]])}
+    ${fieldRow([['Интересы', b.audience.interests], ['Онлайн', b.audience.online], ['Барьеры', b.audience.barriers], ['Инсайт', b.audience.insight]])}
+  `);
+
+  html += sec('7. Сообщение и обещание бренда', `
+    ${block('Главное сообщение', b.message.main)}
+    ${block('Reasons to believe', b.message.reasons)}
+    ${block('Call to action', b.message.cta)}
+  `);
+
+  html += sec('8. Стилистика, тон и референсы', `
+    ${field('Желаемый тон', toneLabels)}
+    ${block('Референсы', b.style.refs)}
+    ${block('Анти-референсы', b.style.antiRefs)}
+  `);
+
+  html += sec('9. Обязательные элементы и ограничения', `
+    ${block('✓ Обязательно включить', b.mandatory.must)}
+    ${block('✗ Нельзя показывать', b.mandatory.mustNot)}
+    ${block('Юридические ограничения', b.mandatory.legal)}
+  `);
+
+  html += sec('10. Дистрибуция и форматы', `
+    ${field('Площадки', platLabels)}
+    ${b.distribution.formats.length > 0 ? `
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:6px;">
+        <thead><tr style="background:#f5f5f0;color:#555;font-size:9px;letter-spacing:0.5px;">
+          <th style="padding:6px 10px;text-align:left;width:20px;">№</th>
+          <th style="padding:6px 10px;text-align:left;">Формат</th>
+          <th style="padding:6px 10px;text-align:left;">Где</th>
+          <th style="padding:6px 10px;text-align:left;">Требования</th>
+        </tr></thead>
+        <tbody>${b.distribution.formats.map((f, i) => `
+          <tr style="border-top:1px solid #ececec;">
+            <td style="padding:5px 10px;">${i + 1}</td>
+            <td style="padding:5px 10px;">${escapeHtml(f.format || '—')}</td>
+            <td style="padding:5px 10px;">${escapeHtml(f.where || '—')}</td>
+            <td style="padding:5px 10px;">${escapeHtml(f.requirements || '—')}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+    ` : ''}
+  `);
+
+  html += sec('11. Сроки и дедлайны', `
+    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <thead><tr style="background:#f5f5f0;color:#555;font-size:9px;letter-spacing:0.5px;">
+        <th style="padding:6px 10px;text-align:left;">Этап</th>
+        <th style="padding:6px 10px;text-align:left;width:140px;">Дата</th>
+        <th style="padding:6px 10px;text-align:left;width:100px;">Жёсткий?</th>
+      </tr></thead>
+      <tbody>${b.timeline.map(t => `
+        <tr style="border-top:1px solid #ececec;">
+          <td style="padding:5px 10px;">${escapeHtml(t.stage || '—')}</td>
+          <td style="padding:5px 10px;">${escapeHtml(formatDateRu(t.date) || t.date || '—')}</td>
+          <td style="padding:5px 10px;">${t.strict ? '✓ да' : '—'}</td>
+        </tr>`).join('')}</tbody>
+    </table>
+  `);
+
+  const vatLabel = b.budget.vat === 'with' ? 'С НДС' : (b.budget.vat === 'without' ? 'Без НДС' : '—');
+  const fixedLabel = b.budget.fixed === 'fixed' ? 'Да' : (b.budget.fixed === 'range' ? 'Вилка' : '—');
+  const ctLabel = b.budget.contractType === 'ip-ip' ? 'ИП-ИП' : (b.budget.contractType === 'ip-smz' ? 'ИП-СМЗ' : (b.budget.contractType === 'other' ? 'Иное' : '—'));
+  html += sec('12. Бюджет', `
+    ${fieldRow([['Общий бюджет', b.budget.total], ['НДС', vatLabel], ['Оплата', b.budget.payment], ['Бюджет', fixedLabel]])}
+    ${fieldRow([['Включено', b.budget.includes], ['Не включено', b.budget.excludes], ['Источник', b.budget.source], ['Тип договора', ctLabel]])}
+  `);
+
+  html += sec('13. Согласования', `
+    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <thead><tr style="background:#f5f5f0;color:#555;font-size:9px;letter-spacing:0.5px;">
+        <th style="padding:6px 10px;text-align:left;">Этап</th>
+        <th style="padding:6px 10px;text-align:left;">Кто</th>
+        <th style="padding:6px 10px;text-align:left;width:120px;">Срок</th>
+        <th style="padding:6px 10px;text-align:left;width:130px;">Канал</th>
+      </tr></thead>
+      <tbody>${b.approvals.map(a => `
+        <tr style="border-top:1px solid #ececec;">
+          <td style="padding:5px 10px;">${escapeHtml(a.stage || '—')}</td>
+          <td style="padding:5px 10px;">${escapeHtml(a.who || '—')}</td>
+          <td style="padding:5px 10px;">${escapeHtml(a.deadline || '—')}</td>
+          <td style="padding:5px 10px;">${escapeHtml(a.channel || '—')}</td>
+        </tr>`).join('')}</tbody>
+    </table>
+  `);
+
+  const exclLabel = b.rights.exclusivity === 'excl' ? 'Эксклюзив' : (b.rights.exclusivity === 'non' ? 'Неэксклюзив' : '—');
+  const editLabel = b.rights.editRight === 'yes' ? 'Да' : (b.rights.editRight === 'no' ? 'Нет' : '—');
+  const ndaLabel = b.rights.nda === 'signed' ? 'Подписан' : (b.rights.nda === 'needed' ? 'Требуется' : (b.rights.nda === 'no' ? 'Нет' : '—'));
+  html += sec('14. Права и юридические моменты', `
+    ${fieldRow([['Срок прав', b.rights.term], ['Территория', b.rights.territory], ['Эксклюзив', exclLabel], ['Право переделки', editLabel]])}
+    ${fieldRow([['Музыка', b.rights.music], ['Голос', b.rights.voice], ['Лого/графика', b.rights.logos], ['NDA', ndaLabel]])}
+  `);
+
+  if (b.extra && b.extra.trim()) {
+    html += sec('15. Дополнительная информация', `${block('', b.extra)}`);
+  }
+
+  html += `<div style="margin:36px 36px 24px;padding-top:10px;border-top:1px solid #e5e5e5;font-size:9px;color:#888;letter-spacing:0.5px;">
+    ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · Бриф · ${new Date().toLocaleDateString('ru-RU')}
+  </div>`;
+
+  c.innerHTML = html;
+  return c;
+}
+
+/* ============================================================
    ТАЙМИНГ ПРОЕКТА — РЕДАКТОР + ЭКСПОРТ
    ============================================================ */
 const TIMING_DEFAULT_STAGES = [
@@ -11542,6 +12518,11 @@ function closeAll() {
   if (_timingSaveTimer) {
     clearTimeout(_timingSaveTimer);
     saveTimingNow();
+  }
+  // Сохранить бриф немедленно
+  if (_briefSaveTimer) {
+    clearTimeout(_briefSaveTimer);
+    saveBriefNow();
   }
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
 }
