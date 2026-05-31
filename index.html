@@ -12466,52 +12466,472 @@ function clearPpmData() {
   toast('ППМ очищен', 'success');
 }
 
-/* ===== ЭКСПОРТ ППМ В PDF ===== */
+/* ===== ЭКСПОРТ ППМ В PDF — СЛАЙДЫ ===== */
+const PPM_SLIDE_W = 1123;  // landscape A4 ratio 1.414
+const PPM_SLIDE_H = 794;
+
+// Загрузить картинку, узнать её натуральные размеры
+function loadImageMeta(src) {
+  return new Promise((resolve) => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve({ src, w: img.naturalWidth, h: img.naturalHeight });
+    img.onerror = () => resolve(null);
+    img.src = src;
+    setTimeout(() => resolve(null), 5000);
+  });
+}
+
+// Подогнать картинку под бокс — возвращает размеры для display
+function fitInBox(natW, natH, boxW, boxH) {
+  if (!natW || !natH) return { w: boxW, h: boxH };
+  const sx = boxW / natW;
+  const sy = boxH / natH;
+  const s = Math.min(sx, sy);
+  return { w: Math.round(natW * s), h: Math.round(natH * s) };
+}
+
+// HTML для картинки в фиксированном боксе (вписана, центрирована, без обрезки)
+function ppmImageBox(meta, boxW, boxH, radius) {
+  radius = radius || 0;
+  if (!meta || !meta.src) {
+    return `<div style="width:${boxW}px;height:${boxH}px;background:#f5f5f0;border-radius:${radius}px;"></div>`;
+  }
+  const fit = fitInBox(meta.w, meta.h, boxW, boxH);
+  const dx = Math.round((boxW - fit.w) / 2);
+  const dy = Math.round((boxH - fit.h) / 2);
+  return `<div style="width:${boxW}px;height:${boxH}px;background:#f5f5f0;border-radius:${radius}px;position:relative;overflow:hidden;">
+    <img src="${meta.src}" style="position:absolute;left:${dx}px;top:${dy}px;width:${fit.w}px;height:${fit.h}px;display:block;" crossorigin="anonymous">
+  </div>`;
+}
+
+function ppmSlideShell(innerHtml) {
+  const c = document.createElement('div');
+  c.style.cssText = `position:absolute;left:-99999px;top:0;width:${PPM_SLIDE_W}px;height:${PPM_SLIDE_H}px;background:#ffffff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;line-height:1.4;overflow:hidden;box-sizing:border-box;`;
+  c.innerHTML = innerHtml;
+  return c;
+}
+
+function ppmSecLabel(num, title) {
+  return `<div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#999;text-transform:uppercase;margin-bottom:18px;">${num}. ${escapeHtml(title)}</div>`;
+}
+
 async function exportPpmToPdf() {
   if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
     toast('Библиотеки не загрузились', 'error'); return;
   }
   if (!_ppmProject) return;
-  const p = ensurePpm(_ppmProject);
-  toast('Готовлю ППМ PDF...', 'success');
-  const container = buildPpmPrintHTML(_ppmProject, p);
-  document.body.appendChild(container);
-  try {
-    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
-      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
-      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 5000); });
-    }));
-    const canvas = await html2canvas(container, {
-      scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
-      windowWidth: 1100, letterRendering: true, allowTaint: false, imageTimeout: 20000
-    });
-    document.body.removeChild(container);
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
-    const pdfW = pdf.internal.pageSize.getWidth();
-    const pdfH = pdf.internal.pageSize.getHeight();
-    const imgW = pdfW;
-    const ratio = canvas.height / canvas.width;
-    const imgH = imgW * ratio;
-    const totalPages = Math.ceil(imgH / pdfH);
-    const imgData = canvas.toDataURL('image/jpeg', 0.88);
-    let pos = 0;
-    for (let i = 0; i < totalPages; i++) {
+  const project = _ppmProject;
+  const p = ensurePpm(project);
+  toast('Готовлю ППМ — собираю фото...', 'success');
+
+  // Шаг 1: соберём метаданные всех картинок (одной пачкой)
+  const allImageSrcs = new Set();
+  function add(src) { if (src && typeof src === 'string') allImageSrcs.add(src); }
+  p.storyboard.forEach(f => add(f.image));
+  p.locations.forEach(l => add(l.image));
+  p.cast.forEach(a => add(a.image));
+  p.costumes.forEach(co => (co.options || []).forEach(o => add(o.image)));
+  p.makeup.forEach(m => { add(m.makeupRef); add(m.hairRef); });
+  p.decor.forEach(d => { add(d.floorplan); add(d.detail1); add(d.detail2); });
+  PPM_PROPS_CATEGORIES.forEach(cat => (p.props[cat.key] || []).forEach(it => add(it.image)));
+  p.customSections.forEach(cs => (cs.items || []).forEach(it => add(it.image)));
+  const metas = {};
+  await Promise.all([...allImageSrcs].map(src => loadImageMeta(src).then(m => { if (m) metas[src] = m; })));
+
+  // Также пре-загрузим лого
+  const logoMeta = await loadImageMeta('logo.png');
+
+  // Шаг 2: соберём массив слайдов (HTML)
+  const slides = buildPpmSlides(project, p, metas, logoMeta);
+  toast(`Готово ${slides.length} слайдов, рендерю...`, 'success');
+
+  // Шаг 3: рендерим каждый слайд → страница PDF
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
+  const pdfW = pdf.internal.pageSize.getWidth();
+  const pdfH = pdf.internal.pageSize.getHeight();
+
+  for (let i = 0; i < slides.length; i++) {
+    const el = slides[i];
+    document.body.appendChild(el);
+    try {
+      // ждём загрузки картинок в этом слайде
+      await Promise.all(Array.from(el.querySelectorAll('img')).map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+        return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 4000); });
+      }));
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: PPM_SLIDE_W,
+        height: PPM_SLIDE_H,
+        windowWidth: PPM_SLIDE_W,
+        windowHeight: PPM_SLIDE_H,
+        letterRendering: true,
+        allowTaint: false,
+        imageTimeout: 15000
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.88);
       if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', 0, pos, imgW, imgH, undefined, 'FAST');
-      pos -= pdfH;
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
+    } finally {
+      if (el.parentNode) el.parentNode.removeChild(el);
     }
-    const slug = (_ppmProject.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
-    pdf.save(`ППМ_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
-    toast('ППМ PDF скачан ✓', 'success');
-  } catch (e) {
-    if (container.parentNode) container.parentNode.removeChild(container);
-    console.error(e);
-    toast('Ошибка PDF: ' + e.message, 'error');
   }
+
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  pdf.save(`ППМ_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast(`ППМ PDF скачан · ${slides.length} слайдов ✓`, 'success');
 }
 
-function buildPpmPrintHTML(project, p) {
+function buildPpmSlides(project, p, metas, logoMeta) {
+  const slides = [];
+
+  // === 01. Обложка ===
+  slides.push(ppmSlideShell(buildCoverSlide(project, p, logoMeta)));
+
+  // === 02. Раскадровка ===
+  if (p.storyboard.length > 0) {
+    // 6 кадров на слайд (2 ряда × 3)
+    for (let i = 0; i < p.storyboard.length; i += 6) {
+      slides.push(ppmSlideShell(buildStoryboardSlide(project, p.storyboard.slice(i, i + 6), metas, i + 1, p.storyboard.length)));
+    }
+  }
+
+  // === 03. Локации === — 1 локация / слайд
+  p.locations.forEach((loc, i) => {
+    slides.push(ppmSlideShell(buildLocationSlide(project, loc, metas, i + 1, p.locations.length)));
+  });
+
+  // === 04. Кастинг === — 2 актёра / слайд
+  for (let i = 0; i < p.cast.length; i += 2) {
+    slides.push(ppmSlideShell(buildCastSlide(project, p.cast.slice(i, i + 2), metas, i + 1, p.cast.length)));
+  }
+
+  // === 05. Костюмы === — 1 костюмный сет / слайд (3 опции)
+  p.costumes.forEach((co, i) => {
+    const actor = p.cast.find(a => a.id === co.castId);
+    slides.push(ppmSlideShell(buildCostumeSlide(project, co, actor, metas, i + 1, p.costumes.length)));
+  });
+
+  // === 06. Грим === — 1 / слайд
+  p.makeup.forEach((m, i) => {
+    const actor = p.cast.find(a => a.id === m.castId);
+    slides.push(ppmSlideShell(buildMakeupSlide(project, m, actor, metas, i + 1, p.makeup.length)));
+  });
+
+  // === 07. Оформление === — 1 / слайд
+  p.decor.forEach((d, i) => {
+    slides.push(ppmSlideShell(buildDecorSlide(project, d, metas, i + 1, p.decor.length)));
+  });
+
+  // === 08. Реквизит === — 1 категория / слайд
+  PPM_PROPS_CATEGORIES.forEach(cat => {
+    const items = p.props[cat.key] || [];
+    if (items.length === 0) return;
+    // 8 на слайд (2 × 4)
+    for (let i = 0; i < items.length; i += 8) {
+      slides.push(ppmSlideShell(buildPropsSlide(project, cat, items.slice(i, i + 8), metas)));
+    }
+  });
+
+  // === 09. Музыка ===
+  if (p.music.tracks.length > 0 || p.music.recommendation) {
+    slides.push(ppmSlideShell(buildMusicSlide(project, p.music)));
+  }
+
+  // === 10. Съёмочный план === — 1 день / слайд
+  p.shootPlan.forEach((day, i) => {
+    slides.push(ppmSlideShell(buildShootSlide(project, day, i + 1, p.shootPlan.length)));
+  });
+
+  // === 11+. Кастомные секции ===
+  p.customSections.forEach((cs, csi) => {
+    const items = cs.items || [];
+    if (items.length === 0) {
+      slides.push(ppmSlideShell(buildCustomSlide(project, cs, [], metas)));
+    } else {
+      for (let i = 0; i < items.length; i += 8) {
+        slides.push(ppmSlideShell(buildCustomSlide(project, cs, items.slice(i, i + 8), metas)));
+      }
+    }
+  });
+
+  // === Спасибо ===
+  slides.push(ppmSlideShell(buildThankYouSlide(project, logoMeta)));
+  return slides;
+}
+
+/* ============== ШАБЛОНЫ СЛАЙДОВ ============== */
+function buildCoverSlide(project, p, logoMeta) {
+  const cover = p.cover;
+  const logoH = 56;
+  const logoW = logoMeta ? Math.round((logoMeta.w / logoMeta.h) * logoH) : 200;
+  return `
+    <div style="width:100%;height:100%;background:#f5f5f0;padding:80px 80px 60px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+        ${logoMeta ? `<img src="logo.png" style="height:${logoH}px;width:${logoW}px;display:block;" crossorigin="anonymous">` : '<div style="font-size:24px;font-weight:900;letter-spacing:6px;">ZALOVE PRODUCTION</div>'}
+      </div>
+      <div>
+        <div style="font-size:80px;font-weight:900;letter-spacing:-2px;line-height:0.92;color:#0a0907;">PPM BOOK</div>
+        <div style="font-size:22px;color:#444;margin-top:14px;letter-spacing:2px;text-transform:uppercase;">${escapeHtml(project.name || '')}</div>
+        ${project.client ? `<div style="font-size:16px;color:#777;margin-top:4px;">× ${escapeHtml(project.client)}</div>` : ''}
+        ${cover.logline ? `<div style="font-size:14px;color:#555;margin-top:24px;max-width:700px;font-style:italic;">${escapeHtml(cover.logline)}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:40px;font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase;border-top:2px solid #0a0907;padding-top:20px;">
+        ${cover.ppmDate ? `<div><div style="color:#999;font-size:9px;">PPM</div><div style="font-size:13px;color:#0a0907;font-weight:700;margin-top:2px;">${formatDateRu(cover.ppmDate)}</div></div>` : ''}
+        ${cover.shootFrom ? `<div><div style="color:#999;font-size:9px;">Съёмки</div><div style="font-size:13px;color:#0a0907;font-weight:700;margin-top:2px;">${formatDateRu(cover.shootFrom)}${cover.shootTo ? ' — ' + formatDateRu(cover.shootTo) : ''}</div></div>` : ''}
+        ${cover.director ? `<div><div style="color:#999;font-size:9px;">Режиссёр</div><div style="font-size:13px;color:#0a0907;font-weight:700;margin-top:2px;">${escapeHtml(cover.director)}</div></div>` : ''}
+        ${cover.producer ? `<div><div style="color:#999;font-size:9px;">Продюсер</div><div style="font-size:13px;color:#0a0907;font-weight:700;margin-top:2px;">${escapeHtml(cover.producer)}</div></div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function buildStoryboardSlide(project, frames, metas, fromIdx, total) {
+  const boxW = Math.floor((PPM_SLIDE_W - 80 * 2 - 18 * 2) / 3);
+  const boxH = 240;
+  return `
+    <div style="width:100%;height:100%;padding:60px 80px;box-sizing:border-box;">
+      ${ppmSecLabel('02', `Раскадровка · ${fromIdx}–${Math.min(fromIdx + frames.length - 1, total)} из ${total}`)}
+      <div style="display:grid;grid-template-columns:repeat(3,${boxW}px);grid-template-rows:auto auto;gap:18px;">
+        ${frames.map((f, i) => `
+          <div>
+            ${ppmImageBox(metas[f.image], boxW, boxH, 4)}
+            <div style="margin-top:8px;font-size:11px;line-height:1.4;color:#444;min-height:32px;">${escapeHtml(f.caption || '—')}</div>
+            <div style="font-size:9px;color:#999;margin-top:2px;letter-spacing:1px;">КАДР ${fromIdx + i}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildLocationSlide(project, loc, metas, idx, total) {
+  const boxW = 700;
+  const boxH = 540;
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;display:flex;gap:40px;align-items:flex-start;">
+      <div style="flex:0 0 ${boxW}px;">
+        ${ppmImageBox(metas[loc.image], boxW, boxH, 4)}
+      </div>
+      <div style="flex:1;">
+        ${ppmSecLabel('03', `Локация ${idx} из ${total}`)}
+        <div style="font-size:36px;font-weight:900;line-height:1;color:#0a0907;margin-bottom:24px;">${escapeHtml(loc.name || 'Локация')}</div>
+        ${loc.address ? `<div style="margin-bottom:16px;"><div style="font-size:9px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Адрес</div><div style="font-size:13px;color:#0a0907;line-height:1.4;">${escapeHtml(loc.address)}</div></div>` : ''}
+        ${loc.contact ? `<div style="margin-bottom:16px;"><div style="font-size:9px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Контакт / цена / условия</div><div style="font-size:12px;color:#444;line-height:1.5;white-space:pre-wrap;">${escapeHtml(loc.contact)}</div></div>` : ''}
+        ${loc.permissions ? `<div><div style="font-size:9px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Разрешения</div><div style="font-size:12px;color:#444;line-height:1.5;">${escapeHtml(loc.permissions)}</div></div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function buildCastSlide(project, actors, metas, fromIdx, total) {
+  const cellW = (PPM_SLIDE_W - 70 * 2 - 30) / 2;
+  const photoW = 220;
+  const photoH = 320;
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('04', `Кастинг · ${fromIdx}–${Math.min(fromIdx + actors.length - 1, total)} из ${total}`)}
+      <div style="display:grid;grid-template-columns:repeat(${actors.length}, 1fr);gap:30px;">
+        ${actors.map((a, i) => `
+          <div style="display:flex;gap:18px;">
+            <div style="flex:0 0 ${photoW}px;">
+              ${ppmImageBox(metas[a.image], photoW, photoH, 4)}
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#888;text-transform:uppercase;">${escapeHtml(a.category || '')}</div>
+              <div style="font-size:24px;font-weight:900;color:#0a0907;margin-top:4px;line-height:1.1;">${escapeHtml(a.name || '—')}</div>
+              ${a.height || a.size || a.shoes ? `<div style="margin-top:14px;font-size:11px;color:#555;line-height:1.7;">
+                ${a.height ? `<div><b>Рост:</b> ${escapeHtml(a.height)}</div>` : ''}
+                ${a.size ? `<div><b>Размер:</b> ${escapeHtml(a.size)}</div>` : ''}
+                ${a.shoes ? `<div><b>Обувь:</b> ${escapeHtml(a.shoes)}</div>` : ''}
+              </div>` : ''}
+              ${a.contact ? `<div style="margin-top:8px;font-size:11px;color:#444;"><b>Контакт:</b><br>${escapeHtml(a.contact)}</div>` : ''}
+              ${a.notes ? `<div style="margin-top:8px;font-size:11px;color:#666;font-style:italic;">${escapeHtml(a.notes)}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildCostumeSlide(project, co, actor, metas, idx, total) {
+  const cellW = (PPM_SLIDE_W - 70 * 2 - 24 * 2) / 3;
+  const cellH = 460;
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('05', `Костюм ${idx} из ${total}`)}
+      <div style="margin-bottom:24px;">
+        <div style="font-size:24px;font-weight:900;color:#0a0907;line-height:1;">${actor ? escapeHtml(actor.name) : 'Образ'} ${actor && actor.category ? `<span style="font-size:14px;color:#888;font-weight:600;">· ${escapeHtml(actor.category)}</span>` : ''}</div>
+        ${co.description ? `<div style="font-size:12px;color:#555;margin-top:4px;">${escapeHtml(co.description)}</div>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3, ${cellW}px);gap:24px;">
+        ${[0, 1, 2].map(idx => {
+          const opt = (co.options || [])[idx] || {};
+          return `<div>
+            ${ppmImageBox(metas[opt.image], cellW, cellH, 4)}
+            <div style="font-size:9px;color:#999;margin-top:6px;letter-spacing:1px;">ОПЦИЯ ${idx + 1}</div>
+            ${opt.caption ? `<div style="font-size:11px;color:#444;margin-top:2px;">${escapeHtml(opt.caption)}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildMakeupSlide(project, m, actor, metas, idx, total) {
+  const boxW = 400;
+  const boxH = 400;
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('06', `Грим и волосы ${idx} из ${total}${actor ? ' · ' + escapeHtml(actor.name) : ''}`)}
+      <div style="display:grid;grid-template-columns:${boxW}px ${boxW}px;gap:60px;align-items:start;">
+        <div>
+          <div style="font-size:10px;color:#888;font-weight:800;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;">Грим</div>
+          ${ppmImageBox(metas[m.makeupRef], boxW, boxH, 4)}
+        </div>
+        <div>
+          <div style="font-size:10px;color:#888;font-weight:800;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;">Волосы</div>
+          ${ppmImageBox(metas[m.hairRef], boxW, boxH, 4)}
+        </div>
+      </div>
+      ${m.description ? `<div style="margin-top:24px;padding:16px 20px;background:#fafafa;border-left:3px solid #0a0907;font-size:12px;color:#444;line-height:1.6;white-space:pre-wrap;">${escapeHtml(m.description)}</div>` : ''}
+    </div>
+  `;
+}
+
+function buildDecorSlide(project, d, metas, idx, total) {
+  const bigW = 580;
+  const bigH = 440;
+  const smW = 250;
+  const smH = 200;
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('07', `Оформление ${idx} из ${total}${d.name ? ' · ' + escapeHtml(d.name) : ''}`)}
+      <div style="display:grid;grid-template-columns:${bigW}px 1fr;gap:30px;align-items:start;">
+        <div>
+          <div style="font-size:10px;color:#888;font-weight:800;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;">Floor plan / dressing</div>
+          ${ppmImageBox(metas[d.floorplan], bigW, bigH, 4)}
+        </div>
+        <div>
+          <div style="font-size:10px;color:#888;font-weight:800;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;">Деталь 1</div>
+          ${ppmImageBox(metas[d.detail1], smW, smH, 4)}
+          <div style="font-size:10px;color:#888;font-weight:800;letter-spacing:2px;margin-bottom:8px;margin-top:16px;text-transform:uppercase;">Деталь 2</div>
+          ${ppmImageBox(metas[d.detail2], smW, smH, 4)}
+        </div>
+      </div>
+      ${d.notes ? `<div style="margin-top:18px;padding:14px 18px;background:#fffaf0;border-left:3px solid #fbbf24;font-size:12px;color:#444;white-space:pre-wrap;">📝 ${escapeHtml(d.notes)}</div>` : ''}
+    </div>
+  `;
+}
+
+function buildPropsSlide(project, cat, items, metas) {
+  const cols = 4;
+  const cellW = Math.floor((PPM_SLIDE_W - 70 * 2 - 16 * (cols - 1)) / cols);
+  const cellH = 240;
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('08', `Реквизит · ${escapeHtml(cat.label)}`)}
+      <div style="display:grid;grid-template-columns:repeat(${cols}, ${cellW}px);gap:16px;">
+        ${items.map(item => `
+          <div>
+            ${ppmImageBox(metas[item.image], cellW, cellH, 4)}
+            ${item.caption ? `<div style="font-size:11px;color:#444;margin-top:6px;">${escapeHtml(item.caption)}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildMusicSlide(project, music) {
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('09', 'Музыкальное сопровождение')}
+      ${music.recommendation ? `<div style="margin-bottom:30px;padding:16px 20px;background:#fafafa;border-left:3px solid #0a0907;font-size:13px;color:#444;font-style:italic;line-height:1.6;">${escapeHtml(music.recommendation)}</div>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+        ${music.tracks.map((t, i) => `
+          <div style="background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:18px;">
+            <div style="font-size:9px;color:#999;letter-spacing:2px;text-transform:uppercase;">Трек ${i + 1}</div>
+            <div style="font-size:18px;font-weight:900;color:#0a0907;margin-top:4px;">${escapeHtml(t.title || '—')}</div>
+            <div style="font-size:13px;color:#666;margin-top:2px;">${escapeHtml(t.artist || '—')}</div>
+            ${t.license ? `<div style="margin-top:10px;font-size:11px;color:#444;"><b>Лицензия:</b> ${escapeHtml(t.license)}</div>` : ''}
+            ${t.url ? `<div style="margin-top:4px;font-size:10px;color:#1e40af;word-break:break-all;">🔗 ${escapeHtml(t.url)}</div>` : ''}
+            ${t.notes ? `<div style="margin-top:6px;font-size:11px;color:#666;font-style:italic;">${escapeHtml(t.notes)}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildShootSlide(project, day, idx, total) {
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('10', `Съёмочный план · ${escapeHtml(day.title || 'День ' + idx)}${day.date ? ' · ' + formatDateRu(day.date) : ''}`)}
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead><tr style="background:#0a0907;color:#fff;font-size:9px;letter-spacing:1px;text-transform:uppercase;">
+          <th style="padding:10px 12px;text-align:left;width:80px;">Время</th>
+          <th style="padding:10px 12px;text-align:left;width:60px;">Сцена</th>
+          <th style="padding:10px 12px;text-align:left;">Кадры</th>
+          <th style="padding:10px 12px;text-align:left;">Локация</th>
+          <th style="padding:10px 12px;text-align:left;">Актёры</th>
+          <th style="padding:10px 12px;text-align:left;">Техника / свет</th>
+        </tr></thead>
+        <tbody>${(day.rows || []).map((r, ri) => `
+          <tr style="border-bottom:1px solid #ececec;${ri % 2 === 0 ? 'background:#fafafa;' : ''}">
+            <td style="padding:9px 12px;font-weight:700;color:#0a0907;">${escapeHtml(r.time || '—')}</td>
+            <td style="padding:9px 12px;">${escapeHtml(r.scene || '—')}</td>
+            <td style="padding:9px 12px;">${escapeHtml(r.frames || '—')}</td>
+            <td style="padding:9px 12px;">${escapeHtml(r.location || '—')}</td>
+            <td style="padding:9px 12px;">${escapeHtml(r.cast || '—')}</td>
+            <td style="padding:9px 12px;">${escapeHtml(r.tech || '—')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function buildCustomSlide(project, cs, items, metas) {
+  const cols = 4;
+  const cellW = Math.floor((PPM_SLIDE_W - 70 * 2 - 16 * (cols - 1)) / cols);
+  const cellH = 240;
+  return `
+    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('+', escapeHtml(cs.title || 'Своя секция'))}
+      ${cs.description ? `<div style="margin-bottom:20px;font-size:12px;color:#555;font-style:italic;">${escapeHtml(cs.description)}</div>` : ''}
+      <div style="display:grid;grid-template-columns:repeat(${cols}, ${cellW}px);gap:16px;">
+        ${items.map(it => `
+          <div>
+            ${ppmImageBox(metas[it.image], cellW, cellH, 4)}
+            ${it.caption ? `<div style="font-size:11px;color:#444;margin-top:6px;">${escapeHtml(it.caption)}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildThankYouSlide(project, logoMeta) {
+  const logoH = 56;
+  const logoW = logoMeta ? Math.round((logoMeta.w / logoMeta.h) * logoH) : 200;
+  return `
+    <div style="width:100%;height:100%;background:#0a0907;color:white;padding:80px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+      <div style="font-size:96px;font-weight:900;letter-spacing:-3px;line-height:1;">СПАСИБО.</div>
+      <div style="font-size:16px;color:#bbb;margin-top:24px;letter-spacing:3px;text-transform:uppercase;">${escapeHtml(project.name || '')}${project.client ? ' × ' + escapeHtml(project.client) : ''}</div>
+      <div style="margin-top:60px;font-size:11px;color:#888;letter-spacing:2px;text-transform:uppercase;">ZALOVE PRODUCTION · ${new Date().toLocaleDateString('ru-RU')}</div>
+    </div>
+  `;
+}
+
+function _unused_buildPpmPrintHTML(project, p) {
   const c = document.createElement('div');
   c.style.cssText = 'position:absolute;left:-9999px;top:0;width:1100px;background:#fff;color:#0a0907;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;line-height:1.45;';
 
