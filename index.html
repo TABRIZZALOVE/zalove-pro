@@ -3394,6 +3394,63 @@ body.has-reel .theme-toggle { right: 158px; }
 }
 
 /* ===== ТАЙМИНГ: МАТРИЦА ===== */
+.timing-link-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 14px;
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.timing-link-bar-l {
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+}
+.timing-link-bar .t-link-ico { font-size: 14px; }
+.timing-link-bar .t-link-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4338ca;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.timing-link-bar .t-link-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #c7d2fe;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  font-family: inherit;
+  min-width: 0;
+}
+.timing-link-bar .t-link-input:focus { outline: none; border-color: #4338ca; }
+.timing-link-bar-r { display: flex; gap: 6px; align-items: center; }
+.timing-link-bar .t-link-open {
+  padding: 7px 12px;
+  background: #4338ca;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.timing-link-bar .t-link-open:hover { background: #3730a3; }
+.timing-link-bar .t-link-clear {
+  width: 26px; height: 26px;
+  border: none;
+  background: rgba(255,255,255,0.7);
+  color: #6b7280;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+}
+.timing-link-bar .t-link-clear:hover { background: #fee2e2; color: #991b1b; }
+
 .timing-toolbar {
   display: flex;
   gap: 18px;
@@ -3427,15 +3484,57 @@ body.has-reel .theme-toggle { right: 158px; }
   margin-left: 12px;
 }
 .timing-legend span { display: flex; align-items: center; gap: 5px; font-weight: 600; }
-.timing-legend i.cl {
+
+/* Палитра кистей */
+.timing-brushes {
+  display: flex;
+  gap: 4px;
+  margin-left: 12px;
+  padding: 3px;
+  background: white;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+}
+.timing-brushes .t-brush {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted, #888);
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.timing-brushes .t-brush:hover { background: #f5f5f0; color: var(--ink, #0a0907); }
+.timing-brushes .t-brush.active {
+  background: var(--ink, #0a0907);
+  color: white;
+  border-color: var(--ink, #0a0907);
+}
+.timing-brushes .t-brush.active i.cl {
+  border-color: rgba(255,255,255,0.4);
+}
+.cl {
   display: inline-block;
   width: 13px; height: 13px;
   border-radius: 2px;
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.15);
+  text-align: center;
+  font-style: normal;
+  font-size: 10px;
+  line-height: 11px;
+  font-weight: 700;
 }
-.timing-legend i.cl-work { background: #0a0907; }
-.timing-legend i.cl-crit { background: #e8231d; }
-.timing-legend i.cl-appr { background: #fbbf24; }
+.cl-work { background: #0a0907; }
+.cl-crit { background: #e8231d; }
+.cl-appr { background: #fbbf24; }
+.cl-clear { background: white; }
+.cl-auto { background: white; color: #888; }
 .timing-hint {
   margin-left: auto;
   font-size: 10px;
@@ -3457,11 +3556,19 @@ body.has-reel .theme-toggle { right: 158px; }
   min-width: 100%;
   font-family: inherit;
   font-size: 11px;
+  user-select: none;
+  -webkit-user-select: none;
 }
+.timing-grid input { user-select: auto; -webkit-user-select: auto; }
 .timing-grid th, .timing-grid td {
-  border-right: 1px solid #ececec;
-  border-bottom: 1px solid #f0f0eb;
+  border-right: 1px solid #c8c8c8;
+  border-bottom: 1px solid #c8c8c8;
   padding: 0;
+  box-sizing: border-box;
+}
+.timing-grid {
+  border-top: 1px solid #c8c8c8;
+  border-left: 1px solid #c8c8c8;
 }
 .timing-grid thead th {
   background: #0a0907;
@@ -3615,12 +3722,17 @@ body.has-reel .theme-toggle { right: 158px; }
   cursor: pointer;
   position: relative;
   transition: filter 0.1s;
+  background: #ffffff;
 }
-.timing-grid td.t-cell:hover { filter: brightness(0.85); }
-.timing-grid td.t-cell.weekend { background: #f3f3ee; }
+.timing-grid td.t-cell:hover { filter: brightness(0.85); outline: 1.5px solid #555; outline-offset: -1px; z-index: 1; }
+.timing-grid td.t-cell.weekend { background: #ededed; }
 .timing-grid td.t-cell.tc-work { background: #0a0907; }
 .timing-grid td.t-cell.tc-critical { background: #e8231d; }
 .timing-grid td.t-cell.tc-approval { background: #fbbf24; }
+/* Толстая граница в конце недели (после воскресенья) */
+.timing-grid th.t-day.weekend-end,
+.timing-grid th.t-dow.weekend-end,
+.timing-grid td.t-cell.weekend-end { border-right: 2px solid #888 !important; }
 
 /* Popover */
 .timing-cell-pop {
@@ -10096,6 +10208,10 @@ const TIMING_DEFAULT_STAGES = [
 
 let _timingSaveTimer = null;
 let _timingProject = null;
+let _timingBrush = null; // null = «авто» (попап), '' = стереть, 'work'|'critical'|'approval'
+let _timingPainting = false;
+let _timingDragStartCell = null;
+let _timingDragMoved = false;
 
 function newTimingId() {
   return 'tp_' + Math.random().toString(36).slice(2, 9);
@@ -10218,7 +10334,19 @@ function renderTimingEditor() {
     `${totalProcesses} процессов · ${t.stages.length} этапа · ${totalDays} дн. · закрашено: ${filledCells}`;
 
   // ---- Шапка-управление ----
+  const externalLink = t.externalLink || '';
   let html = `
+    <div class="timing-link-bar">
+      <div class="timing-link-bar-l">
+        <span class="t-link-ico">🔗</span>
+        <span class="t-link-label">Ссылка на внешний тайминг</span>
+        <input type="url" id="t-ext-link" class="t-link-input" placeholder="https://... (Google Sheets / Notion / Miro)" value="${escapeHtml(externalLink)}">
+      </div>
+      <div class="timing-link-bar-r">
+        ${externalLink ? `<a href="${escapeHtml(externalLink)}" target="_blank" rel="noopener" class="t-link-open">↗ открыть</a>` : ''}
+        ${externalLink ? '<button class="t-link-clear" onclick="clearTimingLink()" title="Убрать ссылку">×</button>' : ''}
+      </div>
+    </div>
     <div class="timing-toolbar">
       <div class="timing-toolbar-field">
         <label>Старт проекта</label>
@@ -10228,12 +10356,24 @@ function renderTimingEditor() {
         <label>Дней в шкале</label>
         <input type="number" id="t-days" min="7" max="180" step="7" value="${totalDays}" style="width:90px;">
       </div>
-      <div class="timing-legend">
-        <span><i class="cl cl-work"></i> работа</span>
-        <span><i class="cl cl-crit"></i> критический</span>
-        <span><i class="cl cl-appr"></i> согласование</span>
+      <div class="timing-brushes">
+        <button class="t-brush ${_timingBrush === 'work' ? 'active' : ''}" data-brush="work" title="Рабочий день">
+          <i class="cl cl-work"></i> работа
+        </button>
+        <button class="t-brush ${_timingBrush === 'critical' ? 'active' : ''}" data-brush="critical" title="Критический день">
+          <i class="cl cl-crit"></i> критич.
+        </button>
+        <button class="t-brush ${_timingBrush === 'approval' ? 'active' : ''}" data-brush="approval" title="День согласования">
+          <i class="cl cl-appr"></i> согл.
+        </button>
+        <button class="t-brush ${_timingBrush === '' ? 'active' : ''}" data-brush="" title="Стереть">
+          <i class="cl cl-clear"></i> стереть
+        </button>
+        <button class="t-brush ${_timingBrush === null ? 'active' : ''}" data-brush="null" title="Авто: клик откроет попап выбора цвета">
+          <i class="cl cl-auto">?</i> авто
+        </button>
       </div>
-      <div class="timing-hint">Клик по ячейке → выбери цвет</div>
+      <div class="timing-hint">Выбери кисть → кликай или тяни по ячейкам</div>
     </div>
   `;
 
@@ -10266,14 +10406,16 @@ function renderTimingEditor() {
   let dayRow = '';
   days.forEach(d => {
     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    dayRow += `<th class="t-day ${isWeekend ? 'weekend' : ''}" title="${d.toLocaleDateString('ru-RU', { weekday: 'long' })}">${d.getDate()}</th>`;
+    const isWeekEnd = d.getDay() === 0; // воскресенье = конец недели
+    dayRow += `<th class="t-day ${isWeekend ? 'weekend' : ''} ${isWeekEnd ? 'weekend-end' : ''}" title="${d.toLocaleDateString('ru-RU', { weekday: 'long' })}">${d.getDate()}</th>`;
   });
 
   let dowRow = '';
   const DOW_RU = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
   days.forEach(d => {
     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    dowRow += `<th class="t-dow ${isWeekend ? 'weekend' : ''}">${DOW_RU[d.getDay()]}</th>`;
+    const isWeekEnd = d.getDay() === 0;
+    dowRow += `<th class="t-dow ${isWeekend ? 'weekend' : ''} ${isWeekEnd ? 'weekend-end' : ''}">${DOW_RU[d.getDay()]}</th>`;
   });
 
   html += `
@@ -10310,7 +10452,8 @@ function renderTimingEditor() {
         const key = timingDateKey(d);
         const v = (p.cells && p.cells[key]) || '';
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-        html += `<td class="t-cell ${v ? 'tc-' + v : ''} ${isWeekend ? 'weekend' : ''}" data-date="${key}" title="${d.toLocaleDateString('ru-RU')} ${escapeHtml(p.name)}"></td>`;
+        const isWeekEnd = d.getDay() === 0;
+        html += `<td class="t-cell ${v ? 'tc-' + v : ''} ${isWeekend ? 'weekend' : ''} ${isWeekEnd ? 'weekend-end' : ''}" data-date="${key}" title="${d.toLocaleDateString('ru-RU')} ${escapeHtml(p.name)}"></td>`;
       });
       html += `</tr>`;
     });
@@ -10345,8 +10488,35 @@ function renderTimingEditor() {
   root.querySelectorAll('.t-proc-name').forEach(el => {
     el.addEventListener('input', onTimingProcessNameChange);
   });
+  // Ссылка на внешний тайминг
+  const linkEl = document.getElementById('t-ext-link');
+  if (linkEl) {
+    linkEl.addEventListener('input', (e) => {
+      _timingProject.timing.externalLink = e.target.value.trim();
+      scheduleTimingSave();
+    });
+    linkEl.addEventListener('blur', (e) => {
+      // Перерисуем, чтобы появилась/исчезла кнопка "открыть"
+      const val = e.target.value.trim();
+      if ((!!val) !== (!!externalLink)) renderTimingEditor();
+    });
+  }
+
+  // Кисти-палитра
+  root.querySelectorAll('.t-brush').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      const v = btn.dataset.brush;
+      _timingBrush = v === 'null' ? null : v;
+      // Перерисовываем только палитру (без полного рендера)
+      root.querySelectorAll('.t-brush').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Ячейки: mousedown / mouseenter / mouseup для drag-paint
   root.querySelectorAll('.t-cell').forEach(el => {
-    el.addEventListener('click', onTimingCellClick);
+    el.addEventListener('mousedown', onTimingCellMouseDown);
+    el.addEventListener('mouseenter', onTimingCellMouseEnter);
   });
 }
 
@@ -10381,19 +10551,88 @@ function onTimingProcessNameChange(e) {
   scheduleTimingSave();
 }
 
-/* ===== POPOVER ВЫБОРА ЦВЕТА ===== */
+/* ===== DRAG-PAINT + ПОПАП ВЫБОРА ЦВЕТА ===== */
 let _timingPopCell = null;
-function onTimingCellClick(e) {
+
+// Применить цвет (или стирание) к одной ячейке
+function paintTimingCell(cell, color) {
+  if (!cell) return;
+  const row = cell.closest('tr');
+  if (!row) return;
+  const stage = _timingProject.timing.stages.find(s => s.id === row.dataset.stage);
+  if (!stage) return;
+  const proc = stage.processes.find(p => p.id === row.dataset.proc);
+  if (!proc) return;
+  if (!proc.cells) proc.cells = {};
+  const date = cell.dataset.date;
+  cell.classList.remove('tc-work', 'tc-critical', 'tc-approval');
+  if (color) {
+    proc.cells[date] = color;
+    cell.classList.add('tc-' + color);
+  } else {
+    delete proc.cells[date];
+  }
+}
+
+// Обновить нижний счётчик после серии красок
+function refreshTimingFooter() {
+  if (!_timingProject) return;
+  let total = 0, filled = 0;
+  _timingProject.timing.stages.forEach(s => s.processes.forEach(p => {
+    total++; filled += Object.keys(p.cells || {}).length;
+  }));
+  document.getElementById('timing-footer-info').textContent =
+    `${total} процессов · ${_timingProject.timing.stages.length} этапа · ${_timingProject.timing.totalDays} дн. · закрашено: ${filled}`;
+}
+
+function onTimingCellMouseDown(e) {
+  if (e.button !== 0) return; // только левая
   const cell = e.target.closest('.t-cell');
   if (!cell) return;
+  e.preventDefault();
+  _timingDragStartCell = cell;
+  _timingDragMoved = false;
+  _timingPainting = true;
+  // Если кисть выбрана — сразу красим стартовую ячейку
+  if (_timingBrush !== null) {
+    paintTimingCell(cell, _timingBrush);
+  }
+}
+
+function onTimingCellMouseEnter(e) {
+  if (!_timingPainting) return;
+  const cell = e.target.closest('.t-cell');
+  if (!cell || cell === _timingDragStartCell) return;
+  _timingDragMoved = true;
+  if (_timingBrush !== null) {
+    paintTimingCell(cell, _timingBrush);
+  }
+}
+
+function endTimingPainting(e) {
+  if (!_timingPainting) return;
+  const wasMoved = _timingDragMoved;
+  const startCell = _timingDragStartCell;
+  _timingPainting = false;
+  _timingDragMoved = false;
+  _timingDragStartCell = null;
+  // Если кисть в режиме «авто» (null) и не было перетаскивания — открыть попап
+  if (_timingBrush === null && !wasMoved && startCell) {
+    showTimingPopover(startCell);
+    return;
+  }
+  // Иначе сохранить и обновить футер
+  saveTimingNow();
+  refreshTimingFooter();
+}
+
+function showTimingPopover(cell) {
   _timingPopCell = cell;
   const pop = document.getElementById('timing-cell-pop');
   const rect = cell.getBoundingClientRect();
   pop.style.display = 'flex';
-  // позиционируем над ячейкой
   pop.style.left = Math.max(8, Math.min(window.innerWidth - 200, rect.left + rect.width / 2 - 88)) + 'px';
   pop.style.top = (rect.top - pop.offsetHeight - 6) + 'px';
-  // если не помещается сверху — снизу
   if (rect.top - pop.offsetHeight - 6 < 8) {
     pop.style.top = (rect.bottom + 6) + 'px';
   }
@@ -10407,28 +10646,15 @@ function setupTimingCellPop() {
       ev.stopPropagation();
       if (!_timingPopCell) return;
       const color = btn.dataset.cellColor;
-      const row = _timingPopCell.closest('tr');
-      const date = _timingPopCell.dataset.date;
-      const stage = _timingProject.timing.stages.find(s => s.id === row.dataset.stage);
-      const proc = stage?.processes.find(p => p.id === row.dataset.proc);
-      if (!proc) return;
-      if (!proc.cells) proc.cells = {};
-      // Снимаем все возможные классы
-      _timingPopCell.classList.remove('tc-work', 'tc-critical', 'tc-approval');
-      if (color) {
-        proc.cells[date] = color;
-        _timingPopCell.classList.add('tc-' + color);
-      } else {
-        delete proc.cells[date];
-      }
+      paintTimingCell(_timingPopCell, color);
+      // Запоминаем как активную кисть для последующего drag-paint
+      _timingBrush = color;
+      // Подсветить соответствующую кнопку в палитре
+      document.querySelectorAll('.t-brush').forEach(b => b.classList.remove('active'));
+      const palBtn = document.querySelector(`.t-brush[data-brush="${color === '' ? '' : color}"]`);
+      if (palBtn) palBtn.classList.add('active');
       saveTimingNow();
-      // Обновим футер
-      let totalProcesses = 0, filled = 0;
-      _timingProject.timing.stages.forEach(s => s.processes.forEach(p => {
-        totalProcesses++; filled += Object.keys(p.cells || {}).length;
-      }));
-      document.getElementById('timing-footer-info').textContent =
-        `${totalProcesses} процессов · ${_timingProject.timing.stages.length} этапа · ${_timingProject.timing.totalDays} дн. · закрашено: ${filled}`;
+      refreshTimingFooter();
       pop.style.display = 'none';
       _timingPopCell = null;
     });
@@ -10437,7 +10663,7 @@ function setupTimingCellPop() {
   document.addEventListener('click', (ev) => {
     if (pop.style.display === 'none') return;
     if (pop.contains(ev.target)) return;
-    if (ev.target.closest('.t-cell')) return; // клик на новую ячейку
+    if (ev.target.closest('.t-cell')) return;
     pop.style.display = 'none';
     _timingPopCell = null;
   });
@@ -10448,6 +10674,20 @@ function setupTimingCellPop() {
       _timingPopCell = null;
     }
   });
+  // Глобальный mouseup для завершения drag-paint
+  if (!document.body.dataset.timingMouseupWired) {
+    document.body.dataset.timingMouseupWired = '1';
+    document.addEventListener('mouseup', endTimingPainting);
+    // Если курсор ушёл за пределы окна
+    document.addEventListener('mouseleave', endTimingPainting);
+  }
+}
+
+function clearTimingLink() {
+  if (!_timingProject) return;
+  _timingProject.timing.externalLink = '';
+  saveTimingNow();
+  renderTimingEditor();
 }
 
 function addTimingStageFromUI() {
@@ -10645,20 +10885,22 @@ async function exportTimingToPdf() {
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pdfWidth;
-    const ratio = canvas.height / canvas.width;
-    const imgHeight = imgWidth * ratio;
-    const totalPages = Math.ceil(imgHeight / pdfHeight);
+    // ВПИСЫВАЕМ В ОДНУ СТРАНИЦУ: считаем масштаб так, чтобы и высота, и ширина помещались
+    const margin = 12;
+    const availW = pdfWidth - margin * 2;
+    const availH = pdfHeight - margin * 2;
+    const scaleByW = availW / canvas.width;
+    const scaleByH = availH / canvas.height;
+    const scale = Math.min(scaleByW, scaleByH);
+    const imgWidth = canvas.width * scale;
+    const imgHeight = canvas.height * scale;
+    const offsetX = (pdfWidth - imgWidth) / 2;
+    const offsetY = (pdfHeight - imgHeight) / 2;
     const imgData = canvas.toDataURL('image/png');
-    let position = 0;
-    for (let i = 0; i < totalPages; i++) {
-      if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-      position -= pdfHeight;
-    }
+    pdf.addImage(imgData, 'PNG', offsetX, offsetY, imgWidth, imgHeight, undefined, 'FAST');
     const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
     pdf.save(`Тайминг_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
-    toast('Тайминг PDF скачан ✓', 'success');
+    toast('Тайминг PDF (1 стр.) скачан ✓', 'success');
   } catch (e) {
     if (container.parentNode) container.parentNode.removeChild(container);
     console.error(e);
