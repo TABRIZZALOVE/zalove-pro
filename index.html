@@ -12517,14 +12517,14 @@ function buildPpmPrintHTML(project, p) {
 
   const cover = p.cover;
   let html = `
-    <div style="background:#0a0907;color:white;padding:50px 40px 40px;display:flex;justify-content:space-between;align-items:flex-end;min-height:300px;">
+    <div style="background:#f5f5f0;color:#0a0907;padding:50px 40px 40px;display:flex;justify-content:space-between;align-items:flex-end;min-height:320px;border-bottom:4px solid #0a0907;">
       <div>
-        <div style="font-size:18px;font-weight:900;letter-spacing:6px;color:#fff;margin-bottom:32px;font-family:Arial,sans-serif;">ZALOVE PRODUCTION</div>
-        <div style="font-size:50px;font-weight:900;letter-spacing:-1px;line-height:0.95;color:white;">PPM BOOK</div>
-        <div style="font-size:18px;color:#cccccc;margin-top:8px;letter-spacing:1px;">${escapeHtml((project.name || '').toUpperCase())}</div>
-        ${project.client ? `<div style="font-size:14px;color:#999999;margin-top:4px;">× ${escapeHtml(project.client)}</div>` : ''}
+        <img src="logo.png" alt="ZALOVE" style="height:46px;width:auto;display:block;margin-bottom:34px;" crossorigin="anonymous">
+        <div style="font-size:54px;font-weight:900;letter-spacing:-1.5px;line-height:0.95;color:#0a0907;">PPM BOOK</div>
+        <div style="font-size:18px;color:#444;margin-top:10px;letter-spacing:1.5px;text-transform:uppercase;">${escapeHtml(project.name || '')}</div>
+        ${project.client ? `<div style="font-size:14px;color:#666;margin-top:4px;">× ${escapeHtml(project.client)}</div>` : ''}
       </div>
-      <div style="text-align:right;font-size:11px;color:#cccccc;letter-spacing:1px;text-transform:uppercase;">
+      <div style="text-align:right;font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase;">
         ${cover.ppmDate ? `<div>PPM: ${formatDateRu(cover.ppmDate)}</div>` : ''}
         ${cover.shootFrom ? `<div style="margin-top:4px;">Съёмки: ${formatDateRu(cover.shootFrom)}${cover.shootTo ? ' — ' + formatDateRu(cover.shootTo) : ''}</div>` : ''}
         ${cover.director ? `<div style="margin-top:4px;">Режиссёр: ${escapeHtml(cover.director)}</div>` : ''}
@@ -12542,7 +12542,7 @@ function buildPpmPrintHTML(project, p) {
     html += secHead('02', 'Раскадровка');
     html += `<div style="padding:0 40px 20px;display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;">${p.storyboard.map((f, i) => `
       <div style="background:#fafafa;border:1px solid #ececec;border-radius:4px;overflow:hidden;">
-        <div style="aspect-ratio:1/1;background:#e8e8e3;display:flex;align-items:center;justify-content:center;overflow:hidden;">${f.image ? `<img src="${f.image}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : '<span style="color:#999;font-size:11px;">[ кадр ' + (i + 1) + ' ]</span>'}</div>
+        <div style="height:200px;background:#f5f5f0;display:flex;align-items:center;justify-content:center;overflow:hidden;">${f.image ? `<img src="${f.image}" style="max-width:100%;max-height:200px;width:auto;height:auto;display:block;">` : '<span style="color:#999;font-size:11px;">[ кадр ' + (i + 1) + ' ]</span>'}</div>
         <div style="padding:8px 10px;font-size:11px;min-height:32px;">${escapeHtml(f.caption || '—')}</div>
       </div>
     `).join('')}</div>`;
@@ -12552,7 +12552,7 @@ function buildPpmPrintHTML(project, p) {
     html += secHead('03', 'Локации');
     html += `<div style="padding:0 40px 20px;">${p.locations.map((loc, i) => `
       <div style="display:grid;grid-template-columns:280px 1fr;gap:18px;margin-bottom:18px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;">
-        <div style="aspect-ratio:4/3;background:#e8e8e3;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${loc.image ? `<img src="${loc.image}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : '<span style="color:#999;font-size:11px;">[ фото ]</span>'}</div>
+        <div style="height:200px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${loc.image ? `<img src="${loc.image}" style="max-width:100%;max-height:200px;width:auto;height:auto;display:block;">` : '<span style="color:#999;font-size:11px;">[ фото ]</span>'}</div>
         <div style="font-size:11px;">
           <div style="font-size:14px;font-weight:700;margin-bottom:6px;">${escapeHtml(loc.name || 'Локация #' + (i + 1))}</div>
           ${loc.address ? `<div><b>Адрес:</b> ${escapeHtml(loc.address)}</div>` : ''}
@@ -12567,7 +12567,7 @@ function buildPpmPrintHTML(project, p) {
     html += secHead('04', 'Кастинг');
     html += `<div style="padding:0 40px 20px;display:grid;grid-template-columns:repeat(2, 1fr);gap:14px;">${p.cast.map((a, i) => `
       <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:12px;">
-        <div style="aspect-ratio:3/4;background:#e8e8e3;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${a.image ? `<img src="${a.image}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : '<span style="color:#999;font-size:10px;">[ фото ]</span>'}</div>
+        <div style="height:160px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${a.image ? `<img src="${a.image}" style="max-width:100%;max-height:160px;width:auto;height:auto;display:block;">` : '<span style="color:#999;font-size:10px;">[ фото ]</span>'}</div>
         <div style="font-size:11px;">
           <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#888;text-transform:uppercase;">${escapeHtml(a.category || 'актёр')}</div>
           <div style="font-size:15px;font-weight:800;margin-top:2px;">${escapeHtml(a.name || '—')}</div>
@@ -12589,7 +12589,7 @@ function buildPpmPrintHTML(project, p) {
           ${[0, 1, 2].map(idx => {
             const opt = (co.options || [])[idx] || {};
             return `<div>
-              <div style="aspect-ratio:3/4;background:#e8e8e3;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${opt.image ? `<img src="${opt.image}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : `<span style="color:#999;font-size:10px;">[ опция ${idx + 1} ]</span>`}</div>
+              <div style="height:180px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${opt.image ? `<img src="${opt.image}" style="max-width:100%;max-height:180px;width:auto;height:auto;display:block;">` : `<span style="color:#999;font-size:10px;">[ опция ${idx + 1} ]</span>`}</div>
               ${opt.caption ? `<div style="font-size:10px;margin-top:4px;">${escapeHtml(opt.caption)}</div>` : ''}
             </div>`;
           }).join('')}
@@ -12603,8 +12603,8 @@ function buildPpmPrintHTML(project, p) {
     html += `<div style="padding:0 40px 20px;">${p.makeup.map((m, i) => {
       const actor = p.cast.find(a => a.id === m.castId);
       return `<div style="margin-bottom:14px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;">
-        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ГРИМ</div><div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${m.makeupRef ? `<img src="${m.makeupRef}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : ''}</div></div>
-        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ВОЛОСЫ</div><div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${m.hairRef ? `<img src="${m.hairRef}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : ''}</div></div>
+        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ГРИМ</div><div style="height:140px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${m.makeupRef ? `<img src="${m.makeupRef}" style="max-width:100%;max-height:140px;width:auto;height:auto;display:block;">` : ''}</div></div>
+        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ВОЛОСЫ</div><div style="height:140px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${m.hairRef ? `<img src="${m.hairRef}" style="max-width:100%;max-height:140px;width:auto;height:auto;display:block;">` : ''}</div></div>
         <div style="font-size:11px;">
           <div style="font-size:13px;font-weight:700;margin-bottom:4px;">${actor ? escapeHtml(actor.name) : '—'}</div>
           <div style="white-space:pre-wrap;color:#444;">${escapeHtml(m.description || '—')}</div>
@@ -12619,9 +12619,9 @@ function buildPpmPrintHTML(project, p) {
       <div style="margin-bottom:18px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;">
         ${d.name ? `<div style="font-size:13px;font-weight:700;margin-bottom:8px;">${escapeHtml(d.name)}</div>` : ''}
         <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;">
-          <div style="aspect-ratio:4/3;background:#e8e8e3;border-radius:4px;overflow:hidden;">${d.floorplan ? `<img src="${d.floorplan}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:10px;">[ floor plan ]</div>'}</div>
-          <div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${d.detail1 ? `<img src="${d.detail1}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : ''}</div>
-          <div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${d.detail2 ? `<img src="${d.detail2}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : ''}</div>
+          <div style="height:160px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${d.floorplan ? `<img src="${d.floorplan}" style="max-width:100%;max-height:160px;width:auto;height:auto;display:block;">` : '<span style="color:#999;font-size:10px;">[ floor plan ]</span>'}</div>
+          <div style="height:160px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${d.detail1 ? `<img src="${d.detail1}" style="max-width:100%;max-height:160px;width:auto;height:auto;display:block;">` : ''}</div>
+          <div style="height:160px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${d.detail2 ? `<img src="${d.detail2}" style="max-width:100%;max-height:160px;width:auto;height:auto;display:block;">` : ''}</div>
         </div>
         ${d.notes ? `<div style="margin-top:8px;font-size:11px;color:#555;">${escapeHtml(d.notes)}</div>` : ''}
       </div>
@@ -12637,7 +12637,7 @@ function buildPpmPrintHTML(project, p) {
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">${cat.label}</div>
         <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:8px;">${p.props[cat.key].map(item => `
           <div>
-            <div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:3px;overflow:hidden;">${item.image ? `<img src="${item.image}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : ''}</div>
+            <div style="height:110px;background:#f5f5f0;border-radius:3px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${item.image ? `<img src="${item.image}" style="max-width:100%;max-height:110px;width:auto;height:auto;display:block;">` : ''}</div>
             ${item.caption ? `<div style="font-size:9px;margin-top:3px;color:#555;">${escapeHtml(item.caption)}</div>` : ''}
           </div>
         `).join('')}</div>
@@ -12697,7 +12697,7 @@ function buildPpmPrintHTML(project, p) {
       <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;">
         ${(cs.items || []).map(item => `
           <div>
-            <div style="aspect-ratio:1/1;background:#e8e8e3;border-radius:4px;overflow:hidden;">${item.image ? `<img src="${item.image}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">` : ''}</div>
+            <div style="height:140px;background:#f5f5f0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${item.image ? `<img src="${item.image}" style="max-width:100%;max-height:140px;width:auto;height:auto;display:block;">` : ''}</div>
             ${item.caption ? `<div style="font-size:10px;margin-top:4px;color:#444;">${escapeHtml(item.caption)}</div>` : ''}
           </div>
         `).join('')}
