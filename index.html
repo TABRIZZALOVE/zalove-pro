@@ -4607,9 +4607,201 @@ body.has-reel .theme-toggle { right: 158px; }
   border-radius: 4px;
   font-size: 13px;
 }
+
+/* ============================================================
+   RESPONSIVE — ПЛАНШЕТ И МОБИЛЬНЫЙ
+   ============================================================ */
+
+/* Гамбургер-кнопка (показывается только на мобиле) */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 1100;
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: var(--ink, #0a0907);
+  color: white;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  align-items: center;
+  justify-content: center;
+}
+.mobile-menu-btn:active { transform: scale(0.95); }
+
+/* Overlay при открытом sidebar на мобиле */
+.mobile-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 999;
+}
+.mobile-sidebar-overlay.active { display: block; }
+
+/* ───── Планшет (до 1024px) ───── */
+@media (max-width: 1024px) {
+  .sidebar { width: 210px; }
+  .main { margin-left: 210px; padding: 24px 24px 80px; }
+  .projects-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+}
+
+/* ───── Мобилка (до 768px) ───── */
+@media (max-width: 768px) {
+  body, html { font-size: 14px; }
+
+  /* Sidebar превращается в выезжающий drawer */
+  .sidebar {
+    position: fixed;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1000;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.18);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding: 60px 14px 80px; }
+
+  .mobile-menu-btn { display: flex; }
+
+  /* Top bar — стек вертикальный */
+  .topbar { flex-wrap: wrap; gap: 10px; }
+  .topbar .role-tabs, .topbar .filter-chip { width: auto; }
+
+  /* Карточки проектов — одна в ряд */
+  .projects-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Stat cards */
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px; }
+
+  /* Модалки — почти fullscreen */
+  .modal-overlay { padding: 6px; align-items: stretch; }
+  .doc-overlay {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border-radius: 6px;
+    margin: 0;
+  }
+  .doc-header { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+  .doc-header-title { font-size: 16px; line-height: 1.2; }
+  .doc-section-label { font-size: 9px; }
+  .doc-actions-h { gap: 4px; flex-wrap: wrap; }
+  .doc-actions-h .btn { padding: 6px 10px; font-size: 11px; }
+  .doc-body { padding: 14px; max-height: calc(100vh - 200px); overflow-y: auto; }
+  .doc-footer { padding: 10px 14px; flex-wrap: wrap; gap: 8px; }
+
+  /* Смета — горизонтальный скролл таблицы */
+  .est-row-edit, .est-headers {
+    grid-template-columns: 1.2fr 1.2fr 50px 50px 80px 90px 100px 70px 22px;
+    gap: 6px;
+    font-size: 11px;
+  }
+  #estimateSections { overflow-x: auto; }
+  #estimateSections > .est-section-edit { min-width: 760px; }
+
+  /* Бриф — все сетки в одну колонку */
+  .brief-grid.cols-2,
+  .brief-grid.cols-3,
+  .brief-grid.cols-4 { grid-template-columns: 1fr; }
+
+  /* ППМ — сетки в одну колонку */
+  .ppm-grid.cols-2,
+  .ppm-grid.cols-3,
+  .ppm-grid.cols-4 { grid-template-columns: 1fr; }
+  .ppm-items.cols-2, .ppm-items.cols-3 { grid-template-columns: 1fr; }
+
+  /* Тайминг — горизонтальный скролл матрицы */
+  .timing-grid-wrap { max-height: 60vh; }
+  .timing-toolbar { gap: 10px; padding: 10px; }
+  .timing-brushes { flex-wrap: wrap; gap: 3px; }
+  .timing-brushes .t-brush { padding: 4px 6px; font-size: 10px; }
+  .timing-link-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .timing-link-bar-l { flex-wrap: wrap; }
+  .timing-link-bar-r { justify-content: flex-end; }
+
+  /* Шутинг-план — горизонтальный скролл уже есть */
+  .sp-meta-grid { grid-template-columns: 1fr 1fr; }
+  .sp-day-meta { display: none; }
+
+  /* Вызывной — стек */
+  .cs-meta-grid { grid-template-columns: 1fr 1fr; }
+  .cs-meta-grid > * { font-size: 12px; }
+
+  /* Detail page header */
+  .project-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .project-detail-header > .actions { flex-wrap: wrap; }
+  .project-detail-header > .actions .btn { padding: 6px 10px; font-size: 11px; }
+
+  /* Документ-карточки в детальной странице */
+  .docs-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .doc-card { padding: 14px 10px; font-size: 11px; }
+  .doc-card .doc-name { font-size: 12px; }
+  .doc-card .doc-meta { font-size: 10px; }
+  .doc-card .doc-icon { font-size: 24px; }
+
+  /* Creative carousel */
+  .creative-section, .doc-card-section { padding: 14px; }
+  .creative-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .creative-card { padding: 14px 10px; font-size: 11px; }
+
+  /* Топбар: greeting на отдельной строке */
+  .greeting-line { font-size: 13px; }
+
+  /* Личный бренд */
+  .brand-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .brand-card { padding: 12px; }
+
+  /* Все формы — нормальный таргет тача (44px высоты) */
+  input, textarea, select, button {
+    min-height: 36px;
+    box-sizing: border-box;
+  }
+  input[type=number], input[type=text], input[type=email], input[type=tel],
+  input[type=url], input[type=date], input[type=time], textarea, select {
+    font-size: 16px !important; /* предотвращает зум на iOS */
+  }
+
+  /* Поппап выбора цвета тайминга — больше для пальцев */
+  .timing-cell-pop { padding: 8px; gap: 6px; }
+  .timing-cell-pop .tc-opt { width: 38px; height: 38px; font-size: 16px; }
+
+  /* Поп-апы внутри сметы (журнал расходов) */
+  .est-fact-popup { width: calc(100vw - 24px) !important; }
+
+  /* Календарь иконы у личного бренда и интеграций */
+  .integration-card { padding: 12px; font-size: 11px; }
+
+  /* Smart-fill блоки */
+  .smart-fill { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px; }
+  .smart-fill .sf-text { font-size: 11px; }
+
+  /* Скрыть некритичные элементы */
+  .sidebar-section.optional-on-mobile { display: none; }
+}
+
+/* ───── Очень узкие телефоны (до 380px) ───── */
+@media (max-width: 380px) {
+  .docs-grid, .creative-cards, .stats, .brand-grid { grid-template-columns: 1fr; }
+  .topbar h1 { font-size: 18px; }
+  .doc-overlay { border-radius: 0; }
+}
 </style>
 </head>
 <body>
+
+<!-- Мобильный гамбургер + overlay -->
+<button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Меню">☰</button>
+<div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay" onclick="toggleMobileSidebar()"></div>
 
 <div class="app">
   <!-- ============ SIDEBAR ============ -->
@@ -5082,6 +5274,7 @@ body.has-reel .theme-toggle { right: 158px; }
           </div>
           <div class="detail-actions">
             <button class="btn" onclick="openNewDoc()">＋ Новый документ</button>
+            <button class="btn-secondary btn" onclick="exportProjectAllIcs()" title="Скачать .ics со всеми событиями проекта">📅 В календарь</button>
             <button class="btn-secondary btn">⤓ Экспорт всех</button>
             <button class="btn-secondary btn">📨 Поделиться</button>
             <button class="btn-dark btn">🤖 В Telegram</button>
@@ -5632,6 +5825,7 @@ body.has-reel .theme-toggle { right: 158px; }
       </div>
       <div class="doc-actions-h">
         <button class="btn btn-dark" onclick="exportCallsheetToPdf()">⤓ PDF</button>
+        <button class="btn-secondary btn" onclick="exportCallsheetIcs()" title="Скачать .ics для Google Calendar / Apple Calendar">📅 В календарь</button>
         <button class="btn btn-dark" onclick="exportCallsheetToXlsx()">⤓ XLSX</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
@@ -5669,6 +5863,7 @@ body.has-reel .theme-toggle { right: 158px; }
       </div>
       <div class="doc-actions-h">
         <button class="btn btn-dark" onclick="exportTimingToPdf()">⤓ PDF</button>
+        <button class="btn-secondary btn" onclick="exportTimingIcs()" title="Скачать .ics для Google Calendar / Apple Calendar">📅 В календарь</button>
         <button class="btn btn-dark" onclick="exportTimingToXlsx()">⤓ XLSX</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
@@ -13915,6 +14110,215 @@ function buildBriefPrintHTML(project, b) {
 
   c.innerHTML = html;
   return c;
+}
+
+/* ============================================================
+   МОБИЛЬНЫЙ SIDEBAR (drawer)
+   ============================================================ */
+function toggleMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const ov = document.getElementById('mobile-sidebar-overlay');
+  if (!sb || !ov) return;
+  const opened = sb.classList.toggle('open');
+  ov.classList.toggle('active', opened);
+}
+function closeMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const ov = document.getElementById('mobile-sidebar-overlay');
+  if (sb) sb.classList.remove('open');
+  if (ov) ov.classList.remove('active');
+}
+// Закрывать sidebar после клика на nav-item на мобиле
+document.addEventListener('click', (e) => {
+  if (window.innerWidth > 768) return;
+  if (e.target.closest('.sidebar .nav-item') || e.target.closest('.sidebar a')) {
+    closeMobileSidebar();
+  }
+});
+
+/* ============================================================
+   GOOGLE CALENDAR / iCAL — УНИВЕРСАЛЬНЫЙ .ics ЭКСПОРТ
+   ============================================================ */
+function _icsEscape(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n');
+}
+function _icsDate(d, allDay) {
+  if (typeof d === 'string') {
+    if (allDay) return d.replace(/-/g, '');
+    // d может быть "YYYY-MM-DD" или "YYYY-MM-DDTHH:MM"
+    if (d.length === 10) return d.replace(/-/g, '') + 'T000000';
+    return d.replace(/[-:]/g, '').replace('T', 'T').slice(0, 15);
+  }
+  if (d instanceof Date) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    if (allDay) return `${y}${m}${day}`;
+    const h = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${y}${m}${day}T${h}${mi}00`;
+  }
+  return '';
+}
+function _icsNowStamp() {
+  const d = new Date();
+  return d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+}
+function _combineDateTime(dateStr, timeStr) {
+  if (!dateStr) return null;
+  if (!timeStr) return new Date(dateStr + 'T00:00');
+  return new Date(dateStr + 'T' + timeStr);
+}
+
+// events = [{ uid, title, start (Date or 'YYYY-MM-DD'), end?, allDay?, location?, description? }]
+function downloadICS(filename, events, calendarName) {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//ZALOVE PRODUCTION//Calendar//RU',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH'
+  ];
+  if (calendarName) lines.push('X-WR-CALNAME:' + _icsEscape(calendarName));
+  const stamp = _icsNowStamp();
+  events.forEach((ev, i) => {
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:' + (ev.uid || `evt-${Date.now()}-${i}@zalove`));
+    lines.push('DTSTAMP:' + stamp);
+    if (ev.allDay) {
+      lines.push('DTSTART;VALUE=DATE:' + _icsDate(ev.start, true));
+      // Для all-day end должен быть на день больше (exclusive)
+      const endDate = ev.end || ev.start;
+      const ed = new Date(endDate);
+      ed.setDate(ed.getDate() + 1);
+      lines.push('DTEND;VALUE=DATE:' + _icsDate(ed, true));
+    } else {
+      lines.push('DTSTART:' + _icsDate(ev.start, false));
+      if (ev.end) lines.push('DTEND:' + _icsDate(ev.end, false));
+    }
+    lines.push('SUMMARY:' + _icsEscape(ev.title || 'Событие'));
+    if (ev.location) lines.push('LOCATION:' + _icsEscape(ev.location));
+    if (ev.description) lines.push('DESCRIPTION:' + _icsEscape(ev.description));
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ===== Сборка событий из разных типов документов ===== */
+function gatherCallsheetEvents(project) {
+  const events = [];
+  if (!project.callsheets) return events;
+  const days = Object.keys(project.callsheets).sort((a, b) => +a - +b);
+  days.forEach(dayKey => {
+    const cs = project.callsheets[dayKey];
+    if (!cs.date) return;
+    const start = _combineDateTime(cs.date, cs.startShift || cs.startShoot || '09:00');
+    const endTime = cs.endShift || '21:00';
+    const end = _combineDateTime(cs.date, endTime);
+    // Если endTime раньше startTime — считаем что end на следующий день
+    if (end && start && end <= start) end.setDate(end.getDate() + 1);
+    const descLines = [];
+    if (cs.startShoot) descLines.push('Начало съёмки: ' + cs.startShoot);
+    if (cs.directorName) descLines.push('Режиссёр: ' + cs.directorName);
+    if (cs.dopName) descLines.push('DOP: ' + cs.dopName);
+    if (cs.producerName) descLines.push('Продюсер: ' + cs.producerName);
+    if (cs.important) descLines.push('⚠ ' + cs.important);
+    events.push({
+      uid: `callsheet-${project.id}-day${dayKey}@zalove`,
+      title: `🎬 Съёмка ${project.name || ''} — день ${dayKey}`,
+      start, end,
+      location: [cs.locationName, cs.locationAddress].filter(Boolean).join(', '),
+      description: descLines.join('\n')
+    });
+  });
+  return events;
+}
+
+function gatherTimingEvents(project) {
+  const events = [];
+  if (!project.timing || !project.timing.stages) return events;
+  project.timing.stages.forEach(stage => {
+    stage.processes.forEach(proc => {
+      if (!proc.cells || Object.keys(proc.cells).length === 0) return;
+      const dates = Object.keys(proc.cells).sort();
+      const startDate = dates[0];
+      const endDate = dates[dates.length - 1];
+      // Определить тип (если разные — берём «крайний», iconе)
+      const types = Object.values(proc.cells);
+      const hasCrit = types.includes('critical');
+      const hasAppr = types.includes('approval');
+      const icon = hasCrit ? '🔴' : (hasAppr ? '🟡' : '⚫');
+      events.push({
+        uid: `timing-${project.id}-${proc.id}@zalove`,
+        title: `${icon} ${stage.name}: ${proc.name}`,
+        start: startDate,
+        end: endDate,
+        allDay: true,
+        description: `Проект: ${project.name}\nЭтап: ${stage.name}${proc.notes ? '\nЗаметки: ' + proc.notes : ''}`
+      });
+    });
+  });
+  return events;
+}
+
+function gatherDeadlineEvent(project) {
+  if (!project.deadline) return [];
+  return [{
+    uid: `deadline-${project.id}@zalove`,
+    title: `🎯 Сдача: ${project.name || 'проект'}`,
+    start: project.deadline,
+    allDay: true,
+    description: `Финальный дедлайн проекта.${project.client ? '\nКлиент: ' + project.client : ''}`
+  }];
+}
+
+function exportCallsheetIcs() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const events = gatherCallsheetEvents(project);
+  if (events.length === 0) { toast('Нет заполненных вызывных с датой', 'error'); return; }
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  downloadICS(`Вызывные_${slug}.ics`, events, 'Вызывные · ' + project.name);
+  toast(`Скачано ${events.length} событий — открой файл, чтобы добавить в календарь ✓`, 'success');
+}
+
+function exportTimingIcs() {
+  if (!_timingProject) return;
+  const events = gatherTimingEvents(_timingProject);
+  if (events.length === 0) { toast('В тайминге нет процессов с датами', 'error'); return; }
+  const slug = (_timingProject.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  downloadICS(`Тайминг_${slug}.ics`, events, 'Тайминг · ' + _timingProject.name);
+  toast(`Скачано ${events.length} событий ✓`, 'success');
+}
+
+function exportProjectAllIcs() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const events = [
+    ...gatherDeadlineEvent(project),
+    ...gatherCallsheetEvents(project),
+    ...gatherTimingEvents(project)
+  ];
+  if (events.length === 0) { toast('Нечего экспортировать — заполни вызывные/тайминг/дедлайн', 'error'); return; }
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  downloadICS(`События_${slug}.ics`, events, project.name + ' — все события');
+  toast(`Скачано ${events.length} событий ✓ Открой файл — добавит в календарь`, 'success');
 }
 
 /* ============================================================
