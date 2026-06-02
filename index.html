@@ -8069,6 +8069,16 @@ function formatDateRu(iso) {
 function openProjectDetail(id, idx) {
   const p = DB.getProject(id);
   if (!p) return;
+  // ЗАЩИТА: если открыта смета другого проекта — сохранить и обнулить состояние
+  if (_currentEstimate && _estimateProjectId && _estimateProjectId !== id) {
+    if (_estimateSaveTimer) {
+      clearTimeout(_estimateSaveTimer);
+      _estimateSaveTimer = null;
+      saveEstimateNow();
+    }
+    _currentEstimate = null;
+    _estimateProjectId = null;
+  }
   const fakeIdx = ((idx - 1) % 6) + 1;
   // Открываем детальную страницу
   window.openProject(p.name, fakeIdx);
@@ -8865,6 +8875,29 @@ const SMETA_TEMPLATE = [
 function ensureEstimateOfMode(project, mode) {
   // mode = 'client' | 'team'
   const slot = mode === 'team' ? 'estimateTeam' : 'estimate';
+
+  // ===== Авто-клонирование командной из клиентской при первом обращении =====
+  if (mode === 'team' && !project.estimateTeam && project.estimate) {
+    const client = project.estimate;
+    // Проверяем что клиентская не пустая (есть хоть одна непустая строка)
+    let hasData = false;
+    Object.values(client.sections || {}).forEach(sec => {
+      [...(sec.rows || []), ...(sec.customRows || [])].forEach(r => {
+        if (r.price && Number(r.price) > 0) hasData = true;
+      });
+    });
+    if (hasData) {
+      // Глубокая копия с новыми ID и пустыми entries
+      const clone = JSON.parse(JSON.stringify(client));
+      Object.values(clone.sections || {}).forEach(sec => {
+        (sec.rows || []).forEach(r => { r.id = 'tm_' + Math.random().toString(36).slice(2, 8); r.entries = []; });
+        (sec.customRows || []).forEach(r => { r.id = 'tmc_' + Math.random().toString(36).slice(2, 8); r.entries = []; });
+      });
+      project.estimateTeam = clone;
+      DB.updateProject(project.id, { estimateTeam: clone });
+    }
+  }
+
   if (!project[slot]) project[slot] = {};
   const est = project[slot];
   est.taxPercent = est.taxPercent != null ? est.taxPercent : 10;
@@ -8931,6 +8964,7 @@ function fmtRub(n) {
 // Текущее состояние редактируемой сметы — НЕ перечитываем из БД на каждое нажатие
 let _currentEstimate = null;
 let _estimateMode = 'client'; // 'client' | 'team'
+let _estimateProjectId = null; // защита от cross-project leak
 
 function switchEstimateMode(mode) {
   if (mode === _estimateMode) return;
@@ -8968,6 +9002,7 @@ function renderEstimate(project) {
   if (!project) return;
   const est = ensureEstimateOfMode(project, _estimateMode);
   _currentEstimate = est;
+  _estimateProjectId = project.id; // запоминаем какому проекту принадлежит загруженная смета
 
   // Title с режимом
   const modeLabel = _estimateMode === 'team' ? 'для команды' : 'для клиента';
@@ -9205,6 +9240,11 @@ function onEstimateInputChange(e) {
 
 function saveEstimateNow() {
   if (!_currentEstimate || !_currentProjectId) return;
+  // ЗАЩИТА: смета принадлежит другому проекту — не пишем
+  if (_estimateProjectId && _estimateProjectId !== _currentProjectId) {
+    console.warn('Save estimate skipped: project mismatch', _estimateProjectId, '!=', _currentProjectId);
+    return;
+  }
   const est = _currentEstimate;
   const slot = (_estimateMode === 'team') ? 'estimateTeam' : 'estimate';
   const upd = { [slot]: est };
