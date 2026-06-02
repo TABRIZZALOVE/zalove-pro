@@ -8416,8 +8416,105 @@ function openAddMember(memberId = null) {
   document.getElementById('mb-note').value = m?.note || '';
   document.getElementById('mb-delete-btn').style.display = isEdit ? 'inline-flex' : 'none';
   document.getElementById('mb-info').textContent = isEdit ? ('ID: ' + memberId) : 'Сохранится в проекте';
+  // Подключаем автокомплит: datalist + автозаполнение
+  setupKnownPeopleAutocomplete();
   document.getElementById('m-add-member').classList.add('active');
   setTimeout(() => document.getElementById('mb-name-ru').focus(), 100);
+}
+
+/* ===== АВТОКОМПЛИТ ИМЁН ИЗ ВСЕХ ПРОЕКТОВ ===== */
+function getKnownPeople() {
+  // Собирает уникальных людей со всех проектов: team + cast + crew (в вызывных)
+  const map = new Map();
+  function addPerson(p) {
+    if (!p || !p.name) return;
+    const key = p.name.trim().toLowerCase();
+    if (!key) return;
+    const existing = map.get(key) || {};
+    // Сливаем поля — приоритет тому, что уже есть (более раннее заполнение)
+    map.set(key, {
+      name: p.name.trim(),
+      name_en: existing.name_en || p.name_en || '',
+      role: existing.role || p.role || '',
+      telegram: existing.telegram || p.telegram || '',
+      instagram: existing.instagram || p.instagram || '',
+      phone: existing.phone || p.phone || '',
+      email: existing.email || p.email || '',
+      note: existing.note || p.note || ''
+    });
+  }
+  DB.getProjects().forEach(proj => {
+    // Команда проекта
+    (proj.team || []).forEach(m => addPerson({
+      name: m.name_ru,
+      name_en: m.name_en,
+      role: m.role || m.position,
+      telegram: m.telegram,
+      instagram: m.instagram,
+      phone: m.phone,
+      email: m.email,
+      note: m.note
+    }));
+    // Кастинг и крю в вызывных
+    if (proj.callsheets) {
+      Object.values(proj.callsheets).forEach(cs => {
+        (cs.crew || []).forEach(c => addPerson({ name: c.name, role: c.position, phone: c.phone }));
+        (cs.cast || []).forEach(c => addPerson({ name: c.name, role: c.category, phone: c.phone }));
+      });
+    }
+    // ППМ кастинг
+    if (proj.ppm && proj.ppm.cast) {
+      proj.ppm.cast.forEach(a => addPerson({ name: a.name, role: a.category, phone: a.contact }));
+    }
+  });
+  return Array.from(map.values());
+}
+
+function setupKnownPeopleAutocomplete() {
+  const people = getKnownPeople();
+  // Удалим старый datalist
+  const oldDl = document.getElementById('dl-known-people');
+  if (oldDl) oldDl.remove();
+  // Создаём новый
+  const dl = document.createElement('datalist');
+  dl.id = 'dl-known-people';
+  dl.innerHTML = people.map(p => {
+    const hint = [p.role, p.phone].filter(Boolean).join(' · ');
+    return `<option value="${escapeHtml(p.name)}">${escapeHtml(hint)}</option>`;
+  }).join('');
+  document.body.appendChild(dl);
+  const nameInput = document.getElementById('mb-name-ru');
+  nameInput.setAttribute('list', 'dl-known-people');
+  // При выборе/вводе известного имени — автозаполняем связанные поля
+  let prevValue = nameInput.value;
+  const handler = () => {
+    const v = nameInput.value.trim();
+    if (!v || v === prevValue) return;
+    prevValue = v;
+    const found = people.find(p => p.name.toLowerCase() === v.toLowerCase());
+    if (!found) return;
+    // Автозаполняем только пустые поля (не перезаписываем то что юзер уже ввёл)
+    const setIfEmpty = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && !el.value && val) el.value = val;
+    };
+    setIfEmpty('mb-name-en', found.name_en);
+    if (found.role) {
+      const roleSel = document.getElementById('mb-role');
+      // Проверим что такая роль есть в списке
+      const opt = Array.from(roleSel.options).find(o => o.value === found.role);
+      if (opt) roleSel.value = found.role;
+    }
+    setIfEmpty('mb-telegram', found.telegram);
+    setIfEmpty('mb-instagram', found.instagram);
+    setIfEmpty('mb-phone', found.phone);
+    setIfEmpty('mb-email', found.email);
+    setIfEmpty('mb-note', found.note);
+    toast(`Подтянул данные ${found.name}`, 'success');
+  };
+  nameInput.addEventListener('input', handler);
+  nameInput.addEventListener('change', handler);
+  nameInput.addEventListener('blur', handler);
 }
 
 function saveTeamMember() {
@@ -10816,6 +10913,54 @@ function renderCallsheetEditor() {
   });
   ed.querySelectorAll('input.people-input').forEach(inp => {
     inp.addEventListener('input', onCsPeopleInputChange);
+  });
+  // Подключаем автокомплит ко всем полям имён
+  attachNameAutocompleteToCallsheet();
+}
+
+// Подключение автокомплита к полям имён в вызывном
+function attachNameAutocompleteToCallsheet() {
+  // Убедимся, что глобальный datalist существует
+  if (!document.getElementById('dl-known-people')) {
+    const people = getKnownPeople();
+    const dl = document.createElement('datalist');
+    dl.id = 'dl-known-people';
+    dl.innerHTML = people.map(p => {
+      const hint = [p.role, p.phone].filter(Boolean).join(' · ');
+      return `<option value="${escapeHtml(p.name)}">${escapeHtml(hint)}</option>`;
+    }).join('');
+    document.body.appendChild(dl);
+  }
+  const people = getKnownPeople();
+  const peopleMap = new Map(people.map(p => [p.name.toLowerCase(), p]));
+
+  // Главные роли вверху вызывного
+  const mainNameFields = ['directorName', 'dopName', 'producerName', 'artName', 'productionDesignerName'];
+  mainNameFields.forEach(f => {
+    const el = document.querySelector(`[data-cs="${f}"]`);
+    if (el) el.setAttribute('list', 'dl-known-people');
+  });
+
+  // Поля имён в крю и кастинге (data-field="name")
+  document.querySelectorAll('input.people-input[data-field="name"]').forEach(el => {
+    el.setAttribute('list', 'dl-known-people');
+    // При выборе подсказки — автозаполняем телефон в той же строке
+    const handler = () => {
+      const v = el.value.trim();
+      if (!v) return;
+      const found = peopleMap.get(v.toLowerCase());
+      if (!found) return;
+      const row = el.closest('tr');
+      if (!row) return;
+      const phoneEl = row.querySelector('input.people-input[data-field="phone"]');
+      if (phoneEl && !phoneEl.value && found.phone) {
+        phoneEl.value = found.phone;
+        // Триггерим input чтобы сохранилось
+        phoneEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    };
+    el.addEventListener('change', handler);
+    el.addEventListener('blur', handler);
   });
 }
 
