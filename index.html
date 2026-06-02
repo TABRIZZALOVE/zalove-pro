@@ -2881,6 +2881,54 @@ body.has-reel .theme-toggle { right: 158px; }
   font-weight: 700;
 }
 
+/* Estimate mode tabs (client / team) */
+.est-mode-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--bg-2);
+  border-radius: 6px;
+  align-items: center;
+}
+.est-mode-tab {
+  padding: 9px 16px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.12s;
+}
+.est-mode-tab:hover { background: var(--bg-3); color: var(--text); }
+.est-mode-tab.active {
+  background: var(--ink, #0a0907);
+  color: white;
+  border-color: var(--ink, #0a0907);
+}
+.est-mode-tab .est-tab-hint {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+.est-mode-copy {
+  margin-left: auto;
+  padding: 8px 14px;
+  background: var(--brand-red, #e8231d);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.est-mode-copy:hover { opacity: 0.88; }
+
 /* Estimate editable */
 .est-row-edit {
   display: grid;
@@ -2914,6 +2962,18 @@ body.has-reel .theme-toggle { right: 158px; }
   font-weight: 700;
 }
 .est-row-edit input.est-input.price { color: var(--brand-red); font-weight: 600; }
+.est-row-edit input.est-name-input {
+  text-align: left;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+}
+.est-row-edit input.est-desc-input {
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+}
 .est-row-edit .row-total {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
@@ -2950,6 +3010,49 @@ body.has-reel .theme-toggle { right: 158px; }
 .est-section-edit.expanded .h-arrow { transform: rotate(90deg); }
 .est-section-edit .est-rows-edit { display: none; padding: 0 16px; }
 .est-section-edit.expanded .est-rows-edit { display: block; }
+
+.est-section-title-input {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  max-width: 400px;
+  outline: none;
+}
+.est-section-title-input:hover { background: var(--bg-3); border-color: var(--line-2); }
+.est-section-title-input:focus { background: var(--bg-2); border-color: var(--brand-red); }
+.est-section-del-btn {
+  width: 22px; height: 22px;
+  border: none; background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.est-section-edit:hover .est-section-del-btn { opacity: 1; }
+.est-section-del-btn:hover { background: rgba(232,35,29,0.15); color: var(--brand-red); }
+
+.est-add-section-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 14px;
+  border: 1.5px dashed var(--line-2);
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #0a0907);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+}
+.est-add-section-btn:hover { border-color: var(--brand-red); background: rgba(232,35,29,0.04); color: var(--brand-red); }
 
 .est-add-row-btn {
   width: 100%;
@@ -5762,6 +5865,9 @@ body.has-reel .theme-toggle { right: 158px; }
         </div>
       </div>
 
+      <div class="est-mode-tabs" id="est-mode-tabs" style="margin-bottom: 12px;">
+        <!-- renderEstimate() заполнит -->
+      </div>
       <div class="timing-link-bar" id="est-link-bar" style="margin-bottom: 12px;">
         <!-- renderEstimate() заполнит -->
       </div>
@@ -7171,6 +7277,7 @@ function openDoc(type) {
   closeAll();
   // Открытие сметы — обязательно подтягиваем актуальные данные проекта
   if (type === 'estimate' && _currentProjectId) {
+    _estimateMode = 'client';
     const project = DB.getProject(_currentProjectId);
     if (project) renderEstimate(project);
   }
@@ -8755,21 +8862,27 @@ const SMETA_TEMPLATE = [
   ]}
 ];
 
-function ensureEstimate(project) {
-  // Создать структуру сметы из шаблона, если её нет, либо смерджить с шаблоном
-  const est = project.estimate || {};
+function ensureEstimateOfMode(project, mode) {
+  // mode = 'client' | 'team'
+  const slot = mode === 'team' ? 'estimateTeam' : 'estimate';
+  if (!project[slot]) project[slot] = {};
+  const est = project[slot];
   est.taxPercent = est.taxPercent != null ? est.taxPercent : 10;
   est.sections = est.sections || {};
-  est.expanded = est.expanded || { 'prep': true }; // первый раздел открыт
+  est.expanded = est.expanded || { 'prep': true };
   SMETA_TEMPLATE.forEach(tmpl => {
     if (!est.sections[tmpl.id]) {
       est.sections[tmpl.id] = {
-        rows: tmpl.rows.map((r, i) => ({ id: 'r' + i, name: r.name, desc: r.desc, qty: 0, days: 0, price: 0 })),
+        rows: tmpl.rows.map((r, i) => ({ id: 'r' + i, name: r.name, desc: r.desc, qty: 0, days: 0, price: 0, entries: [] })),
         customRows: []
       };
     }
   });
   return est;
+}
+// Совместимость
+function ensureEstimate(project) {
+  return ensureEstimateOfMode(project, _estimateMode || 'client');
 }
 
 function calcRowTotal(row) {
@@ -8817,14 +8930,64 @@ function fmtRub(n) {
 
 // Текущее состояние редактируемой сметы — НЕ перечитываем из БД на каждое нажатие
 let _currentEstimate = null;
+let _estimateMode = 'client'; // 'client' | 'team'
+
+function switchEstimateMode(mode) {
+  if (mode === _estimateMode) return;
+  // Сохраним текущую перед переключением
+  if (_currentEstimate && _currentProjectId) {
+    saveEstimateNow();
+  }
+  _estimateMode = mode;
+  const project = DB.getProject(_currentProjectId);
+  if (project) renderEstimate(project);
+}
+
+function copyEstimateFromClientToTeam() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const clientEst = project.estimate;
+  if (!clientEst) { toast('Клиентская смета пустая', 'error'); return; }
+  if (!confirm('Скопировать структуру и цены из клиентской сметы в командную? Текущая командная будет заменена.')) return;
+  // Глубокая копия с новыми ID строк
+  const deepCopy = JSON.parse(JSON.stringify(clientEst));
+  // Уникальные ID для строк (чтобы не пересекались с клиентской)
+  Object.values(deepCopy.sections || {}).forEach(sec => {
+    (sec.rows || []).forEach(r => { r.id = 'tm_' + Math.random().toString(36).slice(2, 8); r.entries = []; });
+    (sec.customRows || []).forEach(r => { r.id = 'tmc_' + Math.random().toString(36).slice(2, 8); r.entries = []; });
+  });
+  project.estimateTeam = deepCopy;
+  DB.updateProject(_currentProjectId, { estimateTeam: deepCopy });
+  _estimateMode = 'team';
+  renderEstimate(DB.getProject(_currentProjectId));
+  toast('Командная смета создана из клиентской ✓', 'success');
+}
 
 function renderEstimate(project) {
   if (!project) return;
-  const est = ensureEstimate(project);
+  const est = ensureEstimateOfMode(project, _estimateMode);
   _currentEstimate = est;
 
-  // Title
-  document.getElementById('est-project-title').textContent = 'Смета · ' + project.name;
+  // Title с режимом
+  const modeLabel = _estimateMode === 'team' ? 'для команды' : 'для клиента';
+  document.getElementById('est-project-title').innerHTML =
+    `Смета · ${escapeHtml(project.name)} <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">${modeLabel}</span>`;
+
+  // Табы Клиент / Команда
+  const tabsEl = document.getElementById('est-mode-tabs');
+  if (tabsEl) {
+    const teamFilled = !!(project.estimateTeam && Object.keys(project.estimateTeam.sections || {}).length);
+    tabsEl.innerHTML = `
+      <button class="est-mode-tab ${_estimateMode === 'client' ? 'active' : ''}" onclick="switchEstimateMode('client')">
+        📋 Клиентская <span class="est-tab-hint">(для клиента)</span>
+      </button>
+      <button class="est-mode-tab ${_estimateMode === 'team' ? 'active' : ''}" onclick="switchEstimateMode('team')">
+        👥 Командная <span class="est-tab-hint">(внутренняя)</span>
+      </button>
+      ${_estimateMode === 'team' && !teamFilled ? `<button class="est-mode-copy" onclick="copyEstimateFromClientToTeam()">📋 Скопировать из клиентской</button>` : ''}
+    `;
+  }
 
   // Ссылка на внешнюю смету
   const extLink = est.externalLink || '';
@@ -8869,9 +9032,24 @@ function renderEstimate(project) {
       <div class="est-meta-value">${escapeHtml(m.val)}</div>
     </div>`).join('');
 
-  // Sections
+  // Sections (стандартные из шаблона + кастомные пользователя)
   const cont = document.getElementById('estimateSections');
-  cont.innerHTML = SMETA_TEMPLATE.map(tmpl => renderEstSection(tmpl, est)).join('');
+  // Кастомные секции хранятся в est.customSections как массив { id, n, title }
+  if (!est.customSections) est.customSections = [];
+  // Кастомные добавляем как полные tmpl-объекты с isCustomSection=true в секции
+  est.customSections.forEach(cs => {
+    if (!est.sections[cs.id]) {
+      est.sections[cs.id] = { rows: [], customRows: [], isCustomSection: true };
+    } else {
+      est.sections[cs.id].isCustomSection = true;
+    }
+  });
+  const allTemplates = [
+    ...SMETA_TEMPLATE,
+    ...est.customSections.map(cs => ({ id: cs.id, n: cs.n || '＋', title: cs.title || 'Свой раздел', rows: [] }))
+  ];
+  cont.innerHTML = allTemplates.map(tmpl => renderEstSection(tmpl, est)).join('')
+    + `<button class="est-add-section-btn" onclick="addEstimateSection()">＋ Добавить свой раздел</button>`;
 
   // Tax
   document.getElementById('est-tax').value = est.taxPercent || 10;
@@ -8880,15 +9058,28 @@ function renderEstimate(project) {
   cont.querySelectorAll('input.est-input').forEach(inp => {
     inp.addEventListener('input', onEstimateInputChange);
   });
+  // Названия секций — редактируемые
+  cont.querySelectorAll('.est-section-title-input').forEach(inp => {
+    inp.addEventListener('input', (e) => {
+      const sid = e.target.dataset.sidTitle;
+      if (!est.sections[sid]) est.sections[sid] = { rows: [], customRows: [] };
+      est.sections[sid].customTitle = e.target.value;
+      // Если это кастомная секция — также обновим title в est.customSections
+      const cs = (est.customSections || []).find(x => x.id === sid);
+      if (cs) cs.title = e.target.value;
+      clearTimeout(_estimateSaveTimer);
+      _estimateSaveTimer = setTimeout(() => saveEstimateNow(), 400);
+    });
+  });
   document.getElementById('est-tax').addEventListener('input', onEstimateInputChange);
   cont.querySelectorAll('.est-section-head').forEach(head => {
     head.addEventListener('click', (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.closest('.est-add-row-btn') || e.target.closest('.est-del-btn')) return;
+      if (e.target.tagName === 'INPUT' || e.target.closest('.est-add-row-btn') || e.target.closest('.est-del-btn') || e.target.closest('.est-section-del-btn')) return;
       const wrap = head.closest('.est-section-edit');
       const sid = wrap.dataset.sid;
       wrap.classList.toggle('expanded');
       est.expanded[sid] = wrap.classList.contains('expanded');
-      DB.updateProject(_currentProjectId, { estimate: est });
+      saveEstimateToCurrentSlot(est);
     });
   });
 
@@ -8900,10 +9091,19 @@ function renderEstSection(tmpl, est) {
   const allRows = [...(section.rows || []), ...(section.customRows || [])];
   const isExpanded = est.expanded[tmpl.id];
   const total = calcSectionTotal(section);
+  // Если есть кастомное название — используем его, иначе шаблонное
+  const customTitle = section.customTitle || tmpl.title;
+  const isCustomSection = !!section.isCustomSection;
   return `
     <div class="est-section est-section-edit ${isExpanded ? 'expanded' : ''}" data-sid="${tmpl.id}">
       <div class="est-section-head">
-        <div class="h"><span class="h-arrow">▶</span>${tmpl.n} · ${escapeHtml(tmpl.title)} <span class="h-count">${allRows.length} позиций</span></div>
+        <div class="h" style="display:flex;align-items:center;gap:8px;flex:1;">
+          <span class="h-arrow">▶</span>
+          <span class="h-num" style="color:var(--muted);font-weight:600;">${escapeHtml(tmpl.n)}</span>
+          <input class="est-section-title-input" data-sid-title="${tmpl.id}" value="${escapeHtml(customTitle)}" placeholder="Название раздела" onclick="event.stopPropagation()">
+          <span class="h-count">${allRows.length} поз.</span>
+          ${isCustomSection ? `<button class="est-section-del-btn" onclick="event.stopPropagation(); deleteEstimateSection('${tmpl.id}')" title="Удалить раздел">×</button>` : ''}
+        </div>
         <div class="sum-display ${total === 0 ? 'zero' : ''}" data-sum="${tmpl.id}">${fmtRub(total)}</div>
       </div>
       <div class="est-rows-edit">
@@ -8911,7 +9111,7 @@ function renderEstSection(tmpl, est) {
           <div>ПОЗИЦИЯ</div><div>ОПИСАНИЕ</div><div class="h-num">К-ВО</div><div class="h-num">ДНЕЙ</div><div class="h-num">ЦЕНА</div><div class="h-num">ПЛАН</div><div class="h-num">ФАКТ</div><div class="h-num">Δ</div><div></div>
         </div>
         ${allRows.map((r, i) => renderEstRow(tmpl.id, r, i, i >= section.rows.length)).join('')}
-        <button class="est-add-row-btn" onclick="addEstimateRow('${tmpl.id}')">＋ Добавить свою позицию</button>
+        <button class="est-add-row-btn" onclick="addEstimateRow('${tmpl.id}')">＋ Добавить позицию</button>
       </div>
     </div>`;
 }
@@ -8926,7 +9126,7 @@ function renderEstRow(sid, row, idx, isCustom) {
   if (fact > 0) {
     if (total > 0 && fact > total) factCls = 'over';
     else if (total > 0 && fact <= total) factCls = 'save';
-    else factCls = 'over'; // факт без плана = неучтённый расход
+    else factCls = 'over';
   }
   // Δ
   let deltaCls = 'zero';
@@ -8938,8 +9138,8 @@ function renderEstRow(sid, row, idx, isCustom) {
   }
   return `
     <div class="est-row-edit" data-row-id="${row.id}" data-sid="${sid}">
-      <div class="name">${escapeHtml(row.name)}</div>
-      <div class="desc">${escapeHtml(row.desc || '')}</div>
+      <input class="est-input est-name-input" type="text" value="${escapeHtml(row.name || '')}" placeholder="Название позиции" data-field="name">
+      <input class="est-input est-desc-input" type="text" value="${escapeHtml(row.desc || '')}" placeholder="—" data-field="desc">
       <input class="est-input qty" type="number" min="0" value="${row.qty || ''}" placeholder="—" data-field="qty">
       <input class="est-input days" type="number" min="0" value="${row.days || ''}" placeholder="—" data-field="days">
       <input class="est-input price" type="number" min="0" value="${row.price || ''}" placeholder="—" data-field="price">
@@ -8949,7 +9149,7 @@ function renderEstRow(sid, row, idx, isCustom) {
         ${entriesCount > 0 ? `<span class="fact-badge">${entriesCount}</span>` : ''}
       </div>
       <div class="delta-cell ${deltaCls}" data-row-delta>${deltaTxt}</div>
-      ${isCustom ? `<button class="est-del-btn" onclick="deleteEstimateRow('${sid}','${row.id}')" title="Удалить">×</button>` : '<div></div>'}
+      <button class="est-del-btn" onclick="deleteEstimateRow('${sid}','${row.id}')" title="Удалить позицию">×</button>
     </div>`;
 }
 
@@ -8967,9 +9167,9 @@ function onEstimateInputChange(e) {
     const sid = rowEl.dataset.sid;
     const rid = rowEl.dataset.rowId;
     const field = inp.dataset.field;
-    // Сохраняем число (или null если пусто)
     const raw = inp.value;
-    const val = raw === '' ? null : Number(raw);
+    // Текстовые поля — сохраняем как строку, числовые — как число
+    const val = (field === 'name' || field === 'desc') ? raw : (raw === '' ? null : Number(raw));
     const section = est.sections[sid];
     if (!section) return;
     let row = section.rows.find(r => r.id === rid);
@@ -9006,9 +9206,14 @@ function onEstimateInputChange(e) {
 function saveEstimateNow() {
   if (!_currentEstimate || !_currentProjectId) return;
   const est = _currentEstimate;
-  const sub = calcGrandTotal(est);
-  const grand = Math.round(sub * (1 + (est.taxPercent || 0) / 100));
-  DB.updateProject(_currentProjectId, { estimate: est, budget: grand });
+  const slot = (_estimateMode === 'team') ? 'estimateTeam' : 'estimate';
+  const upd = { [slot]: est };
+  // Бюджет проекта берём из КЛИЕНТСКОЙ сметы (это сумма для клиента)
+  if (_estimateMode === 'client') {
+    const sub = calcGrandTotal(est);
+    upd.budget = Math.round(sub * (1 + (est.taxPercent || 0) / 100));
+  }
+  DB.updateProject(_currentProjectId, upd);
   renderStats();
   const project = DB.getProject(_currentProjectId);
   if (project) renderSmetaPromo(project);
@@ -9291,9 +9496,49 @@ function deleteEstimateRow(sid, rid) {
   if (!project) return;
   const est = ensureEstimate(project);
   const section = est.sections[sid];
-  if (!section || !section.customRows) return;
-  section.customRows = section.customRows.filter(r => r.id !== rid);
-  DB.updateProject(_currentProjectId, { estimate: est });
+  if (!section) return;
+  if (!confirm('Удалить эту позицию?')) return;
+  // Пробуем удалить и из rows (шаблонных) и из customRows
+  if (Array.isArray(section.rows)) {
+    section.rows = section.rows.filter(r => r.id !== rid);
+  }
+  if (Array.isArray(section.customRows)) {
+    section.customRows = section.customRows.filter(r => r.id !== rid);
+  }
+  saveEstimateToCurrentSlot(est);
+  renderEstimate(DB.getProject(_currentProjectId));
+}
+
+// Сохранить смету в правильный слот (client/team)
+function saveEstimateToCurrentSlot(est) {
+  if (!_currentProjectId) return;
+  const slot = (_estimateMode === 'team') ? 'estimateTeam' : 'estimate';
+  const upd = {};
+  upd[slot] = est;
+  DB.updateProject(_currentProjectId, upd);
+}
+
+function addEstimateSection() {
+  if (!_currentEstimate) return;
+  const name = prompt('Название нового раздела:', 'Свой раздел');
+  if (!name) return;
+  const id = 'csec_' + Math.random().toString(36).slice(2, 8);
+  if (!_currentEstimate.customSections) _currentEstimate.customSections = [];
+  _currentEstimate.customSections.push({ id, n: '＋', title: name });
+  _currentEstimate.sections[id] = { rows: [], customRows: [], isCustomSection: true, customTitle: name };
+  _currentEstimate.expanded[id] = true;
+  saveEstimateToCurrentSlot(_currentEstimate);
+  renderEstimate(DB.getProject(_currentProjectId));
+}
+
+function deleteEstimateSection(sid) {
+  if (!_currentEstimate) return;
+  if (!confirm('Удалить этот раздел со всеми позициями?')) return;
+  delete _currentEstimate.sections[sid];
+  if (_currentEstimate.customSections) {
+    _currentEstimate.customSections = _currentEstimate.customSections.filter(cs => cs.id !== sid);
+  }
+  saveEstimateToCurrentSlot(_currentEstimate);
   renderEstimate(DB.getProject(_currentProjectId));
 }
 
