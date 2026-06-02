@@ -2488,6 +2488,44 @@ body.has-reel .theme-toggle { right: 158px; }
 .cs-people-table input.center { text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--brand-red); }
 .cs-people-table input:hover { border-color: var(--line); background: var(--bg-3); }
 .cs-people-table input:focus { outline: none; border-color: var(--brand-red); background: var(--bg-2); }
+/* Drag handle + move buttons в строке крю/кастинга */
+.cs-drag-cell {
+  width: 50px;
+  white-space: nowrap;
+  text-align: center;
+  cursor: grab;
+}
+.cs-drag-cell .cs-drag-handle {
+  color: var(--muted);
+  font-size: 14px;
+  cursor: grab;
+  user-select: none;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.cs-row-draggable.cs-row-dragging { opacity: 0.4; }
+.cs-row-draggable.cs-row-drag-over { border-top: 3px solid var(--brand-red, #e8231d) !important; }
+.cs-move-btns {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  vertical-align: middle;
+}
+.cs-move-btn {
+  width: 16px; height: 13px;
+  border: none;
+  background: var(--bg-3);
+  color: var(--muted);
+  font-size: 7px;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 2px;
+  line-height: 1;
+}
+.cs-move-btn:hover:not(:disabled) { background: var(--ink, #0a0907); color: white; }
+.cs-move-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.cs-row-draggable:hover .cs-drag-handle { color: var(--text); }
+
 .cs-del-btn-sm {
   width: 26px; height: 26px;
   background: var(--bg-3);
@@ -4712,6 +4750,308 @@ body.has-reel .theme-toggle { right: 158px; }
 }
 
 /* ============================================================
+   ЗАДАЧИ ПРОЕКТА
+   ============================================================ */
+.tasks-block {
+  background: linear-gradient(135deg, #fffbe6 0%, #ffeec4 100%);
+  border: 1px solid #f0d68a;
+  border-radius: 10px;
+  margin: 18px 0;
+  overflow: hidden;
+}
+.tasks-block-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f0d68a;
+}
+.tasks-block-title {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  flex: 1;
+  color: #4a3500;
+}
+.tasks-block-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.tasks-block-stat { padding: 4px 10px; border-radius: 12px; background: rgba(0,0,0,0.06); }
+.tasks-block-stat.urgent { background: #fee2e2; color: #991b1b; }
+.tasks-block-stat.warn { background: #fef3c7; color: #92400e; }
+.tasks-block-stat.done { background: #d1fae5; color: #065f46; }
+
+.tasks-actions { display: flex; gap: 6px; }
+.tasks-action-btn {
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.06);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #4a3500;
+  letter-spacing: 0.3px;
+}
+.tasks-action-btn:hover { background: rgba(0,0,0,0.12); }
+.tasks-action-btn.primary {
+  background: #4a3500;
+  color: white;
+  font-weight: 700;
+}
+.tasks-action-btn.primary:hover { background: #2c1f00; }
+
+.tasks-list { padding: 8px 12px 12px; }
+.task-item {
+  display: grid;
+  grid-template-columns: 28px 1fr 130px 130px 28px;
+  gap: 10px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  align-items: center;
+  transition: all 0.12s;
+  cursor: pointer;
+}
+.task-item:hover { border-color: #4a3500; transform: translateX(2px); }
+.task-item.done { opacity: 0.5; }
+.task-item.done .task-title { text-decoration: line-through; }
+.task-item.overdue .task-deadline { color: #d63838; font-weight: 800; }
+
+.task-checkbox {
+  width: 22px; height: 22px;
+  border: 2px solid #999;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  background: white;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.task-checkbox.checked {
+  background: #4a3500;
+  color: white;
+  border-color: #4a3500;
+}
+.task-title {
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 4px 0;
+  width: 100%;
+  font-family: inherit;
+  color: var(--text);
+}
+.task-title:focus { background: #fffce0; padding: 4px 6px; border-radius: 3px; }
+.task-assignee, .task-deadline {
+  font-size: 11px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: inherit;
+  border-radius: 3px;
+  color: var(--text);
+}
+.task-assignee:hover, .task-deadline:hover { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
+.task-assignee:focus, .task-deadline:focus { background: white; border-color: #4a3500; outline: none; }
+.task-del {
+  width: 24px; height: 24px;
+  border: none;
+  background: transparent;
+  color: #999;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0;
+}
+.task-item:hover .task-del { opacity: 1; }
+.task-del:hover { background: #fee2e2; color: #991b1b; }
+
+.tasks-add-row {
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.04);
+  border: 1.5px dashed rgba(0,0,0,0.2);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  color: #4a3500;
+  letter-spacing: 0.3px;
+}
+.tasks-add-row:hover { background: #4a3500; color: white; border-color: #4a3500; }
+
+.tasks-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: #8b6f00;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Obsidian импорт-окно */
+.obsidian-import-modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: inherit;
+}
+.obsidian-import-modal textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 12px 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+
+/* ============================================================
+   ФИЛЬТР-МЕНЮ
+   ============================================================ */
+.filter-menu {
+  position: absolute;
+  z-index: 1100;
+  background: white;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+}
+.filter-menu-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+.filter-menu-item:hover { background: var(--bg-2, #f5f5f0); }
+.filter-menu-item.active { background: var(--ink, #0a0907); color: white; font-weight: 600; }
+.filter-menu-item .check { font-size: 11px; opacity: 0; }
+.filter-menu-item.active .check { opacity: 1; }
+.filter-menu-divider { height: 1px; background: var(--line-2, #e5e5e5); margin: 4px 0; }
+.filter-chip.has-filter {
+  background: var(--ink, #0a0907) !important;
+  color: white !important;
+  border-color: var(--ink, #0a0907) !important;
+}
+
+/* Список проектов (view: list) */
+.projects-list { display: flex; flex-direction: column; gap: 6px; }
+.projects-list .pl-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 130px 100px 80px 60px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  align-items: center;
+  transition: all 0.12s;
+}
+.projects-list .pl-row:hover { border-color: var(--ink, #0a0907); transform: translateX(2px); }
+.projects-list .pl-num { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--muted); }
+.projects-list .pl-name { font-weight: 700; }
+.projects-list .pl-client { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.projects-list .pl-status { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.projects-list .pl-budget { font-weight: 700; text-align: right; font-family: 'JetBrains Mono', monospace; }
+.projects-list .pl-deadline { font-size: 11px; color: var(--muted); text-align: right; }
+.projects-list .pl-progress { text-align: center; font-weight: 700; }
+
+/* Канбан */
+.projects-kanban { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.kanban-col {
+  background: var(--bg-2, #f5f5f0);
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 200px;
+}
+.kanban-col-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.kanban-col-count {
+  background: rgba(0,0,0,0.08);
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+.kanban-card {
+  background: white;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  border-left: 3px solid var(--ink, #0a0907);
+  font-size: 13px;
+  transition: transform 0.12s;
+}
+.kanban-card:hover { transform: translateX(2px); }
+.kanban-card-title { font-weight: 700; }
+.kanban-card-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* Глобальные списки (sidebar навигация) */
+.global-view {
+  display: none;
+}
+.global-view.active { display: block; }
+.global-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 14px;
+  border-bottom: 1px solid var(--line-2, #e5e5e5);
+  margin-bottom: 18px;
+}
+.global-view-title { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+.global-view-meta { font-size: 12px; color: var(--muted); }
+.global-doc-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 140px 120px 80px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid var(--line-2, #e5e5e5);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  align-items: center;
+  transition: all 0.12s;
+}
+.global-doc-row:hover { border-color: var(--ink, #0a0907); transform: translateX(2px); }
+.global-doc-icon { font-size: 18px; }
+.global-doc-name { font-weight: 700; }
+.global-doc-project { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.global-doc-meta { font-size: 11px; color: var(--muted); text-align: right; }
+.global-empty { padding: 60px 20px; text-align: center; color: var(--muted); font-size: 14px; font-style: italic; }
+
+/* ============================================================
    RESPONSIVE — ПЛАНШЕТ И МОБИЛЬНЫЙ
    ============================================================ */
 
@@ -4928,37 +5268,37 @@ body.has-reel .theme-toggle { right: 158px; }
 
     <div class="nav-section">
       <div class="nav-title">Workspace</div>
-      <div class="nav-item active" onclick="showDashboard()">
-        <span class="nav-icon">▤</span> Все проекты <span class="nav-count">6</span>
+      <div class="nav-item active" onclick="navTo('dashboard', this)" id="nav-dashboard">
+        <span class="nav-icon">▤</span> Все проекты <span class="nav-count" id="nav-count-projects">0</span>
       </div>
-      <div class="nav-item">
-        <span class="nav-icon">⏵</span> Мои задачи <span class="nav-count">9</span>
+      <div class="nav-item" onclick="navTo('tasks', this)">
+        <span class="nav-icon">⏵</span> Мои задачи <span class="nav-count" id="nav-count-tasks">0</span>
       </div>
-      <div class="nav-item">
+      <div class="nav-item" onclick="navTo('calendar', this)">
         <span class="nav-icon">◷</span> Календарь
       </div>
-      <div class="nav-item financial">
+      <div class="nav-item financial" onclick="navTo('finance', this)">
         <span class="nav-icon">⌗</span> Финансы <span class="private-badge" style="margin-left:auto;">Приватно</span>
       </div>
     </div>
 
     <div class="nav-section">
       <div class="nav-title">Документы</div>
-      <div class="nav-item"><span class="nav-icon">§</span> Договоры с клиентом</div>
-      <div class="nav-item financial"><span class="nav-icon">₽</span> Сметы <span class="private-badge" style="margin-left:auto;">Приватно</span></div>
-      <div class="nav-item financial"><span class="nav-icon">₽</span> Подсметы <span class="private-badge" style="margin-left:auto;">Приватно</span></div>
-      <div class="nav-item"><span class="nav-icon">⌚</span> Вызывные</div>
-      <div class="nav-item"><span class="nav-icon">⊞</span> Шаблоны</div>
+      <div class="nav-item" onclick="navTo('docs-clients', this)"><span class="nav-icon">§</span> Договоры с клиентом</div>
+      <div class="nav-item financial" onclick="navTo('docs-smeta', this)"><span class="nav-icon">₽</span> Сметы <span class="private-badge" style="margin-left:auto;">Приватно</span></div>
+      <div class="nav-item financial" onclick="navTo('docs-subsmeta', this)"><span class="nav-icon">₽</span> Подсметы <span class="private-badge" style="margin-left:auto;">Приватно</span></div>
+      <div class="nav-item" onclick="navTo('docs-callsheets', this)"><span class="nav-icon">⌚</span> Вызывные</div>
+      <div class="nav-item" onclick="navTo('docs-templates', this)"><span class="nav-icon">⊞</span> Шаблоны</div>
     </div>
 
     <!-- Отдельная папка договоров с исполнителями -->
     <div class="nav-group-folder">
       <div class="nav-title">📁 Договоры с исполнителями</div>
-      <div class="nav-item"><span class="nav-folder-icon">▸</span> ИП → ИП</div>
-      <div class="nav-item"><span class="nav-folder-icon">▸</span> ИП → Самозанятый</div>
-      <div class="nav-item"><span class="nav-folder-icon">▸</span> ИП → ФЛ безвозмездно</div>
-      <div class="nav-item"><span class="nav-folder-icon">▸</span> NDA исполнителя</div>
-      <div class="nav-item"><span class="nav-folder-icon">▸</span> Расписка о получении</div>
+      <div class="nav-item" onclick="navTo('docs-ip-ip', this)"><span class="nav-folder-icon">▸</span> ИП → ИП</div>
+      <div class="nav-item" onclick="navTo('docs-ip-smz', this)"><span class="nav-folder-icon">▸</span> ИП → Самозанятый</div>
+      <div class="nav-item" onclick="navTo('docs-ip-fl', this)"><span class="nav-folder-icon">▸</span> ИП → ФЛ безвозмездно</div>
+      <div class="nav-item" onclick="navTo('docs-nda', this)"><span class="nav-folder-icon">▸</span> NDA исполнителя</div>
+      <div class="nav-item" onclick="navTo('docs-receipt', this)"><span class="nav-folder-icon">▸</span> Расписка о получении</div>
     </div>
 
     <div class="nav-section">
@@ -5037,22 +5377,30 @@ body.has-reel .theme-toggle { right: 158px; }
       <!-- FILTERS -->
       <div class="filter-bar">
         <div class="view-tabs">
-          <div class="view-tab active">▤ Карточки</div>
-          <div class="view-tab">≡ Список</div>
-          <div class="view-tab">⊞ Канбан</div>
-          <div class="view-tab">◷ Календарь</div>
+          <div class="view-tab active" data-view="cards" onclick="switchProjectView('cards')">▤ Карточки</div>
+          <div class="view-tab" data-view="list" onclick="switchProjectView('list')">≡ Список</div>
+          <div class="view-tab" data-view="kanban" onclick="switchProjectView('kanban')">⊞ Канбан</div>
+          <div class="view-tab" data-view="calendar" onclick="switchProjectView('calendar')">◷ Календарь</div>
         </div>
         <div style="flex: 1;"></div>
-        <div class="filter-chip">Статус ⌄</div>
-        <div class="filter-chip">Клиент ⌄</div>
-        <div class="filter-chip">Команда ⌄</div>
-        <div class="filter-chip">Сортировка: дата ⌄</div>
+        <div class="filter-chip" id="filter-status" onclick="openFilterMenu('status', this)">Статус ⌄</div>
+        <div class="filter-chip" id="filter-client" onclick="openFilterMenu('client', this)">Клиент ⌄</div>
+        <div class="filter-chip" id="filter-team" onclick="openFilterMenu('team', this)">Команда ⌄</div>
+        <div class="filter-chip" id="filter-sort" onclick="openFilterMenu('sort', this)">Сортировка: дата ⌄</div>
       </div>
+      <!-- Меню фильтра (одно на всех) -->
+      <div id="filter-menu" class="filter-menu" style="display:none;"></div>
 
       <!-- PROJECTS GRID -->
       <div class="projects-grid" id="projectsGrid">
         <!-- Карточки проектов рендерятся из localStorage через renderProjects() -->
       </div>
+      <div class="projects-list" id="projectsList" style="display:none;"></div>
+      <div class="projects-kanban" id="projectsKanban" style="display:none;"></div>
+      <div id="projectsCalendar" style="display:none;"></div>
+
+      <!-- Глобальные представления (sidebar навигация) -->
+      <div id="globalViewsHost"></div>
       <div class="projects-grid" style="display:none">
         <div class="project-card" onclick="openProject('Nebula', 1)">
           <div class="poster poster-1">
@@ -5409,6 +5757,11 @@ body.has-reel .theme-toggle { right: 158px; }
         </div>
       </div>
 
+      <!-- TASKS BLOCK -->
+      <div id="tasks-block" class="tasks-block">
+        <!-- renderProjectTasks() заполнит -->
+      </div>
+
       <!-- TEAM MEMBERS -->
       <div class="section-title">Участники проекта <span class="pill" id="team-count-pill">0 человек</span></div>
       <div class="team-members-section">
@@ -5727,107 +6080,9 @@ body.has-reel .theme-toggle { right: 158px; }
       <!-- PROJECT RATING (post-project) -->
       <div class="section-title financial">Оценка проекта <span class="pill">ПОСТ-ФАКТУМ · ТОЛЬКО ВЫ</span> <span class="private-badge" style="margin-left: 8px;">Только продюсер</span></div>
       <div class="financial">
-      <div class="rating-card private-section">
-        <div class="rating-header-row">
-          <div>
-            <div class="rating-label">Общий рейтинг проекта</div>
-            <div class="rating-overall">
-              <div class="rating-num high">87</div>
-              <div class="rating-pct">/ 100</div>
-            </div>
-          </div>
-          <div class="rating-meta">
-            <div>Закрыт <span class="v">11.05.2026</span></div>
-            <div>Команда <span class="v">14 человек</span></div>
-            <div>Косяков <span class="v" style="color: var(--amber)">2</span></div>
-          </div>
+        <div id="project-rating-root">
+          <!-- renderProjectRating() заполнит -->
         </div>
-
-        <div class="team-row">
-          <div class="team-avatar" style="background: var(--brand-red);">Р</div>
-          <div class="team-info">
-            <div class="name">Режиссёр</div>
-            <div class="role">пример: Иван Иванов</div>
-          </div>
-          <div class="team-note">Идеально отработал. Тритмент в срок, на площадке держал темп.</div>
-          <div class="team-rating-bar">
-            <div class="rate-bar"><div class="rate-fill high" style="width: 100%"></div></div>
-          </div>
-          <div class="team-rating-pct high">100%</div>
-        </div>
-
-        <div class="team-row">
-          <div class="team-avatar" style="background: var(--green);">ОП</div>
-          <div class="team-info">
-            <div class="name">Оператор-постановщик</div>
-            <div class="role">пример: Сергей Сергеев</div>
-          </div>
-          <div class="team-note">Чистая работа. Свет ставил быстро, материал отдал сразу после смены.</div>
-          <div class="team-rating-bar">
-            <div class="rate-bar"><div class="rate-fill high" style="width: 95%"></div></div>
-          </div>
-          <div class="team-rating-pct high">95%</div>
-        </div>
-
-        <div class="team-row">
-          <div class="team-avatar" style="background: var(--amber);">РМ</div>
-          <div class="team-info">
-            <div class="name">Режиссёр монтажа</div>
-            <div class="role">пример: Алексей Алексеев</div>
-          </div>
-          <div class="team-note" style="color: var(--brand-red);">⚠ Пропустил дедлайн чернового монтажа на 2 дня. Хорошо работает, но коммуникация слабая.</div>
-          <div class="team-rating-bar">
-            <div class="rate-bar"><div class="rate-fill mid" style="width: 80%"></div></div>
-          </div>
-          <div class="team-rating-pct mid">80%</div>
-        </div>
-
-        <div class="team-row">
-          <div class="team-avatar" style="background: var(--blue);">АД</div>
-          <div class="team-info">
-            <div class="name">Арт-директор</div>
-            <div class="role">пример: Ольга Ольгина</div>
-          </div>
-          <div class="team-note">Отличная визуальная концепция. Фото со съёмки — топ.</div>
-          <div class="team-rating-bar">
-            <div class="rate-bar"><div class="rate-fill high" style="width: 92%"></div></div>
-          </div>
-          <div class="team-rating-pct high">92%</div>
-        </div>
-
-        <div class="team-row">
-          <div class="team-avatar" style="background: var(--text);">АП</div>
-          <div class="team-info">
-            <div class="name">Администратор площадки</div>
-            <div class="role">пример: Михаил Михайлов</div>
-          </div>
-          <div class="team-note empty">Без комментариев · стандартная отработка</div>
-          <div class="team-rating-bar">
-            <div class="rate-bar"><div class="rate-fill high" style="width: 88%"></div></div>
-          </div>
-          <div class="team-rating-pct high">88%</div>
-        </div>
-
-        <div class="team-row">
-          <div class="team-avatar" style="background: var(--brand-red);">СТ</div>
-          <div class="team-info">
-            <div class="name">Стилист</div>
-            <div class="role">пример: Анна Анина</div>
-          </div>
-          <div class="team-note" style="color: var(--amber);">Костюмы согласовали в последний момент, образ ГГ менялся на площадке.</div>
-          <div class="team-rating-bar">
-            <div class="rate-bar"><div class="rate-fill mid" style="width: 75%"></div></div>
-          </div>
-          <div class="team-rating-pct mid">75%</div>
-        </div>
-
-        <button class="rating-add-btn">＋ Добавить участника команды</button>
-
-        <div style="margin-top: 20px; padding: 14px 16px; background: var(--bg-paper); border: 1px solid #e8dec4; border-radius: 4px; font-size: 12px; color: var(--text-2);">
-          <strong style="color: var(--text); font-family: 'Anton', sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 6px;">🔮 На будущее</strong>
-          После завершения проекта рейтинг можно публиковать в общий чат команды через Telegram-бота. Сейчас оценки видите только вы.
-        </div>
-      </div>
       </div>
     </section>
   </main>
@@ -7836,6 +8091,7 @@ function renderProjects() {
   if (!grid) return;
   const projects = DB.getProjects();
   if (projects.length === 0) {
+    grid.style.display = '';
     grid.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-title">Пока нет проектов</div>
@@ -7843,7 +8099,12 @@ function renderProjects() {
         <button class="btn" onclick="openProjectForm()">＋ Новый проект</button>
       </div>`;
   } else {
-    grid.innerHTML = projects.map((p, i) => projectCardHTML(p, i)).join('');
+    // Используем активный режим (cards / list / kanban / calendar)
+    if (typeof applyProjectView === 'function') {
+      applyProjectView();
+    } else {
+      grid.innerHTML = projects.map((p, i) => projectCardHTML(p, i)).join('');
+    }
   }
   renderStats();
 }
@@ -10990,8 +11251,16 @@ function attachNameAutocompleteToCallsheet() {
 }
 
 function renderPeopleTable(kind, people) {
+  const lastIdx = people.length - 1;
   const rows = people.map((p, i) => `
-    <tr data-idx="${i}">
+    <tr data-idx="${i}" data-kind="${kind}" draggable="true" class="cs-row-draggable">
+      <td class="cs-drag-cell">
+        <span class="cs-drag-handle" title="Перетащить">≡</span>
+        <div class="cs-move-btns">
+          <button class="cs-move-btn" onclick="moveCsRow('${kind}', ${i}, -1)" ${i === 0 ? 'disabled' : ''} title="Вверх">▲</button>
+          <button class="cs-move-btn" onclick="moveCsRow('${kind}', ${i}, 1)" ${i === lastIdx ? 'disabled' : ''} title="Вниз">▼</button>
+        </div>
+      </td>
       <td><input class="people-input" data-kind="${kind}" data-field="position" value="${escapeHtml(p.position || '')}" placeholder="Должность"></td>
       <td><input class="people-input" data-kind="${kind}" data-field="name" value="${escapeHtml(p.name || '')}" placeholder="ФИО"></td>
       <td><input class="people-input" data-kind="${kind}" data-field="phone" value="${escapeHtml(p.phone || '')}" placeholder="+7 ___ ___ __ __"></td>
@@ -11003,19 +11272,74 @@ function renderPeopleTable(kind, people) {
     <table class="cs-people-table">
       <thead>
         <tr>
-          <th style="width: 30%;">Позиция</th>
-          <th style="width: 30%;">ФИО</th>
-          <th style="width: 22%;">Телефон</th>
-          <th style="width: 12%; text-align: center;">Вызов</th>
+          <th style="width: 50px;"></th>
+          <th style="width: 28%;">Позиция</th>
+          <th style="width: 28%;">ФИО</th>
+          <th style="width: 20%;">Телефон</th>
+          <th style="width: 11%; text-align: center;">Вызов</th>
           <th style="width: 6%;"></th>
         </tr>
       </thead>
       <tbody>
-        ${rows || '<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--muted);font-style:italic;font-size:12px;">Пока пусто. Нажми «+ Добавить позицию» или «Подтянуть из команды»</td></tr>'}
+        ${rows || '<tr><td colspan="6" style="text-align:center;padding:14px;color:var(--muted);font-style:italic;font-size:12px;">Пока пусто. Нажми «+ Добавить позицию» или «Подтянуть из команды»</td></tr>'}
       </tbody>
     </table>
   `;
 }
+
+/* ===== Перемещение строк в крю/кастинге ===== */
+function moveCsRow(kind, idx, direction) {
+  if (!_currentCsData || !_currentCsData[kind]) return;
+  const arr = _currentCsData[kind];
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  const [moved] = arr.splice(idx, 1);
+  arr.splice(newIdx, 0, moved);
+  saveCsNow();
+  renderCallsheetEditor();
+}
+
+// ===== Drag & Drop строк =====
+let _csDragKind = null;
+let _csDragIdx = null;
+document.addEventListener('dragstart', (e) => {
+  const tr = e.target.closest && e.target.closest('tr.cs-row-draggable');
+  if (!tr) return;
+  _csDragKind = tr.dataset.kind;
+  _csDragIdx = parseInt(tr.dataset.idx, 10);
+  tr.classList.add('cs-row-dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', String(_csDragIdx)); } catch (err) {}
+});
+document.addEventListener('dragover', (e) => {
+  const tr = e.target.closest && e.target.closest('tr.cs-row-draggable');
+  if (!tr || _csDragKind == null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('tr.cs-row-drag-over').forEach(t => t.classList.remove('cs-row-drag-over'));
+  tr.classList.add('cs-row-drag-over');
+});
+document.addEventListener('drop', (e) => {
+  const tr = e.target.closest && e.target.closest('tr.cs-row-draggable');
+  if (!tr || _csDragKind == null) return;
+  e.preventDefault();
+  const targetIdx = parseInt(tr.dataset.idx, 10);
+  const targetKind = tr.dataset.kind;
+  if (targetKind !== _csDragKind) return;
+  if (_csDragIdx === targetIdx) return;
+  const arr = _currentCsData && _currentCsData[_csDragKind];
+  if (!arr) return;
+  const [moved] = arr.splice(_csDragIdx, 1);
+  arr.splice(targetIdx > _csDragIdx ? targetIdx - 1 + 1 : targetIdx, 0, moved);
+  saveCsNow();
+  renderCallsheetEditor();
+});
+document.addEventListener('dragend', () => {
+  document.querySelectorAll('tr.cs-row-dragging').forEach(t => t.classList.remove('cs-row-dragging'));
+  document.querySelectorAll('tr.cs-row-drag-over').forEach(t => t.classList.remove('cs-row-drag-over'));
+  _csDragKind = null;
+  _csDragIdx = null;
+});
 
 function onCsInputChange(e) {
   if (!_currentCsData) return;
@@ -12137,6 +12461,8 @@ window.openProjectDetail = function(id, idx) {
   if (project) {
     renderTeamMembers(project);
     renderCreative(project);
+    renderProjectTasks(project);
+    renderProjectRating(project);
     renderIntegrations(project);
     renderCallsheetCard(project);
     renderSmetaPromo(project);
@@ -14848,6 +15174,812 @@ function buildBriefPrintHTML(project, b) {
 }
 
 /* ============================================================
+   ЗАДАЧИ ПРОЕКТА + OBSIDIAN
+   ============================================================ */
+function newTaskId() { return 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
+
+function renderProjectTasks(project) {
+  const root = document.getElementById('tasks-block');
+  if (!root || !project) return;
+  if (!Array.isArray(project.tasks)) project.tasks = [];
+  const tasks = project.tasks;
+  const team = project.team || [];
+
+  const today = new Date().toISOString().slice(0, 10);
+  let activeCount = 0, doneCount = 0, overdueCount = 0;
+  tasks.forEach(t => {
+    if (t.status === 'done') doneCount++;
+    else {
+      activeCount++;
+      if (t.deadline && t.deadline < today) overdueCount++;
+    }
+  });
+
+  const teamOptions = team.map(m => `<option value="${m.id}">${escapeHtml(m.name_ru || '')}</option>`).join('');
+
+  root.innerHTML = `
+    <div class="tasks-block-head">
+      <span style="font-size:18px;">📋</span>
+      <div class="tasks-block-title">Задачи по проекту</div>
+      <div class="tasks-block-stats">
+        ${activeCount > 0 ? `<div class="tasks-block-stat">${activeCount} активн.</div>` : ''}
+        ${overdueCount > 0 ? `<div class="tasks-block-stat urgent">${overdueCount} просроч.</div>` : ''}
+        ${doneCount > 0 ? `<div class="tasks-block-stat done">${doneCount} готово</div>` : ''}
+      </div>
+      <div class="tasks-actions">
+        <button class="tasks-action-btn" onclick="openObsidianSync()" title="Импорт/экспорт Obsidian">⌗ Obsidian</button>
+        <button class="tasks-action-btn" onclick="exportTasksToIcs()" title="В календарь">📅</button>
+        <button class="tasks-action-btn primary" onclick="addProjectTask()">＋ Задача</button>
+      </div>
+    </div>
+    <div class="tasks-list">
+      ${tasks.length === 0 ? '<div class="tasks-empty">Задач нет. Нажми «＋ Задача» или импортируй из Obsidian.</div>' :
+        tasks.map((t, i) => {
+          const isOverdue = t.status !== 'done' && t.deadline && t.deadline < today;
+          const assignee = team.find(m => m.id === t.assigneeId);
+          return `
+            <div class="task-item ${t.status === 'done' ? 'done' : ''} ${isOverdue ? 'overdue' : ''}" data-task-id="${t.id}">
+              <div class="task-checkbox ${t.status === 'done' ? 'checked' : ''}" onclick="toggleTaskDone('${t.id}')">${t.status === 'done' ? '✓' : ''}</div>
+              <input class="task-title" data-task-fld="title" value="${escapeHtml(t.title || '')}" placeholder="Задача...">
+              <select class="task-assignee" data-task-fld="assigneeId">
+                <option value="">— не назначен —</option>
+                ${teamOptions.replace(`value="${t.assigneeId}"`, `value="${t.assigneeId}" selected`)}
+              </select>
+              <input class="task-deadline" type="date" data-task-fld="deadline" value="${escapeHtml(t.deadline || '')}">
+              <button class="task-del" onclick="deleteTask('${t.id}')">×</button>
+            </div>
+          `;
+        }).join('')
+      }
+      <div class="tasks-add-row" onclick="addProjectTask()">＋ Добавить задачу</div>
+    </div>
+  `;
+
+  // Обработчики
+  root.querySelectorAll('[data-task-fld]').forEach(el => {
+    el.addEventListener('input', (e) => {
+      const item = e.target.closest('[data-task-id]');
+      const taskId = item.dataset.taskId;
+      const task = project.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      task[e.target.dataset.taskFld] = e.target.value;
+      clearTimeout(window._tasksSaveTimer);
+      window._tasksSaveTimer = setTimeout(() => {
+        DB.updateProject(project.id, { tasks: project.tasks });
+        renderProjectTasks(DB.getProject(project.id));
+      }, 500);
+    });
+    el.addEventListener('change', (e) => {
+      const item = e.target.closest('[data-task-id]');
+      const taskId = item.dataset.taskId;
+      const task = project.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      task[e.target.dataset.taskFld] = e.target.value;
+      DB.updateProject(project.id, { tasks: project.tasks });
+      renderProjectTasks(DB.getProject(project.id));
+    });
+  });
+}
+
+function addProjectTask() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  if (!Array.isArray(project.tasks)) project.tasks = [];
+  project.tasks.push({
+    id: newTaskId(),
+    title: '',
+    description: '',
+    assigneeId: '',
+    deadline: '',
+    status: 'todo',
+    createdAt: new Date().toISOString()
+  });
+  DB.updateProject(project.id, { tasks: project.tasks });
+  renderProjectTasks(DB.getProject(project.id));
+  // Фокус на новую задачу
+  setTimeout(() => {
+    const items = document.querySelectorAll('#tasks-block .task-title');
+    const last = items[items.length - 1];
+    if (last) last.focus();
+  }, 50);
+}
+
+function deleteTask(taskId) {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project || !Array.isArray(project.tasks)) return;
+  project.tasks = project.tasks.filter(t => t.id !== taskId);
+  DB.updateProject(project.id, { tasks: project.tasks });
+  renderProjectTasks(DB.getProject(project.id));
+}
+
+function toggleTaskDone(taskId) {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project || !Array.isArray(project.tasks)) return;
+  const t = project.tasks.find(x => x.id === taskId);
+  if (!t) return;
+  t.status = t.status === 'done' ? 'todo' : 'done';
+  t.completedAt = t.status === 'done' ? new Date().toISOString() : null;
+  DB.updateProject(project.id, { tasks: project.tasks });
+  renderProjectTasks(DB.getProject(project.id));
+}
+
+/* ===== Obsidian — импорт/экспорт markdown ===== */
+function openObsidianSync() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const currentMd = exportTasksToMarkdown(project);
+  const html = `
+    <div class="obsidian-import-modal">
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:6px;">⌗ Obsidian синхронизация</h2>
+      <div style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.5;">
+        <b>Импорт:</b> вставь чек-листы из Obsidian, нажми «↓ Импортировать».<br>
+        <b>Экспорт:</b> скопируй текст ниже и вставь в свой Obsidian-проект.<br>
+        <b>Формат:</b> <code style="background:#f5f5f0;padding:2px 6px;border-radius:3px;font-family:monospace;font-size:11px;">- [ ] Текст задачи 📅 2026-06-15 @иван</code>
+      </div>
+      <textarea id="obsidian-md-input" placeholder="- [ ] Подписать NDA со всеми &#128197; 2026-06-15 @иван&#10;- [x] Согласовать локацию&#10;- [ ] Заказать кейтеринг &#128197; 2026-06-20">${escapeHtml(currentMd)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+        <button class="tasks-action-btn" onclick="copyObsidianMd()">📋 Скопировать</button>
+        <button class="tasks-action-btn" onclick="closeObsidianModal()">Закрыть</button>
+        <button class="tasks-action-btn primary" onclick="importObsidianMd()">↓ Импортировать в задачи</button>
+      </div>
+    </div>
+  `;
+  // Создаём временный overlay
+  let ov = document.getElementById('obsidian-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'obsidian-overlay';
+    ov.className = 'modal-overlay';
+    ov.style.display = 'flex';
+    ov.style.alignItems = 'center';
+    ov.style.justifyContent = 'center';
+    ov.style.zIndex = '1200';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = html;
+  ov.classList.add('active');
+}
+function closeObsidianModal() {
+  const ov = document.getElementById('obsidian-overlay');
+  if (ov) ov.classList.remove('active');
+}
+function copyObsidianMd() {
+  const el = document.getElementById('obsidian-md-input');
+  if (!el) return;
+  el.select();
+  document.execCommand('copy');
+  toast('Скопировано в буфер обмена ✓', 'success');
+}
+
+function exportTasksToMarkdown(project) {
+  if (!project || !Array.isArray(project.tasks) || project.tasks.length === 0) return '';
+  const team = project.team || [];
+  return project.tasks.map(t => {
+    let line = '- [' + (t.status === 'done' ? 'x' : ' ') + '] ' + (t.title || '');
+    if (t.deadline) line += ' 📅 ' + t.deadline;
+    const a = team.find(m => m.id === t.assigneeId);
+    if (a && a.name_ru) {
+      const tag = a.name_ru.trim().split(/\s+/)[0].toLowerCase();
+      line += ' @' + tag;
+    }
+    return line;
+  }).join('\n');
+}
+
+function importObsidianMd() {
+  const text = document.getElementById('obsidian-md-input').value;
+  if (!text || !_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  if (!Array.isArray(project.tasks)) project.tasks = [];
+  const team = project.team || [];
+  const lines = text.split('\n');
+  const newTasks = [];
+  lines.forEach(line => {
+    const m = line.match(/^\s*-\s*\[(\s|x|X)\]\s*(.+)$/);
+    if (!m) return;
+    let title = m[2].trim();
+    const status = m[1].toLowerCase() === 'x' ? 'done' : 'todo';
+    // Дедлайн: 📅 YYYY-MM-DD или 🗓 YYYY-MM-DD или [due:: 2026-06-15] или просто YYYY-MM-DD
+    let deadline = '';
+    const dlM = title.match(/(?:📅|🗓|due::|@due\()\s*(\d{4}-\d{2}-\d{2})/);
+    if (dlM) {
+      deadline = dlM[1];
+      title = title.replace(dlM[0], '').trim();
+    } else {
+      const dateM = title.match(/(\d{4}-\d{2}-\d{2})/);
+      if (dateM) {
+        deadline = dateM[1];
+        title = title.replace(dateM[0], '').trim();
+      }
+    }
+    // Ответственный: @имя
+    let assigneeId = '';
+    const asM = title.match(/@([\wа-яА-ЯёЁ]+)/);
+    if (asM) {
+      const tag = asM[1].toLowerCase();
+      const member = team.find(m => (m.name_ru || '').toLowerCase().split(/\s+/)[0] === tag);
+      if (member) assigneeId = member.id;
+      title = title.replace(asM[0], '').trim();
+    }
+    // Убираем оставшиеся хэштеги [[ссылки]] и просто чистим
+    title = title.replace(/\[\[([^\]]+)\]\]/g, '$1').replace(/#[\wа-яА-ЯёЁ]+/g, '').trim();
+    if (!title) return;
+    newTasks.push({
+      id: newTaskId(),
+      title,
+      description: '',
+      assigneeId,
+      deadline,
+      status,
+      createdAt: new Date().toISOString()
+    });
+  });
+  if (newTasks.length === 0) {
+    toast('Не нашёл задач в формате - [ ] ...', 'error');
+    return;
+  }
+  // Объединяем с существующими — без дублей по тексту
+  const existingTitles = new Set(project.tasks.map(t => (t.title || '').toLowerCase().trim()));
+  let added = 0;
+  newTasks.forEach(t => {
+    if (!existingTitles.has(t.title.toLowerCase().trim())) {
+      project.tasks.push(t);
+      added++;
+    }
+  });
+  DB.updateProject(project.id, { tasks: project.tasks });
+  renderProjectTasks(DB.getProject(project.id));
+  closeObsidianModal();
+  toast(`Импортировано ${added} задач${newTasks.length > added ? ' (' + (newTasks.length - added) + ' уже было)' : ''} ✓`, 'success');
+}
+
+function exportTasksToIcs() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project || !Array.isArray(project.tasks)) {
+    toast('Нет задач', 'error'); return;
+  }
+  const team = project.team || [];
+  const events = project.tasks.filter(t => t.deadline && t.status !== 'done').map(t => {
+    const assignee = team.find(m => m.id === t.assigneeId);
+    return {
+      uid: `task-${project.id}-${t.id}@zalove`,
+      title: `📋 ${project.name || 'Проект'}: ${t.title}`,
+      start: t.deadline,
+      allDay: true,
+      description: assignee ? `Ответственный: ${assignee.name_ru || ''}` : ''
+    };
+  });
+  if (events.length === 0) {
+    toast('Нет задач с дедлайнами', 'error'); return;
+  }
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  downloadICS(`Задачи_${slug}.ics`, events, 'Задачи · ' + project.name);
+  toast(`Скачано ${events.length} задач ✓ Открой файл — добавит в календарь`, 'success');
+}
+
+/* ============================================================
+   ОЦЕНКА ПРОЕКТА (рейтинг команды по проекту)
+   ============================================================ */
+function renderProjectRating(project) {
+  const root = document.getElementById('project-rating-root');
+  if (!root || !project) return;
+  // Структура: project.rating = { members: [{ memberId, score (0-100), note, mistakes }] }
+  if (!project.rating) project.rating = { members: [] };
+  const team = project.team || [];
+  // Соберём строки оценки: для каждого члена команды
+  const rows = team.map(m => {
+    const r = project.rating.members.find(x => x.memberId === m.id) || {};
+    return { member: m, score: r.score != null ? r.score : null, note: r.note || '', mistakes: r.mistakes || 0 };
+  });
+  const teamSize = team.length;
+  const scoredRows = rows.filter(r => r.score != null);
+  const totalScore = scoredRows.length > 0 ? Math.round(scoredRows.reduce((s, r) => s + r.score, 0) / scoredRows.length) : 0;
+  const totalMistakes = rows.reduce((s, r) => s + (r.mistakes || 0), 0);
+  const isDone = project.status === 'done' || project.status === 'archive';
+
+  const scoreCls = (s) => s >= 85 ? 'high' : s >= 70 ? 'mid' : 'low';
+
+  root.innerHTML = `
+    <div class="rating-card private-section">
+      <div class="rating-header-row">
+        <div>
+          <div class="rating-label">Общий рейтинг проекта</div>
+          <div class="rating-overall">
+            <div class="rating-num ${scoreCls(totalScore)}">${scoredRows.length > 0 ? totalScore : '—'}</div>
+            <div class="rating-pct">/ 100</div>
+          </div>
+        </div>
+        <div class="rating-meta">
+          ${isDone && project.updatedAt ? `<div>Закрыт <span class="v">${formatDateRu(project.updatedAt.slice(0, 10))}</span></div>` : ''}
+          <div>Команда <span class="v">${teamSize} ${pluralPeople(teamSize)}</span></div>
+          <div>Косяков <span class="v" style="color: var(--amber)">${totalMistakes}</span></div>
+        </div>
+      </div>
+
+      ${teamSize === 0 ? `<div style="padding:40px 20px;text-align:center;color:var(--muted);font-style:italic;">Сначала добавь участников проекта (раздел «Команда» ниже).</div>` : rows.map(r => {
+        const initials = (r.member.name_ru || '').split(/\\s+/).map(s => s[0]).filter(Boolean).slice(0, 2).join('');
+        const hasScore = r.score != null;
+        const cls = hasScore ? scoreCls(r.score) : 'low';
+        return `
+        <div class="team-row" data-member-id="${r.member.id}">
+          <div class="team-avatar" style="background: var(--brand-red);">${escapeHtml(initials || '?')}</div>
+          <div class="team-info">
+            <div class="name">${escapeHtml(r.member.role || '—')}</div>
+            <div class="role">${escapeHtml(r.member.name_ru || '')}</div>
+          </div>
+          <input class="team-note-input" data-rate-fld="note" value="${escapeHtml(r.note)}" placeholder="Комментарий по работе…" style="background:transparent;border:1px solid transparent;padding:6px 10px;font-size:12px;flex:1;border-radius:3px;font-family:inherit;color:var(--text);outline:none;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="number" min="0" max="100" data-rate-fld="score" value="${hasScore ? r.score : ''}" placeholder="—" style="width:64px;padding:6px 8px;text-align:right;font-weight:700;font-family:'JetBrains Mono', monospace;font-size:13px;border:1px solid var(--line-2,#e5e5e5);border-radius:3px;background:white;color:var(--text);">
+            <span class="team-rating-pct ${cls}" style="min-width:32px;">${hasScore ? r.score + '%' : '—'}</span>
+          </div>
+          <div class="team-rating-bar">
+            <div class="rate-bar"><div class="rate-fill ${cls}" style="width: ${hasScore ? r.score : 0}%"></div></div>
+          </div>
+          <input type="number" min="0" max="99" data-rate-fld="mistakes" value="${r.mistakes || ''}" placeholder="0" title="Кол-во косяков на проекте" style="width:48px;padding:6px 8px;text-align:center;font-weight:700;border:1px solid var(--line-2,#e5e5e5);border-radius:3px;background:white;color:var(--text);">
+        </div>
+      `;
+      }).join('')}
+
+      ${teamSize > 0 ? `<div style="margin-top:14px;padding:10px 14px;background:var(--bg-2);border-radius:4px;font-size:11px;color:var(--muted);">
+        Введи балл 0-100 для каждого участника, добавь комментарий и количество косяков. Общий рейтинг считается автоматически.
+      </div>` : ''}
+    </div>
+  `;
+
+  // Подключаем обработчики
+  root.querySelectorAll('input[data-rate-fld]').forEach(inp => {
+    inp.addEventListener('input', (e) => {
+      const row = e.target.closest('[data-member-id]');
+      const memberId = row.dataset.memberId;
+      const fld = e.target.dataset.rateFld;
+      let val = e.target.value;
+      if (fld === 'score' || fld === 'mistakes') val = val === '' ? null : Math.max(0, Math.min(fld === 'score' ? 100 : 99, Number(val)));
+      let r = project.rating.members.find(x => x.memberId === memberId);
+      if (!r) { r = { memberId }; project.rating.members.push(r); }
+      r[fld] = val;
+      clearTimeout(window._ratingSaveTimer);
+      window._ratingSaveTimer = setTimeout(() => {
+        DB.updateProject(project.id, { rating: project.rating });
+        // Перерисовываем шапку и прогресс-бар (но не сбрасываем фокус инпутов)
+        renderProjectRating(DB.getProject(project.id));
+      }, 500);
+    });
+  });
+}
+
+function pluralPeople(n) {
+  if (n % 10 === 1 && n % 100 !== 11) return 'человек';
+  return 'человек'; // все формы одинаковы для этого слова
+}
+
+/* ============================================================
+   НАВИГАЦИЯ SIDEBAR + ПРЕДСТАВЛЕНИЯ + ФИЛЬТРЫ
+   ============================================================ */
+let _currentView = 'cards';        // cards | list | kanban | calendar
+let _currentNav = 'dashboard';
+let _projectFilters = {
+  status: null,    // 'preprod' | 'shoot' | 'post' | 'done' | 'frozen' | null
+  client: null,
+  team: null,
+  sort: 'date'     // 'date' | 'name' | 'budget' | 'progress' | 'deadline'
+};
+
+function navTo(target, el) {
+  _currentNav = target;
+  document.querySelectorAll('.sidebar .nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  closeMobileSidebar();
+  // Скрыть детальный экран проекта, открыть дашборд
+  document.querySelectorAll('.project-detail-screen, .detail-screen').forEach(s => s.style.display = 'none');
+  // Скрыть глобальные view
+  document.getElementById('globalViewsHost').style.display = 'none';
+  // Скрываем все project view containers
+  const projectsGrid = document.getElementById('projectsGrid');
+  const projectsList = document.getElementById('projectsList');
+  const projectsKanban = document.getElementById('projectsKanban');
+  const projectsCalendar = document.getElementById('projectsCalendar');
+  if (projectsGrid) projectsGrid.style.display = 'none';
+  if (projectsList) projectsList.style.display = 'none';
+  if (projectsKanban) projectsKanban.style.display = 'none';
+  if (projectsCalendar) projectsCalendar.style.display = 'none';
+  // Скрываем все детали и promo блоки
+  const dashboardElements = ['greetingLine', 'brandHealthSection', 'integrationsSection', 'smetaPromo', 'projectStats'];
+
+  if (target === 'dashboard') {
+    // Возвращаем главную
+    showDashboard();
+    applyProjectView();
+    return;
+  }
+  // Открываем глобальное представление
+  renderGlobalView(target);
+}
+
+function renderGlobalView(key) {
+  const host = document.getElementById('globalViewsHost');
+  host.style.display = 'block';
+  const projects = DB.getProjects();
+  const cfg = GLOBAL_VIEWS[key];
+  if (!cfg) {
+    host.innerHTML = '<div class="global-empty">Раздел в разработке</div>';
+    return;
+  }
+  // Собираем элементы со всех проектов
+  const items = cfg.collect(projects);
+  let html = `
+    <div class="global-view-header">
+      <div>
+        <div class="global-view-title">${cfg.icon} ${escapeHtml(cfg.title)}</div>
+        <div class="global-view-meta">${items.length} ${cfg.unit || 'элементов'} · все проекты</div>
+      </div>
+    </div>
+  `;
+  if (items.length === 0) {
+    html += `<div class="global-empty">${escapeHtml(cfg.emptyText || 'Ничего нет')}</div>`;
+  } else {
+    html += items.map(it => `
+      <div class="global-doc-row" onclick="${it.onclick || `openProjectDetail('${it.projectId}', 1)`}">
+        <div class="global-doc-icon">${it.icon || cfg.icon}</div>
+        <div>
+          <div class="global-doc-name">${escapeHtml(it.title)}</div>
+          <div class="global-doc-project">${escapeHtml(it.project)}</div>
+        </div>
+        <div class="global-doc-meta">${escapeHtml(it.amount || '')}</div>
+        <div class="global-doc-meta">${escapeHtml(it.date || '')}</div>
+        <div class="global-doc-meta">${escapeHtml(it.status || '')}</div>
+      </div>
+    `).join('');
+  }
+  host.innerHTML = html;
+}
+
+const GLOBAL_VIEWS = {
+  'tasks': {
+    icon: '✓', title: 'Мои задачи', unit: 'задач',
+    emptyText: 'Задач нет. Открой проект и добавь задачу в карточке.',
+    collect: (projects) => {
+      // Задачи строим из дедлайнов проектов + статусов
+      const tasks = [];
+      projects.forEach(p => {
+        if (p.status === 'done' || p.status === 'archive') return;
+        if (p.deadline) {
+          const d = new Date(p.deadline);
+          const days = Math.ceil((d - new Date()) / 86400000);
+          tasks.push({
+            projectId: p.id,
+            icon: days < 0 ? '🚨' : days < 3 ? '🔥' : '◷',
+            title: `Сдача проекта · ${p.name}`,
+            project: p.client || p.artist || p.name,
+            date: formatDateRu(p.deadline),
+            status: days < 0 ? 'просрочено' : `через ${days} дн.`
+          });
+        }
+      });
+      return tasks.sort((a, b) => a.date.localeCompare(b.date));
+    }
+  },
+  'calendar': {
+    icon: '◷', title: 'Календарь', unit: 'событий',
+    emptyText: 'Календарь пуст. Заполни вызывные и тайминги.',
+    collect: (projects) => {
+      const events = [];
+      projects.forEach(p => {
+        if (p.deadline) events.push({
+          projectId: p.id,
+          icon: '🎯',
+          title: `Сдача · ${p.name}`,
+          project: p.client || '',
+          date: formatDateRu(p.deadline)
+        });
+        if (p.callsheets) {
+          Object.entries(p.callsheets).forEach(([day, cs]) => {
+            if (cs.date) events.push({
+              projectId: p.id,
+              icon: '🎬',
+              title: `Съёмка день ${day} · ${p.name}`,
+              project: cs.locationName || '',
+              date: formatDateRu(cs.date)
+            });
+          });
+        }
+      });
+      return events.sort((a, b) => a.date.localeCompare(b.date));
+    }
+  },
+  'finance': {
+    icon: '⌗', title: 'Финансы', unit: 'проектов',
+    emptyText: 'Нет проектов с бюджетом.',
+    collect: (projects) => projects.filter(p => p.budget).map(p => {
+      const fact = p.estimate ? calcGrandFact(p.estimate) : 0;
+      const delta = fact - (p.budget || 0);
+      return {
+        projectId: p.id,
+        icon: '₽',
+        title: p.name,
+        project: p.client || '',
+        amount: fmtRub(p.budget),
+        date: p.deadline ? formatDateRu(p.deadline) : '',
+        status: fact ? (delta > 0 ? '+' + fmtRub(delta) : fmtRub(fact) + ' факт') : ''
+      };
+    })
+  },
+  'docs-clients': {
+    icon: '§', title: 'Договоры с клиентом', unit: 'договоров',
+    emptyText: 'Договоров с клиентом пока нет. Открой проект → Документы.',
+    collect: (projects) => projects.filter(p => p.client).map(p => ({
+      projectId: p.id, title: 'Договор с ' + (p.client || '—'),
+      project: p.name, date: formatDateRu(p.deadline), status: p.status || ''
+    }))
+  },
+  'docs-smeta': {
+    icon: '₽', title: 'Сметы', unit: 'смет',
+    emptyText: 'Смет пока нет.',
+    collect: (projects) => projects.filter(p => p.estimate && p.budget).map(p => ({
+      projectId: p.id, title: 'Смета · ' + p.name, project: p.client || '',
+      amount: fmtRub(p.budget), date: formatDateRu(p.deadline)
+    }))
+  },
+  'docs-subsmeta': {
+    icon: '₽', title: 'Подсметы (от подрядчиков)', unit: 'подсмет',
+    emptyText: 'Подсметы появляются когда подрядчик присылает смету.',
+    collect: () => []
+  },
+  'docs-callsheets': {
+    icon: '⌚', title: 'Вызывные', unit: 'вызывных',
+    emptyText: 'Вызывных пока нет.',
+    collect: (projects) => {
+      const list = [];
+      projects.forEach(p => {
+        if (p.callsheets) Object.entries(p.callsheets).forEach(([day, cs]) => {
+          if (cs.date || cs.locationName) list.push({
+            projectId: p.id, title: `${p.name} · день ${day}`,
+            project: cs.locationName || '', date: formatDateRu(cs.date)
+          });
+        });
+      });
+      return list;
+    }
+  },
+  'docs-templates': {
+    icon: '⊞', title: 'Шаблоны документов', unit: 'шаблонов',
+    emptyText: 'Шаблоны — статичные DOCX/XLSX в твоей базе.',
+    collect: () => [
+      { title: 'Смета 2026', project: 'XLSX · шаблон', icon: '₽' },
+      { title: 'Тайминг 2026', project: 'XLSX · шаблон', icon: '◷' },
+      { title: 'Вызывной (Клип)', project: 'XLS · шаблон', icon: '⌚' },
+      { title: 'Вызывной (Реклама)', project: 'XLS · шаблон', icon: '⌚' },
+      { title: 'Бриф клиента', project: 'DOCX · шаблон', icon: '✎' },
+      { title: 'PPM Book', project: 'PPTX · шаблон', icon: '⎙' },
+      { title: 'NDA участника', project: 'DOCX · шаблон', icon: '§' },
+      { title: 'Договоры с исполнителями', project: 'ZIP · шаблоны', icon: '§' }
+    ]
+  },
+  'docs-ip-ip': { icon: '§', title: 'Договор ИП → ИП', unit: '', collect: () => [], emptyText: 'Шаблон договора между двумя ИП.' },
+  'docs-ip-smz': { icon: '§', title: 'Договор ИП → Самозанятый', unit: '', collect: () => [], emptyText: 'Шаблон договора с самозанятым.' },
+  'docs-ip-fl': { icon: '§', title: 'Договор ИП → ФЛ безвозмездно', unit: '', collect: () => [], emptyText: 'Безвозмездный договор с физлицом.' },
+  'docs-nda': { icon: '§', title: 'NDA исполнителя', unit: '', collect: () => [], emptyText: 'Шаблон соглашения о неразглашении.' },
+  'docs-receipt': { icon: '§', title: 'Расписка о получении', unit: '', collect: () => [], emptyText: 'Шаблон расписки о получении средств.' }
+};
+
+/* ===== Переключатель Карточки / Список / Канбан / Календарь ===== */
+function switchProjectView(view) {
+  _currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  applyProjectView();
+}
+
+function getFilteredProjects() {
+  let list = DB.getProjects();
+  if (_projectFilters.status) list = list.filter(p => (p.status || 'preprod') === _projectFilters.status);
+  if (_projectFilters.client) list = list.filter(p => (p.client || '').toLowerCase() === _projectFilters.client.toLowerCase());
+  if (_projectFilters.team) {
+    list = list.filter(p => (p.team || []).some(m => (m.name_ru || '').toLowerCase().includes(_projectFilters.team.toLowerCase())));
+  }
+  const s = _projectFilters.sort || 'date';
+  list = list.slice().sort((a, b) => {
+    if (s === 'name') return (a.name || '').localeCompare(b.name || '');
+    if (s === 'budget') return (b.budget || 0) - (a.budget || 0);
+    if (s === 'progress') return (b.progress || 0) - (a.progress || 0);
+    if (s === 'deadline') return (a.deadline || '9999').localeCompare(b.deadline || '9999');
+    return (b.createdAt || '').localeCompare(a.createdAt || '');
+  });
+  return list;
+}
+
+function applyProjectView() {
+  // Скрываем всё что относится к global views если переключаемся
+  const gh = document.getElementById('globalViewsHost');
+  if (gh) gh.style.display = 'none';
+  const projects = getFilteredProjects();
+  const grid = document.getElementById('projectsGrid');
+  const list = document.getElementById('projectsList');
+  const kanban = document.getElementById('projectsKanban');
+  const cal = document.getElementById('projectsCalendar');
+  // Сначала скрываем всё
+  grid.style.display = 'none';
+  list.style.display = 'none';
+  kanban.style.display = 'none';
+  cal.style.display = 'none';
+  if (_currentView === 'cards') {
+    grid.innerHTML = projects.map((p, i) => projectCardHTML(p, i)).join('');
+    grid.style.display = '';
+  } else if (_currentView === 'list') {
+    list.innerHTML = projects.map((p, i) => renderProjectListRow(p, i)).join('');
+    list.style.display = '';
+  } else if (_currentView === 'kanban') {
+    kanban.innerHTML = renderProjectKanban(projects);
+    kanban.style.display = '';
+  } else if (_currentView === 'calendar') {
+    cal.innerHTML = renderProjectCalendar(projects);
+    cal.style.display = '';
+  }
+  // Обновим счётчики
+  const cntEl = document.getElementById('nav-count-projects');
+  if (cntEl) cntEl.textContent = projects.length;
+  // Подсветка кнопок фильтров
+  document.getElementById('filter-status').classList.toggle('has-filter', !!_projectFilters.status);
+  document.getElementById('filter-client').classList.toggle('has-filter', !!_projectFilters.client);
+  document.getElementById('filter-team').classList.toggle('has-filter', !!_projectFilters.team);
+}
+
+function renderProjectListRow(p, i) {
+  const status = STATUS_TAGS ? STATUS_TAGS[p.status || 'preprod'] : { txt: p.status || '—', cls: '' };
+  const num = String(i + 1).padStart(2, '0');
+  return `
+    <div class="pl-row" onclick="openProjectDetail('${p.id}', ${i + 1})">
+      <div class="pl-num">${num}</div>
+      <div>
+        <div class="pl-name">${escapeHtml(p.name || 'Без названия')}</div>
+        <div class="pl-client">${escapeHtml((p.client || p.artist || '—') + ' · ' + (p.type || ''))}</div>
+      </div>
+      <div class="pl-status ${status.cls || ''}" style="color:${(p.status === 'frozen') ? '#1d4ed8' : 'var(--text)'};">${escapeHtml(status.txt || '')}</div>
+      <div class="pl-budget">${p.budget ? fmtRub(p.budget) : '—'}</div>
+      <div class="pl-deadline">${formatDateRu(p.deadline) || '—'}</div>
+      <div class="pl-progress">${p.progress || 0}%</div>
+    </div>
+  `;
+}
+
+const KANBAN_COLS = [
+  { key: 'preprod', label: 'Препрод' },
+  { key: 'shoot', label: 'Съёмки' },
+  { key: 'post', label: 'Постпрод' },
+  { key: 'done', label: 'Закрыто' },
+  { key: 'frozen', label: 'Заморожено' }
+];
+function renderProjectKanban(projects) {
+  return KANBAN_COLS.map(col => {
+    const items = projects.filter(p => (p.status || 'preprod') === col.key);
+    return `
+      <div class="kanban-col">
+        <div class="kanban-col-head">
+          <span>${escapeHtml(col.label)}</span>
+          <span class="kanban-col-count">${items.length}</span>
+        </div>
+        ${items.map((p, i) => `
+          <div class="kanban-card" onclick="openProjectDetail('${p.id}', ${i + 1})" style="border-left-color:${p.status === 'frozen' ? '#1d4ed8' : '#0a0907'};">
+            <div class="kanban-card-title">${escapeHtml(p.name || '—')}</div>
+            <div class="kanban-card-meta">${escapeHtml(p.client || p.artist || '—')}${p.deadline ? ' · ' + formatDateRu(p.deadline) : ''}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderProjectCalendar(projects) {
+  // Простой календарь — события по месяцам
+  const events = [];
+  projects.forEach(p => {
+    if (p.deadline) events.push({ date: p.deadline, type: 'deadline', label: '🎯 ' + p.name + ' (сдача)', projectId: p.id });
+    if (p.callsheets) Object.entries(p.callsheets).forEach(([day, cs]) => {
+      if (cs.date) events.push({ date: cs.date, type: 'shoot', label: '🎬 ' + p.name + ' день ' + day, projectId: p.id });
+    });
+  });
+  events.sort((a, b) => a.date.localeCompare(b.date));
+  if (events.length === 0) {
+    return '<div class="global-empty">Нет событий. Заполни дедлайны и вызывные.</div>';
+  }
+  // Группируем по месяцу
+  const byMonth = {};
+  events.forEach(e => {
+    const m = e.date.slice(0, 7);
+    (byMonth[m] = byMonth[m] || []).push(e);
+  });
+  return Object.entries(byMonth).map(([m, evts]) => {
+    const monthName = new Date(m + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:8px;">${escapeHtml(monthName)}</div>
+        ${evts.map(e => `
+          <div class="pl-row" style="grid-template-columns:80px 1fr;" onclick="openProjectDetail('${e.projectId}', 1)">
+            <div style="font-family:'JetBrains Mono', monospace;font-weight:700;">${formatDateRu(e.date) || ''}</div>
+            <div>${escapeHtml(e.label)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+/* ===== Меню фильтра ===== */
+function openFilterMenu(kind, anchor) {
+  const menu = document.getElementById('filter-menu');
+  const projects = DB.getProjects();
+  const rect = anchor.getBoundingClientRect();
+  let opts = [];
+  let current = null;
+  let onPick = () => {};
+  if (kind === 'status') {
+    opts = [
+      { val: null, label: 'Все статусы' },
+      { val: 'preprod', label: 'Препрод' },
+      { val: 'shoot', label: 'Съёмки' },
+      { val: 'post', label: 'Постпрод' },
+      { val: 'done', label: 'Закрыто' },
+      { val: 'frozen', label: 'Заморожено' }
+    ];
+    current = _projectFilters.status;
+    onPick = (v) => { _projectFilters.status = v; document.getElementById('filter-status').textContent = (opts.find(o => o.val === v) || { label: 'Статус' }).label + ' ⌄'; };
+  } else if (kind === 'client') {
+    const clients = [...new Set(projects.map(p => p.client).filter(Boolean))];
+    opts = [{ val: null, label: 'Все клиенты' }, ...clients.map(c => ({ val: c, label: c }))];
+    current = _projectFilters.client;
+    onPick = (v) => { _projectFilters.client = v; document.getElementById('filter-client').textContent = (v || 'Клиент') + ' ⌄'; };
+  } else if (kind === 'team') {
+    const names = new Set();
+    projects.forEach(p => (p.team || []).forEach(m => m.name_ru && names.add(m.name_ru)));
+    opts = [{ val: null, label: 'Все' }, ...[...names].sort().map(n => ({ val: n, label: n }))];
+    current = _projectFilters.team;
+    onPick = (v) => { _projectFilters.team = v; document.getElementById('filter-team').textContent = (v || 'Команда') + ' ⌄'; };
+  } else if (kind === 'sort') {
+    opts = [
+      { val: 'date', label: 'Дата создания' },
+      { val: 'name', label: 'Название' },
+      { val: 'budget', label: 'Бюджет (↓)' },
+      { val: 'progress', label: 'Прогресс (↓)' },
+      { val: 'deadline', label: 'Дедлайн (ближайший)' }
+    ];
+    current = _projectFilters.sort;
+    onPick = (v) => { _projectFilters.sort = v; document.getElementById('filter-sort').textContent = 'Сортировка: ' + (opts.find(o => o.val === v) || { label: '' }).label.toLowerCase() + ' ⌄'; };
+  }
+  menu.innerHTML = opts.map(o => `
+    <div class="filter-menu-item ${o.val === current ? 'active' : ''}" data-val="${o.val == null ? '' : escapeHtml(String(o.val))}">
+      <span>${escapeHtml(o.label)}</span>
+      <span class="check">✓</span>
+    </div>
+  `).join('');
+  menu.style.left = rect.left + 'px';
+  menu.style.top = (rect.bottom + 6) + 'px';
+  menu.style.display = 'block';
+  // Обработчики
+  menu.querySelectorAll('.filter-menu-item').forEach((it, idx) => {
+    it.addEventListener('click', () => {
+      const v = opts[idx].val;
+      onPick(v);
+      menu.style.display = 'none';
+      applyProjectView();
+    });
+  });
+  // Закрытие по клику вне
+  setTimeout(() => {
+    const closeHandler = (e) => {
+      if (!menu.contains(e.target) && !e.target.classList.contains('filter-chip')) {
+        menu.style.display = 'none';
+        document.removeEventListener('click', closeHandler);
+      }
+    };
+    document.addEventListener('click', closeHandler);
+  }, 0);
+}
+
+/* ============================================================
    МОБИЛЬНЫЙ SIDEBAR (drawer)
    ============================================================ */
 function toggleMobileSidebar() {
@@ -15916,6 +17048,14 @@ function buildTimingPrintHTML(project, t) {
    INIT
    ============================================================ */
 renderProjects();
+// Обновим счётчик задач при загрузке
+setTimeout(() => {
+  try {
+    const tasks = (GLOBAL_VIEWS.tasks.collect(DB.getProjects()) || []).length;
+    const el = document.getElementById('nav-count-tasks');
+    if (el) el.textContent = tasks;
+  } catch (e) {}
+}, 100);
 function openNewDoc() { closeAll(); document.getElementById('m-new').classList.add('active'); }
 function closeAll() {
   // Сохранить смету немедленно, если есть несохранённые правки
