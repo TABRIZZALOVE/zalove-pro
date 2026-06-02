@@ -9876,9 +9876,10 @@ const SMETA_PAGE_W = 794;   // A4 portrait
 const SMETA_PAGE_H = 1123;
 const SMETA_FONT = `'Montserrat', -apple-system, Arial, sans-serif`;
 
-function smetaPageShell(innerHtml) {
+function smetaPageShell(innerHtml, autoHeight) {
   const c = document.createElement('div');
-  c.style.cssText = `position:absolute;left:-99999px;top:0;width:${SMETA_PAGE_W}px;height:${SMETA_PAGE_H}px;background:#ffffff;color:#0a0907;font-family:${SMETA_FONT};line-height:1.4;overflow:hidden;box-sizing:border-box;`;
+  const heightCss = autoHeight ? `min-height:${SMETA_PAGE_H}px` : `height:${SMETA_PAGE_H}px`;
+  c.style.cssText = `position:absolute;left:-99999px;top:0;width:${SMETA_PAGE_W}px;${heightCss};background:#ffffff;color:#0a0907;font-family:${SMETA_FONT};line-height:1.4;${autoHeight ? '' : 'overflow:hidden;'}box-sizing:border-box;`;
   c.innerHTML = innerHtml;
   return c;
 }
@@ -9901,63 +9902,84 @@ function smetaFooter(project) {
   `;
 }
 
-function buildSmetaCoverPage(project, est, totals, modeLabel, sectionsBreakdown) {
+function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) {
   const taxPct = est.taxPercent || 0;
-  return smetaHeader(project, 'сводка') + `
-    <div style="padding:32px 40px 16px;">
-      <div style="font-size:36px;font-weight:900;letter-spacing:-1px;line-height:0.95;font-family:${SMETA_FONT};">СМЕТА ПРОЕКТА</div>
-      <div style="font-size:14px;color:#444;margin-top:8px;font-weight:600;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}${project.type ? ' · ' + escapeHtml(project.type) : ''}</div>
-      <div style="font-size:10px;color:#888;margin-top:4px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">${modeLabel}</div>
+  // Собираем все строки в одну большую таблицу с разделителями разделов
+  let bodyRows = '';
+  nonEmptySections.forEach((tmpl, secIdx) => {
+    const sec = est.sections[tmpl.id];
+    const allRows = [...(sec.rows || []), ...(sec.customRows || [])].filter(r => r.price && calcRowTotal(r) > 0);
+    if (allRows.length === 0) return;
+    const customTitle = sec.customTitle || tmpl.title;
+    const secSum = allRows.reduce((s, r) => s + calcRowTotal(r), 0);
+    // Разделитель раздела
+    bodyRows += `
+      <tr style="background:#0a0907;color:white;">
+        <td colspan="4" style="padding:8px 12px;font-weight:800;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;">${escapeHtml(tmpl.n)} · ${escapeHtml(customTitle)}</td>
+        <td colspan="2" style="padding:8px 12px;text-align:right;font-weight:900;font-size:11px;">${secSum.toLocaleString('ru-RU')} ₽</td>
+      </tr>
+    `;
+    allRows.forEach((row, i) => {
+      const total = calcRowTotal(row);
+      bodyRows += `
+        <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #f0f0eb;">
+          <td style="padding:5px 12px;font-weight:700;color:#0a0907;font-size:10px;">${escapeHtml(row.name || '')}</td>
+          <td style="padding:5px 8px;color:#666;font-size:9.5px;font-weight:500;line-height:1.35;">${escapeHtml(row.desc || '')}</td>
+          <td style="padding:5px 6px;text-align:right;font-weight:600;font-size:10px;">${row.qty || ''}</td>
+          <td style="padding:5px 6px;text-align:right;font-weight:600;font-size:10px;">${row.days || ''}</td>
+          <td style="padding:5px 6px;text-align:right;color:#e8231d;font-weight:700;font-size:10px;">${row.price ? Number(row.price).toLocaleString('ru-RU') : ''}</td>
+          <td style="padding:5px 12px;text-align:right;font-weight:800;color:#0a0907;font-size:10px;">${total.toLocaleString('ru-RU')} ₽</td>
+        </tr>
+      `;
+    });
+  });
+
+  return smetaHeader(project, 'полная смета') + `
+    <div style="padding:24px 40px 12px;">
+      <div style="font-size:30px;font-weight:900;letter-spacing:-1px;line-height:0.95;font-family:${SMETA_FONT};">СМЕТА ПРОЕКТА</div>
+      <div style="font-size:13px;color:#444;margin-top:6px;font-weight:600;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}${project.type ? ' · ' + escapeHtml(project.type) : ''}</div>
+      <div style="font-size:9px;color:#888;margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">${modeLabel}</div>
     </div>
-    <div style="padding:0 40px 14px;display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;">
-      ${project.deadline ? `<div style="background:#fafafa;padding:10px 14px;border-radius:4px;"><div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Дедлайн</div><div style="font-size:13px;font-weight:800;margin-top:3px;">${escapeHtml(formatDateRu(project.deadline))}</div></div>` : '<div></div>'}
-      ${project.days ? `<div style="background:#fafafa;padding:10px 14px;border-radius:4px;"><div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Дней съёмки</div><div style="font-size:13px;font-weight:800;margin-top:3px;">${project.days}</div></div>` : '<div></div>'}
-      ${project.artist ? `<div style="background:#fafafa;padding:10px 14px;border-radius:4px;"><div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Артист</div><div style="font-size:13px;font-weight:800;margin-top:3px;">${escapeHtml(project.artist)}</div></div>` : '<div></div>'}
-      ${project.client ? `<div style="background:#fafafa;padding:10px 14px;border-radius:4px;"><div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Клиент</div><div style="font-size:13px;font-weight:800;margin-top:3px;">${escapeHtml(project.client)}</div></div>` : '<div></div>'}
+    <div style="padding:0 40px 12px;display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;">
+      ${project.deadline ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Дедлайн</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(formatDateRu(project.deadline))}</div></div>` : '<div></div>'}
+      ${project.days ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Дней съёмки</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${project.days}</div></div>` : '<div></div>'}
+      ${project.artist ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Артист</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(project.artist)}</div></div>` : '<div></div>'}
+      ${project.client ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Клиент</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(project.client)}</div></div>` : '<div></div>'}
     </div>
 
-    <div style="padding:0 40px;">
-      <div style="font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Сводка по разделам</div>
-      <table style="width:100%;border-collapse:collapse;font-size:11px;font-family:${SMETA_FONT};">
+    <div style="padding:0 40px 30px;">
+      <table style="width:100%;border-collapse:collapse;font-family:${SMETA_FONT};">
         <thead>
-          <tr style="background:#0a0907;color:white;">
-            <th style="text-align:left;padding:8px 12px;font-weight:700;font-size:9px;letter-spacing:0.6px;text-transform:uppercase;width:40px;">№</th>
-            <th style="text-align:left;padding:8px 12px;font-weight:700;font-size:9px;letter-spacing:0.6px;text-transform:uppercase;">Раздел</th>
-            <th style="text-align:right;padding:8px 12px;font-weight:700;font-size:9px;letter-spacing:0.6px;text-transform:uppercase;width:80px;">Позиций</th>
-            <th style="text-align:right;padding:8px 12px;font-weight:700;font-size:9px;letter-spacing:0.6px;text-transform:uppercase;width:140px;">Сумма</th>
+          <tr style="background:#3c3c3c;color:white;">
+            <th style="text-align:left;padding:8px 12px;font-weight:800;font-size:8.5px;letter-spacing:0.8px;text-transform:uppercase;">Позиция</th>
+            <th style="text-align:left;padding:8px 8px;font-weight:800;font-size:8.5px;letter-spacing:0.8px;text-transform:uppercase;width:30%;">Описание</th>
+            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:7%;">К-во</th>
+            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:7%;">Смен</th>
+            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:13%;">Цена</th>
+            <th style="text-align:right;padding:8px 12px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:15%;">Итого</th>
           </tr>
         </thead>
-        <tbody>
-          ${sectionsBreakdown.map((b, i) => `
-            <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #f0f0eb;">
-              <td style="padding:8px 12px;font-weight:700;color:#888;">${escapeHtml(b.n)}</td>
-              <td style="padding:8px 12px;font-weight:600;color:#0a0907;">${escapeHtml(b.title)}</td>
-              <td style="padding:8px 12px;text-align:right;font-weight:600;color:#666;">${b.itemsCount}</td>
-              <td style="padding:8px 12px;text-align:right;font-weight:800;color:#0a0907;">${b.sum.toLocaleString('ru-RU')} ₽</td>
-            </tr>
-          `).join('')}
-        </tbody>
+        <tbody>${bodyRows}</tbody>
         <tfoot>
           <tr style="background:#f5f5f0;border-top:2px solid #0a0907;">
-            <td colspan="3" style="padding:10px 12px;text-align:right;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#444;">Сумма разделов</td>
+            <td colspan="5" style="padding:10px 12px;text-align:right;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#444;">Сумма разделов</td>
             <td style="padding:10px 12px;text-align:right;font-weight:900;font-size:14px;color:#0a0907;">${totals.subtotal.toLocaleString('ru-RU')} ₽</td>
           </tr>
           <tr style="background:#f5f5f0;">
-            <td colspan="3" style="padding:8px 12px;text-align:right;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#444;">Налог ${taxPct}%</td>
+            <td colspan="5" style="padding:8px 12px;text-align:right;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#444;">Налог ${taxPct}%</td>
             <td style="padding:8px 12px;text-align:right;font-weight:800;font-size:13px;color:#666;">${totals.tax.toLocaleString('ru-RU')} ₽</td>
+          </tr>
+          <tr style="background:#e8231d;color:white;">
+            <td colspan="5" style="padding:14px 12px;text-align:right;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;">Итого с налогом</td>
+            <td style="padding:14px 12px;text-align:right;font-weight:900;font-size:20px;">${totals.final.toLocaleString('ru-RU')} ₽</td>
           </tr>
         </tfoot>
       </table>
     </div>
-
-    <div style="margin:18px 40px 0;background:linear-gradient(135deg,#e8231d,#b81812);color:white;padding:24px 28px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;opacity:0.9;">Итого с налогом ${taxPct}%</div>
-        <div style="font-size:11px;opacity:0.7;margin-top:4px;">${totals.sectionsCount} разделов · ${totals.itemsCount} позиций</div>
-      </div>
-      <div style="font-size:46px;font-weight:900;letter-spacing:-1.5px;line-height:1;">${totals.final.toLocaleString('ru-RU')} ₽</div>
+    <div style="padding:0 40px 60px;font-size:8.5px;color:#999;text-align:center;line-height:1.5;font-weight:500;border-top:1px solid #ddd;padding-top:10px;margin:0 40px;">
+      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670<br>
+      ${escapeHtml(project.name || '')} · ${new Date().toLocaleDateString('ru-RU')} · ${totals.sectionsCount} разделов · ${totals.itemsCount} позиций
     </div>
-    ${smetaFooter(project)}
   `;
 }
 
@@ -10095,24 +10117,59 @@ async function exportEstimateToPdf() {
   const totals = { subtotal, tax, final, taxPct, sectionsCount: nonEmptySections.length, itemsCount };
   const modeLabel = _estimateMode === 'team' ? 'для команды (внутренняя)' : 'для клиента';
 
-  toast(`Готовлю PDF · ${2 + nonEmptySections.length} страниц...`, 'success');
+  toast(`Готовлю PDF...`, 'success');
 
-  // Список страниц: обложка+сводка → детализация по разделам → финал
-  const pages = [];
-  pages.push(smetaPageShell(buildSmetaCoverPage(project, est, totals, modeLabel, sectionsBreakdown)));
-  nonEmptySections.forEach((tmpl, idx) => {
+  // Первая страница — полная сводка (может занимать несколько листов A4)
+  // Остальные — по разделу на лист + финал
+  const coverPage = smetaPageShell(buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections), true);
+  const sectionPages = nonEmptySections.map((tmpl, idx) => {
     const sec = est.sections[tmpl.id];
-    pages.push(smetaPageShell(buildSmetaSectionPage(project, sec, tmpl, totals, idx + 1, nonEmptySections.length)));
+    return smetaPageShell(buildSmetaSectionPage(project, sec, tmpl, totals, idx + 1, nonEmptySections.length));
   });
-  pages.push(smetaPageShell(buildSmetaFinalPage(project, totals, modeLabel)));
+  const finalPage = smetaPageShell(buildSmetaFinalPage(project, totals, modeLabel));
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
   const pdfW = pdf.internal.pageSize.getWidth();
   const pdfH = pdf.internal.pageSize.getHeight();
 
-  for (let i = 0; i < pages.length; i++) {
-    const el = pages[i];
+  // ===== ОБЛОЖКА с полной сводкой — auto-height, может растянуться на несколько листов A4 =====
+  document.body.appendChild(coverPage);
+  try {
+    await Promise.all(Array.from(coverPage.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
+    }));
+    const canvas = await html2canvas(coverPage, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: SMETA_PAGE_W,
+      windowWidth: SMETA_PAGE_W,
+      letterRendering: true,
+      allowTaint: false,
+      imageTimeout: 15000
+    });
+    const imgData = canvas.toDataURL('image/png');
+    const imgW = pdfW;
+    const ratio = canvas.height / canvas.width;
+    const imgH = imgW * ratio;
+    const totalCoverPages = Math.ceil(imgH / pdfH);
+    let position = 0;
+    for (let p = 0; p < totalCoverPages; p++) {
+      if (p > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgW, imgH, undefined, 'FAST');
+      position -= pdfH;
+    }
+  } finally {
+    if (coverPage.parentNode) coverPage.parentNode.removeChild(coverPage);
+  }
+
+  // ===== Разделы и финал — фиксированные страницы =====
+  const fixedPages = [...sectionPages, finalPage];
+  for (let i = 0; i < fixedPages.length; i++) {
+    const el = fixedPages[i];
     document.body.appendChild(el);
     try {
       await Promise.all(Array.from(el.querySelectorAll('img')).map(img => {
@@ -10133,7 +10190,7 @@ async function exportEstimateToPdf() {
         imageTimeout: 15000
       });
       const imgData = canvas.toDataURL('image/png');
-      if (i > 0) pdf.addPage();
+      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH, undefined, 'FAST');
     } finally {
       if (el.parentNode) el.parentNode.removeChild(el);
@@ -10143,7 +10200,7 @@ async function exportEstimateToPdf() {
   const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
   const modeSlug = _estimateMode === 'team' ? '_команда' : '';
   pdf.save(`Смета${modeSlug}_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
-  toast(`Смета PDF · ${pages.length} страниц ✓`, 'success');
+  toast(`Смета PDF · ${pdf.internal.getNumberOfPages()} стр. ✓`, 'success');
   return;
 }
 
