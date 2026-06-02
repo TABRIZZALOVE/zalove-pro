@@ -6669,8 +6669,9 @@ body.has-reel .theme-toggle { right: 158px; }
             <input class="form-input" id="mb-name-en" placeholder="Ivan Ivanov · опционально">
           </div>
         </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div>
-          <label class="form-label">Роль на проекте *</label>
+          <label class="form-label">Роль на проекте (рус) *</label>
           <select class="form-select" id="mb-role">
             <optgroup label="🎬 Продюсерский цех">
               <option>Генеральный продюсер</option>
@@ -6763,6 +6764,11 @@ body.has-reel .theme-toggle { right: 158px; }
               <option>Другая</option>
             </optgroup>
           </select>
+        </div>
+        <div>
+          <label class="form-label">Position (EN)</label>
+          <input class="form-input" id="mb-role-en" placeholder="Director · авто-перевод" style="font-family: 'Inter', sans-serif;">
+        </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
@@ -8409,6 +8415,22 @@ function openAddMember(memberId = null) {
   document.getElementById('mb-name-ru').value = m?.name_ru || '';
   document.getElementById('mb-name-en').value = m?.name_en || '';
   document.getElementById('mb-role').value = m?.role || 'Режиссёр';
+  // Английская версия роли — либо из сохранённого, либо авто
+  document.getElementById('mb-role-en').value = m?.role_en || translateRole(m?.role || 'Режиссёр');
+  // При смене русской роли — автоматически переводим в английскую (если поле EN пустое или совпадает с предыдущим переводом)
+  const roleSelEl = document.getElementById('mb-role');
+  const roleEnEl = document.getElementById('mb-role-en');
+  let lastTranslation = roleEnEl.value;
+  roleSelEl.addEventListener('change', () => {
+    const newTrans = translateRole(roleSelEl.value);
+    // Перетираем поле EN только если юзер не редактировал его сам (т.е. оно совпадает с предыдущим переводом)
+    if (!roleEnEl.value || roleEnEl.value === lastTranslation) {
+      roleEnEl.value = newTrans;
+      lastTranslation = newTrans;
+    } else {
+      lastTranslation = roleEnEl.value;
+    }
+  });
   document.getElementById('mb-telegram').value = m?.telegram || '';
   document.getElementById('mb-instagram').value = m?.instagram || '';
   document.getElementById('mb-phone').value = m?.phone || '';
@@ -8529,11 +8551,14 @@ function saveTeamMember() {
   if (!project) return;
   const team = [...(project.team || [])];
   const role = document.getElementById('mb-role').value;
+  // Берём английскую роль из поля (юзер мог отредактировать), иначе авто-перевод
+  const roleEnManual = document.getElementById('mb-role-en').value.trim();
+  const role_en = roleEnManual || translateRole(role);
   const data = {
     name_ru,
     name_en: document.getElementById('mb-name-en').value.trim(),
     role,
-    role_en: translateRole(role),
+    role_en,
     telegram: document.getElementById('mb-telegram').value.trim(),
     instagram: document.getElementById('mb-instagram').value.trim(),
     phone: document.getElementById('mb-phone').value.trim(),
