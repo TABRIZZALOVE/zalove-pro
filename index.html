@@ -4844,26 +4844,37 @@ body.has-reel .theme-toggle { right: 158px; }
 .task-title {
   font-size: 13px;
   font-weight: 600;
-  border: none;
-  background: transparent;
+  border: 1px solid #e0d2a8;
+  background: #fffce8;
   outline: none;
-  padding: 4px 0;
+  padding: 7px 10px;
   width: 100%;
   font-family: inherit;
-  color: var(--text);
+  color: #2a1f00 !important;
+  border-radius: 4px;
 }
-.task-title:focus { background: #fffce0; padding: 4px 6px; border-radius: 3px; }
+.task-title::placeholder { color: #a08740; }
+.task-title:focus { background: white; border-color: #4a3500; box-shadow: 0 0 0 2px rgba(74,53,0,0.1); }
 .task-assignee, .task-deadline {
   font-size: 11px;
-  padding: 5px 8px;
-  border: 1px solid transparent;
-  background: transparent;
+  padding: 6px 8px;
+  border: 1px solid #e0d2a8;
+  background: #fffce8;
   font-family: inherit;
-  border-radius: 3px;
-  color: var(--text);
+  border-radius: 4px;
+  color: #2a1f00 !important;
+  font-weight: 600;
 }
-.task-assignee:hover, .task-deadline:hover { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
-.task-assignee:focus, .task-deadline:focus { background: white; border-color: #4a3500; outline: none; }
+.task-assignee:hover, .task-deadline:hover { background: white; border-color: #b89248; }
+.task-assignee:focus, .task-deadline:focus { background: white; border-color: #4a3500; outline: none; box-shadow: 0 0 0 2px rgba(74,53,0,0.1); }
+.task-assignee option { color: #2a1f00; background: white; }
+/* Тёмная тема: текст всё равно тёмный, потому что фон у блока кремовый */
+body.dark-theme .task-title,
+body.dark-theme .task-assignee,
+body.dark-theme .task-deadline { color: #2a1f00 !important; background: #fffce8; }
+body.dark-theme .task-title:focus,
+body.dark-theme .task-assignee:focus,
+body.dark-theme .task-deadline:focus { background: white; }
 .task-del {
   width: 24px; height: 24px;
   border: none;
@@ -15235,10 +15246,11 @@ function renderProjectTasks(project) {
     </div>
   `;
 
-  // Обработчики
+  // Обработчики: input — только обновить data + сохранить (БЕЗ ререндера, чтоб не слетал фокус)
   root.querySelectorAll('[data-task-fld]').forEach(el => {
     el.addEventListener('input', (e) => {
       const item = e.target.closest('[data-task-id]');
+      if (!item) return;
       const taskId = item.dataset.taskId;
       const task = project.tasks.find(t => t.id === taskId);
       if (!task) return;
@@ -15246,19 +15258,50 @@ function renderProjectTasks(project) {
       clearTimeout(window._tasksSaveTimer);
       window._tasksSaveTimer = setTimeout(() => {
         DB.updateProject(project.id, { tasks: project.tasks });
-        renderProjectTasks(DB.getProject(project.id));
+        // Обновим только цифры в шапке (без полного ререндера, чтоб не слетел фокус)
+        refreshTaskStats(project.id);
       }, 500);
     });
+    // change — для select и date — можно безопасно ререндерить
     el.addEventListener('change', (e) => {
       const item = e.target.closest('[data-task-id]');
+      if (!item) return;
       const taskId = item.dataset.taskId;
       const task = project.tasks.find(t => t.id === taskId);
       if (!task) return;
       task[e.target.dataset.taskFld] = e.target.value;
       DB.updateProject(project.id, { tasks: project.tasks });
-      renderProjectTasks(DB.getProject(project.id));
+      // Если это title — НЕ ререндерим, иначе слетит фокус
+      if (e.target.dataset.taskFld === 'title') {
+        refreshTaskStats(project.id);
+      } else {
+        renderProjectTasks(DB.getProject(project.id));
+      }
     });
   });
+}
+
+// Обновить только статистику задач (без перерисовки списка)
+function refreshTaskStats(projectId) {
+  const project = DB.getProject(projectId);
+  if (!project || !Array.isArray(project.tasks)) return;
+  const today = new Date().toISOString().slice(0, 10);
+  let activeCount = 0, doneCount = 0, overdueCount = 0;
+  project.tasks.forEach(t => {
+    if (t.status === 'done') doneCount++;
+    else {
+      activeCount++;
+      if (t.deadline && t.deadline < today) overdueCount++;
+    }
+  });
+  const head = document.querySelector('#tasks-block .tasks-block-stats');
+  if (head) {
+    head.innerHTML = `
+      ${activeCount > 0 ? `<div class="tasks-block-stat">${activeCount} активн.</div>` : ''}
+      ${overdueCount > 0 ? `<div class="tasks-block-stat urgent">${overdueCount} просроч.</div>` : ''}
+      ${doneCount > 0 ? `<div class="tasks-block-stat done">${doneCount} готово</div>` : ''}
+    `;
+  }
 }
 
 function addProjectTask() {
@@ -15312,23 +15355,38 @@ function openObsidianSync() {
   const project = DB.getProject(_currentProjectId);
   if (!project) return;
   const currentMd = exportTasksToMarkdown(project);
+  const lastFile = project.obsidianFilename || '';
   const html = `
     <div class="obsidian-import-modal">
       <h2 style="font-size:18px;font-weight:800;margin-bottom:6px;">⌗ Obsidian синхронизация</h2>
       <div style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.5;">
-        <b>Импорт:</b> вставь чек-листы из Obsidian, нажми «↓ Импортировать».<br>
-        <b>Экспорт:</b> скопируй текст ниже и вставь в свой Obsidian-проект.<br>
-        <b>Формат:</b> <code style="background:#f5f5f0;padding:2px 6px;border-radius:3px;font-family:monospace;font-size:11px;">- [ ] Текст задачи 📅 2026-06-15 @иван</code>
+        Открой <b>.md</b> файл из своего Obsidian vault. Прототип сам прочитает чек-листы и импортирует.<br>
+        <b>Формат:</b> <code style="background:#f5f5f0;padding:2px 6px;border-radius:3px;font-family:monospace;font-size:11px;">- [ ] Задача 📅 2026-06-15 @иван</code>
       </div>
-      <textarea id="obsidian-md-input" placeholder="- [ ] Подписать NDA со всеми &#128197; 2026-06-15 @иван&#10;- [x] Согласовать локацию&#10;- [ ] Заказать кейтеринг &#128197; 2026-06-20">${escapeHtml(currentMd)}</textarea>
-      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
-        <button class="tasks-action-btn" onclick="copyObsidianMd()">📋 Скопировать</button>
-        <button class="tasks-action-btn" onclick="closeObsidianModal()">Закрыть</button>
-        <button class="tasks-action-btn primary" onclick="importObsidianMd()">↓ Импортировать в задачи</button>
+
+      <div id="obsidian-dropzone" style="border:2px dashed #b89248;border-radius:8px;padding:24px 18px;text-align:center;background:#fffbe6;cursor:pointer;transition:all 0.15s;">
+        <div style="font-size:34px;margin-bottom:8px;">⌗</div>
+        <div style="font-size:14px;font-weight:700;color:#4a3500;margin-bottom:4px;">Перетащи .md файл сюда</div>
+        <div style="font-size:11px;color:#8b6f00;margin-bottom:14px;">или нажми кнопку ниже</div>
+        <button class="tasks-action-btn primary" type="button" onclick="document.getElementById('obsidian-file-input').click()">📂 Выбрать файл .md</button>
+        <input type="file" id="obsidian-file-input" accept=".md,.txt,text/markdown,text/plain" style="display:none;">
+        ${lastFile ? `<div style="margin-top:10px;font-size:10px;color:#666;">Последний импорт: ${escapeHtml(lastFile)}</div>` : ''}
+      </div>
+
+      <details style="margin-top:14px;">
+        <summary style="cursor:pointer;font-size:12px;color:#4a3500;font-weight:600;padding:6px;">▸ Или вставь текст вручную / посмотри что выгрузится</summary>
+        <textarea id="obsidian-md-input" placeholder="- [ ] Подписать NDA со всеми &#128197; 2026-06-15 @иван&#10;- [x] Согласовать локацию&#10;- [ ] Заказать кейтеринг &#128197; 2026-06-20" style="margin-top:8px;">${escapeHtml(currentMd)}</textarea>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="tasks-action-btn" type="button" onclick="copyObsidianMd()">📋 Скопировать в буфер</button>
+          <button class="tasks-action-btn" type="button" onclick="importObsidianMd()">↓ Импортировать введённый текст</button>
+        </div>
+      </details>
+
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+        <button class="tasks-action-btn" type="button" onclick="closeObsidianModal()">Закрыть</button>
       </div>
     </div>
   `;
-  // Создаём временный overlay
   let ov = document.getElementById('obsidian-overlay');
   if (!ov) {
     ov = document.createElement('div');
@@ -15342,6 +15400,59 @@ function openObsidianSync() {
   }
   ov.innerHTML = html;
   ov.classList.add('active');
+
+  // Подключаем обработчики: file input + drag-and-drop
+  const fileInput = document.getElementById('obsidian-file-input');
+  const dropzone = document.getElementById('obsidian-dropzone');
+  fileInput.addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    if (f) await processObsidianFile(f);
+  });
+  dropzone.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') fileInput.click();
+  });
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.style.background = '#ffeec4';
+      dropzone.style.borderColor = '#4a3500';
+    });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.style.background = '#fffbe6';
+      dropzone.style.borderColor = '#b89248';
+    });
+  });
+  dropzone.addEventListener('drop', async (e) => {
+    const f = e.dataTransfer.files[0];
+    if (f) await processObsidianFile(f);
+  });
+}
+
+async function processObsidianFile(file) {
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    toast('Файл слишком большой (> 5 МБ)', 'error');
+    return;
+  }
+  try {
+    const text = await file.text();
+    // Сохраняем имя файла в проект — на будущее
+    if (_currentProjectId) {
+      const project = DB.getProject(_currentProjectId);
+      if (project) {
+        DB.updateProject(_currentProjectId, { obsidianFilename: file.name });
+      }
+    }
+    // Вставляем в textarea (если открыт) и сразу парсим
+    const ta = document.getElementById('obsidian-md-input');
+    if (ta) ta.value = text;
+    importObsidianFromText(text, file.name);
+  } catch (e) {
+    toast('Не удалось прочитать файл: ' + e.message, 'error');
+  }
 }
 function closeObsidianModal() {
   const ov = document.getElementById('obsidian-overlay');
@@ -15372,7 +15483,14 @@ function exportTasksToMarkdown(project) {
 
 function importObsidianMd() {
   const text = document.getElementById('obsidian-md-input').value;
-  if (!text || !_currentProjectId) return;
+  importObsidianFromText(text);
+}
+
+function importObsidianFromText(text, filename) {
+  if (!text || !_currentProjectId) {
+    toast('Нет текста для импорта', 'error');
+    return;
+  }
   const project = DB.getProject(_currentProjectId);
   if (!project) return;
   if (!Array.isArray(project.tasks)) project.tasks = [];
@@ -15406,7 +15524,6 @@ function importObsidianMd() {
       if (member) assigneeId = member.id;
       title = title.replace(asM[0], '').trim();
     }
-    // Убираем оставшиеся хэштеги [[ссылки]] и просто чистим
     title = title.replace(/\[\[([^\]]+)\]\]/g, '$1').replace(/#[\wа-яА-ЯёЁ]+/g, '').trim();
     if (!title) return;
     newTasks.push({
@@ -15420,7 +15537,7 @@ function importObsidianMd() {
     });
   });
   if (newTasks.length === 0) {
-    toast('Не нашёл задач в формате - [ ] ...', 'error');
+    toast('Не нашёл задач в формате — - [ ] ...', 'error');
     return;
   }
   // Объединяем с существующими — без дублей по тексту
@@ -15435,7 +15552,8 @@ function importObsidianMd() {
   DB.updateProject(project.id, { tasks: project.tasks });
   renderProjectTasks(DB.getProject(project.id));
   closeObsidianModal();
-  toast(`Импортировано ${added} задач${newTasks.length > added ? ' (' + (newTasks.length - added) + ' уже было)' : ''} ✓`, 'success');
+  const fromFile = filename ? ' из ' + filename : '';
+  toast(`Импортировано ${added} задач${fromFile}${newTasks.length > added ? ' (' + (newTasks.length - added) + ' уже было)' : ''} ✓`, 'success');
 }
 
 function exportTasksToIcs() {
