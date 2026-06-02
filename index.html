@@ -9927,7 +9927,7 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
           <td style="padding:5px 8px;color:#666;font-size:9.5px;font-weight:500;line-height:1.35;">${escapeHtml(row.desc || '')}</td>
           <td style="padding:5px 6px;text-align:right;font-weight:600;font-size:10px;">${row.qty || ''}</td>
           <td style="padding:5px 6px;text-align:right;font-weight:600;font-size:10px;">${row.days || ''}</td>
-          <td style="padding:5px 6px;text-align:right;color:#e8231d;font-weight:700;font-size:10px;">${row.price ? Number(row.price).toLocaleString('ru-RU') : ''}</td>
+          <td style="padding:5px 6px;text-align:right;color:#6b1d1f;font-weight:700;font-size:10px;">${row.price ? Number(row.price).toLocaleString('ru-RU') : ''}</td>
           <td style="padding:5px 12px;text-align:right;font-weight:800;color:#0a0907;font-size:10px;">${total.toLocaleString('ru-RU')} ₽</td>
         </tr>
       `;
@@ -9969,9 +9969,9 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
             <td colspan="5" style="padding:8px 12px;text-align:right;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#444;">Налог ${taxPct}%</td>
             <td style="padding:8px 12px;text-align:right;font-weight:800;font-size:13px;color:#666;">${totals.tax.toLocaleString('ru-RU')} ₽</td>
           </tr>
-          <tr style="background:#e8231d;color:white;">
-            <td colspan="5" style="padding:14px 12px;text-align:right;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;">Итого с налогом</td>
-            <td style="padding:14px 12px;text-align:right;font-weight:900;font-size:20px;">${totals.final.toLocaleString('ru-RU')} ₽</td>
+          <tr style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+            <td colspan="5" style="background:#6b1d1f;padding:14px 12px;text-align:right;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:white;">Итого с налогом</td>
+            <td style="background:#3d1416;padding:14px 12px;text-align:right;font-weight:900;font-size:20px;color:white;">${totals.final.toLocaleString('ru-RU')} ₽</td>
           </tr>
         </tfoot>
       </table>
@@ -10002,7 +10002,7 @@ function buildSmetaFinalPage(project, totals, modeLabel) {
         </div>
       </div>
 
-      <div style="background:linear-gradient(135deg,#e8231d,#b81812);color:white;padding:50px 60px;border-radius:12px;min-width:520px;">
+      <div style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:50px 60px;border-radius:12px;min-width:520px;box-shadow:0 8px 32px rgba(61,20,22,0.25);">
         <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:800;opacity:0.9;margin-bottom:10px;">Итого по проекту</div>
         <div style="font-size:84px;font-weight:900;letter-spacing:-3px;line-height:1;">${totals.final.toLocaleString('ru-RU')} ₽</div>
       </div>
@@ -10021,7 +10021,7 @@ function buildSmetaSectionPage(project, section, tmpl, totals, pageIdx, pagesCou
   const customTitle = section.customTitle || tmpl.title;
   return smetaHeader(project, `раздел ${pageIdx} из ${pagesCount}`) + `
     <div style="padding:30px 40px 30px;">
-      <div style="background:#e8231d;color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:4px;margin-bottom:14px;">
+      <div style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:4px;margin-bottom:14px;">
         <div>
           <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;opacity:0.85;">Раздел ${escapeHtml(tmpl.n)}</div>
           <div style="font-size:18px;font-weight:800;letter-spacing:0.5px;margin-top:2px;text-transform:uppercase;">${escapeHtml(customTitle)}</div>
@@ -10048,7 +10048,7 @@ function buildSmetaSectionPage(project, section, tmpl, totals, pageIdx, pagesCou
               <td style="padding:10px 12px;color:#666;font-size:10.5px;font-weight:500;line-height:1.4;">${escapeHtml(row.desc || '')}</td>
               <td style="padding:10px 8px;text-align:right;font-weight:600;">${row.qty || ''}</td>
               <td style="padding:10px 8px;text-align:right;font-weight:600;">${row.days || ''}</td>
-              <td style="padding:10px 8px;text-align:right;color:#e8231d;font-weight:700;">${row.price ? Number(row.price).toLocaleString('ru-RU') : ''}</td>
+              <td style="padding:10px 8px;text-align:right;color:#6b1d1f;font-weight:700;">${row.price ? Number(row.price).toLocaleString('ru-RU') : ''}</td>
               <td style="padding:10px 12px;text-align:right;font-weight:800;color:#0a0907;">${total.toLocaleString('ru-RU')} ₽</td>
             </tr>`;
           }).join('')}
@@ -10133,7 +10133,7 @@ async function exportEstimateToPdf() {
   const pdfW = pdf.internal.pageSize.getWidth();
   const pdfH = pdf.internal.pageSize.getHeight();
 
-  // ===== ОБЛОЖКА с полной сводкой — auto-height, может растянуться на несколько листов A4 =====
+  // ===== ОБЛОЖКА с полной сводкой — ВСЕГДА ровно один лист A4, авто-уменьшение если контент больше =====
   document.body.appendChild(coverPage);
   try {
     await Promise.all(Array.from(coverPage.querySelectorAll('img')).map(img => {
@@ -10152,16 +10152,15 @@ async function exportEstimateToPdf() {
       imageTimeout: 15000
     });
     const imgData = canvas.toDataURL('image/png');
-    const imgW = pdfW;
-    const ratio = canvas.height / canvas.width;
-    const imgH = imgW * ratio;
-    const totalCoverPages = Math.ceil(imgH / pdfH);
-    let position = 0;
-    for (let p = 0; p < totalCoverPages; p++) {
-      if (p > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgW, imgH, undefined, 'FAST');
-      position -= pdfH;
-    }
+    // Вписываем всё в один лист: масштабируем чтобы и ширина, и высота помещались
+    const scaleByW = pdfW / canvas.width;
+    const scaleByH = pdfH / canvas.height;
+    const fitScale = Math.min(scaleByW, scaleByH);
+    const imgW = canvas.width * fitScale;
+    const imgH = canvas.height * fitScale;
+    const offsetX = (pdfW - imgW) / 2;
+    const offsetY = (pdfH - imgH) / 2;
+    pdf.addImage(imgData, 'PNG', offsetX, offsetY, imgW, imgH, undefined, 'FAST');
   } finally {
     if (coverPage.parentNode) coverPage.parentNode.removeChild(coverPage);
   }
