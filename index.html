@@ -8715,7 +8715,7 @@ const SMETA_EN_DICT = {
   'Пластический грим': 'Special FX Makeup',
   'Стилист маникюра': 'Manicurist',
   // 07. Администрация
-  'Директор площадки': 'Location Manager',
+  'Директор площадки': 'Set Manager',
   'Администратор': 'Administrator',
   'Рабочие': 'Set workers',
   // 08. Техническое оборудование
@@ -8916,23 +8916,162 @@ const SMETA_EN_DICT = {
   'К-во': 'Qty'
 };
 
+// Словарь отдельных слов для частичной замены (когда строка не нашлась целиком).
+// Применяется как regex замена — поэтому ключи должны быть в нижнем регистре.
+const SMETA_EN_WORDS = {
+  'танцоры': 'dancers',
+  'танцор': 'dancer',
+  'люди': 'crew',
+  'человек': 'people',
+  'логистика': 'logistics',
+  'трансфер': 'transfer',
+  'оборудование': 'equipment',
+  'аренда': 'rental',
+  'аренды': 'rental',
+  'покупка': 'purchase',
+  'доставка': 'delivery',
+  'трансферы': 'transfers',
+  'дополнительные': 'additional',
+  'дополнительный': 'additional',
+  'дополнительная': 'additional',
+  'основные': 'main',
+  'основной': 'main',
+  'основная': 'main',
+  'площадка': 'set',
+  'площадки': 'set',
+  'съёмки': 'shooting',
+  'смена': 'shift',
+  'смены': 'shifts',
+  'клип': 'music video',
+  'клипа': 'music video',
+  'реклама': 'commercial',
+  'рекламы': 'commercial',
+  'проект': 'project',
+  'проекта': 'project',
+  'компания': 'company',
+  'команда': 'team',
+  'команды': 'team',
+  'отдел': 'department',
+  'администратор': 'administrator',
+  'менеджер': 'manager',
+  'продюсер': 'producer',
+  'режиссёр': 'director',
+  'оператор': 'operator',
+  'ассистент': 'assistant',
+  'специалист': 'specialist',
+  'дополнительно': 'additional',
+  'переработка': 'overtime',
+  'налог': 'tax',
+  'налоги': 'taxes',
+  'агент': 'agent',
+  'агентство': 'agency'
+};
+
+// Translate Russian text fragment to English. Strategy:
+// 1. Exact match in SMETA_EN_DICT / ROLE_TRANSLATIONS
+// 2. Case-insensitive exact match
+// 3. Longest known key as prefix → translate prefix, keep tail
+// 4. Split by separators (, ( ) — переводим каждую часть отдельно
+// 5. Word-by-word replacement using SMETA_EN_WORDS
+// If nothing matched → leave as is on Russian.
 function translateSmeta(text) {
   if (!text) return text;
+  const raw = text;
+
+  // 1. Точное совпадение
+  if (SMETA_EN_DICT[raw]) return SMETA_EN_DICT[raw];
+  if (ROLE_TRANSLATIONS[raw]) return ROLE_TRANSLATIONS[raw];
+
+  // 2. Case-insensitive точное совпадение
+  const normalized = raw.trim();
+  const dictLower = (typeof translateSmeta._lowerDict === 'undefined')
+    ? (translateSmeta._lowerDict = (() => {
+        const m = {};
+        for (const k in SMETA_EN_DICT) m[k.toLowerCase()] = SMETA_EN_DICT[k];
+        for (const k in ROLE_TRANSLATIONS) if (!m[k.toLowerCase()]) m[k.toLowerCase()] = ROLE_TRANSLATIONS[k];
+        return m;
+      })())
+    : translateSmeta._lowerDict;
+  if (dictLower[normalized.toLowerCase()]) return dictLower[normalized.toLowerCase()];
+
+  // 3. Префиксное совпадение — ищем самый длинный ключ, с которого начинается текст
+  const lower = normalized.toLowerCase();
+  let bestKey = null;
+  for (const k in dictLower) {
+    if (lower.startsWith(k) && (k.length === lower.length || /[\s\(,\-]/.test(lower[k.length] || ''))) {
+      if (!bestKey || k.length > bestKey.length) bestKey = k;
+    }
+  }
+  if (bestKey) {
+    let tail = normalized.slice(bestKey.length);
+    // если tail начинается с разделителя — оставляем как есть, иначе пробел
+    const startsWithSep = /^[\s,;:]/.test(tail);
+    tail = tail.replace(/^\s+/, '');
+    if (!tail) return dictLower[bestKey];
+    const tailTranslated = translateFragmentRu(tail);
+    // Если tailTranslated начинается с пунктуации — без доп. пробела
+    if (/^[,;:.\-]/.test(tailTranslated)) {
+      return dictLower[bestKey] + tailTranslated;
+    }
+    return dictLower[bestKey] + ' ' + tailTranslated;
+  }
+
+  // 4. Разбиваем по разделителям и пробуем каждую часть
+  if (/[,;()]/.test(normalized)) {
+    return splitAndTranslate(normalized);
+  }
+
+  // 5. Замена отдельных слов
+  const wordReplaced = replaceWords(normalized);
+  if (wordReplaced !== normalized) return wordReplaced;
+
+  // Ничего не подошло — оставляем как есть
+  return raw;
+}
+
+function splitAndTranslate(text) {
+  // Разделяем по запятым / точке с запятой, но НЕ внутри скобок
+  // Заодно — если есть скобки, переводим содержимое отдельно
+  const parts = [];
+  let buf = '';
+  let depth = 0;
+  for (const ch of text) {
+    if (ch === '(') { if (buf.trim()) parts.push({ kind: 'text', val: buf.trim() }); buf = ''; depth++; }
+    else if (ch === ')' && depth > 0) { parts.push({ kind: 'paren', val: buf.trim() }); buf = ''; depth--; }
+    else if ((ch === ',' || ch === ';') && depth === 0) { if (buf.trim()) parts.push({ kind: 'text', val: buf.trim() }); buf = ''; parts.push({ kind: 'sep', val: ',' }); }
+    else buf += ch;
+  }
+  if (buf.trim()) parts.push({ kind: depth > 0 ? 'paren' : 'text', val: buf.trim() });
+  return parts.map(p => {
+    if (p.kind === 'sep') return ', ';
+    const t = translateFragmentRu(p.val);
+    if (p.kind === 'paren') return ' (' + t + ')';
+    return t;
+  }).join('').replace(/, +\(/g, ' (').replace(/\s+,/g, ',').trim();
+}
+
+function translateFragmentRu(text) {
+  if (!text) return text;
+  // Сначала пробуем словари
   if (SMETA_EN_DICT[text]) return SMETA_EN_DICT[text];
   if (ROLE_TRANSLATIONS[text]) return ROLE_TRANSLATIONS[text];
-  // Пробуем варианты с заглавной/строчной буквой
-  const normalized = text.trim();
-  for (const key in SMETA_EN_DICT) {
-    if (key.toLowerCase() === normalized.toLowerCase()) return SMETA_EN_DICT[key];
-  }
-  for (const key in ROLE_TRANSLATIONS) {
-    if (key.toLowerCase() === normalized.toLowerCase()) return ROLE_TRANSLATIONS[key];
-  }
-  return text;
+  // Case-insensitive
+  const lower = text.toLowerCase();
+  for (const k in SMETA_EN_DICT) if (k.toLowerCase() === lower) return SMETA_EN_DICT[k];
+  for (const k in ROLE_TRANSLATIONS) if (k.toLowerCase() === lower) return ROLE_TRANSLATIONS[k];
+  // Замена отдельных слов
+  return replaceWords(text);
+}
+
+function replaceWords(text) {
+  // Заменяем каждое слово на перевод из SMETA_EN_WORDS если есть
+  return text.replace(/[а-яА-ЯёЁ]+/g, (m) => {
+    const lower = m.toLowerCase();
+    return SMETA_EN_WORDS[lower] || m;
+  });
 }
 
 // Для PDF EN: переводит по смыслу. Если слова нет в словаре — оставляет на русском (без транслита).
-// Параметр transliterateFallback больше не используется, оставлен для совместимости.
 function trEN(text /*, transliterateFallback */) {
   if (!text) return '';
   return translateSmeta(text);
