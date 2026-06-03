@@ -10813,8 +10813,8 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
     if (isEn) {
       bodyRows += `
         <tr style="background:#0a0907;color:white;">
-          <td style="padding:8px 12px;font-weight:800;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;">${escapeHtml(tmpl.n)} · ${escapeHtml(t(customTitle))}</td>
-          <td style="padding:8px 12px;text-align:right;font-weight:900;font-size:11px;">${tNum(secSum)} ${tCur()}</td>
+          <td style="padding:6px 12px;font-weight:800;font-size:9px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(tmpl.n)} · ${escapeHtml(t(customTitle))}</td>
+          <td style="padding:6px 12px;text-align:right;font-weight:900;font-size:10px;">${tNum(secSum)} ${tCur()}</td>
         </tr>
       `;
     } else {
@@ -10830,8 +10830,8 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
       if (isEn) {
         bodyRows += `
           <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #f0f0eb;">
-            <td style="padding:7px 14px;font-weight:600;color:#0a0907;font-size:11px;">${escapeHtml(t(row.name || ''))}</td>
-            <td style="padding:7px 14px;text-align:right;font-weight:800;color:#0a0907;font-size:11px;">${tNum(total)} ${tCur()}</td>
+            <td style="padding:4px 12px;font-weight:600;color:#0a0907;font-size:10px;">${escapeHtml(t(row.name || ''))}</td>
+            <td style="padding:4px 12px;text-align:right;font-weight:800;color:#0a0907;font-size:10px;">${tNum(total)} ${tCur()}</td>
           </tr>
         `;
       } else {
@@ -10850,9 +10850,9 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
   });
 
   return smetaHeader(project, t('полная смета')) + `
-    <div style="padding:24px 40px 12px;">
-      <div style="font-size:30px;font-weight:900;letter-spacing:-1px;line-height:0.95;font-family:${SMETA_FONT};">${t('СМЕТА ПРОЕКТА')}</div>
-      <div style="font-size:13px;color:#444;margin-top:6px;font-weight:600;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(t(project.client)) : ''}${project.type ? ' · ' + escapeHtml(project.type) : ''}</div>
+    <div style="padding:${isEn ? '16px 40px 8px' : '24px 40px 12px'};">
+      <div style="font-size:${isEn ? '24' : '30'}px;font-weight:900;letter-spacing:-1px;line-height:0.95;font-family:${SMETA_FONT};">${t('СМЕТА ПРОЕКТА')}</div>
+      <div style="font-size:${isEn ? '11' : '13'}px;color:#444;margin-top:4px;font-weight:600;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(t(project.client)) : ''}${project.type ? ' · ' + escapeHtml(project.type) : ''}</div>
       <div style="font-size:9px;color:#888;margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">${t(modeLabel)}</div>
     </div>
     <div style="padding:0 40px 12px;display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;">
@@ -11066,11 +11066,11 @@ async function exportEstimateToPdf() {
 
   toast(`Готовлю PDF...`, 'success');
 
-  // EN-версия: только обложка на один лист, без описаний и без секционных страниц
+  // EN-версия: только обложка, без описаний и без секционных страниц
   // RU-версия: обложка + страницы по разделам + финал
   const isEn = _smetaPdfLang === 'en';
-  const coverAutoHeight = !isEn; // EN — строго один лист, RU — может расти
-  const coverPage = smetaPageShell(buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections), coverAutoHeight);
+  // Всегда auto-height для обложки — контент может расти, auto-scale впишет в один лист
+  const coverPage = smetaPageShell(buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections), true);
   const sectionPages = isEn ? [] : nonEmptySections.map((tmpl, idx) => {
     const sec = est.sections[tmpl.id];
     return smetaPageShell(buildSmetaSectionPage(project, sec, tmpl, totals, idx + 1, nonEmptySections.length));
