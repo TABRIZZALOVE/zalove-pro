@@ -6115,6 +6115,7 @@ body.dark-theme .task-deadline:focus { background: white; }
       <div class="doc-actions-h">
         <button class="btn btn-dark" onclick="exportEstimateToXlsx()">⤓ XLSX</button>
         <button class="btn btn-dark" onclick="exportEstimateToPdf()">⎙ PDF</button>
+        <button class="btn btn-dark" onclick="exportEstimateToPdfEn()" title="PDF на английском с переводом должностей">🌐 PDF EN</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
@@ -6177,6 +6178,7 @@ body.dark-theme .task-deadline:focus { background: white; }
       <div style="display: flex; gap: 6px;">
         <button class="btn-secondary btn" onclick="resetEstimate()">↺ Сбросить</button>
         <button class="btn btn-dark" onclick="exportEstimateToPdf()">⤓ PDF</button>
+        <button class="btn btn-dark" onclick="exportEstimateToPdfEn()" title="PDF на английском">🌐 PDF EN</button>
         <button class="btn btn-dark" onclick="exportEstimateToXlsx()">⤓ XLSX</button>
         <button class="btn" onclick="closeAll()">💾 Закрыть</button>
       </div>
@@ -8629,6 +8631,161 @@ const ROLE_TRANSLATIONS = {
 function translateRole(roleRu) {
   return ROLE_TRANSLATIONS[roleRu] || roleRu;
 }
+
+// Расширенный словарь смета-терминов RU → EN
+const SMETA_EN_DICT = {
+  // Заголовки разделов
+  'Подготовительный период': 'Pre-Production',
+  'Препродакшн': 'Pre-Production',
+  'Съёмочный период': 'Production',
+  'Съёмочная группа': 'Crew',
+  'Кастинг': 'Casting',
+  'Локации': 'Locations',
+  'Локация': 'Location',
+  'Транспорт': 'Transport',
+  'Транспорт и логистика': 'Transport & Logistics',
+  'Реквизит': 'Props',
+  'Реквизит и декор': 'Props & Decor',
+  'Костюмы': 'Costumes',
+  'Костюмы и стиль': 'Costumes & Styling',
+  'Грим и волосы': 'Hair & Makeup',
+  'Кейтеринг': 'Catering',
+  'Кейтеринг и питание': 'Catering & Food',
+  'Тех. оборудование': 'Equipment',
+  'Камера и оптика': 'Camera & Lenses',
+  'Свет и грип': 'Lighting & Grip',
+  'Звук': 'Sound',
+  'Постпродакшн': 'Post-Production',
+  'Постпродукция': 'Post-Production',
+  'Монтаж': 'Editing',
+  'Цветокоррекция': 'Color Grading',
+  'Звуковой пост': 'Sound Post',
+  'VFX / CGI': 'VFX / CGI',
+  'Графика и титры': 'Graphics & Titles',
+  'Музыка': 'Music',
+  'Музыкальный продакшн': 'Music Production',
+  'Прочее': 'Miscellaneous',
+  'Резерв': 'Contingency',
+  'Накладные расходы': 'Overhead',
+  'Юридические расходы': 'Legal',
+  'Страховка': 'Insurance',
+  // Типовые позиции
+  'Аренда локации': 'Location rental',
+  'Скаут локации': 'Location scout',
+  'Разрешения на съёмку': 'Filming permits',
+  'Кейтеринг основной': 'Main catering',
+  'Завтрак': 'Breakfast',
+  'Обед': 'Lunch',
+  'Ужин': 'Dinner',
+  'Снеки и напитки': 'Snacks & drinks',
+  'Кофе': 'Coffee',
+  'Транспорт команды': 'Crew transport',
+  'Транспорт оборудования': 'Equipment transport',
+  'Такси': 'Taxi',
+  'Камера': 'Camera',
+  'Объективы': 'Lenses',
+  'Стабилизация': 'Stabilization',
+  'Стедикам': 'Steadicam',
+  'Кран': 'Crane',
+  'Дрон': 'Drone',
+  'Свет': 'Lighting',
+  'Генератор': 'Generator',
+  'Микрофоны': 'Microphones',
+  'Радиосистемы': 'Wireless mics',
+  'Гримёрные расходники': 'Makeup supplies',
+  'Парик': 'Wig',
+  'Парики': 'Wigs',
+  'Костюм': 'Costume',
+  'Аренда костюмов': 'Costume rental',
+  'Пошив': 'Tailoring',
+  'Реквизит ручной': 'Hand props',
+  'Реквизит мебель': 'Furniture props',
+  'Мебель': 'Furniture',
+  'Декор': 'Decoration',
+  'Графика': 'Graphics',
+  'Лицензия трека': 'Track license',
+  'Композитор': 'Composer',
+  'Звуковое оформление': 'Sound design',
+  'Дубляж': 'Voice-over',
+  'Перевод': 'Translation',
+  'Субтитры': 'Subtitles',
+  'Сторителлинг': 'Storytelling',
+  'Сценарий': 'Script',
+  'Тритмент': 'Treatment',
+  'Раскадровка': 'Storyboard',
+  'Кастинг-директор': 'Casting Director',
+  'Кастинг (доп)': 'Extras casting',
+  'Гонорар': 'Fee',
+  'Гонорар артиста': 'Talent fee',
+  'Налоги': 'Taxes',
+  'Бухгалтерия': 'Accounting',
+  // Заголовки и метки
+  'Сумма разделов': 'Sections subtotal',
+  'Итого с налогом': 'Total with tax',
+  'Итого по проекту': 'Project total',
+  'Итого по разделу': 'Section total',
+  'Налог': 'Tax',
+  'Позиция': 'Item',
+  'Описание': 'Description',
+  'Цена': 'Price',
+  'Цена ₽': 'Price (RUB)',
+  'Смен': 'Days',
+  'Дней': 'Days',
+  'Раздел': 'Section',
+  'Сводка по разделам': 'Sections breakdown',
+  'Сводка': 'Summary',
+  'Полная смета': 'Full estimate',
+  'Смета проекта': 'Project Estimate',
+  'СМЕТА ПРОЕКТА': 'PROJECT ESTIMATE',
+  'Сдача': 'Delivery',
+  'Дедлайн': 'Deadline',
+  'Артист': 'Artist',
+  'Клиент': 'Client',
+  'Дней съёмки': 'Shooting days',
+  'для клиента': 'for client',
+  'для команды (внутренняя)': 'for crew (internal)',
+  'обложка': 'cover',
+  'итог': 'total',
+  'разделов': 'sections',
+  'позиций': 'items',
+  'Авто-сохранение': 'Auto-saved',
+  'План': 'Plan',
+  'Факт': 'Actual',
+  'Δ': 'Δ',
+  'К-во': 'Qty'
+};
+
+function translateSmeta(text) {
+  if (!text) return text;
+  // Сначала ищем точное совпадение
+  if (SMETA_EN_DICT[text]) return SMETA_EN_DICT[text];
+  // Потом проверяем словарь ролей
+  if (ROLE_TRANSLATIONS[text]) return ROLE_TRANSLATIONS[text];
+  // Иначе возвращаем как есть
+  return text;
+}
+
+// Транслитерация для строк, которых нет в словаре
+function transliterateRu(text) {
+  if (!text) return '';
+  const map = {
+    а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'yo',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'kh',ц:'ts',ч:'ch',ш:'sh',щ:'shch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya',
+    А:'A',Б:'B',В:'V',Г:'G',Д:'D',Е:'E',Ё:'Yo',Ж:'Zh',З:'Z',И:'I',Й:'Y',К:'K',Л:'L',М:'M',Н:'N',О:'O',П:'P',Р:'R',С:'S',Т:'T',У:'U',Ф:'F',Х:'Kh',Ц:'Ts',Ч:'Ch',Ш:'Sh',Щ:'Shch',Ъ:'',Ы:'Y',Ь:'',Э:'E',Ю:'Yu',Я:'Ya'
+  };
+  return text.replace(/[а-яА-ЯёЁ]/g, ch => map[ch] || ch);
+}
+
+// Для PDF EN: переводит, если есть в словаре, иначе транслитерирует если хотим
+function trEN(text, transliterateFallback) {
+  if (!text) return '';
+  const t = translateSmeta(text);
+  if (t !== text) return t;
+  // Если есть кириллица и просили — транслитерируем
+  if (transliterateFallback && /[а-яА-ЯёЁ]/.test(text)) {
+    return transliterateRu(text);
+  }
+  return text;
+}
 function sortTeamByRole(arr) {
   return [...arr].sort((a, b) => {
     const pa = ROLE_PRIORITY[a.role] || 99;
@@ -10308,6 +10465,20 @@ function buildEstimatePrintHTML(project, est) {
 const SMETA_PAGE_W = 794;   // A4 portrait
 const SMETA_PAGE_H = 1123;
 const SMETA_FONT = `'Montserrat', -apple-system, Arial, sans-serif`;
+let _smetaPdfLang = 'ru'; // 'ru' | 'en'
+function t(text) { return _smetaPdfLang === 'en' ? trEN(text, true) : (text || ''); }
+function tNum(n) {
+  if (_smetaPdfLang === 'en') return Number(n).toLocaleString('en-US');
+  return Number(n).toLocaleString('ru-RU');
+}
+function tCur() { return _smetaPdfLang === 'en' ? 'RUB' : '₽'; }
+function tDate(d) {
+  if (!d) return '';
+  if (_smetaPdfLang === 'en') {
+    try { return new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) { return d; }
+  }
+  return formatDateRu(d);
+}
 
 function smetaPageShell(innerHtml, autoHeight) {
   const c = document.createElement('div');
@@ -10348,100 +10519,100 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
     // Разделитель раздела
     bodyRows += `
       <tr style="background:#0a0907;color:white;">
-        <td colspan="4" style="padding:8px 12px;font-weight:800;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;">${escapeHtml(tmpl.n)} · ${escapeHtml(customTitle)}</td>
-        <td colspan="2" style="padding:8px 12px;text-align:right;font-weight:900;font-size:11px;">${secSum.toLocaleString('ru-RU')} ₽</td>
+        <td colspan="4" style="padding:8px 12px;font-weight:800;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;">${escapeHtml(tmpl.n)} · ${escapeHtml(t(customTitle))}</td>
+        <td colspan="2" style="padding:8px 12px;text-align:right;font-weight:900;font-size:11px;">${tNum(secSum)} ${tCur()}</td>
       </tr>
     `;
     allRows.forEach((row, i) => {
       const total = calcRowTotal(row);
       bodyRows += `
         <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #f0f0eb;">
-          <td style="padding:5px 12px;font-weight:700;color:#0a0907;font-size:10px;">${escapeHtml(row.name || '')}</td>
-          <td style="padding:5px 8px;color:#666;font-size:9.5px;font-weight:500;line-height:1.35;">${escapeHtml(row.desc || '')}</td>
+          <td style="padding:5px 12px;font-weight:700;color:#0a0907;font-size:10px;">${escapeHtml(t(row.name || ''))}</td>
+          <td style="padding:5px 8px;color:#666;font-size:9.5px;font-weight:500;line-height:1.35;">${escapeHtml(t(row.desc || ''))}</td>
           <td style="padding:5px 6px;text-align:right;font-weight:600;font-size:10px;">${row.qty || ''}</td>
           <td style="padding:5px 6px;text-align:right;font-weight:600;font-size:10px;">${row.days || ''}</td>
-          <td style="padding:5px 6px;text-align:right;color:#6b1d1f;font-weight:700;font-size:10px;">${row.price ? Number(row.price).toLocaleString('ru-RU') : ''}</td>
-          <td style="padding:5px 12px;text-align:right;font-weight:800;color:#0a0907;font-size:10px;">${total.toLocaleString('ru-RU')} ₽</td>
+          <td style="padding:5px 6px;text-align:right;color:#6b1d1f;font-weight:700;font-size:10px;">${row.price ? tNum(row.price) : ''}</td>
+          <td style="padding:5px 12px;text-align:right;font-weight:800;color:#0a0907;font-size:10px;">${tNum(total)} ${tCur()}</td>
         </tr>
       `;
     });
   });
 
-  return smetaHeader(project, 'полная смета') + `
+  return smetaHeader(project, t('полная смета')) + `
     <div style="padding:24px 40px 12px;">
-      <div style="font-size:30px;font-weight:900;letter-spacing:-1px;line-height:0.95;font-family:${SMETA_FONT};">СМЕТА ПРОЕКТА</div>
-      <div style="font-size:13px;color:#444;margin-top:6px;font-weight:600;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}${project.type ? ' · ' + escapeHtml(project.type) : ''}</div>
-      <div style="font-size:9px;color:#888;margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">${modeLabel}</div>
+      <div style="font-size:30px;font-weight:900;letter-spacing:-1px;line-height:0.95;font-family:${SMETA_FONT};">${t('СМЕТА ПРОЕКТА')}</div>
+      <div style="font-size:13px;color:#444;margin-top:6px;font-weight:600;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(t(project.client)) : ''}${project.type ? ' · ' + escapeHtml(project.type) : ''}</div>
+      <div style="font-size:9px;color:#888;margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">${t(modeLabel)}</div>
     </div>
     <div style="padding:0 40px 12px;display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;">
-      ${project.deadline ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Дедлайн</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(formatDateRu(project.deadline))}</div></div>` : '<div></div>'}
-      ${project.days ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Дней съёмки</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${project.days}</div></div>` : '<div></div>'}
-      ${project.artist ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Артист</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(project.artist)}</div></div>` : '<div></div>'}
-      ${project.client ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Клиент</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(project.client)}</div></div>` : '<div></div>'}
+      ${project.deadline ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">${t('Дедлайн')}</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(tDate(project.deadline))}</div></div>` : '<div></div>'}
+      ${project.days ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">${t('Дней съёмки')}</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${project.days}</div></div>` : '<div></div>'}
+      ${project.artist ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">${t('Артист')}</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(t(project.artist))}</div></div>` : '<div></div>'}
+      ${project.client ? `<div style="background:#fafafa;padding:8px 12px;border-radius:4px;"><div style="font-size:7px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;">${t('Клиент')}</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${escapeHtml(t(project.client))}</div></div>` : '<div></div>'}
     </div>
 
     <div style="padding:0 40px 30px;">
       <table style="width:100%;border-collapse:collapse;font-family:${SMETA_FONT};">
         <thead>
           <tr style="background:#3c3c3c;color:white;">
-            <th style="text-align:left;padding:8px 12px;font-weight:800;font-size:8.5px;letter-spacing:0.8px;text-transform:uppercase;">Позиция</th>
-            <th style="text-align:left;padding:8px 8px;font-weight:800;font-size:8.5px;letter-spacing:0.8px;text-transform:uppercase;width:30%;">Описание</th>
-            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:7%;">К-во</th>
-            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:7%;">Смен</th>
-            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:13%;">Цена</th>
-            <th style="text-align:right;padding:8px 12px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:15%;">Итого</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:800;font-size:8.5px;letter-spacing:0.8px;text-transform:uppercase;">${t('Позиция')}</th>
+            <th style="text-align:left;padding:8px 8px;font-weight:800;font-size:8.5px;letter-spacing:0.8px;text-transform:uppercase;width:30%;">${t('Описание')}</th>
+            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:7%;">${t('К-во')}</th>
+            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:7%;">${t('Смен')}</th>
+            <th style="text-align:right;padding:8px 6px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:13%;">${t('Цена')}</th>
+            <th style="text-align:right;padding:8px 12px;font-weight:800;font-size:8.5px;letter-spacing:0.5px;text-transform:uppercase;width:15%;">${_smetaPdfLang === 'en' ? 'Total' : 'Итого'}</th>
           </tr>
         </thead>
         <tbody>${bodyRows}</tbody>
         <tfoot>
           <tr style="background:#f5f5f0;border-top:2px solid #0a0907;">
-            <td colspan="5" style="padding:10px 12px;text-align:right;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#444;">Сумма разделов</td>
-            <td style="padding:10px 12px;text-align:right;font-weight:900;font-size:14px;color:#0a0907;">${totals.subtotal.toLocaleString('ru-RU')} ₽</td>
+            <td colspan="5" style="padding:10px 12px;text-align:right;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#444;">${t('Сумма разделов')}</td>
+            <td style="padding:10px 12px;text-align:right;font-weight:900;font-size:14px;color:#0a0907;">${tNum(totals.subtotal)} ${tCur()}</td>
           </tr>
           <tr style="background:#f5f5f0;">
-            <td colspan="5" style="padding:8px 12px;text-align:right;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#444;">Налог ${taxPct}%</td>
-            <td style="padding:8px 12px;text-align:right;font-weight:800;font-size:13px;color:#666;">${totals.tax.toLocaleString('ru-RU')} ₽</td>
+            <td colspan="5" style="padding:8px 12px;text-align:right;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#444;">${t('Налог')} ${taxPct}%</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:800;font-size:13px;color:#666;">${tNum(totals.tax)} ${tCur()}</td>
           </tr>
           <tr style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
-            <td colspan="5" style="background:#6b1d1f;padding:14px 12px;text-align:right;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:white;">Итого с налогом</td>
-            <td style="background:#3d1416;padding:14px 12px;text-align:right;font-weight:900;font-size:20px;color:white;">${totals.final.toLocaleString('ru-RU')} ₽</td>
+            <td colspan="5" style="background:#6b1d1f;padding:14px 12px;text-align:right;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:white;">${t('Итого с налогом')}</td>
+            <td style="background:#3d1416;padding:14px 12px;text-align:right;font-weight:900;font-size:20px;color:white;">${tNum(totals.final)} ${tCur()}</td>
           </tr>
         </tfoot>
       </table>
     </div>
     <div style="padding:0 40px 60px;font-size:8.5px;color:#999;text-align:center;line-height:1.5;font-weight:500;border-top:1px solid #ddd;padding-top:10px;margin:0 40px;">
-      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670<br>
-      ${escapeHtml(project.name || '')} · ${new Date().toLocaleDateString('ru-RU')} · ${totals.sectionsCount} разделов · ${totals.itemsCount} позиций
+      ${_smetaPdfLang === 'en' ? 'Sole proprietor Zalov Tabriz · TIN 180204378651 · OGRNIP 324508100144670' : 'ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670'}<br>
+      ${escapeHtml(project.name || '')} · ${_smetaPdfLang === 'en' ? new Date().toLocaleDateString('en-US') : new Date().toLocaleDateString('ru-RU')} · ${totals.sectionsCount} ${t('разделов')} · ${totals.itemsCount} ${t('позиций')}
     </div>
   `;
 }
 
 function buildSmetaFinalPage(project, totals, modeLabel) {
   const taxPct = totals.taxPct || 0;
-  return smetaHeader(project, 'итог') + `
+  return smetaHeader(project, t('итог')) + `
     <div style="height:calc(100% - 130px);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px;text-align:center;">
-      <div style="font-size:11px;color:#888;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;">${modeLabel}</div>
+      <div style="font-size:11px;color:#888;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;">${t(modeLabel)}</div>
       <div style="font-size:22px;font-weight:800;color:#0a0907;line-height:1.2;margin-bottom:8px;">${escapeHtml(project.name || '')}</div>
-      ${project.client ? `<div style="font-size:14px;color:#666;font-weight:600;margin-bottom:36px;">${escapeHtml(project.client)}</div>` : '<div style="margin-bottom:36px;"></div>'}
+      ${project.client ? `<div style="font-size:14px;color:#666;font-weight:600;margin-bottom:36px;">${escapeHtml(t(project.client))}</div>` : '<div style="margin-bottom:36px;"></div>'}
 
       <div style="background:#fafafa;padding:18px 30px;border-radius:6px;margin-bottom:24px;min-width:380px;">
         <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-weight:600;">
-          <span style="color:#666;">Сумма разделов</span>
-          <span style="font-weight:800;color:#0a0907;">${totals.subtotal.toLocaleString('ru-RU')} ₽</span>
+          <span style="color:#666;">${t('Сумма разделов')}</span>
+          <span style="font-weight:800;color:#0a0907;">${tNum(totals.subtotal)} ${tCur()}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-weight:600;border-top:1px dashed #ddd;">
-          <span style="color:#666;">Налог ${taxPct}%</span>
-          <span style="font-weight:800;color:#0a0907;">${totals.tax.toLocaleString('ru-RU')} ₽</span>
+          <span style="color:#666;">${t('Налог')} ${taxPct}%</span>
+          <span style="font-weight:800;color:#0a0907;">${tNum(totals.tax)} ${tCur()}</span>
         </div>
       </div>
 
       <div style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:50px 60px;border-radius:12px;min-width:520px;box-shadow:0 8px 32px rgba(61,20,22,0.25);">
-        <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:800;opacity:0.9;margin-bottom:10px;">Итого по проекту</div>
-        <div style="font-size:84px;font-weight:900;letter-spacing:-3px;line-height:1;">${totals.final.toLocaleString('ru-RU')} ₽</div>
+        <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:800;opacity:0.9;margin-bottom:10px;">${t('Итого по проекту')}</div>
+        <div style="font-size:84px;font-weight:900;letter-spacing:-3px;line-height:1;">${tNum(totals.final)} ${tCur()}</div>
       </div>
 
       <div style="margin-top:36px;font-size:11px;color:#888;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;">
-        ZALOVE PRODUCTION · ${new Date().toLocaleDateString('ru-RU')}
+        ZALOVE PRODUCTION · ${_smetaPdfLang === 'en' ? new Date().toLocaleDateString('en-US') : new Date().toLocaleDateString('ru-RU')}
       </div>
     </div>
     ${smetaFooter(project)}
@@ -10452,50 +10623,60 @@ function buildSmetaSectionPage(project, section, tmpl, totals, pageIdx, pagesCou
   const allRows = [...(section.rows || []), ...(section.customRows || [])].filter(r => r.price && calcRowTotal(r) > 0);
   const sectionSum = allRows.reduce((s, r) => s + calcRowTotal(r), 0);
   const customTitle = section.customTitle || tmpl.title;
-  return smetaHeader(project, `раздел ${pageIdx} из ${pagesCount}`) + `
+  return smetaHeader(project, `${_smetaPdfLang === 'en' ? 'section' : 'раздел'} ${pageIdx} ${_smetaPdfLang === 'en' ? 'of' : 'из'} ${pagesCount}`) + `
     <div style="padding:30px 40px 30px;">
       <div style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:4px;margin-bottom:14px;">
         <div>
-          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;opacity:0.85;">Раздел ${escapeHtml(tmpl.n)}</div>
-          <div style="font-size:18px;font-weight:800;letter-spacing:0.5px;margin-top:2px;text-transform:uppercase;">${escapeHtml(customTitle)}</div>
+          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;opacity:0.85;">${t('Раздел')} ${escapeHtml(tmpl.n)}</div>
+          <div style="font-size:18px;font-weight:800;letter-spacing:0.5px;margin-top:2px;text-transform:uppercase;">${escapeHtml(t(customTitle))}</div>
         </div>
-        <div style="font-size:22px;font-weight:900;">${sectionSum.toLocaleString('ru-RU')} ₽</div>
+        <div style="font-size:22px;font-weight:900;">${tNum(sectionSum)} ${tCur()}</div>
       </div>
-      ${allRows.length === 0 ? '<div style="padding:40px;text-align:center;color:#999;font-style:italic;">В разделе нет заполненных позиций.</div>' : `
+      ${allRows.length === 0 ? `<div style="padding:40px;text-align:center;color:#999;font-style:italic;">${_smetaPdfLang === 'en' ? 'No items in this section.' : 'В разделе нет заполненных позиций.'}</div>` : `
       <table style="width:100%;border-collapse:collapse;font-size:11px;font-family:${SMETA_FONT};">
         <thead>
           <tr style="background:#0a0907;color:white;">
-            <th style="text-align:left;padding:10px 12px;font-weight:700;font-size:9px;letter-spacing:0.8px;text-transform:uppercase;">Позиция</th>
-            <th style="text-align:left;padding:10px 12px;font-weight:700;font-size:9px;letter-spacing:0.8px;text-transform:uppercase;width:34%;">Описание</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:8%;">К-во</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:8%;">Смен</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:14%;">Цена</th>
-            <th style="text-align:right;padding:10px 12px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:16%;">Итого</th>
+            <th style="text-align:left;padding:10px 12px;font-weight:700;font-size:9px;letter-spacing:0.8px;text-transform:uppercase;">${t('Позиция')}</th>
+            <th style="text-align:left;padding:10px 12px;font-weight:700;font-size:9px;letter-spacing:0.8px;text-transform:uppercase;width:34%;">${t('Описание')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:8%;">${t('К-во')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:8%;">${t('Смен')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:14%;">${t('Цена')}</th>
+            <th style="text-align:right;padding:10px 12px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:16%;">${_smetaPdfLang === 'en' ? 'Total' : 'Итого'}</th>
           </tr>
         </thead>
         <tbody>
           ${allRows.map((row, i) => {
             const total = calcRowTotal(row);
             return `<tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #f0f0eb;">
-              <td style="padding:10px 12px;font-weight:700;color:#0a0907;">${escapeHtml(row.name || '')}</td>
-              <td style="padding:10px 12px;color:#666;font-size:10.5px;font-weight:500;line-height:1.4;">${escapeHtml(row.desc || '')}</td>
+              <td style="padding:10px 12px;font-weight:700;color:#0a0907;">${escapeHtml(t(row.name || ''))}</td>
+              <td style="padding:10px 12px;color:#666;font-size:10.5px;font-weight:500;line-height:1.4;">${escapeHtml(t(row.desc || ''))}</td>
               <td style="padding:10px 8px;text-align:right;font-weight:600;">${row.qty || ''}</td>
               <td style="padding:10px 8px;text-align:right;font-weight:600;">${row.days || ''}</td>
-              <td style="padding:10px 8px;text-align:right;color:#6b1d1f;font-weight:700;">${row.price ? Number(row.price).toLocaleString('ru-RU') : ''}</td>
-              <td style="padding:10px 12px;text-align:right;font-weight:800;color:#0a0907;">${total.toLocaleString('ru-RU')} ₽</td>
+              <td style="padding:10px 8px;text-align:right;color:#6b1d1f;font-weight:700;">${row.price ? tNum(row.price) : ''}</td>
+              <td style="padding:10px 12px;text-align:right;font-weight:800;color:#0a0907;">${tNum(total)} ${tCur()}</td>
             </tr>`;
           }).join('')}
         </tbody>
         <tfoot>
           <tr style="background:#f5f5f0;border-top:2px solid #0a0907;">
-            <td colspan="5" style="padding:12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#444;">Итого по разделу</td>
-            <td style="padding:12px;text-align:right;font-weight:900;font-size:14px;color:#0a0907;">${sectionSum.toLocaleString('ru-RU')} ₽</td>
+            <td colspan="5" style="padding:12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#444;">${t('Итого по разделу')}</td>
+            <td style="padding:12px;text-align:right;font-weight:900;font-size:14px;color:#0a0907;">${tNum(sectionSum)} ${tCur()}</td>
           </tr>
         </tfoot>
       </table>`}
     </div>
     ${smetaFooter(project)}
   `;
+}
+
+// Английская версия — просто меняет lang и вызывает обычный экспорт
+async function exportEstimateToPdfEn() {
+  _smetaPdfLang = 'en';
+  try {
+    await exportEstimateToPdf();
+  } finally {
+    _smetaPdfLang = 'ru';
+  }
 }
 
 async function exportEstimateToPdf() {
@@ -10631,7 +10812,8 @@ async function exportEstimateToPdf() {
 
   const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
   const modeSlug = _estimateMode === 'team' ? '_команда' : '';
-  pdf.save(`Смета${modeSlug}_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+  const filePrefix = _smetaPdfLang === 'en' ? 'Estimate' : 'Смета';
+  pdf.save(`${filePrefix}${modeSlug}_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
   toast(`Смета PDF · ${pdf.internal.getNumberOfPages()} стр. ✓`, 'success');
   return;
 }
