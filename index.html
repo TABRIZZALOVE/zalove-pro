@@ -9269,29 +9269,7 @@ const SMETA_TEMPLATE = [
 function ensureEstimateOfMode(project, mode) {
   // mode = 'client' | 'team'
   const slot = mode === 'team' ? 'estimateTeam' : 'estimate';
-
-  // ===== Авто-клонирование командной из клиентской при первом обращении =====
-  if (mode === 'team' && !project.estimateTeam && project.estimate) {
-    const client = project.estimate;
-    // Проверяем что клиентская не пустая (есть хоть одна непустая строка)
-    let hasData = false;
-    Object.values(client.sections || {}).forEach(sec => {
-      [...(sec.rows || []), ...(sec.customRows || [])].forEach(r => {
-        if (r.price && Number(r.price) > 0) hasData = true;
-      });
-    });
-    if (hasData) {
-      // Глубокая копия с новыми ID и пустыми entries
-      const clone = JSON.parse(JSON.stringify(client));
-      Object.values(clone.sections || {}).forEach(sec => {
-        (sec.rows || []).forEach(r => { r.id = 'tm_' + Math.random().toString(36).slice(2, 8); r.entries = []; });
-        (sec.customRows || []).forEach(r => { r.id = 'tmc_' + Math.random().toString(36).slice(2, 8); r.entries = []; });
-      });
-      project.estimateTeam = clone;
-      DB.updateProject(project.id, { estimateTeam: clone });
-    }
-  }
-
+  // Командная смета НЕ копируется автоматически — пользователь решает через кнопку
   if (!project[slot]) project[slot] = {};
   const est = project[slot];
   est.taxPercent = est.taxPercent != null ? est.taxPercent : 10;
@@ -9392,6 +9370,24 @@ function copyEstimateFromClientToTeam() {
   toast('Командная смета создана из клиентской ✓', 'success');
 }
 
+function clearTeamEstimate() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  if (!confirm('Очистить ТОЛЬКО командную смету? Клиентская не пострадает. Командная будет сброшена в шаблон без сумм.')) return;
+  // Удаляем командную полностью — при следующем рендере она создастся пустой из шаблона
+  project.estimateTeam = undefined;
+  DB.updateProject(_currentProjectId, { estimateTeam: null });
+  // Сбрасываем кэш
+  if (_estimateMode === 'team') {
+    _currentEstimate = null;
+    _estimateProjectId = null;
+  }
+  _estimateMode = 'team';
+  renderEstimate(DB.getProject(_currentProjectId));
+  toast('Командная смета очищена ✓', 'success');
+}
+
 function renderEstimate(project) {
   if (!project) return;
   const est = ensureEstimateOfMode(project, _estimateMode);
@@ -9414,7 +9410,10 @@ function renderEstimate(project) {
       <button class="est-mode-tab ${_estimateMode === 'team' ? 'active' : ''}" onclick="switchEstimateMode('team')">
         👥 Командная <span class="est-tab-hint">(внутренняя)</span>
       </button>
-      ${_estimateMode === 'team' && !teamFilled ? `<button class="est-mode-copy" onclick="copyEstimateFromClientToTeam()">📋 Скопировать из клиентской</button>` : ''}
+      ${_estimateMode === 'team' ? `
+        <button class="est-mode-copy" style="background:#555;" onclick="copyEstimateFromClientToTeam()" title="Перезаписать командную данными из клиентской">↻ Из клиентской</button>
+        <button class="est-mode-copy" style="background:#991b1b;" onclick="clearTeamEstimate()" title="Очистить только командную смету">🗑 Очистить команд.</button>
+      ` : ''}
     `;
   }
 
