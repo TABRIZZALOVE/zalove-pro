@@ -12143,7 +12143,8 @@ function buildCallsheetPrintHTML(project, cs) {
   const subParts = [];
   if (hdrProjectName) subParts.push(escapeHtml(hdrProjectName));
   if (hdrClient) subParts.push(escapeHtml(hdrClient));
-  const subLine = subParts.join(' · ') + (hdrArtist ? ` <span style="color:#888;">(${escapeHtml(hdrArtist)})</span>` : '');
+  if (hdrArtist) subParts.push(`<span style="color:#888;">${escapeHtml(hdrArtist)}</span>`);
+  const subLine = subParts.join(' · ');
   html += `
     <div style="padding:14px ${PAD_X}px 8px;">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
