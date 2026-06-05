@@ -11561,31 +11561,47 @@ function renderCallsheetEditor() {
   // Editor content
   const ed = document.getElementById('cs-editor');
   ed.innerHTML = `
-    <!-- 1. Шапка проекта -->
+    <!-- 1. Шапка проекта — РЕДАКТИРУЕМАЯ -->
     <div class="cs-section">
-      <div class="cs-section-title">📅 Шапка вызывного</div>
+      <div class="cs-section-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span>📅 Шапка вызывного</span>
+        <button type="button" onclick="resetCallsheetHeaderToProject()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;" title="Подтянуть актуальные значения из карточки проекта">↻ из проекта</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.4;">
+        Эти поля попадут в PDF и Excel-вызывного. По умолчанию подтягиваются из карточки проекта — можешь переписать под конкретный день.
+      </div>
       <div class="cs-row-grid cs-3col">
         <div>
           <div class="cs-field-label">Дата съёмки</div>
           <input class="cs-input" type="date" data-cs="date" value="${escapeHtml(cs.date || '')}">
         </div>
         <div>
-          <div class="cs-field-label">Проект</div>
-          <input class="cs-input" readonly value="${escapeHtml(project.name || '')}" style="background:var(--bg-3);color:var(--muted);">
+          <div class="cs-field-label">Название проекта</div>
+          <input class="cs-input" data-cs="headerProjectName" value="${escapeHtml(cs.headerProjectName != null ? cs.headerProjectName : (project.name || ''))}" placeholder="${escapeHtml(project.name || 'Название')}">
         </div>
         <div>
           <div class="cs-field-label">Тип</div>
-          <input class="cs-input" readonly value="${escapeHtml(project.type || '—')}" style="background:var(--bg-3);color:var(--muted);">
+          <input class="cs-input" data-cs="headerType" value="${escapeHtml(cs.headerType != null ? cs.headerType : (project.type || ''))}" placeholder="MV / AD / иное">
         </div>
       </div>
       <div class="cs-row-grid cs-2col" style="margin-top: 12px;">
         <div>
           <div class="cs-field-label">Клиент / Бренд</div>
-          <input class="cs-input" readonly value="${escapeHtml(project.client || '—')}" style="background:var(--bg-3);color:var(--muted);">
+          <input class="cs-input" data-cs="headerClient" value="${escapeHtml(cs.headerClient != null ? cs.headerClient : (project.client || ''))}" placeholder="${escapeHtml(project.client || 'Клиент')}">
         </div>
         <div>
           <div class="cs-field-label">Артист (если клип)</div>
-          <input class="cs-input" readonly value="${escapeHtml(project.artist || '—')}" style="background:var(--bg-3);color:var(--muted);">
+          <input class="cs-input" data-cs="headerArtist" value="${escapeHtml(cs.headerArtist != null ? cs.headerArtist : (project.artist || ''))}" placeholder="${escapeHtml(project.artist || 'Артист')}">
+        </div>
+      </div>
+      <div class="cs-row-grid cs-2col" style="margin-top: 12px;">
+        <div>
+          <div class="cs-field-label">Заголовок документа</div>
+          <input class="cs-input" data-cs="headerTitle" value="${escapeHtml(cs.headerTitle != null ? cs.headerTitle : 'ВЫЗЫВНОЙ')}" placeholder="ВЫЗЫВНОЙ">
+        </div>
+        <div>
+          <div class="cs-field-label">Подпись слева (у лого)</div>
+          <input class="cs-input" data-cs="headerSubtitle" value="${escapeHtml(cs.headerSubtitle || '')}" placeholder="${escapeHtml((project.type === 'MV' ? 'Music Video' : 'Commercial') + ' · Call Sheet')}">
         </div>
       </div>
     </div>
@@ -11848,6 +11864,22 @@ function pickLocationContactFromTeam(memberId) {
   if (picker) picker.value = '';
 }
 
+/* ===== Сбросить шапку вызывного на значения из карточки проекта ===== */
+function resetCallsheetHeaderToProject() {
+  const project = DB.getProject(_currentProjectId);
+  if (!project || !_currentCsData) return;
+  if (!confirm('Подтянуть название проекта / тип / клиента / артиста из карточки проекта? Текущие значения шапки будут перезаписаны.')) return;
+  _currentCsData.headerProjectName = project.name || '';
+  _currentCsData.headerType = project.type || '';
+  _currentCsData.headerClient = project.client || '';
+  _currentCsData.headerArtist = project.artist || '';
+  _currentCsData.headerTitle = 'ВЫЗЫВНОЙ';
+  _currentCsData.headerSubtitle = '';
+  saveCsNow();
+  renderCallsheetEditor();
+  toast('Шапка восстановлена из проекта', 'success');
+}
+
 /* ===== Открыть Telegram по @username из любого input ===== */
 function openTelegramHandle(inputId, event) {
   if (event) { event.preventDefault(); event.stopPropagation(); }
@@ -12054,21 +12086,21 @@ async function exportCallsheetToPdf() {
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pdfWidth;
     const ratio = canvas.height / canvas.width;
-    const imgHeight = imgWidth * ratio;
-    const totalPages = Math.ceil(imgHeight / pdfHeight);
-    // Используем PNG для чёткости текста
-    const imgData = canvas.toDataURL('image/png');
-    let position = 0;
-    for (let i = 0; i < totalPages; i++) {
-      if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-      position -= pdfHeight;
+    // ── ОДНА СТРАНИЦА: авто-скейл при превышении высоты A4
+    let imgW = pdfWidth;
+    let imgH = pdfWidth * ratio;
+    if (imgH > pdfHeight) {
+      imgH = pdfHeight;
+      imgW = imgH / ratio;
     }
+    const x = (pdfWidth - imgW) / 2;
+    const y = (pdfHeight - imgH) / 2;
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', x, y, imgW, imgH, undefined, 'FAST');
     const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
     pdf.save(`Вызывной_${slug}_день${_currentCsDay}_${new Date().toISOString().slice(0,10)}.pdf`);
-    toast('Вызывной PDF скачан ✓', 'success');
+    toast('Вызывной PDF скачан ✓ (1 стр.)', 'success');
   } catch (e) {
     if (container.parentNode) container.parentNode.removeChild(container);
     console.error(e);
@@ -12077,33 +12109,71 @@ async function exportCallsheetToPdf() {
 }
 
 function buildCallsheetPrintHTML(project, cs) {
-  const isMV = project.type === 'MV';
+  // ── Шапка: переопределяемые поля из cs, по дефолту — из project
+  const hdrProjectName = (cs.headerProjectName != null && cs.headerProjectName !== '') ? cs.headerProjectName : (project.name || '');
+  const hdrType = (cs.headerType != null && cs.headerType !== '') ? cs.headerType : (project.type || '');
+  const hdrClient = (cs.headerClient != null && cs.headerClient !== '') ? cs.headerClient : (project.client || '');
+  const hdrArtist = (cs.headerArtist != null && cs.headerArtist !== '') ? cs.headerArtist : (project.artist || '');
+  const hdrTitle = (cs.headerTitle != null && cs.headerTitle !== '') ? cs.headerTitle : 'ВЫЗЫВНОЙ';
+  const isMV = /^mv$/i.test(hdrType) || hdrType === 'MV' || project.type === 'MV';
+  const hdrSubtitle = (cs.headerSubtitle && cs.headerSubtitle.trim()) || ((isMV ? 'Music Video' : 'Commercial') + ' · Call Sheet');
+
   const c = document.createElement('div');
-  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:600;line-height:1.4;';
+  // Компактная вёрстка под единый A4-лист, с авто-скейлингом в экспорте
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:600;line-height:1.3;';
 
-  // Brand header — компактный, на белом
+  const PAD_X = 24; // боковой паддинг — компактнее
+  const accent = isMV ? '#6b1d1f' : '#1d4ed8';
+  const accentDeep = isMV ? '#3d1416' : '#0c1e7a';
+
+  // ===== Header: лого + дата + день — единая полоса =====
   let html = `
-    <div style="background:#ffffff;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
-      <img src="logo.png" alt="ZALOVE" style="height:26px;width:auto;" crossorigin="anonymous">
+    <div style="background:linear-gradient(135deg,${accent},${accentDeep});padding:10px ${PAD_X}px;display:flex;justify-content:space-between;align-items:center;color:white;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="logo.png" alt="ZALOVE" style="height:20px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+        <div style="font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,0.85);text-transform:uppercase;font-weight:700;">${escapeHtml(hdrSubtitle)}</div>
+      </div>
       <div style="text-align:right;">
-        ${cs.date ? `<div style="font-size:16px;font-weight:700;color:#0a0907;letter-spacing:0.3px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
-        <div style="font-size:10px;color:#888;margin-top:2px;letter-spacing:1px;text-transform:uppercase;">День ${_currentCsDay}${project.days ? ' из ' + project.days : ''}</div>
+        ${cs.date ? `<div style="font-size:13px;font-weight:800;letter-spacing:0.3px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
+        <div style="font-size:8.5px;color:rgba(255,255,255,0.8);margin-top:1px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;">День ${_currentCsDay}${project.days ? ' из ' + project.days : ''}</div>
       </div>
     </div>`;
 
-  // Title
+  // ===== Title =====
+  const subParts = [];
+  if (hdrProjectName) subParts.push(escapeHtml(hdrProjectName));
+  if (hdrClient) subParts.push(escapeHtml(hdrClient));
+  const subLine = subParts.join(' · ') + (hdrArtist ? ` <span style="color:#888;">(${escapeHtml(hdrArtist)})</span>` : '');
   html += `
-    <div style="padding:32px 40px 16px;">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-        <div style="font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1;">ВЫЗЫВНОЙ</div>
-        <div style="background:${isMV ? '#6b1d1f' : '#1d4ed8'};color:white;padding:7px 14px;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:1px;">${isMV ? 'МУЗ. КЛИП' : 'РЕКЛАМА'}</div>
-      </div>
-      <div style="font-size:16px;color:#444;margin-top:8px;">
-        ${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}${project.artist ? ' (' + escapeHtml(project.artist) + ')' : ''}
+    <div style="padding:14px ${PAD_X}px 8px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:26px;font-weight:900;letter-spacing:-0.5px;line-height:1;">${escapeHtml(hdrTitle)}</div>
+        <div style="font-size:11px;color:#666;font-weight:600;text-align:right;max-width:60%;">
+          ${subLine}
+        </div>
       </div>
     </div>`;
 
-  // Roles strip — только заполненные
+  // ===== Times (3 cells) + Roles strip — стек =====
+  if (cs.startShift || cs.startShoot || cs.endShift) {
+    html += `
+      <div style="margin:0 ${PAD_X}px 8px;background:#0a0907;color:white;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;border-radius:4px;">
+        <div style="text-align:center;">
+          <div style="font-size:8px;color:#b8b8b8;font-weight:700;letter-spacing:1.3px;">НАЧАЛО СМЕНЫ</div>
+          <div style="font-size:22px;font-weight:900;margin-top:3px;line-height:1;font-family:'Montserrat',monospace;">${escapeHtml(cs.startShift || '—:—')}</div>
+        </div>
+        <div style="text-align:center;border-left:1px solid rgba(255,255,255,0.15);border-right:1px solid rgba(255,255,255,0.15);">
+          <div style="font-size:8px;color:#b8b8b8;font-weight:700;letter-spacing:1.3px;">НАЧАЛО СЪЁМКИ</div>
+          <div style="font-size:22px;font-weight:900;margin-top:3px;line-height:1;font-family:'Montserrat',monospace;">${escapeHtml(cs.startShoot || '—:—')}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:8px;color:#b8b8b8;font-weight:700;letter-spacing:1.3px;">КОНЕЦ СМЕНЫ</div>
+          <div style="font-size:22px;font-weight:900;margin-top:3px;line-height:1;font-family:'Montserrat',monospace;">${escapeHtml(cs.endShift || '—:—')}</div>
+        </div>
+      </div>`;
+  }
+
+  // ===== Roles strip — только заполненные =====
   const roleItems = [];
   if ((cs.directorName || '').trim()) roleItems.push({ lbl: 'РЕЖИССЁР', val: cs.directorName });
   if ((cs.dopName || '').trim()) roleItems.push({ lbl: 'DOP', val: cs.dopName });
@@ -12111,69 +12181,53 @@ function buildCallsheetPrintHTML(project, cs) {
   if ((cs.artName || '').trim()) roleItems.push({ lbl: 'АРТ-ДИРЕКТОР', val: cs.artName });
   if (roleItems.length > 0) {
     html += `
-      <div style="margin:0 40px;background:#f5f5f0;padding:14px 18px;display:grid;grid-template-columns:repeat(${roleItems.length},1fr);gap:14px;border-radius:4px;">
+      <div style="margin:0 ${PAD_X}px 8px;background:#f5f5f0;padding:8px 12px;display:grid;grid-template-columns:repeat(${roleItems.length},1fr);gap:10px;border-radius:4px;border:1px solid #e8e8df;">
         ${roleItems.map(r => `
           <div>
-            <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">${r.lbl}</div>
-            <div style="font-size:13px;font-weight:600;margin-top:4px;">${escapeHtml(r.val)}</div>
+            <div style="font-size:8px;color:#888;font-weight:800;letter-spacing:1px;">${r.lbl}</div>
+            <div style="font-size:11px;font-weight:700;margin-top:2px;color:#1a1a1a;">${escapeHtml(r.val)}</div>
           </div>
         `).join('')}
       </div>`;
   }
 
-  // Times
-  if (cs.startShift || cs.startShoot || cs.endShift) {
-    html += `
-      <div style="margin:16px 40px 0;background:#0a0907;color:white;padding:18px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;border-radius:4px;">
-        <div style="text-align:center;">
-          <div style="font-size:10px;color:#b8b8b8;font-weight:700;letter-spacing:1.5px;">НАЧАЛО СМЕНЫ</div>
-          <div style="font-size:30px;font-weight:900;margin-top:6px;line-height:1;">${escapeHtml(cs.startShift || '—:—')}</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-size:10px;color:#b8b8b8;font-weight:700;letter-spacing:1.5px;">НАЧАЛО СЪЁМКИ</div>
-          <div style="font-size:30px;font-weight:900;margin-top:6px;line-height:1;">${escapeHtml(cs.startShoot || '—:—')}</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-size:10px;color:#b8b8b8;font-weight:700;letter-spacing:1.5px;">КОНЕЦ СМЕНЫ</div>
-          <div style="font-size:30px;font-weight:900;margin-top:6px;line-height:1;">${escapeHtml(cs.endShift || '—:—')}</div>
-        </div>
-      </div>`;
-  }
+  // ===== Location + Info — в одной горизонтальной полосе =====
+  const hasLoc = cs.locationName || cs.locationAddress;
+  const infoParts = [];
+  if (cs.wifiName) infoParts.push(`<span style="color:#888;font-weight:700;">Wi-Fi:</span> ${escapeHtml(cs.wifiName)}${cs.wifiPass ? ' / ' + escapeHtml(cs.wifiPass) : ''}`);
+  if (cs.weatherDay || cs.weatherNight) infoParts.push(`<span style="color:#888;font-weight:700;">Погода:</span> ${escapeHtml(cs.weatherDay || '?')}°C / ${escapeHtml(cs.weatherNight || '?')}°C`);
+  if (cs.parking) infoParts.push(`<span style="color:#888;font-weight:700;">Парковка:</span> ${escapeHtml(cs.parking)}`);
 
-  // Location
-  if (cs.locationName || cs.locationAddress) {
+  if (hasLoc) {
     let contactLine = '';
     if (cs.locationContactName) contactLine += escapeHtml(cs.locationContactName);
     if (cs.locationContactPhone) contactLine += (contactLine ? ' · ' : '') + escapeHtml(cs.locationContactPhone);
     if (cs.locationContactTelegram) contactLine += (contactLine ? ' · ' : '') + escapeHtml(cs.locationContactTelegram);
     html += `
-      <div style="margin:16px 40px 0;background:#faf3f3;border-left:5px solid #6b1d1f;padding:16px 20px;border-radius:4px;">
-        <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">ГДЕ СНИМАЕМ</div>
-        <div style="font-size:20px;font-weight:700;margin-top:4px;">${escapeHtml(cs.locationName || '—')}</div>
-        ${cs.locationAddress ? `<div style="font-size:13px;margin-top:4px;color:#333;">${escapeHtml(cs.locationAddress)}</div>` : ''}
-        ${contactLine ? `<div style="font-size:12px;color:#666;margin-top:6px;">${contactLine}</div>` : ''}
+      <div style="margin:0 ${PAD_X}px 8px;background:#faf3f3;border-left:4px solid #6b1d1f;padding:8px 12px;border-radius:0 4px 4px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+          <div>
+            <span style="font-size:8px;color:#888;font-weight:800;letter-spacing:1px;">ГДЕ СНИМАЕМ</span>
+            <span style="font-size:14px;font-weight:800;margin-left:8px;">${escapeHtml(cs.locationName || '—')}</span>
+          </div>
+          ${contactLine ? `<div style="font-size:10px;color:#555;font-weight:600;">${contactLine}</div>` : ''}
+        </div>
+        ${cs.locationAddress ? `<div style="font-size:10.5px;margin-top:3px;color:#333;font-weight:600;">${escapeHtml(cs.locationAddress)}</div>` : ''}
       </div>`;
   }
 
-  // Info line
-  const infoParts = [];
-  if (cs.wifiName) infoParts.push(`Wi-Fi: <b>${escapeHtml(cs.wifiName)}</b>${cs.wifiPass ? ' / ' + escapeHtml(cs.wifiPass) : ''}`);
-  if (cs.weatherDay || cs.weatherNight) infoParts.push(`Погода: ${escapeHtml(cs.weatherDay || '?')}°C / ${escapeHtml(cs.weatherNight || '?')}°C`);
   if (infoParts.length > 0) {
-    html += `<div style="margin:12px 40px 0;font-size:12px;color:#444;">${infoParts.join(' &nbsp; · &nbsp; ')}</div>`;
+    html += `<div style="margin:0 ${PAD_X}px 8px;font-size:10px;color:#444;display:flex;gap:14px;flex-wrap:wrap;font-weight:600;">${infoParts.join('<span style="color:#ccc;">·</span>')}</div>`;
   }
-  if (cs.parking) {
-    html += `<div style="margin:6px 40px 0;font-size:11px;color:#666;">Парковка: ${escapeHtml(cs.parking)}</div>`;
-  }
+
   if (cs.important) {
     html += `
-      <div style="margin:14px 40px 0;background:#6b1d1f;color:white;padding:14px 18px;font-size:14px;font-weight:700;letter-spacing:1px;border-radius:4px;">
-        ⚠ &nbsp; ${escapeHtml(cs.important.toUpperCase())}
+      <div style="margin:0 ${PAD_X}px 10px;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:8px 12px;font-size:11px;font-weight:800;letter-spacing:0.5px;border-radius:4px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:14px;">⚠</span> ${escapeHtml(cs.important.toUpperCase())}
       </div>`;
   }
 
-  // Crew — фильтр: не дублируем тех, кто уже в "Главных позициях" вверху
-  // Худ-постановщик (Production Designer) — отдельная роль, должен попасть в общий список КРЮ
+  // ===== Crew — фильтр TOP-ролей =====
   const TOP_ROLES = new Set([
     'Режиссёр',
     'Оператор-постановщик (DOP)',
@@ -12189,82 +12243,57 @@ function buildCallsheetPrintHTML(project, cs) {
     if (p.name && topNames.has(p.name.trim().toLowerCase())) return false;
     return true;
   });
+
+  function compactTable(rows, headerLabel, headerCount, headerBg, headerAccent, isCast) {
+    const rowsHtml = rows.map((p, i) => {
+      const posEn = translateRole(p.position);
+      const callColor = isCast ? '#6b1d1f' : '#0a0907';
+      const stripeBg = isCast ? (i % 2 ? '#faf3f3' : '#ffffff') : (i % 2 ? '#fafafa' : '#ffffff');
+      return `
+        <tr style="background:${stripeBg};border-bottom:1px solid #ececec;">
+          <td style="padding:5px 10px;font-weight:700;font-size:10px;">
+            ${escapeHtml(p.position || '')}
+            ${posEn && posEn !== p.position ? `<div style="font-size:8px;color:#999;font-weight:500;margin-top:1px;">${escapeHtml(posEn)}</div>` : ''}
+          </td>
+          <td style="padding:5px 10px;font-size:10px;font-weight:600;">${escapeHtml(p.name || '')}</td>
+          <td style="padding:5px 10px;color:#444;font-family:'Montserrat',monospace;font-size:9.5px;font-weight:600;">${escapeHtml(p.phone || '')}</td>
+          <td style="padding:5px 10px;text-align:center;font-weight:800;font-family:'Montserrat',monospace;font-size:10px;color:${callColor};">${escapeHtml(p.callTime || '')}</td>
+        </tr>`;
+    }).join('');
+    return `
+      <div style="margin:0 ${PAD_X}px 8px;">
+        <div style="background:${headerBg};color:white;padding:7px 12px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1px;">${headerLabel}</div>
+          <div style="font-size:9px;font-weight:700;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:2px;letter-spacing:0.5px;">${headerCount}</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;background:white;border:1px solid ${headerAccent};border-top:none;">
+          <thead>
+            <tr style="background:#f0eee6;color:#3a3a3a;">
+              <th style="text-align:left;padding:5px 10px;font-weight:800;font-size:8px;letter-spacing:1px;width:30%;">ПОЗИЦИЯ</th>
+              <th style="text-align:left;padding:5px 10px;font-weight:800;font-size:8px;letter-spacing:1px;width:33%;">ФИО</th>
+              <th style="text-align:left;padding:5px 10px;font-weight:800;font-size:8px;letter-spacing:1px;width:24%;">ТЕЛЕФОН</th>
+              <th style="text-align:center;padding:5px 10px;font-weight:800;font-size:8px;letter-spacing:1px;width:13%;">ВЫЗОВ</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
+  }
+
   if (filteredCrew.length > 0) {
-    html += `
-      <div style="margin:28px 40px 0;">
-        <div style="background:#0a0907;color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
-          <div style="font-size:15px;font-weight:800;letter-spacing:1px;">КРЮ · СЪЁМОЧНАЯ ГРУППА</div>
-          <div style="font-size:12px;">${filteredCrew.length} человек</div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;background:white;">
-          <thead>
-            <tr style="background:#3c3c3c;color:white;">
-              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:30%;">ПОЗИЦИЯ</th>
-              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:35%;">ФИО</th>
-              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:25%;">ТЕЛЕФОН</th>
-              <th style="text-align:center;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:10%;">ВЫЗОВ</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filteredCrew.map((p, i) => {
-              const posEn = translateRole(p.position);
-              return `
-              <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #e5e5e5;">
-                <td style="padding:9px 14px;font-weight:700;">
-                  ${escapeHtml(p.position || '')}
-                  ${posEn && posEn !== p.position ? `<div style="font-size:10px;color:#999;font-weight:500;margin-top:2px;">${escapeHtml(posEn)}</div>` : ''}
-                </td>
-                <td style="padding:9px 14px;">${escapeHtml(p.name || '')}</td>
-                <td style="padding:9px 14px;color:#444;font-family:monospace;">${escapeHtml(p.phone || '')}</td>
-                <td style="padding:9px 14px;text-align:center;font-weight:700;font-family:monospace;">${escapeHtml(p.callTime || '')}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>`;
+    html += compactTable(filteredCrew, 'КРЮ · СЪЁМОЧНАЯ ГРУППА', filteredCrew.length + ' чел.', '#0a0907', '#d8d8d8', false);
   }
 
-  // Cast
   if (cs.cast && cs.cast.length > 0) {
-    html += `
-      <div style="margin:24px 40px 0;">
-        <div style="background:#6b1d1f;color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
-          <div style="font-size:16px;font-weight:800;letter-spacing:1px;">${isMV ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ, АГЕНТСТВО И КАСТИНГ'}</div>
-          <div style="background:white;color:#6b1d1f;padding:5px 12px;border-radius:3px;font-size:11px;font-weight:800;letter-spacing:0.5px;">${isMV ? 'МУЗ. КЛИП' : 'РЕКЛАМА'} · ${cs.cast.length} ЧЕЛ.</div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;background:white;">
-          <thead>
-            <tr style="background:#5a1719;color:white;">
-              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:30%;">ПОЗИЦИЯ</th>
-              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:35%;">ФИО</th>
-              <th style="text-align:left;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:25%;">ТЕЛЕФОН</th>
-              <th style="text-align:center;padding:10px 14px;font-weight:700;font-size:11px;letter-spacing:1px;width:10%;">ВЫЗОВ</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${cs.cast.map((p, i) => {
-              const posEn = translateRole(p.position);
-              return `
-              <tr style="background:${i % 2 ? '#faf3f3' : '#ffffff'};border-bottom:1px solid #e5e5e5;">
-                <td style="padding:9px 14px;font-weight:700;">
-                  ${escapeHtml(p.position || '')}
-                  ${posEn && posEn !== p.position ? `<div style="font-size:10px;color:#999;font-weight:500;margin-top:2px;">${escapeHtml(posEn)}</div>` : ''}
-                </td>
-                <td style="padding:9px 14px;">${escapeHtml(p.name || '')}</td>
-                <td style="padding:9px 14px;color:#444;font-family:monospace;">${escapeHtml(p.phone || '')}</td>
-                <td style="padding:9px 14px;text-align:center;font-weight:700;color:#6b1d1f;font-family:monospace;">${escapeHtml(p.callTime || '')}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>`;
+    const castLabel = isMV ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ · АГЕНТСТВО · КАСТИНГ';
+    html += compactTable(cs.cast, castLabel, cs.cast.length + ' чел.', '#6b1d1f', '#d8b8b9', true);
   }
 
-  // Footer
+  // ===== Footer =====
   html += `
-    <div style="margin:40px 40px 24px;padding-top:14px;border-top:1px solid #ddd;font-size:9px;color:#999;text-align:center;line-height:1.5;">
+    <div style="margin:8px ${PAD_X}px 12px;padding-top:8px;border-top:1px solid #e5e5e5;font-size:7.5px;color:#999;text-align:center;line-height:1.5;font-weight:600;">
       ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670<br>
-      ${escapeHtml(project.name || '')} · день ${_currentCsDay} · сгенерирован ${new Date().toLocaleDateString('ru-RU')}
+      <span style="color:#bbb;">${escapeHtml(project.name || '')} · день ${_currentCsDay} · сгенерирован ${new Date().toLocaleDateString('ru-RU')}</span>
     </div>`;
 
   c.innerHTML = html;
