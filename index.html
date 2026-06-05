@@ -11649,18 +11649,25 @@ function renderCallsheetEditor() {
           <input class="cs-input" data-cs="locationAddress" value="${escapeHtml(cs.locationAddress || '')}" placeholder="Улица, дом, корпус">
         </div>
       </div>
+      <div style="margin-top: 12px;">
+        <div class="cs-field-label">👥 Выбрать из команды проекта</div>
+        <select class="cs-input" id="cs-pick-location-contact" onchange="pickLocationContactFromTeam(this.value)">
+          <option value="">— вручную или выбери человека —</option>
+          ${(project.team || []).map(m => `<option value="${m.id}">${escapeHtml(m.name_ru || '')}${m.role ? ' · ' + escapeHtml(m.role) : ''}</option>`).join('')}
+        </select>
+      </div>
       <div class="cs-row-grid cs-3col" style="margin-top: 12px;">
         <div>
           <div class="cs-field-label">Контакт на площадке — имя</div>
-          <input class="cs-input" data-cs="locationContactName" value="${escapeHtml(cs.locationContactName || '')}" placeholder="ФИО">
+          <input class="cs-input" data-cs="locationContactName" id="cs-loc-contact-name" value="${escapeHtml(cs.locationContactName || '')}" placeholder="ФИО">
         </div>
         <div>
           <div class="cs-field-label">Телефон</div>
-          <input class="cs-input" data-cs="locationContactPhone" value="${escapeHtml(cs.locationContactPhone || '')}" placeholder="+7 ___ ___ __ __">
+          <input class="cs-input" data-cs="locationContactPhone" id="cs-loc-contact-phone" value="${escapeHtml(cs.locationContactPhone || '')}" placeholder="+7 ___ ___ __ __">
         </div>
         <div>
           <div class="cs-field-label">Telegram</div>
-          <input class="cs-input" data-cs="locationContactTelegram" value="${escapeHtml(cs.locationContactTelegram || '')}" placeholder="@username">
+          <input class="cs-input" data-cs="locationContactTelegram" id="cs-loc-contact-tg" value="${escapeHtml(cs.locationContactTelegram || '')}" placeholder="@username">
         </div>
       </div>
       <div style="margin-top: 12px;">
@@ -11812,6 +11819,34 @@ function renderPeopleTable(kind, people) {
       </tbody>
     </table>
   `;
+}
+
+/* ===== Выбрать контакт на площадке из команды ===== */
+function pickLocationContactFromTeam(memberId) {
+  if (!memberId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const m = (project.team || []).find(x => x.id === memberId);
+  if (!m) return;
+  const nameEl = document.getElementById('cs-loc-contact-name');
+  const phoneEl = document.getElementById('cs-loc-contact-phone');
+  const tgEl = document.getElementById('cs-loc-contact-tg');
+  if (nameEl) {
+    nameEl.value = m.name_ru || '';
+    nameEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  if (phoneEl) {
+    phoneEl.value = m.phone || '';
+    phoneEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  if (tgEl) {
+    tgEl.value = m.telegram || '';
+    tgEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  toast(`Подставил ${m.name_ru}`, 'success');
+  // Сбрасываем dropdown в дефолтное состояние
+  const picker = document.getElementById('cs-pick-location-contact');
+  if (picker) picker.value = '';
 }
 
 /* ===== Перемещение строк в крю/кастинге ===== */
