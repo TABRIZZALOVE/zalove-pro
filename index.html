@@ -7433,8 +7433,12 @@ body.dark-theme .task-deadline:focus { background: white; }
             <input class="form-input" type="number" id="np-budget" placeholder="0">
           </div>
           <div>
-            <label class="form-label">Прогресс %</label>
-            <input class="form-input" type="number" id="np-progress" min="0" max="100" value="0">
+            <label class="form-label" style="display:flex;align-items:center;gap:6px;">
+              <span>Прогресс %</span>
+              <span style="background:#e8f5e9;color:#0a8a3a;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:800;letter-spacing:0.5px;">АВТО</span>
+            </label>
+            <input class="form-input" type="number" id="np-progress" min="0" max="100" placeholder="0 (авто)" style="background:var(--bg-3);">
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.3;">Оставь пустым — посчитается сам из команды, сметы, документов, задач и съёмочных дней.</div>
           </div>
           <div>
             <label class="form-label">Статус</label>
@@ -8085,9 +8089,9 @@ function projectCardHTML(p, idx) {
       <div class="card-body">
         <div class="card-title">${escapeHtml(p.name || 'Без названия')}</div>
         <div class="card-meta">${escapeHtml(meta)}</div>
-        <div class="card-progress">
-          <div class="progress-bar"><div class="progress-fill" style="width: ${p.progress || 0}%"></div></div>
-          <span class="progress-text">${p.progress || 0}%</span>
+        <div class="card-progress" title="Авто-расчёт по реальным данным проекта">
+          <div class="progress-bar"><div class="progress-fill" style="width: ${getProjectProgress(p)}%"></div></div>
+          <span class="progress-text">${getProjectProgress(p)}%</span>
         </div>
       </div>
     </div>
@@ -8097,6 +8101,184 @@ function projectCardHTML(p, idx) {
 function escapeHtml(s) {
   if (s == null) return '';
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ===== Popup с разбивкой расчёта прогресса ===== */
+function showProgressBreakdown(projectId) {
+  const p = DB.getProject(projectId);
+  if (!p) return;
+  const full = _calcProgressFull(p);
+  const total = full.value;
+
+  const itemsHtml = full.items.map(it => {
+    const isNegative = it.v < 0;
+    const isOverride = it.k.startsWith('✏');
+    const ratio = it.max !== 0 ? Math.abs(it.v) / Math.abs(it.max) : 0;
+    const barColor = isNegative ? '#b45309' : (ratio >= 0.99 ? '#0a8a3a' : '#6b1d1f');
+    const bgColor = isNegative ? '#fef3c7' : '#f0eee6';
+    return `
+      <div style="display:grid;grid-template-columns:1fr 80px 60px;gap:12px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);background:${isOverride ? '#eef2ff' : 'transparent'};">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--ink);">${it.k}</div>
+          ${it.hint ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">${escapeHtml(it.hint)}</div>` : ''}
+        </div>
+        <div style="background:${bgColor};border-radius:4px;height:8px;position:relative;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:${Math.min(100, ratio * 100)}%;background:${barColor};"></div>
+        </div>
+        <div style="text-align:right;font-family:'Montserrat',monospace;font-weight:800;font-size:12px;color:${isNegative ? '#b45309' : (it.v > 0 ? '#0a8a3a' : 'var(--muted)')};">
+          ${it.v > 0 ? '+' : ''}${it.v}${it.max > 0 ? '<span style="color:var(--muted);font-weight:600;font-size:10px;">/' + it.max + '</span>' : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,9,7,0.7);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
+
+  overlay.innerHTML = `
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;width:100%;max-width:540px;max-height:90vh;overflow:auto;font-family:'Inter','Montserrat',sans-serif;">
+      <div style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;border-radius:12px 12px 0 0;">
+        <div>
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;font-weight:700;">Прогресс проекта</div>
+          <div style="font-size:28px;font-weight:900;margin-top:2px;line-height:1;">${total}%</div>
+        </div>
+        <button onclick="this.closest('.modal-overlay').remove()" style="background:rgba(255,255,255,0.15);border:none;color:white;width:32px;height:32px;border-radius:16px;cursor:pointer;font-size:18px;font-weight:700;">×</button>
+      </div>
+      <div style="padding:6px 0;">
+        ${itemsHtml}
+      </div>
+      <div style="padding:14px 22px;background:var(--bg-3);font-size:11px;color:var(--muted);line-height:1.5;border-radius:0 0 12px 12px;">
+        Прогресс считается автоматически из реальных данных проекта. Чем больше открытых задач — тем сильнее тянет вниз (до −15%). Завершить можно поставив статус <b style="color:var(--ink);">done</b>.
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+/* ===== ГИБРИДНЫЙ АВТО-ПРОГРЕСС ПРОЕКТА =====
+   Считаем 0-100 на лету из реальных данных:
+   • Команда (10)
+   • Смета — кол-во заполненных строк (15)
+   • Бриф — 5 ключевых блоков (10)
+   • Тайминг — процессы (5)
+   • Креатив — прикреплённые документы (10)
+   • Вызывные — заполненные дни (10)
+   • Съёмочные дни прошли (15)
+   • Стадия проекта по статусу (20)
+   • Бонус за закрытые задачи (+5)
+   • Штраф за открытые задачи в работе (−15 макс)
+   • status='done' → жёстко 100
+   ============================================ */
+function _round1(n) { return Math.round(n * 10) / 10; }
+
+function getProjectProgress(p) {
+  return _calcProgressFull(p).value;
+}
+
+function getProjectProgressBreakdown(p) {
+  return _calcProgressFull(p).items;
+}
+
+function _calcProgressFull(p) {
+  if (!p) return { value: 0, items: [] };
+  if (p.status === 'done')    return { value: 100, items: [{ k: '✅ Завершён', v: 100, max: 100, hint: 'done' }] };
+  if (p.status === 'archive') return { value: 100, items: [{ k: '📦 Архив',    v: 100, max: 100, hint: 'archive' }] };
+  if (p.status === 'frozen')  return { value: Math.max(0, p.progressOverride || 0), items: [{ k: '🧊 Заморожен', v: p.progressOverride || 0, max: 100, hint: 'на паузе' }] };
+
+  let score = 0;
+  const items = [];
+
+  // 1. Команда (10)
+  const team = (p.team || []).length;
+  const teamS = team === 0 ? 0 : Math.min(10, team * 1.5);
+  score += teamS; items.push({ k: '👥 Команда', v: _round1(teamS), max: 10, hint: `${team} чел.` });
+
+  // 2. Смета (15)
+  let rows = 0;
+  Object.values((p.estimate || {}).sections || {}).forEach(s => {
+    [...(s.rows || []), ...(s.customRows || [])].forEach(r => {
+      if (r && r.price > 0) rows++;
+    });
+  });
+  const smetaS = rows === 0 ? 0 : Math.min(15, rows * 0.8);
+  score += smetaS; items.push({ k: '💰 Смета', v: _round1(smetaS), max: 15, hint: rows ? `${rows} строк с ценой` : '—' });
+
+  // 3. Бриф (10)
+  const b = p.brief || {};
+  let bf = 0;
+  if (((b.brand && b.brand.about) || '').length > 20) bf++;
+  if (((b.essence && b.essence.description) || '').length > 20) bf++;
+  if (((b.goals && b.goals.main) || '').length > 10) bf++;
+  if (((b.audience && b.audience.age) || '').toString().length > 0) bf++;
+  if (((b.message && b.message.main) || '').length > 10) bf++;
+  const briefS = bf * 2;
+  score += briefS; items.push({ k: '📝 Бриф', v: briefS, max: 10, hint: `${bf}/5 секций` });
+
+  // 4. Тайминг (5)
+  const stages = ((p.timing || {}).stages || []).length;
+  const procs = ((p.timing || {}).stages || []).reduce((s, st) => s + (st.processes || []).length, 0);
+  const timingS = stages === 0 ? 0 : Math.min(5, 1 + procs * 0.4);
+  score += timingS; items.push({ k: '📊 Тайминг', v: _round1(timingS), max: 5, hint: `${procs} процессов` });
+
+  // 5. Креатив (10)
+  const cr = p.creative || {};
+  const cKeys = ['treatment', 'script', 'creative', 'track', 'ppm', 'shooting_plan'];
+  const cFill = cKeys.filter(k => cr[k] && (cr[k].url || cr[k].fileKey)).length;
+  const crS = Math.min(10, cFill * 1.7);
+  score += crS; items.push({ k: '🎨 Креатив', v: _round1(crS), max: 10, hint: `${cFill}/6 материалов` });
+
+  // 6. Вызывные (10)
+  const callsheets = p.callsheets || {};
+  const totalDays = Math.max(1, p.days || 1);
+  const filledDays = Object.values(callsheets).filter(cs =>
+    cs && (cs.locationName || cs.locationAddress || (cs.crew && cs.crew.length > 0))
+  ).length;
+  const csS = Math.min(10, (filledDays / totalDays) * 10);
+  score += csS; items.push({ k: '📋 Вызывные', v: _round1(csS), max: 10, hint: `${filledDays}/${totalDays} дней` });
+
+  // 7. Съёмочные дни прошли (15)
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dates = Object.values(callsheets)
+    .filter(cs => cs && cs.date)
+    .map(cs => new Date(cs.date))
+    .filter(d => !isNaN(d.getTime()));
+  let shootS = 0;
+  let passedCount = 0;
+  if (dates.length > 0) {
+    passedCount = dates.filter(d => d <= today).length;
+    shootS = (passedCount / dates.length) * 15;
+  }
+  score += shootS; items.push({ k: '🎬 Съёмки прошли', v: _round1(shootS), max: 15, hint: dates.length > 0 ? `${passedCount}/${dates.length} съём. дней` : 'нет дат' });
+
+  // 8. Стадия (20)
+  let stageS = 0;
+  if (p.status === 'shooting') stageS = 10;
+  else if (p.status === 'post') stageS = 18;
+  score += stageS; items.push({ k: '🚀 Стадия', v: stageS, max: 20, hint: p.status || 'preprod' });
+
+  // 9. Задачи: бонус за закрытые (+5), штраф за открытые (−15 макс)
+  const tasks = p.tasks || [];
+  const doneTasks = tasks.filter(t => t && (t.done || t.status === 'done')).length;
+  const openTasks = tasks.length - doneTasks;
+  let tasksBonus = 0;
+  if (tasks.length > 0) tasksBonus = (doneTasks / tasks.length) * 5;
+  score += tasksBonus;
+  items.push({ k: '✅ Закрытые задачи', v: _round1(tasksBonus), max: 5, hint: tasks.length ? `${doneTasks}/${tasks.length} done` : 'нет задач' });
+
+  // ШТРАФ: каждая открытая задача тянет −0.5, потолок −15
+  const tasksPenalty = Math.min(15, openTasks * 0.5);
+  if (openTasks > 0) {
+    score -= tasksPenalty;
+    items.push({ k: '⚠ Открытые задачи', v: -_round1(tasksPenalty), max: -15, hint: `${openTasks} в работе` });
+  }
+
+  // 10. Ручной override (если пользователь явно выставил)
+  if (p.progressOverride != null && p.progressOverride !== '' && !isNaN(Number(p.progressOverride))) {
+    const ovr = Math.max(0, Math.min(100, Number(p.progressOverride)));
+    return { value: ovr, items: [{ k: '✏ Ручное значение', v: ovr, max: 100, hint: 'override' }, ...items] };
+  }
+
+  return { value: Math.max(0, Math.min(100, Math.round(score))), items };
 }
 
 function renderProjects() {
@@ -8242,7 +8424,7 @@ function openProjectForm(id = null) {
   document.getElementById('np-deadline').value = p?.deadline || '';
   document.getElementById('np-days').value = p?.days || '';
   document.getElementById('np-budget').value = p?.budget || '';
-  document.getElementById('np-progress').value = p?.progress ?? 0;
+  document.getElementById('np-progress').value = (p?.progressOverride != null && p.progressOverride !== '') ? p.progressOverride : '';
   document.getElementById('np-status').value = p?.status || 'preprod';
 
   // Mood selector
@@ -8286,7 +8468,12 @@ function saveProjectForm() {
     deadline: document.getElementById('np-deadline').value,
     days: parseInt(document.getElementById('np-days').value) || 0,
     budget: parseInt(document.getElementById('np-budget').value) || 0,
-    progress: Math.min(100, Math.max(0, parseInt(document.getElementById('np-progress').value) || 0)),
+    progressOverride: (() => {
+      const raw = document.getElementById('np-progress').value.trim();
+      if (raw === '') return null; // пусто → авто
+      const n = parseInt(raw); if (isNaN(n)) return null;
+      return Math.min(100, Math.max(0, n));
+    })(),
     status: document.getElementById('np-status').value,
     mood: selectedMood,
     poster: selectedPoster
@@ -8399,9 +8586,15 @@ function openProjectDetail(id, idx) {
   const deadlineEl = document.getElementById('detail-deadline');
   if (deadlineEl) deadlineEl.textContent = formatDateRu(p.deadline);
 
-  // Прогресс
+  // Прогресс — авто-расчёт + кликабельная разбивка
   const progressEl = document.getElementById('detail-progress');
-  if (progressEl) progressEl.textContent = (p.progress || 0) + '%';
+  if (progressEl) {
+    const pct = getProjectProgress(p);
+    progressEl.textContent = pct + '%';
+    progressEl.style.cursor = 'pointer';
+    progressEl.title = 'Кликни для разбивки расчёта';
+    progressEl.onclick = () => showProgressBreakdown(p.id);
+  }
 
   // Теги (динамически по типу проекта)
   const tagsEl = document.getElementById('detail-tags');
@@ -16500,7 +16693,7 @@ function getFilteredProjects() {
   list = list.slice().sort((a, b) => {
     if (s === 'name') return (a.name || '').localeCompare(b.name || '');
     if (s === 'budget') return (b.budget || 0) - (a.budget || 0);
-    if (s === 'progress') return (b.progress || 0) - (a.progress || 0);
+    if (s === 'progress') return getProjectProgress(b) - getProjectProgress(a);
     if (s === 'deadline') return (a.deadline || '9999').localeCompare(b.deadline || '9999');
     return (b.createdAt || '').localeCompare(a.createdAt || '');
   });
@@ -16556,7 +16749,7 @@ function renderProjectListRow(p, i) {
       <div class="pl-status ${status.cls || ''}" style="color:${(p.status === 'frozen') ? '#1d4ed8' : 'var(--text)'};">${escapeHtml(status.txt || '')}</div>
       <div class="pl-budget">${p.budget ? fmtRub(p.budget) : '—'}</div>
       <div class="pl-deadline">${formatDateRu(p.deadline) || '—'}</div>
-      <div class="pl-progress">${p.progress || 0}%</div>
+      <div class="pl-progress">${getProjectProgress(p)}%</div>
     </div>
   `;
 }
