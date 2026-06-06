@@ -6619,49 +6619,22 @@ body.dark-theme .task-deadline:focus { background: white; }
 
 <!-- RISK MATRIX -->
 <div class="modal-overlay" id="m-risks">
-  <div class="doc-overlay">
+  <div class="doc-overlay" style="max-width:1100px;width:96vw;">
     <div class="doc-header">
       <div class="doc-header-l">
         <div class="doc-header-icon">⚠</div>
         <div>
-          <div class="doc-section-label">Документ · из вашего шаблона</div>
-          <div class="doc-header-title">Матрица рисков · Risk matrix</div>
+          <div class="doc-section-label">Документ · риск-менеджмент</div>
+          <div class="doc-header-title" id="risks-title">Матрица рисков</div>
         </div>
       </div>
       <div class="doc-actions-h">
-        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="btn" onclick="exportRisksToPdf()">⤓ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
-    <div class="doc-body">
-      <div class="smart-fill">
-        <div class="sf-icon">⚡</div>
-        <div class="sf-text">
-          <strong>Из шаблона «шаблон матрица рисков.docx»</strong>
-          Каждый риск: Вероятность (P 1-5) × Ущерб (I 1-5) = Балл R. Чем выше R — тем приоритетнее.
-        </div>
-      </div>
-      <table style="width: 100%; border-collapse: collapse; font-size: 12px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; overflow: hidden;">
-        <thead>
-          <tr style="background: var(--bg-3); color: var(--muted); text-transform: uppercase; font-size: 10px; letter-spacing: 1px;">
-            <th style="padding: 10px 14px; text-align: left;">Риск</th>
-            <th style="padding: 10px 14px; text-align: center;">P</th>
-            <th style="padding: 10px 14px; text-align: center;">I</th>
-            <th style="padding: 10px 14px; text-align: center;">R</th>
-            <th style="padding: 10px 14px; text-align: left;">Митигация</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="border-top: 1px solid var(--line);"><td style="padding: 10px 14px;">Артист опоздал на смену</td><td style="text-align: center;">3</td><td style="text-align: center;">4</td><td style="text-align: center; background: rgba(232,35,29,0.15); color: var(--brand-red); font-weight: 700;">12</td><td style="padding: 10px 14px; color: var(--muted);">Звонок за 2ч, бэк-ап сцены без артиста</td></tr>
-          <tr style="border-top: 1px solid var(--line);"><td style="padding: 10px 14px;">Дождь на open-air</td><td style="text-align: center;">2</td><td style="text-align: center;">5</td><td style="text-align: center; background: rgba(232,35,29,0.15); color: var(--brand-red); font-weight: 700;">10</td><td style="padding: 10px 14px; color: var(--muted);">Резерв-локация в крытом помещении</td></tr>
-          <tr style="border-top: 1px solid var(--line);"><td style="padding: 10px 14px;">Реквизит не привезли вовремя</td><td style="text-align: center;">2</td><td style="text-align: center;">4</td><td style="text-align: center; background: rgba(217,119,6,0.15); color: var(--amber); font-weight: 700;">8</td><td style="padding: 10px 14px; color: var(--muted);">Подтверждение от худцеха за 24ч</td></tr>
-          <tr style="border-top: 1px solid var(--line);"><td style="padding: 10px 14px;">Камера сломалась</td><td style="text-align: center;">1</td><td style="text-align: center;">5</td><td style="text-align: center; background: rgba(217,119,6,0.15); color: var(--amber); font-weight: 700;">5</td><td style="padding: 10px 14px; color: var(--muted);">Бэк-ап тушки в комплекте рентала</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="doc-footer">
-      <div class="doc-footer-info">RISKS-NEB-2026 · 12 РИСКОВ · v.1</div>
-      <button class="btn">⚡ Сгенерировать DOCX</button>
+    <div class="doc-body" id="risks-body" style="padding:0;">
+      <!-- Динамическое содержимое через renderRisksEditor() -->
     </div>
   </div>
 </div>
@@ -7582,6 +7555,11 @@ function openDoc(type) {
   // Шутинг-план — открываем редактор
   if (type === 'shootplan' && _currentProjectId) {
     openShootplanEditor();
+    return;
+  }
+  // Матрица рисков — открываем редактор
+  if (type === 'risks' && _currentProjectId) {
+    openRisksEditor();
     return;
   }
   const map = {
@@ -11717,6 +11695,693 @@ function isCallsheetFilled(cs) {
   if (!cs) return false;
   return !!(cs.locationName || cs.startShift || (cs.crew && cs.crew.length > 0) || (cs.cast && cs.cast.length > 0));
 }
+
+/* ===== МАТРИЦА РИСКОВ ===== */
+const RISK_CATEGORIES = ['Погода', 'Техника', 'Кастинг', 'Локация', 'Данные', 'Тайминг', 'Команда', 'Реквизит', 'Безопасность', 'Технический брак', 'Клиент', 'Бюджет', 'Информация', 'Иное'];
+
+const RISK_DEFAULT_REGISTRY = [
+  { category: 'Погода',            desc: 'Дождь / резкое ухудшение погоды', p: 3, i: 4, planA: 'Следим за прогнозом за 5/3/1 дней; имеем cover-set (закрытая локация); тенты, дождевики, плёнка на технику', planB: 'Перенос смены или смена сцены на cover-set; продление аренды на резервный день', owner: '', status: 'open' },
+  { category: 'Техника',           desc: 'Опоздание или отказ техники из рент-хауса', p: 2, i: 4, planA: 'Получаем технику накануне; чек-лист приёмки на складе; запасной комплект ключевых единиц (батареи, носители)', planB: 'Срочный подвоз из дублирующего рент-хауса; shoot-around оставшимися инструментами', owner: '', status: 'open' },
+  { category: 'Кастинг',           desc: 'Главный артист заболел / не приехал', p: 2, i: 5, planA: 'Подписан договор со штрафом; в PPM согласован Back-up; контакт за 24 ч; medic check заранее', planB: 'Замена на Back-up из PPM; перестройка плана на сцены без артиста; перенос смены', owner: '', status: 'open' },
+  { category: 'Локация',           desc: 'Отказ локации в последний момент', p: 2, i: 5, planA: 'Договор с предоплатой и штрафом за отказ; запасная локация (Plan B) забронирована за неделю', planB: 'Перенос на запасную локацию; перепланирование шот-листа под её особенности', owner: '', status: 'open' },
+  { category: 'Данные',            desc: 'Сбой SSD / потеря отснятого материала', p: 2, i: 5, planA: 'Двойной бэкап на площадке (DIT + копия в сейф/облако); проверка карт перед использованием; маркировка', planB: 'Восстановление с зеркального бэкапа; в крайнем случае — пересъёмка повреждённых сцен', owner: '', status: 'open' },
+  { category: 'Тайминг',           desc: 'Overtime (выход за плановое время смены)', p: 4, i: 3, planA: 'Реалистичный шот-лист; буферы между блоками; чёткие команды режиссёра; ассистент по таймингу', planB: 'Решение: продлеваем (доп. оплата) или режем планы (с режиссёром); фиксируем в рапорте причины', owner: '', status: 'open' },
+  { category: 'Команда',           desc: 'Опоздание ключевых членов команды', p: 3, i: 3, planA: 'Crew call за 1 ч до смены; заранее присланные адреса/парковка; чат с подтверждением выхода', planB: 'Перестановка порядка съёмки (начинаем без опоздавшего); вызов фрилансера-замены', owner: '', status: 'open' },
+  { category: 'Локация',           desc: 'Конфликт с соседями / полицией / охраной', p: 2, i: 4, planA: 'Согласование шумных сцен с локейшн-менеджером и ТСЖ; распечатанные разрешения на руках', planB: 'Контакт юриста и локейшн-менеджера; перенос шумных сцен; смена локации', owner: '', status: 'open' },
+  { category: 'Реквизит',          desc: 'Не приехал реквизит / костюм / ключевой предмет', p: 3, i: 3, planA: 'Чек-лист реквизита с фото; доставка накануне; ответственный по списку', planB: 'Локальная закупка/аренда; импровизация на площадке; перенос сцены с этим реквизитом', owner: '', status: 'open' },
+  { category: 'Безопасность',      desc: 'Травма на площадке', p: 2, i: 5, planA: 'Медик/аптечка на площадке; инструктаж по технике безопасности; страховка артистов и команды', planB: 'Скорая; замена артиста/специалиста; остановка смены до выяснения; уведомление продюсера и юриста', owner: '', status: 'open' },
+  { category: 'Технический брак',  desc: 'Брак материала (фокус, экспозиция, шум)', p: 3, i: 4, planA: 'Мониторинг на DIT в реальном времени; контрольные стопы; backup-камера на ключевых сценах', planB: 'Срочная пересъёмка проблемных кадров в той же смене; перенос на доп. день съёмки', owner: '', status: 'open' },
+  { category: 'Клиент',            desc: 'Клиент отменяет / переносит проект', p: 2, i: 5, planA: 'Договор с предоплатой и графиком отмен; письменное подтверждение даты за 7 дней', planB: 'Удерживаем предоплату по штрафной шкале; команде платим за зарезервированные дни', owner: '', status: 'open' },
+  { category: 'Бюджет',            desc: 'Перерасход бюджета', p: 3, i: 4, planA: 'Бюджет с резервом 10–15%; ежедневный контроль; согласование любого перерасхода до факта', planB: 'Сокращение позиций по согласованию с режиссёром; переговоры с клиентом на доп. бюджет', owner: '', status: 'open' },
+  { category: 'Команда',           desc: 'Конфликт в команде / срыв коммуникации', p: 2, i: 3, planA: 'Брифинг команды на старте; одно лицо принимает решения; чёткие зоны ответственности', planB: '1-на-1 быстрый разговор; разведение по зонам; в крайнем — замена', owner: '', status: 'open' },
+  { category: 'Информация',        desc: 'Утечка кадров/информации до релиза', p: 2, i: 4, planA: 'Подписан NDA со всеми участниками; запрет фото/видео на площадке; контроль на въезде', planB: 'Юрист → запрос на удаление; штраф по NDA; коммуникация с клиентом / PR', owner: '', status: 'open' },
+];
+
+function ensureRisks(project) {
+  if (!project.risks) project.risks = {};
+  const r = project.risks;
+  if (r.externalLink == null) r.externalLink = '';
+  if (r.updated == null) r.updated = new Date().toISOString().slice(0, 10);
+  if (r.version == null) r.version = 1;
+  if (!Array.isArray(r.registry) || r.registry.length === 0) {
+    r.registry = RISK_DEFAULT_REGISTRY.map((row, idx) => ({ ...row, id: 'risk_' + Date.now() + '_' + idx }));
+  }
+  if (!Array.isArray(r.top5)) r.top5 = [];
+  if (!Array.isArray(r.postShift)) r.postShift = [];
+  if (r.producerName == null) r.producerName = '';
+  if (r.directorName == null) r.directorName = '';
+  if (r.producerDate == null) r.producerDate = '';
+  if (r.directorDate == null) r.directorDate = '';
+  return r;
+}
+
+function _riskColor(R) {
+  if (!R || R < 1) return { bg: '#f3f3ed', fg: '#999', label: '—' };
+  if (R <= 4)  return { bg: '#e8f5e9', fg: '#0a8a3a', label: 'НИЗКИЙ' };
+  if (R <= 9)  return { bg: '#fef9c3', fg: '#a16207', label: 'УМЕРЕННЫЙ' };
+  if (R <= 14) return { bg: '#fed7aa', fg: '#9a3412', label: 'ВЫСОКИЙ' };
+  if (R <= 19) return { bg: '#fecaca', fg: '#991b1b', label: 'КРИТИЧНЫЙ' };
+  return { bg: '#6b1d1f', fg: '#ffffff', label: 'НЕДОПУСТИМЫЙ' };
+}
+
+let _currentRisksProjectId = null;
+let _risksSaveTimer = null;
+
+function openRisksEditor() {
+  if (!_currentProjectId) return;
+  closeAll();
+  _currentRisksProjectId = _currentProjectId;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  ensureRisks(project);
+  document.getElementById('m-risks').classList.add('active');
+  document.getElementById('risks-title').textContent = 'Матрица рисков · ' + (project.name || 'проект');
+  renderRisksEditor();
+}
+
+function renderRisksEditor() {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project) return;
+  const r = ensureRisks(project);
+  const body = document.getElementById('risks-body');
+  if (!body) return;
+
+  // ── Heatmap counters: сколько рисков попало в каждую ячейку P×I
+  const heatCounts = {};
+  r.registry.forEach(row => {
+    const key = `${row.p}_${row.i}`;
+    heatCounts[key] = (heatCounts[key] || 0) + 1;
+  });
+
+  // ── Сводка по уровням
+  const tier = { low: 0, moderate: 0, high: 0, critical: 0, severe: 0 };
+  r.registry.forEach(row => {
+    const R = (row.p || 0) * (row.i || 0);
+    if (R <= 4)       tier.low++;
+    else if (R <= 9)  tier.moderate++;
+    else if (R <= 14) tier.high++;
+    else if (R <= 19) tier.critical++;
+    else              tier.severe++;
+  });
+
+  // === HEADER + ВНЕШНЯЯ ССЫЛКА ===
+  let html = `
+    <div style="padding:18px 22px;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;font-weight:700;">Risk Matrix · что может пойти не так</div>
+          <div style="font-size:22px;font-weight:900;margin-top:4px;line-height:1.1;">${escapeHtml(project.name || '—')}</div>
+          <div style="font-size:11px;opacity:0.8;margin-top:3px;font-weight:600;">${escapeHtml(project.type || '—')} · обновлено ${escapeHtml(r.updated || '')}</div>
+        </div>
+        <div style="text-align:right;font-size:11px;">
+          <div style="opacity:0.7;letter-spacing:1px;text-transform:uppercase;font-weight:700;">Версия</div>
+          <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:4px;">
+            <button onclick="riskVersionMinus()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:22px;height:22px;border-radius:11px;cursor:pointer;font-weight:700;">−</button>
+            <div style="font-size:16px;font-weight:800;min-width:24px;text-align:center;">v${r.version}</div>
+            <button onclick="riskVersionPlus()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:22px;height:22px;border-radius:11px;cursor:pointer;font-weight:700;">+</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <input id="risks-extlink" type="url" placeholder="🔗 Внешняя ссылка (Notion / Google Doc)" value="${escapeHtml(r.externalLink || '')}" oninput="onRiskExtLinkChange(this.value)" style="flex:1;min-width:220px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:white;padding:6px 10px;border-radius:4px;font-size:12px;font-family:'Inter',sans-serif;">
+        <button onclick="addRiskRow()" style="background:rgba(255,255,255,0.92);border:none;color:#3d1416;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:800;">＋ Риск</button>
+      </div>
+    </div>`;
+
+  // === СВОДКА ПО УРОВНЯМ ===
+  html += `
+    <div style="padding:14px 22px;background:#f5f5f0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:11px;font-weight:700;">
+      ${[
+        ['НИЗКИЙ', tier.low, '#e8f5e9', '#0a8a3a'],
+        ['УМЕРЕННЫЙ', tier.moderate, '#fef9c3', '#a16207'],
+        ['ВЫСОКИЙ', tier.high, '#fed7aa', '#9a3412'],
+        ['КРИТИЧНЫЙ', tier.critical, '#fecaca', '#991b1b'],
+        ['НЕДОПУСТИМЫЙ', tier.severe, '#6b1d1f', '#ffffff'],
+      ].map(([label, count, bg, fg]) => `
+        <div style="background:${bg};color:${fg};padding:8px 10px;border-radius:4px;text-align:center;">
+          <div style="font-size:9px;letter-spacing:1px;opacity:0.9;">${label}</div>
+          <div style="font-size:18px;font-weight:900;margin-top:2px;line-height:1;">${count}</div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // === HEATMAP ===
+  let heatHtml = '<table style="width:100%;border-collapse:collapse;font-size:11px;text-align:center;font-weight:700;">';
+  heatHtml += '<thead><tr><th style="padding:6px;color:var(--muted);font-weight:600;">P / I</th>';
+  for (let i = 1; i <= 5; i++) heatHtml += `<th style="padding:6px;background:#f5f5f0;color:var(--muted);font-weight:700;">I = ${i}</th>`;
+  heatHtml += '</tr></thead><tbody>';
+  for (let p = 5; p >= 1; p--) {
+    heatHtml += `<tr><td style="padding:6px;background:#f5f5f0;color:var(--muted);font-weight:700;">P = ${p}</td>`;
+    for (let i = 1; i <= 5; i++) {
+      const R = p * i;
+      const c = _riskColor(R);
+      const cnt = heatCounts[`${p}_${i}`] || 0;
+      heatHtml += `<td style="padding:10px;background:${c.bg};color:${c.fg};border:1px solid #fff;position:relative;">
+        <div style="font-size:13px;font-weight:800;">${R}</div>
+        ${cnt > 0 ? `<div style="position:absolute;top:3px;right:4px;background:rgba(0,0,0,0.18);color:#fff;border-radius:8px;font-size:9px;padding:1px 5px;font-weight:800;">${cnt}</div>` : ''}
+      </td>`;
+    }
+    heatHtml += '</tr>';
+  }
+  heatHtml += '</tbody></table>';
+
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+        <span>🌡 Тепловая карта P × I</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0;">цифры в углу — сколько рисков попало в ячейку</span>
+      </div>
+      ${heatHtml}
+    </div>`;
+
+  // === РЕЕСТР РИСКОВ ===
+  let regHtml = `
+    <div style="padding:14px 22px;">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>📋 Реестр рисков (${r.registry.length})</span>
+        <button onclick="addRiskRow()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Добавить</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+          <thead>
+            <tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:1px;">
+              <th style="padding:8px 6px;width:30px;text-align:center;">№</th>
+              <th style="padding:8px 6px;width:110px;text-align:left;">Категория</th>
+              <th style="padding:8px 6px;text-align:left;">Описание риска</th>
+              <th style="padding:8px 6px;width:48px;text-align:center;">P</th>
+              <th style="padding:8px 6px;width:48px;text-align:center;">I</th>
+              <th style="padding:8px 6px;width:60px;text-align:center;">R</th>
+              <th style="padding:8px 6px;width:18%;text-align:left;">План A — снизить</th>
+              <th style="padding:8px 6px;width:18%;text-align:left;">План B — если случилось</th>
+              <th style="padding:8px 6px;width:90px;text-align:left;">Owner</th>
+              <th style="padding:8px 6px;width:90px;text-align:left;">Статус</th>
+              <th style="padding:8px 6px;width:30px;text-align:center;">🗑</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${r.registry.map((row, idx) => {
+              const R = (row.p || 0) * (row.i || 0);
+              const c = _riskColor(R);
+              return `
+                <tr style="border-top:1px solid var(--line);" data-risk-id="${row.id}">
+                  <td style="padding:6px;text-align:center;color:var(--muted);font-weight:700;font-size:11px;">${idx + 1}</td>
+                  <td style="padding:4px;">
+                    <input list="dl-risk-cats" class="cs-input" value="${escapeHtml(row.category || '')}" style="padding:4px 6px;font-size:11px;" oninput="onRiskFieldChange('${row.id}','category',this.value)">
+                  </td>
+                  <td style="padding:4px;">
+                    <input class="cs-input" value="${escapeHtml(row.desc || '')}" placeholder="что может пойти не так" style="padding:4px 6px;font-size:11px;" oninput="onRiskFieldChange('${row.id}','desc',this.value)">
+                  </td>
+                  <td style="padding:4px;text-align:center;">
+                    <select class="cs-input" style="padding:4px 4px;font-size:11px;text-align:center;font-weight:700;" onchange="onRiskFieldChange('${row.id}','p',parseInt(this.value)||0)">
+                      ${[1,2,3,4,5].map(v => `<option value="${v}" ${(row.p||0)===v?'selected':''}>${v}</option>`).join('')}
+                    </select>
+                  </td>
+                  <td style="padding:4px;text-align:center;">
+                    <select class="cs-input" style="padding:4px 4px;font-size:11px;text-align:center;font-weight:700;" onchange="onRiskFieldChange('${row.id}','i',parseInt(this.value)||0)">
+                      ${[1,2,3,4,5].map(v => `<option value="${v}" ${(row.i||0)===v?'selected':''}>${v}</option>`).join('')}
+                    </select>
+                  </td>
+                  <td style="padding:4px;text-align:center;background:${c.bg};color:${c.fg};font-weight:900;font-size:13px;">${R || '—'}</td>
+                  <td style="padding:4px;"><textarea class="cs-input" rows="2" placeholder="что делаем чтобы снизить" style="padding:4px 6px;font-size:11px;line-height:1.3;resize:vertical;" oninput="onRiskFieldChange('${row.id}','planA',this.value)">${escapeHtml(row.planA || '')}</textarea></td>
+                  <td style="padding:4px;"><textarea class="cs-input" rows="2" placeholder="что делаем если случилось" style="padding:4px 6px;font-size:11px;line-height:1.3;resize:vertical;" oninput="onRiskFieldChange('${row.id}','planB',this.value)">${escapeHtml(row.planB || '')}</textarea></td>
+                  <td style="padding:4px;"><input class="cs-input" value="${escapeHtml(row.owner || '')}" placeholder="кто" style="padding:4px 6px;font-size:11px;" oninput="onRiskFieldChange('${row.id}','owner',this.value)"></td>
+                  <td style="padding:4px;">
+                    <select class="cs-input" style="padding:4px 6px;font-size:11px;" onchange="onRiskFieldChange('${row.id}','status',this.value)">
+                      <option value="open" ${row.status==='open'?'selected':''}>Открыт</option>
+                      <option value="mitigated" ${row.status==='mitigated'?'selected':''}>Митигирован</option>
+                      <option value="closed" ${row.status==='closed'?'selected':''}>Закрыт</option>
+                    </select>
+                  </td>
+                  <td style="padding:4px;text-align:center;">
+                    <button onclick="deleteRiskRow('${row.id}')" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:14px;padding:4px;">×</button>
+                  </td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <datalist id="dl-risk-cats">${RISK_CATEGORIES.map(c => `<option value="${escapeHtml(c)}">`).join('')}</datalist>`;
+  html += regHtml;
+
+  // === TOP-5 РИСКОВ СМЕНЫ ===
+  // Авто-собираем топ-5 по R, но юзер может переопределить через текст
+  const top5Auto = [...r.registry].sort((a, b) => (b.p * b.i) - (a.p * a.i)).slice(0, 5);
+  html += `
+    <div style="padding:14px 22px;border-top:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">⭐ Топ-5 рисков смены — на что смотрим в первую очередь</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Авто-выбор по баллу R. Поле «Что сделать ДО» заполняешь сам.</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead>
+          <tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:1px;">
+            <th style="padding:8px 6px;width:30px;text-align:center;">#</th>
+            <th style="padding:8px 10px;text-align:left;">Риск</th>
+            <th style="padding:8px 6px;width:60px;text-align:center;">R</th>
+            <th style="padding:8px 10px;width:140px;text-align:left;">Owner</th>
+            <th style="padding:8px 10px;text-align:left;">Что сделать ДО смены</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${top5Auto.map((row, idx) => {
+            const R = (row.p || 0) * (row.i || 0);
+            const c = _riskColor(R);
+            const t5 = (r.top5 && r.top5[idx]) || {};
+            return `
+              <tr style="border-top:1px solid var(--line);">
+                <td style="padding:6px;text-align:center;color:var(--muted);font-weight:700;">${idx + 1}</td>
+                <td style="padding:6px 10px;font-weight:600;">${escapeHtml(row.desc || '—')}</td>
+                <td style="padding:6px;text-align:center;background:${c.bg};color:${c.fg};font-weight:900;">${R || '—'}</td>
+                <td style="padding:4px;"><input class="cs-input" value="${escapeHtml(t5.owner || row.owner || '')}" placeholder="кто" style="padding:4px 6px;font-size:11px;" oninput="onTop5Change(${idx},'owner',this.value)"></td>
+                <td style="padding:4px;"><input class="cs-input" value="${escapeHtml(t5.todo || '')}" placeholder="конкретное действие" style="padding:4px 6px;font-size:11px;" oninput="onTop5Change(${idx},'todo',this.value)"></td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // === POST-SHIFT REVIEW ===
+  html += `
+    <div style="padding:14px 22px;border-top:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>🔬 Что случилось по факту (заполняем после смены)</span>
+        <button onclick="addPostShift()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Запись</button>
+      </div>
+      ${r.postShift.length === 0 ? '<div style="font-size:11px;color:var(--muted);padding:8px 0;">Пока ничего — добавь записи после съёмки.</div>' : ''}
+      ${r.postShift.map((ps, idx) => `
+        <div style="display:grid;grid-template-columns:30px 1fr 1fr 1fr 30px;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line);">
+          <div style="text-align:center;color:var(--muted);font-weight:700;padding-top:6px;">${idx + 1}</div>
+          <textarea class="cs-input" rows="2" placeholder="что произошло" style="padding:4px 6px;font-size:11px;" oninput="onPostShiftChange(${idx},'event',this.value)">${escapeHtml(ps.event || '')}</textarea>
+          <textarea class="cs-input" rows="2" placeholder="сработал ли план B?" style="padding:4px 6px;font-size:11px;" oninput="onPostShiftChange(${idx},'planBWorked',this.value)">${escapeHtml(ps.planBWorked || '')}</textarea>
+          <textarea class="cs-input" rows="2" placeholder="что добавить в матрицу на следующий проект" style="padding:4px 6px;font-size:11px;" oninput="onPostShiftChange(${idx},'learning',this.value)">${escapeHtml(ps.learning || '')}</textarea>
+          <button onclick="deletePostShift(${idx})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:14px;padding:4px;">×</button>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // === ПОДПИСИ ===
+  html += `
+    <div style="padding:14px 22px;border-top:1px solid var(--line);background:#fafaf5;">
+      <div class="cs-section-title" style="margin-bottom:10px;">✍ Подписи</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">Продюсер · ФИО</div>
+          <input class="cs-input" value="${escapeHtml(r.producerName || '')}" placeholder="ФИО продюсера" oninput="onRiskSign('producerName',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Дата</div>
+          <input class="cs-input" type="date" value="${escapeHtml(r.producerDate || '')}" oninput="onRiskSign('producerDate',this.value)">
+        </div>
+      </div>
+      <div class="cs-row-grid cs-2col" style="margin-top:10px;">
+        <div>
+          <div class="cs-field-label">Режиссёр · ФИО</div>
+          <input class="cs-input" value="${escapeHtml(r.directorName || '')}" placeholder="ФИО режиссёра" oninput="onRiskSign('directorName',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Дата</div>
+          <input class="cs-input" type="date" value="${escapeHtml(r.directorDate || '')}" oninput="onRiskSign('directorDate',this.value)">
+        </div>
+      </div>
+    </div>`;
+
+  body.innerHTML = html;
+}
+
+function scheduleRisksSave() {
+  if (_risksSaveTimer) clearTimeout(_risksSaveTimer);
+  _risksSaveTimer = setTimeout(saveRisksNow, 350);
+}
+
+function saveRisksNow() {
+  if (!_currentRisksProjectId) return;
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  project.risks.updated = new Date().toISOString().slice(0, 10);
+  DB.updateProject(_currentRisksProjectId, { risks: project.risks });
+}
+
+function _liveRisksRefreshHeatmapOnly() {
+  // Перерисуем только сводку + heatmap + top5, без перерисовки реестра (не сбросить фокус инпутов)
+  // Простой способ — полный рендер; реестр редактируется через oninput, и значение в инпуте уже стоит в DOM;
+  // фокус потеряется только если активный элемент исчезнет, чего не происходит — все ID rows сохраняются.
+  // Однако textarea для planA/planB пере-рендерится с обнулённым курсором.
+  // Поэтому при редактировании planA/planB/desc/owner — НЕ перерисуем, только сохраним.
+  // А при изменении P/I/status/category — обновим header + heatmap.
+  renderRisksEditor();
+}
+
+function onRiskFieldChange(riskId, field, value) {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  const row = project.risks.registry.find(r => r.id === riskId);
+  if (!row) return;
+  row[field] = value;
+  scheduleRisksSave();
+  // Перерисуем только если изменили P, I или status (влияет на heatmap/счётчики)
+  if (field === 'p' || field === 'i' || field === 'status' || field === 'category') {
+    renderRisksEditor();
+  }
+}
+
+function addRiskRow() {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project) return;
+  ensureRisks(project);
+  project.risks.registry.push({
+    id: 'risk_' + Date.now(),
+    category: '', desc: '', p: 1, i: 1,
+    planA: '', planB: '', owner: '', status: 'open'
+  });
+  saveRisksNow();
+  renderRisksEditor();
+}
+
+function deleteRiskRow(riskId) {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  if (!confirm('Удалить риск?')) return;
+  project.risks.registry = project.risks.registry.filter(r => r.id !== riskId);
+  saveRisksNow();
+  renderRisksEditor();
+}
+
+function onTop5Change(idx, field, value) {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  if (!project.risks.top5[idx]) project.risks.top5[idx] = {};
+  project.risks.top5[idx][field] = value;
+  scheduleRisksSave();
+}
+
+function addPostShift() {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project) return;
+  ensureRisks(project);
+  project.risks.postShift.push({ event: '', planBWorked: '', learning: '' });
+  saveRisksNow();
+  renderRisksEditor();
+}
+
+function deletePostShift(idx) {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  project.risks.postShift.splice(idx, 1);
+  saveRisksNow();
+  renderRisksEditor();
+}
+
+function onPostShiftChange(idx, field, value) {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  if (!project.risks.postShift[idx]) project.risks.postShift[idx] = {};
+  project.risks.postShift[idx][field] = value;
+  scheduleRisksSave();
+}
+
+function onRiskSign(field, value) {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  project.risks[field] = value;
+  scheduleRisksSave();
+}
+
+function onRiskExtLinkChange(value) {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  project.risks.externalLink = value;
+  scheduleRisksSave();
+}
+
+function riskVersionPlus() {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  project.risks.version = (project.risks.version || 1) + 1;
+  saveRisksNow();
+  renderRisksEditor();
+}
+function riskVersionMinus() {
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  project.risks.version = Math.max(1, (project.risks.version || 1) - 1);
+  saveRisksNow();
+  renderRisksEditor();
+}
+
+/* ===== PDF ЭКСПОРТ матрицы рисков ===== */
+async function exportRisksToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  if (!_currentRisksProjectId) return;
+  const project = DB.getProject(_currentRisksProjectId);
+  if (!project || !project.risks) return;
+  const r = ensureRisks(project);
+  toast('Готовлю PDF матрицы рисков...', 'success');
+
+  const container = buildRisksPrintHTML(project, r);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 2000); });
+    }));
+    const canvas = await html2canvas(container, {
+      scale: 2.5, useCORS: true, backgroundColor: '#ffffff',
+      logging: false, windowWidth: 1100
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.height / canvas.width;
+    const imgW = pdfW;
+    const imgH = imgW * ratio;
+    const totalPages = Math.ceil(imgH / pdfH);
+    const imgData = canvas.toDataURL('image/png');
+    let pos = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pos -= pdfH;
+    }
+    const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`Матрица_рисков_${slug}_v${r.version || 1}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка PDF: ' + e.message, 'error');
+  }
+}
+
+function buildRisksPrintHTML(project, r) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:1100px;background:#ffffff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:500;line-height:1.35;';
+
+  const sorted = [...r.registry].sort((a, b) => (b.p * b.i) - (a.p * a.i));
+  const PAD = 28;
+
+  // ── Шапка
+  let html = `
+    <div style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:18px ${PAD}px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="logo.png" alt="ZALOVE" style="height:24px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+        <div>
+          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;opacity:0.85;font-weight:700;">Risk Matrix · что может пойти не так на съёмке</div>
+          <div style="font-size:22px;font-weight:900;margin-top:2px;line-height:1;">МАТРИЦА РИСКОВ</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;">
+        <div style="font-size:13px;font-weight:800;">${escapeHtml(project.name || '')}</div>
+        <div style="opacity:0.8;margin-top:2px;">${escapeHtml(project.type || '')} · обновлено ${escapeHtml(r.updated || '')} · v${r.version || 1}</div>
+      </div>
+    </div>`;
+
+  // ── Heatmap + сводка
+  const heatCounts = {};
+  r.registry.forEach(row => {
+    const key = `${row.p}_${row.i}`;
+    heatCounts[key] = (heatCounts[key] || 0) + 1;
+  });
+
+  let heat = '<table style="width:48%;border-collapse:collapse;font-size:11px;text-align:center;font-weight:700;">';
+  heat += '<thead><tr><th style="padding:5px;color:#888;">P / I</th>';
+  for (let i = 1; i <= 5; i++) heat += `<th style="padding:5px;background:#f5f5f0;color:#888;">I=${i}</th>`;
+  heat += '</tr></thead><tbody>';
+  for (let p = 5; p >= 1; p--) {
+    heat += `<tr><td style="padding:5px;background:#f5f5f0;color:#888;">P=${p}</td>`;
+    for (let i = 1; i <= 5; i++) {
+      const R = p * i;
+      const cc = _riskColor(R);
+      const cnt = heatCounts[`${p}_${i}`] || 0;
+      heat += `<td style="padding:8px;background:${cc.bg};color:${cc.fg};border:1px solid #fff;position:relative;">
+        <div style="font-size:13px;font-weight:800;">${R}</div>
+        ${cnt > 0 ? `<div style="position:absolute;top:2px;right:3px;background:rgba(0,0,0,0.2);color:#fff;border-radius:6px;font-size:8px;padding:1px 4px;font-weight:800;">${cnt}</div>` : ''}
+      </td>`;
+    }
+    heat += '</tr>';
+  }
+  heat += '</tbody></table>';
+
+  const tier = { low: 0, moderate: 0, high: 0, critical: 0, severe: 0 };
+  r.registry.forEach(row => {
+    const R = (row.p || 0) * (row.i || 0);
+    if (R <= 4)       tier.low++;
+    else if (R <= 9)  tier.moderate++;
+    else if (R <= 14) tier.high++;
+    else if (R <= 19) tier.critical++;
+    else              tier.severe++;
+  });
+
+  html += `
+    <div style="padding:14px ${PAD}px;display:flex;gap:18px;align-items:flex-start;">
+      ${heat}
+      <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;font-weight:700;">
+        ${[
+          ['1–4', 'НИЗКИЙ', tier.low, '#e8f5e9', '#0a8a3a'],
+          ['5–9', 'УМЕРЕННЫЙ', tier.moderate, '#fef9c3', '#a16207'],
+          ['10–14', 'ВЫСОКИЙ', tier.high, '#fed7aa', '#9a3412'],
+          ['15–19', 'КРИТИЧНЫЙ', tier.critical, '#fecaca', '#991b1b'],
+          ['20–25', 'НЕДОПУСТИМЫЙ', tier.severe, '#6b1d1f', '#ffffff'],
+        ].map(([range, label, count, bg, fg]) => `
+          <div style="background:${bg};color:${fg};padding:8px 10px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:9px;letter-spacing:1px;opacity:0.85;">${range} · ${label}</div>
+            </div>
+            <div style="font-size:18px;font-weight:900;line-height:1;">${count}</div>
+          </div>
+        `).join('')}
+        <div style="grid-column:1/3;padding:8px;font-size:10px;color:#666;line-height:1.45;">
+          Балл R = P × I. <b>1–4</b> наблюдаем · <b>5–9</b> следим · <b>10–14</b> обязателен план A · <b>15–19</b> план A + B · <b>20–25</b> не идём в съёмку.
+        </div>
+      </div>
+    </div>`;
+
+  // ── Реестр (отсортированный)
+  html += `
+    <div style="padding:0 ${PAD}px 14px;">
+      <div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#0a0907;margin-bottom:8px;background:#f5f5f0;padding:8px 12px;border-left:5px solid #6b1d1f;border-radius:0 4px 4px 0;">📋 Реестр рисков · отсортирован по R</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;background:white;">
+        <thead>
+          <tr style="background:#0a0907;color:white;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;">
+            <th style="padding:5px 6px;text-align:center;width:24px;">#</th>
+            <th style="padding:5px 6px;text-align:left;width:80px;">Категория</th>
+            <th style="padding:5px 6px;text-align:left;">Описание</th>
+            <th style="padding:5px 6px;text-align:center;width:24px;">P</th>
+            <th style="padding:5px 6px;text-align:center;width:24px;">I</th>
+            <th style="padding:5px 6px;text-align:center;width:50px;">R</th>
+            <th style="padding:5px 6px;text-align:left;width:23%;">План A</th>
+            <th style="padding:5px 6px;text-align:left;width:23%;">План B</th>
+            <th style="padding:5px 6px;text-align:left;width:70px;">Owner</th>
+            <th style="padding:5px 6px;text-align:center;width:60px;">Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map((row, idx) => {
+            const R = (row.p || 0) * (row.i || 0);
+            const c = _riskColor(R);
+            const statusBadge = row.status === 'mitigated' ? '<span style="background:#e8f5e9;color:#0a8a3a;padding:1px 5px;border-radius:3px;font-size:8px;font-weight:800;">МИТИГ.</span>'
+                              : row.status === 'closed' ? '<span style="background:#e5e5e5;color:#666;padding:1px 5px;border-radius:3px;font-size:8px;font-weight:800;">ЗАКР.</span>'
+                              : '<span style="background:#fef3c7;color:#a16207;padding:1px 5px;border-radius:3px;font-size:8px;font-weight:800;">ОТКР.</span>';
+            return `
+              <tr style="background:${idx % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #ececec;">
+                <td style="padding:5px 6px;text-align:center;color:#666;font-weight:700;">${idx + 1}</td>
+                <td style="padding:5px 6px;color:#444;font-weight:700;">${escapeHtml(row.category || '—')}</td>
+                <td style="padding:5px 6px;font-weight:700;">${escapeHtml(row.desc || '')}</td>
+                <td style="padding:5px 6px;text-align:center;font-weight:700;">${row.p || 0}</td>
+                <td style="padding:5px 6px;text-align:center;font-weight:700;">${row.i || 0}</td>
+                <td style="padding:5px 6px;text-align:center;background:${c.bg};color:${c.fg};font-weight:900;font-size:12px;">${R || '—'}</td>
+                <td style="padding:5px 6px;color:#333;font-size:9.5px;">${escapeHtml(row.planA || '')}</td>
+                <td style="padding:5px 6px;color:#333;font-size:9.5px;">${escapeHtml(row.planB || '')}</td>
+                <td style="padding:5px 6px;color:#555;">${escapeHtml(row.owner || '')}</td>
+                <td style="padding:5px 6px;text-align:center;">${statusBadge}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // ── ТОП-5
+  const top5 = sorted.slice(0, 5);
+  html += `
+    <div style="padding:0 ${PAD}px 14px;">
+      <div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#0a0907;margin-bottom:8px;background:#f5f5f0;padding:8px 12px;border-left:5px solid #6b1d1f;border-radius:0 4px 4px 0;">⭐ Топ-5 рисков смены</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:white;">
+        <thead><tr style="background:#5a1719;color:white;">
+          <th style="padding:6px 8px;text-align:center;width:24px;font-size:9px;letter-spacing:0.5px;">#</th>
+          <th style="padding:6px 8px;text-align:left;font-size:9px;letter-spacing:0.5px;">Риск</th>
+          <th style="padding:6px 8px;text-align:center;width:60px;font-size:9px;letter-spacing:0.5px;">R</th>
+          <th style="padding:6px 8px;text-align:left;width:14%;font-size:9px;letter-spacing:0.5px;">Owner</th>
+          <th style="padding:6px 8px;text-align:left;font-size:9px;letter-spacing:0.5px;">Что сделать ДО смены</th>
+        </tr></thead>
+        <tbody>
+          ${top5.map((row, idx) => {
+            const R = (row.p || 0) * (row.i || 0);
+            const cc = _riskColor(R);
+            const t5 = (r.top5 && r.top5[idx]) || {};
+            return `
+              <tr style="background:${idx % 2 ? '#faf3f3' : '#ffffff'};border-bottom:1px solid #ececec;">
+                <td style="padding:5px 8px;text-align:center;color:#666;font-weight:700;">${idx + 1}</td>
+                <td style="padding:5px 8px;font-weight:700;">${escapeHtml(row.desc || '—')}</td>
+                <td style="padding:5px 8px;text-align:center;background:${cc.bg};color:${cc.fg};font-weight:900;font-size:13px;">${R || '—'}</td>
+                <td style="padding:5px 8px;color:#444;">${escapeHtml(t5.owner || row.owner || '')}</td>
+                <td style="padding:5px 8px;color:#333;">${escapeHtml(t5.todo || '')}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // ── Post-shift
+  if (r.postShift.length > 0) {
+    html += `
+      <div style="padding:0 ${PAD}px 14px;">
+        <div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#0a0907;margin-bottom:8px;background:#f5f5f0;padding:8px 12px;border-left:5px solid #6b1d1f;border-radius:0 4px 4px 0;">🔬 Что случилось по факту</div>
+        <table style="width:100%;border-collapse:collapse;font-size:10.5px;background:white;">
+          <thead><tr style="background:#3c3c3c;color:white;font-size:9px;letter-spacing:0.5px;">
+            <th style="padding:5px 6px;text-align:center;width:24px;">#</th>
+            <th style="padding:5px 6px;text-align:left;">Что произошло</th>
+            <th style="padding:5px 6px;text-align:left;">Сработал ли план B?</th>
+            <th style="padding:5px 6px;text-align:left;">Чему научились</th>
+          </tr></thead>
+          <tbody>
+            ${r.postShift.map((ps, idx) => `
+              <tr style="background:${idx % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #ececec;">
+                <td style="padding:5px 6px;text-align:center;color:#666;font-weight:700;">${idx + 1}</td>
+                <td style="padding:5px 6px;">${escapeHtml(ps.event || '')}</td>
+                <td style="padding:5px 6px;">${escapeHtml(ps.planBWorked || '')}</td>
+                <td style="padding:5px 6px;">${escapeHtml(ps.learning || '')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // ── Подписи + футер
+  html += `
+    <div style="padding:14px ${PAD}px 8px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid #ddd;margin-top:6px;">
+      <div>
+        <div style="font-size:9px;color:#888;letter-spacing:1px;font-weight:700;text-transform:uppercase;">Продюсер</div>
+        <div style="border-bottom:1px solid #888;padding:14px 0 3px;font-weight:700;">${escapeHtml(r.producerName || '')}</div>
+        <div style="font-size:10px;color:#888;margin-top:2px;">${r.producerDate ? escapeHtml(formatDateRu(r.producerDate)) : ''}</div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:#888;letter-spacing:1px;font-weight:700;text-transform:uppercase;">Режиссёр</div>
+        <div style="border-bottom:1px solid #888;padding:14px 0 3px;font-weight:700;">${escapeHtml(r.directorName || '')}</div>
+        <div style="font-size:10px;color:#888;margin-top:2px;">${r.directorDate ? escapeHtml(formatDateRu(r.directorDate)) : ''}</div>
+      </div>
+    </div>
+    <div style="padding:6px ${PAD}px 14px;font-size:8.5px;color:#999;text-align:center;line-height:1.5;font-weight:600;">
+      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670 · ${escapeHtml(project.name || '')} · v${r.version || 1} · ${new Date().toLocaleDateString('ru-RU')}
+    </div>`;
+
+  c.innerHTML = html;
+  return c;
+}
+/* ===== END Матрица рисков ===== */
+
 
 function openCallsheetEditor(dayNum = 1) {
   if (!_currentProjectId) return;
