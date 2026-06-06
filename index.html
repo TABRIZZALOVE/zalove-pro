@@ -5917,6 +5917,14 @@ body.dark-theme .task-deadline:focus { background: white; }
           <div class="doc-meta">универсальное · клип/реклама</div>
         </div>
 
+        <div class="doc-card loaded" id="doc-card-locrelease" onclick="openDoc('locrelease')">
+          <div class="loaded-badge" id="locrelease-badge">редактор</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">🏠</div>
+          <div class="doc-name">Локейшн-релиз</div>
+          <div class="doc-meta" id="locrelease-meta">разрешение на съёмку</div>
+        </div>
+
         <div class="doc-card loaded" onclick="openDoc('nda')">
           <div class="loaded-badge">DOCX</div>
           <div class="doc-status status-loaded"></div>
@@ -5966,16 +5974,20 @@ body.dark-theme .task-deadline:focus { background: white; }
       </div>
 
       <!-- SUB-ESTIMATES from contractors -->
-      <div class="section-title financial">Подсметы от исполнителей <span class="pill">7 ЦЕХОВ</span> <span class="private-badge" style="margin-left: 8px;">Только продюсер</span></div>
+      <div class="section-title financial">Подсметы от подрядчиков <span class="pill" id="subest-count-pill">0 ПОДРЯДЧИКОВ</span> <span class="private-badge" style="margin-left: 8px;">Только продюсер</span></div>
       <div class="financial">
       <div class="sub-est-summary">
         <div>
           <div class="lbl">Сумма по всем подсметам</div>
-          <div class="v red mask-value">— ₽ (4 / 7 получено)</div>
+          <div class="v red mask-value" id="subest-total-display">— ₽</div>
         </div>
-        <button class="btn">📎 Загрузить подсмету</button>
+        <button class="btn" onclick="openDoc('sub-est')">📎 Подсметы</button>
       </div>
-      <div class="sub-est-grid">
+      <div class="sub-est-grid" id="subest-cards-grid">
+        <!-- Динамически рендерится в renderSubEstCards() -->
+      </div>
+      <!-- (static placeholder cards removed) -->
+      <div style="display:none;">
         <div class="sub-est-card received" onclick="openDoc('sub-est')">
           <div class="head">
             <div>
@@ -6113,6 +6125,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn" onclick="openExpensesJournal()" title="Вся хронология расходов по проекту">📒 Журнал</button>
         <button class="btn btn-dark" onclick="exportEstimateToXlsx()">⤓ XLSX</button>
         <button class="btn btn-dark" onclick="exportEstimateToPdf()">⎙ PDF</button>
         <button class="btn btn-dark" onclick="exportEstimateToPdfEn()" title="PDF на английском с переводом должностей">🌐 PDF EN</button>
@@ -6659,6 +6672,45 @@ body.dark-theme .task-deadline:focus { background: white; }
   </div>
 </div>
 
+<!-- EXPENSES JOURNAL -->
+<div class="modal-overlay" id="m-expenses">
+  <div class="doc-overlay" style="max-width:1180px;width:96vw;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">📒</div>
+        <div>
+          <div class="doc-section-label">Журнал расходов · хронология трат проекта</div>
+          <div class="doc-header-title" id="expenses-title">Журнал расходов</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body" id="expenses-body" style="padding:0;"></div>
+  </div>
+</div>
+
+<!-- LOCATION RELEASE -->
+<div class="modal-overlay" id="m-locrelease">
+  <div class="doc-overlay" style="max-width:1100px;width:96vw;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">🏠</div>
+        <div>
+          <div class="doc-section-label">Документ · разрешение на съёмку локации</div>
+          <div class="doc-header-title" id="locrelease-title">Локейшн-релиз</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn" onclick="exportLocReleaseToPdf()">⤓ PDF</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body" id="locrelease-body" style="padding:0;"></div>
+  </div>
+</div>
+
 <!-- POST-PROD TASK -->
 <div class="modal-overlay" id="m-postprod">
   <div class="doc-overlay" style="max-width:1000px;width:96vw;">
@@ -6679,69 +6731,23 @@ body.dark-theme .task-deadline:focus { background: white; }
   </div>
 </div>
 
-<!-- SUB-EST PLACEHOLDER -->
+<!-- SUB-ESTIMATES (подрядчики) -->
 <div class="modal-overlay" id="m-sub-est">
-  <div class="doc-overlay" style="width: 620px;">
+  <div class="doc-overlay" style="max-width:1100px;width:96vw;">
     <div class="doc-header">
       <div class="doc-header-l">
         <div class="doc-header-icon">📎</div>
         <div>
-          <div class="doc-section-label">Подсмета от исполнителя</div>
-          <div class="doc-header-title">Загрузка / просмотр подсметы</div>
+          <div class="doc-section-label">Подсметы от подрядчиков · приватно</div>
+          <div class="doc-header-title" id="subest-title">Сметы подрядчиков</div>
         </div>
       </div>
-      <button class="modal-close-x" onclick="closeAll()">×</button>
-    </div>
-    <div class="doc-body">
-      <div class="access-info" style="border-left-color: var(--brand-red);">
-        <div class="access-info-icon" style="background: var(--brand-red);">🔒</div>
-        <div><strong>Приватно.</strong> Эти файлы видите только вы. Подсметы не входят в основную смету проекта — это отдельное хранилище расходов от подрядчиков.</div>
-      </div>
-      <div style="display: grid; gap: 14px;">
-        <div>
-          <label class="form-label">Цех / Подрядчик</label>
-          <select class="form-select">
-            <option>Цех художника-постановщика</option>
-            <option>Цех осветителей</option>
-            <option>Рентал кинотехники</option>
-            <option>Стилист</option>
-            <option>Кастинг-директор</option>
-            <option>Администратор площадки</option>
-            <option>CG и AI</option>
-            <option>Другое (указать)</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">От кого</label>
-          <input class="form-input" placeholder="ФИО или название подрядчика">
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div>
-            <label class="form-label">Сумма</label>
-            <input class="form-input" placeholder="0 ₽">
-          </div>
-          <div>
-            <label class="form-label">Дата получения</label>
-            <input class="form-input" value="10.05.2026">
-          </div>
-        </div>
-        <div>
-          <label class="form-label">Файл сметы</label>
-          <div style="padding: 14px; border: 1px dashed var(--line-2); border-radius: 4px; text-align: center; cursor: pointer; color: var(--muted); font-size: 12px;">📎 Перетащите файл или нажмите для выбора · XLSX / PDF / DOCX</div>
-        </div>
-        <div>
-          <label class="form-label">Комментарий</label>
-          <textarea class="form-textarea" rows="2" placeholder="Заметки по подсмете..."></textarea>
-        </div>
+      <div class="doc-actions-h">
+        <button class="btn" onclick="exportSubEstToPdf()">⤓ PDF</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
-    <div class="doc-footer">
-      <div class="doc-footer-info">SUB-EST · приватно</div>
-      <div style="display: flex; gap: 6px;">
-        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
-        <button class="btn" onclick="closeAll()">Сохранить</button>
-      </div>
-    </div>
+    <div class="doc-body" id="subest-body" style="padding:0;"></div>
   </div>
 </div>
 
@@ -7498,6 +7504,16 @@ function openDoc(type) {
   // ТЗ пост-продакшн — открываем редактор
   if (type === 'postprod' && _currentProjectId) {
     openPostprodEditor();
+    return;
+  }
+  // Локейшн-релиз — открываем редактор
+  if (type === 'locrelease' && _currentProjectId) {
+    openLocReleaseEditor();
+    return;
+  }
+  // Sub-смета подрядчика — открываем редактор
+  if (type === 'sub-est' && _currentProjectId) {
+    openSubEstEditor();
     return;
   }
   const map = {
@@ -13752,6 +13768,1253 @@ function buildReportPrintHTML(project, rep) {
 }
 /* ===== END Продакшн-рапорт ===== */
 
+/* =====================================================
+   ЛОКЕЙШН-РЕЛИЗ — разрешение на съёмку локации
+   ===================================================== */
+let _currentLocReleaseProjectId = null;
+let _currentLocReleaseId = null;
+let _locReleaseSaveTimer = null;
+
+function ensureLocReleases(project) {
+  if (!Array.isArray(project.locationReleases)) project.locationReleases = [];
+  return project.locationReleases;
+}
+
+function makeNewLocRelease(project) {
+  const cs1 = (project.callsheets || {})[1];
+  return {
+    id: 'lr_' + Date.now(),
+    locName: (cs1 && cs1.locationName) || '',
+    locAddress: (cs1 && cs1.locationAddress) || '',
+    ownerType: 'fl', // 'fl' | 'ip' | 'ooo'
+    ownerName: '',
+    ownerInn: '',
+    ownerOgrn: '',
+    ownerPassport: '',
+    ownerPassportIssue: '',
+    ownerAddress: '',
+    ownerPhone: '',
+    ownerEmail: '',
+    shootDates: '',
+    cityForRelease: 'Москва',
+    paymentAmount: '',
+    paymentTerms: '',
+    permitCommercial: true,
+    permitSocial: true,
+    permitEdit: true,
+    permitWorld: true,
+    permitPerpetual: true,
+    permitDerivative: true,
+    notes: '',
+    signed: false,
+    signedDate: '',
+    createdAt: new Date().toISOString().slice(0,10)
+  };
+}
+
+function openLocReleaseEditor() {
+  if (!_currentProjectId) return;
+  closeAll();
+  _currentLocReleaseProjectId = _currentProjectId;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const list = ensureLocReleases(project);
+  if (list.length === 0) {
+    list.push(makeNewLocRelease(project));
+    DB.updateProject(project.id, { locationReleases: list });
+  }
+  _currentLocReleaseId = list[0].id;
+  document.getElementById('m-locrelease').classList.add('active');
+  document.getElementById('locrelease-title').textContent = 'Локейшн-релиз · ' + (project.name || 'проект');
+  renderLocReleaseEditor();
+}
+
+function selectLocRelease(id) {
+  _currentLocReleaseId = id;
+  renderLocReleaseEditor();
+}
+
+function addNewLocRelease() {
+  const project = DB.getProject(_currentLocReleaseProjectId);
+  if (!project) return;
+  const list = ensureLocReleases(project);
+  const fresh = makeNewLocRelease(project);
+  list.push(fresh);
+  DB.updateProject(project.id, { locationReleases: list });
+  _currentLocReleaseId = fresh.id;
+  renderLocReleaseEditor();
+}
+
+function deleteCurrentLocRelease() {
+  const project = DB.getProject(_currentLocReleaseProjectId);
+  if (!project) return;
+  const list = ensureLocReleases(project);
+  if (list.length <= 1) { toast('Должен остаться хотя бы один релиз', 'warn'); return; }
+  if (!confirm('Удалить релиз?')) return;
+  project.locationReleases = list.filter(r => r.id !== _currentLocReleaseId);
+  DB.updateProject(project.id, { locationReleases: project.locationReleases });
+  _currentLocReleaseId = project.locationReleases[0].id;
+  renderLocReleaseEditor();
+}
+
+function getCurrentLocRelease() {
+  const project = DB.getProject(_currentLocReleaseProjectId);
+  if (!project) return null;
+  const list = ensureLocReleases(project);
+  return list.find(r => r.id === _currentLocReleaseId);
+}
+
+function onLocReleaseField(field, value) {
+  const r = getCurrentLocRelease();
+  if (!r) return;
+  r[field] = value;
+  scheduleLocReleaseSave();
+}
+
+function onLocReleaseToggle(field) {
+  const r = getCurrentLocRelease();
+  if (!r) return;
+  r[field] = !r[field];
+  scheduleLocReleaseSave();
+  renderLocReleaseEditor();
+}
+
+function scheduleLocReleaseSave() {
+  if (_locReleaseSaveTimer) clearTimeout(_locReleaseSaveTimer);
+  _locReleaseSaveTimer = setTimeout(saveLocReleaseNow, 350);
+}
+function saveLocReleaseNow() {
+  const project = DB.getProject(_currentLocReleaseProjectId);
+  if (!project) return;
+  DB.updateProject(project.id, { locationReleases: project.locationReleases });
+}
+
+function renderLocReleaseEditor() {
+  const project = DB.getProject(_currentLocReleaseProjectId);
+  if (!project) return;
+  const list = ensureLocReleases(project);
+  const r = getCurrentLocRelease();
+  if (!r) return;
+  const body = document.getElementById('locrelease-body');
+  if (!body) return;
+
+  // Tabs (по локациям)
+  let tabsHtml = '';
+  list.forEach((lr, idx) => {
+    const isAct = lr.id === _currentLocReleaseId;
+    const labelText = lr.locName || `Локация ${idx + 1}`;
+    tabsHtml += `<div onclick="selectLocRelease('${lr.id}')" style="padding:6px 12px;background:${isAct ? 'white' : 'rgba(255,255,255,0.15)'};color:${isAct ? '#3d1416' : 'white'};border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:800;letter-spacing:0.3px;${lr.signed ? 'box-shadow: inset 0 -3px 0 #0a8a3a;' : ''}">${escapeHtml(labelText)}${lr.signed ? ' ✓' : ''}</div>`;
+  });
+
+  let html = `
+    <div style="padding:16px 22px;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;font-weight:700;">Location Release · разрешение на съёмку и использование</div>
+          <div style="font-size:20px;font-weight:900;margin-top:3px;line-height:1.1;">${escapeHtml(project.name || '—')}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="addNewLocRelease()" style="background:rgba(255,255,255,0.9);color:#3d1416;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:800;">＋ Локация</button>
+          ${list.length > 1 ? `<button onclick="deleteCurrentLocRelease()" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;">🗑 Удалить</button>` : ''}
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">${tabsHtml}</div>
+    </div>`;
+
+  // Локация
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">🏠 1. Локация</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">Название локации</div>
+          <input class="cs-input" value="${escapeHtml(r.locName || '')}" placeholder="AG Loft, павильон Атмосфера..." oninput="onLocReleaseField('locName',this.value);renderLocReleaseTabsOnly();">
+        </div>
+        <div>
+          <div class="cs-field-label">Адрес</div>
+          <input class="cs-input" value="${escapeHtml(r.locAddress || '')}" placeholder="Москва, ул. ..." oninput="onLocReleaseField('locAddress',this.value)">
+        </div>
+      </div>
+      <div class="cs-row-grid cs-2col" style="margin-top:10px;">
+        <div>
+          <div class="cs-field-label">Даты съёмки</div>
+          <input class="cs-input" value="${escapeHtml(r.shootDates || '')}" placeholder="12-13 июня 2026" oninput="onLocReleaseField('shootDates',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Город заключения</div>
+          <input class="cs-input" value="${escapeHtml(r.cityForRelease || '')}" placeholder="Москва" oninput="onLocReleaseField('cityForRelease',this.value)">
+        </div>
+      </div>
+    </div>`;
+
+  // Тип владельца
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">👤 2. Владелец / правообладатель локации</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        ${[['fl','Физлицо'],['ip','ИП'],['ooo','ООО / Юрлицо']].map(([k,lbl]) => `
+          <button onclick="onLocReleaseField('ownerType','${k}');renderLocReleaseEditor();" style="background:${r.ownerType===k ? '#6b1d1f' : 'transparent'};color:${r.ownerType===k ? 'white' : 'var(--ink)'};border:1px solid ${r.ownerType===k ? '#6b1d1f' : 'var(--border)'};padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;">${lbl}</button>
+        `).join('')}
+      </div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">${r.ownerType === 'ooo' ? 'Название организации' : 'ФИО полностью'}</div>
+          <input class="cs-input" value="${escapeHtml(r.ownerName || '')}" placeholder="${r.ownerType === 'ooo' ? 'ООО «Название»' : 'Иванов Иван Иванович'}" oninput="onLocReleaseField('ownerName',this.value)">
+        </div>
+        ${r.ownerType === 'fl' ? `
+          <div>
+            <div class="cs-field-label">Паспорт (серия номер)</div>
+            <input class="cs-input" value="${escapeHtml(r.ownerPassport || '')}" placeholder="4500 123456" oninput="onLocReleaseField('ownerPassport',this.value)">
+          </div>` : `
+          <div>
+            <div class="cs-field-label">ИНН</div>
+            <input class="cs-input" value="${escapeHtml(r.ownerInn || '')}" placeholder="500100123456" oninput="onLocReleaseField('ownerInn',this.value)">
+          </div>`}
+      </div>
+      ${r.ownerType === 'fl' ? `
+        <div style="margin-top:10px;">
+          <div class="cs-field-label">Кем и когда выдан паспорт</div>
+          <input class="cs-input" value="${escapeHtml(r.ownerPassportIssue || '')}" placeholder="ОУФМС... выдан 01.01.2020" oninput="onLocReleaseField('ownerPassportIssue',this.value)">
+        </div>` : ''}
+      ${(r.ownerType === 'ip' || r.ownerType === 'ooo') ? `
+        <div style="margin-top:10px;">
+          <div class="cs-field-label">ОГРН${r.ownerType === 'ip' ? 'ИП' : ''}</div>
+          <input class="cs-input" value="${escapeHtml(r.ownerOgrn || '')}" placeholder="${r.ownerType === 'ip' ? '320500000000000' : '1027700000000'}" oninput="onLocReleaseField('ownerOgrn',this.value)">
+        </div>` : ''}
+      <div class="cs-row-grid cs-3col" style="margin-top:10px;">
+        <div>
+          <div class="cs-field-label">Адрес ${r.ownerType === 'fl' ? 'регистрации' : 'юридический'}</div>
+          <input class="cs-input" value="${escapeHtml(r.ownerAddress || '')}" placeholder="г. ..." oninput="onLocReleaseField('ownerAddress',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Телефон</div>
+          <input class="cs-input" value="${escapeHtml(r.ownerPhone || '')}" placeholder="+7 ___ ___ __ __" oninput="onLocReleaseField('ownerPhone',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Email</div>
+          <input class="cs-input" value="${escapeHtml(r.ownerEmail || '')}" placeholder="email@..." oninput="onLocReleaseField('ownerEmail',this.value)">
+        </div>
+      </div>
+    </div>`;
+
+  // Условия (платно / бесплатно)
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">💰 3. Условия съёмки</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">Сумма аренды / гонорар ₽ <span style="color:var(--muted);font-weight:400;">(оставь пусто для безвозмездного)</span></div>
+          <input class="cs-input" type="number" value="${escapeHtml(r.paymentAmount || '')}" placeholder="0 = безвозмездно" oninput="onLocReleaseField('paymentAmount',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Условия оплаты</div>
+          <input class="cs-input" value="${escapeHtml(r.paymentTerms || '')}" placeholder="наличными / на карту / 100% по факту" oninput="onLocReleaseField('paymentTerms',this.value)">
+        </div>
+      </div>
+    </div>`;
+
+  // Права
+  const checkbox = (field, label) => `
+    <div onclick="onLocReleaseToggle('${field}')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid ${r[field] ? '#0a8a3a' : 'var(--border)'};background:${r[field] ? '#e8f5e9' : 'transparent'};border-radius:4px;cursor:pointer;margin-bottom:5px;">
+      <div style="width:18px;height:18px;border:2px solid ${r[field] ? '#0a8a3a' : '#999'};border-radius:3px;background:${r[field] ? '#0a8a3a' : 'white'};color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">${r[field] ? '✓' : ''}</div>
+      <div style="font-size:12px;font-weight:600;color:${r[field] ? '#0a8a3a' : 'var(--ink)'};">${label}</div>
+    </div>`;
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">📜 4. Разрешённые действия</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Что владелец разрешает делать с материалом. Снять галку = ограничение.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        ${checkbox('permitCommercial', 'Коммерческое использование (реклама, продажи)')}
+        ${checkbox('permitSocial', 'Публикация в соцсетях и видеохостингах')}
+        ${checkbox('permitEdit', 'Монтаж, обработка, цветокоррекция')}
+        ${checkbox('permitDerivative', 'Производные произведения (тизеры, ремиксы)')}
+        ${checkbox('permitWorld', 'Использование на любой территории')}
+        ${checkbox('permitPerpetual', 'Без ограничения срока')}
+      </div>
+    </div>`;
+
+  // Примечания
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">📝 5. Дополнительные условия</div>
+      <textarea class="cs-input" rows="3" placeholder="Например: ограничения по шуму, требование уборки после смены, запрет курить, обязательство показать готовый материал..." oninput="onLocReleaseField('notes',this.value)" style="font-size:12px;line-height:1.45;resize:vertical;">${escapeHtml(r.notes || '')}</textarea>
+    </div>`;
+
+  // Подпись
+  html += `
+    <div style="padding:14px 22px;background:#fafaf5;">
+      <div class="cs-section-title" style="margin-bottom:10px;">✍ 6. Статус подписания</div>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <div onclick="onLocReleaseToggle('signed')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid ${r.signed ? '#0a8a3a' : 'var(--border)'};background:${r.signed ? '#e8f5e9' : 'transparent'};border-radius:6px;cursor:pointer;">
+          <div style="width:22px;height:22px;border:2px solid ${r.signed ? '#0a8a3a' : '#999'};border-radius:50%;background:${r.signed ? '#0a8a3a' : 'white'};color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">${r.signed ? '✓' : ''}</div>
+          <div>
+            <div style="font-weight:800;font-size:13px;color:${r.signed ? '#0a8a3a' : 'var(--ink)'};">${r.signed ? 'Подписан владельцем' : 'Не подписан'}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;">${r.signed ? 'Юридически защищён' : 'Распечатать и подписать на площадке'}</div>
+          </div>
+        </div>
+        ${r.signed ? `
+          <div>
+            <div class="cs-field-label">Дата подписания</div>
+            <input class="cs-input" type="date" value="${escapeHtml(r.signedDate || '')}" oninput="onLocReleaseField('signedDate',this.value)" style="width:auto;">
+          </div>` : ''}
+      </div>
+    </div>`;
+
+  body.innerHTML = html;
+}
+
+function renderLocReleaseTabsOnly() {
+  // легковесное обновление: переустановим текст таба
+  const r = getCurrentLocRelease();
+  if (!r) return;
+  // полный ререндер для простоты
+  renderLocReleaseEditor();
+}
+
+/* PDF локейшн-релиза */
+async function exportLocReleaseToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  const project = DB.getProject(_currentLocReleaseProjectId);
+  const r = getCurrentLocRelease();
+  if (!project || !r) return;
+  toast('Готовлю PDF...', 'success');
+  const container = buildLocReleasePrintHTML(project, r);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 2000); });
+    }));
+    const canvas = await html2canvas(container, { scale: 2.5, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 794 });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.height / canvas.width;
+    const imgW = pdfW;
+    const imgH = imgW * ratio;
+    const totalPages = Math.ceil(imgH / pdfH);
+    const imgData = canvas.toDataURL('image/png');
+    let pos = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pos -= pdfH;
+    }
+    const slug = ((r.locName || project.name || 'release').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_')).slice(0, 30);
+    pdf.save(`Локейшн_релиз_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка PDF: ' + e.message, 'error');
+  }
+}
+
+function buildLocReleasePrintHTML(project, r) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#fff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:500;line-height:1.55;padding:36px 44px;';
+
+  const pay = r.paymentAmount && Number(r.paymentAmount) > 0
+    ? `за вознаграждение в размере ${Number(r.paymentAmount).toLocaleString('ru-RU')} руб. (${r.paymentTerms || 'по соглашению сторон'})`
+    : 'на безвозмездной основе';
+
+  const permits = [];
+  if (r.permitCommercial) permits.push('коммерческое использование (включая рекламу и продажу продукции)');
+  if (r.permitSocial) permits.push('публикацию в социальных сетях и на видеохостингах');
+  if (r.permitEdit) permits.push('монтаж, обработку, цветокоррекцию материала');
+  if (r.permitDerivative) permits.push('создание производных произведений (тизеры, ремиксы, фрагменты)');
+  if (r.permitWorld) permits.push('использование на любой территории мира');
+  if (r.permitPerpetual) permits.push('использование без ограничения срока');
+
+  const restrictions = [];
+  if (!r.permitCommercial) restrictions.push('запрещено коммерческое использование');
+  if (!r.permitSocial) restrictions.push('запрещена публикация в социальных сетях');
+  if (!r.permitEdit) restrictions.push('запрещён монтаж/обработка материала');
+  if (!r.permitDerivative) restrictions.push('запрещены производные произведения');
+  if (!r.permitWorld) restrictions.push('территория использования ограничена');
+  if (!r.permitPerpetual) restrictions.push('срок использования ограничен (см. п. 4.6)');
+
+  const ownerLine = r.ownerType === 'ooo' ? r.ownerName
+    : r.ownerType === 'ip' ? `ИП ${r.ownerName}, ИНН ${r.ownerInn || '—'}, ОГРНИП ${r.ownerOgrn || '—'}`
+    : `${r.ownerName}, паспорт ${r.ownerPassport || '—'}${r.ownerPassportIssue ? ' (' + r.ownerPassportIssue + ')' : ''}`;
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #6b1d1f;padding-bottom:14px;margin-bottom:24px;">
+      <img src="logo.png" alt="ZALOVE" style="height:30px;width:auto;" crossorigin="anonymous">
+      <div style="text-align:right;font-size:9px;letter-spacing:1.5px;color:#888;text-transform:uppercase;font-weight:700;">${escapeHtml(r.cityForRelease || 'Москва')} · ${new Date().toLocaleDateString('ru-RU')}</div>
+    </div>
+
+    <h1 style="font-size:24px;font-weight:900;text-align:center;letter-spacing:0.5px;margin-bottom:6px;">РАЗРЕШЕНИЕ НА СЪЁМКУ</h1>
+    <div style="text-align:center;font-size:11px;color:#888;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:24px;">LOCATION RELEASE · ${escapeHtml(project.name || '')}</div>
+
+    <p style="font-size:13px;margin-bottom:16px;">
+      Настоящее разрешение составлено между <b>${escapeHtml(ownerLine)}</b>${r.ownerAddress ? `, проживающим (зарегистрированным) по адресу: ${escapeHtml(r.ownerAddress)}` : ''} (далее — «<b>Правообладатель локации</b>»), и <b>ИП Залов Табриз Руслан-Оглы</b> (ИНН 180204378651, ОГРНИП 324508100144670, далее — «<b>Студия</b>»), о нижеследующем:
+    </p>
+
+    <h2 style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:18px 0 8px;border-bottom:1px solid #6b1d1f;padding-bottom:4px;">1. Предмет разрешения</h2>
+    <p style="font-size:12.5px;margin-bottom:6px;">1.1. Правообладатель локации разрешает Студии произвести аудио- и видеосъёмку на территории объекта по адресу: <b>${escapeHtml(r.locAddress || '—')}</b>${r.locName ? ` («${escapeHtml(r.locName)}»)` : ''} (далее — «<b>Локация</b>») в рамках производства аудиовизуального произведения под рабочим названием «<b>${escapeHtml(project.name || '—')}</b>» (далее — «<b>Произведение</b>»).</p>
+    <p style="font-size:12.5px;margin-bottom:6px;">1.2. Даты съёмки: <b>${escapeHtml(r.shootDates || 'согласовываются дополнительно')}</b>.</p>
+    <p style="font-size:12.5px;margin-bottom:6px;">1.3. Съёмочные работы производятся ${pay}.</p>
+
+    <h2 style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:18px 0 8px;border-bottom:1px solid #6b1d1f;padding-bottom:4px;">2. Передаваемые права</h2>
+    <p style="font-size:12.5px;margin-bottom:6px;">2.1. Правообладатель локации передаёт Студии (а также её правопреемникам, лицензиатам и партнёрам) неисключительные права на использование изображений Локации в составе Произведения, включая, без ограничения:</p>
+    <ul style="font-size:12.5px;margin:6px 0 6px 22px;line-height:1.7;">
+      ${permits.map(p => `<li>${escapeHtml(p)};</li>`).join('')}
+    </ul>
+    ${restrictions.length > 0 ? `
+      <p style="font-size:12.5px;margin-bottom:6px;"><b>2.2. Ограничения:</b></p>
+      <ul style="font-size:12.5px;margin:6px 0 6px 22px;line-height:1.7;color:#991b1b;">
+        ${restrictions.map(p => `<li>${escapeHtml(p)};</li>`).join('')}
+      </ul>
+    ` : ''}
+    <p style="font-size:12.5px;margin-bottom:6px;">2.3. Правообладатель не претендует на какие-либо отчисления (роялти) с проката, публикаций или коммерческого использования Произведения.</p>
+
+    <h2 style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:18px 0 8px;border-bottom:1px solid #6b1d1f;padding-bottom:4px;">3. Обязательства Студии</h2>
+    <p style="font-size:12.5px;margin-bottom:6px;">3.1. Студия обязуется: соблюдать чистоту и сохранность Локации; не препятствовать нормальной деятельности Правообладателя; возместить ущерб, если таковой будет причинён по вине Студии в ходе съёмок.</p>
+    <p style="font-size:12.5px;margin-bottom:6px;">3.2. Студия самостоятельно несёт ответственность за технику безопасности на площадке.</p>
+
+    ${r.notes ? `
+      <h2 style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:18px 0 8px;border-bottom:1px solid #6b1d1f;padding-bottom:4px;">4. Дополнительные условия</h2>
+      <p style="font-size:12.5px;margin-bottom:6px;white-space:pre-wrap;">${escapeHtml(r.notes)}</p>
+    ` : ''}
+
+    <h2 style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:18px 0 8px;border-bottom:1px solid #6b1d1f;padding-bottom:4px;">${r.notes ? '5' : '4'}. Подписи сторон</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:18px;">
+      <div>
+        <div style="font-size:9px;letter-spacing:1.5px;color:#888;text-transform:uppercase;font-weight:800;margin-bottom:4px;">Правообладатель локации</div>
+        <div style="font-size:11px;font-weight:700;margin-bottom:30px;">${escapeHtml(r.ownerName || '')}</div>
+        <div style="border-bottom:1px solid #555;width:90%;"></div>
+        <div style="font-size:9px;color:#888;margin-top:4px;">подпись · дата</div>
+        ${r.signedDate ? `<div style="font-size:11px;font-weight:700;color:#0a8a3a;margin-top:6px;">${escapeHtml(formatDateRu(r.signedDate))} ✓</div>` : ''}
+        ${r.ownerPhone ? `<div style="font-size:10px;color:#666;margin-top:8px;">тел.: ${escapeHtml(r.ownerPhone)}</div>` : ''}
+        ${r.ownerEmail ? `<div style="font-size:10px;color:#666;">e-mail: ${escapeHtml(r.ownerEmail)}</div>` : ''}
+      </div>
+      <div>
+        <div style="font-size:9px;letter-spacing:1.5px;color:#888;text-transform:uppercase;font-weight:800;margin-bottom:4px;">Студия</div>
+        <div style="font-size:11px;font-weight:700;">ИП Залов Табриз Руслан-Оглы</div>
+        <div style="font-size:10px;color:#666;margin-bottom:20px;">ИНН 180204378651 · ОГРНИП 324508100144670</div>
+        <div style="border-bottom:1px solid #555;width:90%;"></div>
+        <div style="font-size:9px;color:#888;margin-top:4px;">подпись · дата</div>
+        <div style="font-size:10px;color:#666;margin-top:8px;">zalov.production@gmail.com</div>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;padding-top:10px;border-top:1px solid #ddd;font-size:8px;color:#999;text-align:center;font-weight:600;line-height:1.4;">
+      Документ сгенерирован системой ZALOVE PRODUCTION · ${escapeHtml(r.locName || project.name || '')} · ${new Date().toLocaleDateString('ru-RU')}
+    </div>`;
+
+  c.innerHTML = html;
+  return c;
+}
+/* ===== END Локейшн-релиз ===== */
+
+
+/* =====================================================
+   SUB-СМЕТЫ ОТ ПОДРЯДЧИКОВ
+   ===================================================== */
+let _currentSubEstProjectId = null;
+let _currentSubEstId = null;
+let _subEstSaveTimer = null;
+
+const SUB_EST_CATEGORIES = [
+  { id: 'art', name: 'Цех художника-постановщика', icon: '🎨', linkSection: 'art' },
+  { id: 'light', name: 'Цех осветителей', icon: '💡', linkSection: 'tech' },
+  { id: 'rental', name: 'Рентал кинотехники', icon: '🎥', linkSection: 'tech' },
+  { id: 'stylist', name: 'Стилист / костюмы', icon: '👗', linkSection: 'costume' },
+  { id: 'casting', name: 'Кастинг-директор', icon: '★', linkSection: 'cast' },
+  { id: 'setmgr', name: 'Администратор площадки', icon: '📋', linkSection: 'loc' },
+  { id: 'cg', name: 'CG / AI / постпрод', icon: '⚡', linkSection: 'post' },
+  { id: 'transport', name: 'Транспорт / логистика', icon: '🚐', linkSection: 'logistics' },
+  { id: 'catering', name: 'Кейтеринг', icon: '🍽', linkSection: 'logistics' },
+  { id: 'location', name: 'Локация / павильон', icon: '🏠', linkSection: 'loc' },
+  { id: 'other', name: 'Другое', icon: '📎', linkSection: '' }
+];
+
+function ensureSubEsts(project) {
+  if (!Array.isArray(project.subEstimates)) project.subEstimates = [];
+  return project.subEstimates;
+}
+
+function makeNewSubEst() {
+  return {
+    id: 'sub_' + Date.now(),
+    categoryId: 'other',
+    name: '',
+    contractorCompany: '',
+    contractorInn: '',
+    contractorContact: '',
+    rows: [
+      { id: 'r_' + Date.now(), name: '', qty: 1, days: 1, price: 0 }
+    ],
+    paymentStatus: 'pending', // pending / advance / full
+    advancePaid: 0,
+    fullPaid: 0,
+    receivedDate: '',
+    deadlineDate: '',
+    externalLink: '',
+    notes: '',
+    status: 'draft' // draft / received / paid / closed
+  };
+}
+
+function openSubEstEditor() {
+  if (!_currentProjectId) return;
+  closeAll();
+  _currentSubEstProjectId = _currentProjectId;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const list = ensureSubEsts(project);
+  if (list.length === 0) {
+    const fresh = makeNewSubEst();
+    list.push(fresh);
+    DB.updateProject(project.id, { subEstimates: list });
+  }
+  _currentSubEstId = list[0].id;
+  document.getElementById('m-sub-est').classList.add('active');
+  document.getElementById('subest-title').textContent = 'Подсметы подрядчиков · ' + (project.name || 'проект');
+  renderSubEstEditor();
+}
+
+function selectSubEst(id) { _currentSubEstId = id; renderSubEstEditor(); }
+function addNewSubEst() {
+  const project = DB.getProject(_currentSubEstProjectId);
+  if (!project) return;
+  const list = ensureSubEsts(project);
+  const fresh = makeNewSubEst();
+  list.push(fresh);
+  DB.updateProject(project.id, { subEstimates: list });
+  _currentSubEstId = fresh.id;
+  renderSubEstEditor();
+  renderSubEstCards();
+}
+function deleteCurrentSubEst() {
+  const project = DB.getProject(_currentSubEstProjectId);
+  if (!project) return;
+  const list = ensureSubEsts(project);
+  if (!confirm('Удалить подсмету подрядчика?')) return;
+  project.subEstimates = list.filter(s => s.id !== _currentSubEstId);
+  if (project.subEstimates.length === 0) project.subEstimates.push(makeNewSubEst());
+  DB.updateProject(project.id, { subEstimates: project.subEstimates });
+  _currentSubEstId = project.subEstimates[0].id;
+  renderSubEstEditor();
+  renderSubEstCards();
+}
+function getCurrentSubEst() {
+  const project = DB.getProject(_currentSubEstProjectId);
+  if (!project) return null;
+  const list = ensureSubEsts(project);
+  return list.find(s => s.id === _currentSubEstId);
+}
+function scheduleSubEstSave() {
+  if (_subEstSaveTimer) clearTimeout(_subEstSaveTimer);
+  _subEstSaveTimer = setTimeout(saveSubEstNow, 350);
+}
+function saveSubEstNow() {
+  const project = DB.getProject(_currentSubEstProjectId);
+  if (!project) return;
+  DB.updateProject(project.id, { subEstimates: project.subEstimates });
+  // refresh cards in main view
+  renderSubEstCards();
+}
+function onSubEstField(field, value) {
+  const s = getCurrentSubEst();
+  if (!s) return;
+  s[field] = value;
+  scheduleSubEstSave();
+}
+function onSubEstRowField(rowId, field, value) {
+  const s = getCurrentSubEst();
+  if (!s) return;
+  const row = s.rows.find(r => r.id === rowId);
+  if (!row) return;
+  row[field] = field === 'name' ? value : (parseFloat(value) || 0);
+  scheduleSubEstSave();
+  // Re-render only the totals (avoid focus loss in name field)
+  if (field !== 'name') refreshSubEstTotals();
+}
+function addSubEstRow() {
+  const s = getCurrentSubEst();
+  if (!s) return;
+  s.rows.push({ id: 'r_' + Date.now(), name: '', qty: 1, days: 1, price: 0 });
+  saveSubEstNow();
+  renderSubEstEditor();
+}
+function deleteSubEstRow(rowId) {
+  const s = getCurrentSubEst();
+  if (!s) return;
+  s.rows = s.rows.filter(r => r.id !== rowId);
+  saveSubEstNow();
+  renderSubEstEditor();
+}
+
+function computeSubEstTotal(s) {
+  if (!s || !s.rows) return 0;
+  return s.rows.reduce((acc, r) => acc + (r.qty || 0) * (r.days || 0) * (r.price || 0), 0);
+}
+
+function refreshSubEstTotals() {
+  const s = getCurrentSubEst();
+  if (!s) return;
+  const total = computeSubEstTotal(s);
+  const el = document.getElementById('subest-total-value');
+  if (el) el.textContent = total.toLocaleString('ru-RU') + ' ₽';
+}
+
+function renderSubEstEditor() {
+  const project = DB.getProject(_currentSubEstProjectId);
+  if (!project) return;
+  const list = ensureSubEsts(project);
+  const s = getCurrentSubEst();
+  if (!s) return;
+  const body = document.getElementById('subest-body');
+  if (!body) return;
+
+  const total = computeSubEstTotal(s);
+  const cat = SUB_EST_CATEGORIES.find(c => c.id === s.categoryId) || SUB_EST_CATEGORIES.find(c => c.id === 'other');
+
+  // Сравнение с основной сметой по этому разделу
+  let mainSectionAmount = 0;
+  if (cat.linkSection && project.estimate && project.estimate.sections && project.estimate.sections[cat.linkSection]) {
+    const sec = project.estimate.sections[cat.linkSection];
+    [...(sec.rows || []), ...(sec.customRows || [])].forEach(r => {
+      mainSectionAmount += (r.qty || 0) * (r.days || 0) * (r.price || 0);
+    });
+  }
+  const compareDiff = mainSectionAmount > 0 ? (total - mainSectionAmount) : null;
+
+  // Сумма по всем подсметам
+  const allTotal = list.reduce((acc, x) => acc + computeSubEstTotal(x), 0);
+
+  // Tabs
+  let tabsHtml = '';
+  list.forEach(sub => {
+    const isAct = sub.id === _currentSubEstId;
+    const c = SUB_EST_CATEGORIES.find(x => x.id === sub.categoryId) || SUB_EST_CATEGORIES.find(x => x.id === 'other');
+    const labelText = sub.name || c.name;
+    tabsHtml += `<div onclick="selectSubEst('${sub.id}')" style="padding:6px 12px;background:${isAct ? 'white' : 'rgba(255,255,255,0.15)'};color:${isAct ? '#3d1416' : 'white'};border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:800;letter-spacing:0.3px;display:flex;align-items:center;gap:6px;">${c.icon} ${escapeHtml(labelText)}</div>`;
+  });
+
+  let html = `
+    <div style="padding:16px 22px;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;font-weight:700;">Sub-estimates · приватно для продюсера</div>
+          <div style="font-size:20px;font-weight:900;margin-top:3px;line-height:1.1;">${escapeHtml(project.name || '—')}</div>
+          <div style="font-size:11px;opacity:0.85;margin-top:3px;font-weight:600;">${list.length} подрядчик(ов) · общая сумма <b>${allTotal.toLocaleString('ru-RU')} ₽</b></div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="addNewSubEst()" style="background:rgba(255,255,255,0.9);color:#3d1416;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:800;">＋ Подрядчик</button>
+          ${list.length > 1 ? `<button onclick="deleteCurrentSubEst()" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;">🗑</button>` : ''}
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">${tabsHtml}</div>
+    </div>`;
+
+  // Карточка-инфо
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">📌 Подрядчик</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">Категория / цех</div>
+          <select class="cs-input" onchange="onSubEstField('categoryId',this.value);renderSubEstEditor();">
+            ${SUB_EST_CATEGORIES.map(c => `<option value="${c.id}" ${s.categoryId===c.id?'selected':''}>${c.icon} ${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div class="cs-field-label">Название подрядчика / название сметы</div>
+          <input class="cs-input" value="${escapeHtml(s.name || '')}" placeholder="ProRental · ALEXA 35 kit" oninput="onSubEstField('name',this.value)">
+        </div>
+      </div>
+      <div class="cs-row-grid cs-3col" style="margin-top:10px;">
+        <div>
+          <div class="cs-field-label">Юр. название</div>
+          <input class="cs-input" value="${escapeHtml(s.contractorCompany || '')}" placeholder="ИП / ООО" oninput="onSubEstField('contractorCompany',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">ИНН</div>
+          <input class="cs-input" value="${escapeHtml(s.contractorInn || '')}" placeholder="ИНН" oninput="onSubEstField('contractorInn',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Контакт (телефон / TG)</div>
+          <input class="cs-input" value="${escapeHtml(s.contractorContact || '')}" placeholder="+7 ___ или @username" oninput="onSubEstField('contractorContact',this.value)">
+        </div>
+      </div>
+      <div class="cs-row-grid cs-3col" style="margin-top:10px;">
+        <div>
+          <div class="cs-field-label">Дата получения сметы</div>
+          <input class="cs-input" type="date" value="${escapeHtml(s.receivedDate || '')}" oninput="onSubEstField('receivedDate',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Дедлайн оплаты</div>
+          <input class="cs-input" type="date" value="${escapeHtml(s.deadlineDate || '')}" oninput="onSubEstField('deadlineDate',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Статус</div>
+          <select class="cs-input" onchange="onSubEstField('status',this.value);renderSubEstEditor();">
+            <option value="draft" ${s.status==='draft'?'selected':''}>📝 Черновик</option>
+            <option value="received" ${s.status==='received'?'selected':''}>📥 Получен</option>
+            <option value="paid" ${s.status==='paid'?'selected':''}>💸 Оплачен</option>
+            <option value="closed" ${s.status==='closed'?'selected':''}>✓ Закрыт</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="cs-field-label">🔗 Ссылка на внешний файл (Google Drive / Notion)</div>
+        <input class="cs-input" type="url" value="${escapeHtml(s.externalLink || '')}" placeholder="https://..." oninput="onSubEstField('externalLink',this.value)">
+      </div>
+    </div>`;
+
+  // Строки сметы
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>📋 Позиции сметы</span>
+        <button onclick="addSubEstRow()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Позиция</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:1px;">
+          <th style="padding:8px 6px;text-align:left;width:30px;">#</th>
+          <th style="padding:8px 10px;text-align:left;">Позиция</th>
+          <th style="padding:8px 6px;text-align:center;width:70px;">К-во</th>
+          <th style="padding:8px 6px;text-align:center;width:70px;">Дней</th>
+          <th style="padding:8px 10px;text-align:right;width:120px;">Цена ₽</th>
+          <th style="padding:8px 10px;text-align:right;width:140px;">Итого ₽</th>
+          <th style="padding:8px;width:30px;"></th>
+        </tr></thead>
+        <tbody>
+          ${s.rows.map((row, idx) => {
+            const sub = (row.qty || 0) * (row.days || 0) * (row.price || 0);
+            return `
+              <tr style="border-top:1px solid var(--line);">
+                <td style="padding:6px;text-align:center;color:var(--muted);font-weight:700;">${idx + 1}</td>
+                <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(row.name || '')}" placeholder="название позиции" style="padding:5px 8px;font-size:12px;" oninput="onSubEstRowField('${row.id}','name',this.value)"></td>
+                <td style="padding:3px;"><input class="cs-input" type="number" value="${row.qty || 0}" style="padding:5px 6px;font-size:12px;text-align:center;" oninput="onSubEstRowField('${row.id}','qty',this.value)"></td>
+                <td style="padding:3px;"><input class="cs-input" type="number" value="${row.days || 0}" style="padding:5px 6px;font-size:12px;text-align:center;" oninput="onSubEstRowField('${row.id}','days',this.value)"></td>
+                <td style="padding:3px;"><input class="cs-input" type="number" value="${row.price || 0}" style="padding:5px 8px;font-size:12px;text-align:right;font-family:'Montserrat',monospace;" oninput="onSubEstRowField('${row.id}','price',this.value)"></td>
+                <td style="padding:6px 10px;text-align:right;font-family:'Montserrat',monospace;font-weight:800;color:#6b1d1f;">${sub.toLocaleString('ru-RU')}</td>
+                <td style="padding:3px;text-align:center;"><button onclick="deleteSubEstRow('${row.id}')" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:14px;">×</button></td>
+              </tr>`;
+          }).join('')}
+          <tr style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+            <td colspan="5" style="padding:10px 12px;text-align:right;font-weight:800;letter-spacing:1px;text-transform:uppercase;font-size:11px;">Итого подрядчика</td>
+            <td style="padding:10px 12px;text-align:right;font-family:'Montserrat',monospace;font-weight:900;font-size:16px;" id="subest-total-value">${total.toLocaleString('ru-RU')} ₽</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+
+  // Сравнение с основной сметой
+  if (cat.linkSection && mainSectionAmount > 0) {
+    const isOver = compareDiff > 0;
+    const color = isOver ? '#991b1b' : '#0a8a3a';
+    const bg = isOver ? '#fee2e2' : '#e8f5e9';
+    html += `
+      <div style="padding:12px 22px;background:${bg};border-bottom:1px solid var(--line);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;">
+          <div>
+            <div style="font-size:11px;font-weight:800;color:${color};letter-spacing:0.5px;">${isOver ? '⚠ ПЕРЕРАСХОД ОТНОСИТЕЛЬНО ОСНОВНОЙ СМЕТЫ' : '✓ В РАМКАХ ОСНОВНОЙ СМЕТЫ'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">В основной смете на «${escapeHtml(cat.name)}» заложено: <b>${mainSectionAmount.toLocaleString('ru-RU')} ₽</b>. Подрядчик: <b>${total.toLocaleString('ru-RU')} ₽</b>.</div>
+          </div>
+          <div style="font-family:'Montserrat',monospace;font-size:20px;font-weight:900;color:${color};">
+            ${compareDiff > 0 ? '+' : ''}${compareDiff.toLocaleString('ru-RU')} ₽
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Оплата
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">💸 Оплата</div>
+      <div class="cs-row-grid cs-3col">
+        <div>
+          <div class="cs-field-label">Статус оплаты</div>
+          <select class="cs-input" onchange="onSubEstField('paymentStatus',this.value);renderSubEstEditor();">
+            <option value="pending" ${s.paymentStatus==='pending'?'selected':''}>⏳ Не оплачено</option>
+            <option value="advance" ${s.paymentStatus==='advance'?'selected':''}>💰 Аванс</option>
+            <option value="full" ${s.paymentStatus==='full'?'selected':''}>✅ Полностью</option>
+          </select>
+        </div>
+        <div>
+          <div class="cs-field-label">Аванс ₽</div>
+          <input class="cs-input" type="number" value="${escapeHtml(String(s.advancePaid || 0))}" oninput="onSubEstField('advancePaid',parseFloat(this.value)||0)" style="font-family:'Montserrat',monospace;">
+        </div>
+        <div>
+          <div class="cs-field-label">Полная оплата ₽</div>
+          <input class="cs-input" type="number" value="${escapeHtml(String(s.fullPaid || 0))}" oninput="onSubEstField('fullPaid',parseFloat(this.value)||0)" style="font-family:'Montserrat',monospace;">
+        </div>
+      </div>
+      ${total > 0 ? `
+        <div style="margin-top:10px;font-size:11px;color:var(--muted);">
+          Уже оплачено: <b>${((s.advancePaid || 0) + (s.fullPaid || 0)).toLocaleString('ru-RU')} ₽</b> из <b>${total.toLocaleString('ru-RU')} ₽</b>
+          (осталось <b style="color:#6b1d1f;">${Math.max(0, total - (s.advancePaid || 0) - (s.fullPaid || 0)).toLocaleString('ru-RU')} ₽</b>)
+        </div>` : ''}
+    </div>`;
+
+  // Комментарий
+  html += `
+    <div style="padding:14px 22px;background:#fafaf5;">
+      <div class="cs-section-title" style="margin-bottom:10px;">📝 Комментарий</div>
+      <textarea class="cs-input" rows="3" placeholder="Заметки по подсмете, особые условия..." oninput="onSubEstField('notes',this.value)" style="font-size:12px;line-height:1.5;resize:vertical;">${escapeHtml(s.notes || '')}</textarea>
+    </div>`;
+
+  body.innerHTML = html;
+}
+
+/* Рендер карточек подсмет в основной странице проекта */
+function renderSubEstCards() {
+  const grid = document.getElementById('subest-cards-grid');
+  if (!grid || !_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const list = ensureSubEsts(project);
+  const total = list.reduce((acc, s) => acc + computeSubEstTotal(s), 0);
+
+  // Обновим pill + сумму
+  const pill = document.getElementById('subest-count-pill');
+  if (pill) pill.textContent = list.length + (list.length === 1 ? ' ПОДРЯДЧИК' : ' ПОДРЯДЧИК(ОВ)');
+  const totalEl = document.getElementById('subest-total-display');
+  if (totalEl) totalEl.textContent = total.toLocaleString('ru-RU') + ' ₽';
+
+  let html = '';
+  list.forEach(s => {
+    const cat = SUB_EST_CATEGORIES.find(c => c.id === s.categoryId) || SUB_EST_CATEGORIES.find(c => c.id === 'other');
+    const sum = computeSubEstTotal(s);
+    const cls = s.status === 'closed' || s.status === 'paid' ? 'received' : s.status === 'received' ? 'received' : 'draft';
+    html += `
+      <div class="sub-est-card ${cls}" onclick="_currentSubEstId='${s.id}';openDoc('sub-est');">
+        <div class="head">
+          <div>
+            <div class="name">${escapeHtml(s.name || cat.name)}</div>
+            <div class="sub">${escapeHtml(cat.name)}${s.contractorCompany ? ' · ' + escapeHtml(s.contractorCompany) : ''}</div>
+          </div>
+          <div class="status-dot ${s.status === 'paid' || s.status === 'closed' ? 'dot-recv' : s.status === 'received' ? 'dot-recv' : 'dot-draft'}"></div>
+        </div>
+        <div class="icon">${cat.icon}</div>
+        <div class="bottom-row">
+          <div class="from">${s.receivedDate ? 'получено · ' + formatDateRu(s.receivedDate).slice(0,5) : 'черновик'}</div>
+          <div class="amount">${sum.toLocaleString('ru-RU')} ₽</div>
+        </div>
+      </div>`;
+  });
+  // + Add card
+  html += `
+    <div class="sub-est-card sub-est-upload" onclick="addNewSubEstAndOpen()">
+      <div class="icon-plus">+</div>
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Добавить подрядчика</div>
+    </div>`;
+  grid.innerHTML = html;
+}
+
+function addNewSubEstAndOpen() {
+  _currentSubEstProjectId = _currentProjectId;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const list = ensureSubEsts(project);
+  const fresh = makeNewSubEst();
+  list.push(fresh);
+  DB.updateProject(project.id, { subEstimates: list });
+  _currentSubEstId = fresh.id;
+  openDoc('sub-est');
+}
+
+/* PDF подсметы подрядчика */
+async function exportSubEstToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  const project = DB.getProject(_currentSubEstProjectId);
+  const s = getCurrentSubEst();
+  if (!project || !s) return;
+  toast('Готовлю PDF...', 'success');
+  const container = buildSubEstPrintHTML(project, s);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 2000); });
+    }));
+    const canvas = await html2canvas(container, { scale: 2.5, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 794 });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.height / canvas.width;
+    const imgW = pdfW;
+    const imgH = imgW * ratio;
+    const totalPages = Math.ceil(imgH / pdfH);
+    const imgData = canvas.toDataURL('image/png');
+    let pos = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pos -= pdfH;
+    }
+    const slug = ((s.name || project.name || 'subest').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_')).slice(0, 30);
+    pdf.save(`Подсмета_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка PDF: ' + e.message, 'error');
+  }
+}
+
+function buildSubEstPrintHTML(project, s) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#fff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:500;line-height:1.4;';
+  const cat = SUB_EST_CATEGORIES.find(x => x.id === s.categoryId) || SUB_EST_CATEGORIES.find(x => x.id === 'other');
+  const total = computeSubEstTotal(s);
+  const paid = (s.advancePaid || 0) + (s.fullPaid || 0);
+  const left = Math.max(0, total - paid);
+
+  let html = `
+    <div style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:18px 28px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="logo.png" alt="ZALOVE" style="height:24px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+        <div>
+          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;opacity:0.85;font-weight:700;">Sub-estimate · ${escapeHtml(cat.name)}</div>
+          <div style="font-size:20px;font-weight:900;margin-top:3px;line-height:1;">${escapeHtml(s.name || cat.name)}</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;">
+        <div style="font-size:13px;font-weight:800;">${escapeHtml(project.name || '')}</div>
+        <div style="opacity:0.85;margin-top:1px;">${s.receivedDate ? 'получено ' + escapeHtml(formatDateRu(s.receivedDate)) : 'черновик'}</div>
+      </div>
+    </div>
+
+    <div style="padding:14px 28px;background:#f5f5f0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:10.5px;">
+      ${s.contractorCompany ? `<div><div style="font-size:8px;letter-spacing:1px;color:#888;text-transform:uppercase;font-weight:700;">Подрядчик</div><div style="font-weight:700;margin-top:2px;">${escapeHtml(s.contractorCompany)}</div></div>` : ''}
+      ${s.contractorInn ? `<div><div style="font-size:8px;letter-spacing:1px;color:#888;text-transform:uppercase;font-weight:700;">ИНН</div><div style="font-weight:700;margin-top:2px;font-family:'Montserrat',monospace;">${escapeHtml(s.contractorInn)}</div></div>` : ''}
+      ${s.contractorContact ? `<div><div style="font-size:8px;letter-spacing:1px;color:#888;text-transform:uppercase;font-weight:700;">Контакт</div><div style="font-weight:700;margin-top:2px;">${escapeHtml(s.contractorContact)}</div></div>` : ''}
+    </div>
+
+    <div style="padding:14px 28px 0;">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:white;">
+        <thead><tr style="background:#0a0907;color:white;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;">
+          <th style="padding:6px 8px;text-align:center;width:30px;">№</th>
+          <th style="padding:6px 10px;text-align:left;">Позиция</th>
+          <th style="padding:6px 6px;text-align:center;width:50px;">К-во</th>
+          <th style="padding:6px 6px;text-align:center;width:50px;">Дней</th>
+          <th style="padding:6px 8px;text-align:right;width:18%;">Цена ₽</th>
+          <th style="padding:6px 8px;text-align:right;width:18%;">Итого ₽</th>
+        </tr></thead>
+        <tbody>
+          ${s.rows.filter(r => r.name || r.price).map((r, i) => {
+            const sub = (r.qty || 0) * (r.days || 0) * (r.price || 0);
+            return `
+              <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #ececec;">
+                <td style="padding:5px 8px;text-align:center;color:#666;font-weight:700;">${i + 1}</td>
+                <td style="padding:5px 10px;font-weight:700;">${escapeHtml(r.name || '')}</td>
+                <td style="padding:5px 6px;text-align:center;font-family:monospace;">${r.qty || 0}</td>
+                <td style="padding:5px 6px;text-align:center;font-family:monospace;">${r.days || 0}</td>
+                <td style="padding:5px 8px;text-align:right;font-family:monospace;">${(r.price || 0).toLocaleString('ru-RU')}</td>
+                <td style="padding:5px 8px;text-align:right;font-family:monospace;font-weight:800;color:#6b1d1f;">${sub.toLocaleString('ru-RU')}</td>
+              </tr>`;
+          }).join('')}
+          <tr style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+            <td colspan="5" style="padding:10px 12px;text-align:right;font-weight:800;letter-spacing:1px;text-transform:uppercase;font-size:10px;">Итого</td>
+            <td style="padding:10px 12px;text-align:right;font-family:monospace;font-weight:900;font-size:18px;">${total.toLocaleString('ru-RU')} ₽</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="padding:14px 28px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div style="background:#fafafa;border:1px solid #ececec;padding:10px 12px;border-radius:4px;">
+        <div style="font-size:9px;color:#888;letter-spacing:1px;text-transform:uppercase;font-weight:700;">Сумма сметы</div>
+        <div style="font-size:18px;font-weight:900;font-family:'Montserrat',monospace;margin-top:3px;">${total.toLocaleString('ru-RU')} ₽</div>
+      </div>
+      <div style="background:#e8f5e9;border:1px solid #c8e6c9;padding:10px 12px;border-radius:4px;">
+        <div style="font-size:9px;color:#0a8a3a;letter-spacing:1px;text-transform:uppercase;font-weight:700;">Оплачено</div>
+        <div style="font-size:18px;font-weight:900;font-family:'Montserrat',monospace;color:#0a8a3a;margin-top:3px;">${paid.toLocaleString('ru-RU')} ₽</div>
+      </div>
+      <div style="background:#fee2e2;border:1px solid #fecaca;padding:10px 12px;border-radius:4px;">
+        <div style="font-size:9px;color:#991b1b;letter-spacing:1px;text-transform:uppercase;font-weight:700;">Осталось</div>
+        <div style="font-size:18px;font-weight:900;font-family:'Montserrat',monospace;color:#991b1b;margin-top:3px;">${left.toLocaleString('ru-RU')} ₽</div>
+      </div>
+    </div>
+
+    ${s.notes ? `<div style="padding:0 28px 14px;"><div style="background:#f5f5f0;border-left:4px solid #6b1d1f;padding:10px 14px;font-size:11px;line-height:1.5;white-space:pre-wrap;border-radius:0 4px 4px 0;"><b style="font-size:9px;letter-spacing:1px;color:#888;text-transform:uppercase;">Комментарий:</b> ${escapeHtml(s.notes)}</div></div>` : ''}
+
+    <div style="padding:6px 28px 12px;font-size:8.5px;color:#999;text-align:center;line-height:1.5;font-weight:600;border-top:1px solid #ddd;margin-top:10px;">
+      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670 · ${escapeHtml(project.name || '')} · подсмета · ${new Date().toLocaleDateString('ru-RU')}
+    </div>`;
+
+  c.innerHTML = html;
+  return c;
+}
+
+/* Хук авто-перерисовки карточек подсмет при открытии проекта */
+const _origOpenProjectDetailForSubEst = window.openProjectDetail;
+/* ===== END Подсметы ===== */
+
+
+/* =====================================================
+   ЖУРНАЛ РАСХОДОВ — единая лента всех entries проекта
+   ===================================================== */
+let _expenseFilters = { from: '', to: '', section: '', search: '', source: 'all' };
+
+function openExpensesJournal() {
+  if (!_currentProjectId) return;
+  closeAll();
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  document.getElementById('m-expenses').classList.add('active');
+  renderExpensesJournal();
+}
+
+function gatherAllExpenses(project) {
+  const items = [];
+  const est = project.estimate || {};
+  const sections = est.sections || {};
+  Object.entries(sections).forEach(([secId, sec]) => {
+    const secName = sec.title || secId;
+    const allRows = [...(sec.rows || []), ...(sec.customRows || [])];
+    allRows.forEach(row => {
+      (row.entries || []).forEach(e => {
+        items.push({
+          id: e.id,
+          date: e.date || '',
+          comment: e.comment || '',
+          amount: e.amount || 0,
+          rowName: row.name || '',
+          sectionId: secId,
+          sectionName: secName,
+          mode: 'client',
+          source: 'estimate'
+        });
+      });
+    });
+  });
+  // Team estimate
+  const estTeam = project.estimateTeam || {};
+  const sectionsTeam = estTeam.sections || {};
+  Object.entries(sectionsTeam).forEach(([secId, sec]) => {
+    const secName = sec.title || secId;
+    const allRows = [...(sec.rows || []), ...(sec.customRows || [])];
+    allRows.forEach(row => {
+      (row.entries || []).forEach(e => {
+        items.push({
+          id: e.id,
+          date: e.date || '',
+          comment: e.comment || '',
+          amount: e.amount || 0,
+          rowName: row.name || '',
+          sectionId: secId,
+          sectionName: secName,
+          mode: 'team',
+          source: 'estimateTeam'
+        });
+      });
+    });
+  });
+  return items.sort((a, b) => {
+    // Сначала свежие (по дате убывание)
+    if (a.date && b.date) return b.date.localeCompare(a.date);
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return 0;
+  });
+}
+
+function applyExpenseFilters(items) {
+  return items.filter(e => {
+    if (_expenseFilters.from && e.date && e.date < _expenseFilters.from) return false;
+    if (_expenseFilters.to && e.date && e.date > _expenseFilters.to) return false;
+    if (_expenseFilters.section && e.sectionId !== _expenseFilters.section) return false;
+    if (_expenseFilters.source !== 'all' && e.mode !== _expenseFilters.source) return false;
+    if (_expenseFilters.search) {
+      const q = _expenseFilters.search.toLowerCase();
+      if (!(e.comment.toLowerCase().includes(q) || e.rowName.toLowerCase().includes(q))) return false;
+    }
+    return true;
+  });
+}
+
+function onExpenseFilter(field, value) {
+  _expenseFilters[field] = value;
+  renderExpensesJournal();
+}
+function resetExpenseFilters() {
+  _expenseFilters = { from: '', to: '', section: '', search: '', source: 'all' };
+  renderExpensesJournal();
+}
+
+function renderExpensesJournal() {
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const body = document.getElementById('expenses-body');
+  if (!body) return;
+  const all = gatherAllExpenses(project);
+  const filtered = applyExpenseFilters(all);
+
+  const total = filtered.reduce((acc, e) => acc + (e.amount || 0), 0);
+  // Топ-3 категории по сумме (по разделам)
+  const bySection = {};
+  filtered.forEach(e => {
+    if (!bySection[e.sectionId]) bySection[e.sectionId] = { name: e.sectionName, sum: 0, count: 0 };
+    bySection[e.sectionId].sum += e.amount || 0;
+    bySection[e.sectionId].count++;
+  });
+  const top3 = Object.values(bySection).sort((a, b) => b.sum - a.sum).slice(0, 3);
+
+  // Список разделов для фильтра
+  const allSections = {};
+  all.forEach(e => { allSections[e.sectionId] = e.sectionName; });
+
+  let html = `
+    <div style="padding:16px 22px;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;font-weight:700;">Expense Journal · вся хронология расходов</div>
+          <div style="font-size:20px;font-weight:900;margin-top:3px;line-height:1.1;">${escapeHtml(project.name || '—')}</div>
+          <div style="font-size:11px;opacity:0.85;margin-top:3px;font-weight:600;">${all.length} расход(ов) всего · ${filtered.length} по фильтру</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="exportExpensesToXlsx()" style="background:rgba(255,255,255,0.9);color:#3d1416;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:800;">⤓ Excel</button>
+        </div>
+      </div>
+    </div>`;
+
+  // Сводка
+  html += `
+    <div style="padding:14px 22px;background:#f5f5f0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr 2fr;gap:14px;">
+      <div style="background:white;border-radius:6px;padding:14px 16px;border:1px solid var(--line);">
+        <div style="font-size:10px;letter-spacing:1.5px;color:#888;text-transform:uppercase;font-weight:700;">Итого по фильтру</div>
+        <div style="font-family:'Montserrat',monospace;font-size:28px;font-weight:900;color:#6b1d1f;margin-top:4px;letter-spacing:-0.5px;">${total.toLocaleString('ru-RU')} ₽</div>
+      </div>
+      <div style="background:white;border-radius:6px;padding:14px 16px;border:1px solid var(--line);">
+        <div style="font-size:10px;letter-spacing:1.5px;color:#888;text-transform:uppercase;font-weight:700;margin-bottom:8px;">Топ-3 категории</div>
+        ${top3.length === 0 ? '<div style="font-size:11px;color:var(--muted);">нет данных</div>' : top3.map((t, i) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;">
+            <div><b>${i + 1}.</b> ${escapeHtml(t.name)} <span style="color:var(--muted);font-size:10px;">· ${t.count} расход(ов)</span></div>
+            <div style="font-family:'Montserrat',monospace;font-weight:800;color:#6b1d1f;">${t.sum.toLocaleString('ru-RU')} ₽</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+
+  // Фильтры
+  html += `
+    <div style="padding:12px 22px;background:#fafaf5;border-bottom:1px solid var(--line);display:grid;grid-template-columns:140px 140px 1fr 140px 140px auto;gap:8px;align-items:center;">
+      <div>
+        <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">С даты</div>
+        <input class="cs-input" type="date" value="${escapeHtml(_expenseFilters.from || '')}" oninput="onExpenseFilter('from',this.value)" style="padding:5px 8px;font-size:11px;">
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">По дату</div>
+        <input class="cs-input" type="date" value="${escapeHtml(_expenseFilters.to || '')}" oninput="onExpenseFilter('to',this.value)" style="padding:5px 8px;font-size:11px;">
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">Поиск</div>
+        <input class="cs-input" value="${escapeHtml(_expenseFilters.search || '')}" placeholder="комментарий или позиция" oninput="onExpenseFilter('search',this.value)" style="padding:5px 8px;font-size:11px;">
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">Раздел</div>
+        <select class="cs-input" onchange="onExpenseFilter('section',this.value)" style="padding:5px 8px;font-size:11px;">
+          <option value="">все разделы</option>
+          ${Object.entries(allSections).map(([id, name]) => `<option value="${id}" ${_expenseFilters.section===id?'selected':''}>${escapeHtml(name)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">Смета</div>
+        <select class="cs-input" onchange="onExpenseFilter('source',this.value)" style="padding:5px 8px;font-size:11px;">
+          <option value="all" ${_expenseFilters.source==='all'?'selected':''}>обе</option>
+          <option value="client" ${_expenseFilters.source==='client'?'selected':''}>клиентская</option>
+          <option value="team" ${_expenseFilters.source==='team'?'selected':''}>командная</option>
+        </select>
+      </div>
+      <div style="align-self:flex-end;">
+        <button onclick="resetExpenseFilters()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;">Сбросить</button>
+      </div>
+    </div>`;
+
+  // Лента
+  if (filtered.length === 0) {
+    html += `
+      <div style="padding:60px 22px;text-align:center;color:var(--muted);">
+        <div style="font-size:42px;opacity:0.3;margin-bottom:10px;">📒</div>
+        <div style="font-size:13px;font-weight:600;">Расходов по фильтру нет</div>
+        <div style="font-size:11px;margin-top:6px;">Добавляй расходы в смете — попап «факт» по каждой позиции</div>
+      </div>`;
+  } else {
+    // Группировка по дате
+    const byDate = {};
+    filtered.forEach(e => {
+      const k = e.date || '—без даты—';
+      if (!byDate[k]) byDate[k] = [];
+      byDate[k].push(e);
+    });
+    const sortedDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+    let listHtml = '';
+    sortedDates.forEach(date => {
+      const dayItems = byDate[date];
+      const daySum = dayItems.reduce((acc, e) => acc + (e.amount || 0), 0);
+      const dateLabel = date === '—без даты—' ? '— Без даты —' : formatDateRu(date);
+      listHtml += `
+        <div style="padding:10px 22px;background:#f5f5f0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:#3d1416;">
+          <span>📅 ${escapeHtml(dateLabel)}</span>
+          <span>${dayItems.length} расход(ов) · <span style="font-family:'Montserrat',monospace;">${daySum.toLocaleString('ru-RU')} ₽</span></span>
+        </div>`;
+      dayItems.forEach(e => {
+        listHtml += `
+          <div style="display:grid;grid-template-columns:130px 1fr 140px 80px 110px;gap:14px;align-items:center;padding:8px 22px;border-bottom:1px solid #f0f0f0;font-size:12px;">
+            <div style="font-size:11px;color:var(--muted);font-weight:600;">${escapeHtml(e.sectionName)}</div>
+            <div>
+              <div style="font-weight:700;">${escapeHtml(e.comment || '—')}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:1px;">${escapeHtml(e.rowName)}</div>
+            </div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:${e.mode === 'team' ? '#1d4ed8' : '#6b1d1f'};">${e.mode === 'team' ? '👥 команда' : '💼 клиент'}</div>
+            <div></div>
+            <div style="text-align:right;font-family:'Montserrat',monospace;font-weight:800;color:#6b1d1f;font-size:13px;">${(e.amount || 0).toLocaleString('ru-RU')} ₽</div>
+          </div>`;
+      });
+    });
+    html += `<div>${listHtml}</div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+async function exportExpensesToXlsx() {
+  if (typeof XLSX === 'undefined') { toast('XLSX библиотека не загружена', 'error'); return; }
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const all = gatherAllExpenses(project);
+  const filtered = applyExpenseFilters(all);
+  if (filtered.length === 0) { toast('Нечего экспортировать', 'warn'); return; }
+  const data = [
+    ['Дата', 'Раздел', 'Позиция', 'Комментарий', 'Сумма ₽', 'Смета'],
+    ...filtered.map(e => [
+      e.date || '',
+      e.sectionName,
+      e.rowName,
+      e.comment,
+      e.amount || 0,
+      e.mode === 'team' ? 'команда' : 'клиент'
+    ])
+  ];
+  const total = filtered.reduce((acc, e) => acc + (e.amount || 0), 0);
+  data.push(['', '', '', 'ИТОГО', total, '']);
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 40 }, { wch: 14 }, { wch: 12 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Журнал расходов');
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  XLSX.writeFile(wb, `Журнал_расходов_${slug}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Excel скачан ✓', 'success');
+}
+/* ===== END Журнал расходов ===== */
+
+
 
 function openCallsheetEditor(dayNum = 1) {
   if (!_currentProjectId) return;
@@ -15303,6 +16566,7 @@ window.openProjectDetail = function(id, idx) {
     renderCallsheetCard(project);
     renderSmetaPromo(project);
     renderDocCreativeCards(project);
+    renderSubEstCards();
     updateFreezeButton(project);
   }
 };
