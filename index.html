@@ -6641,113 +6641,41 @@ body.dark-theme .task-deadline:focus { background: white; }
 
 <!-- PRODUCTION REPORT -->
 <div class="modal-overlay" id="m-report">
-  <div class="doc-overlay">
+  <div class="doc-overlay" style="max-width:1100px;width:96vw;">
     <div class="doc-header">
       <div class="doc-header-l">
         <div class="doc-header-icon">▦</div>
         <div>
-          <div class="doc-section-label">Документ · из вашего шаблона</div>
-          <div class="doc-header-title">Продакшн-рапорт · wrap смены</div>
+          <div class="doc-section-label">Документ · wrap смены</div>
+          <div class="doc-header-title" id="report-title">Продакшн-рапорт</div>
         </div>
       </div>
       <div class="doc-actions-h">
-        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="btn" onclick="exportReportToPdf()">⤓ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
-    <div class="doc-body">
-      <div class="smart-fill">
-        <div class="sf-icon">⚡</div>
-        <div class="sf-text">
-          <strong>Из шаблона «шаблон продакшн-рапорт.docx»</strong>
-          Wrap-отчёт смены: команда, оборудование, технические/творческие итоги, инциденты
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px;">
-        <div class="est-meta-item"><div class="est-meta-label">Проект</div><div class="est-meta-value">Nebula</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Тип</div><div class="est-meta-value">☑ Реклама</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Дата</div><div class="est-meta-value">18.05.2026</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Смена</div><div class="est-meta-value">Day 1 / 3</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Локация</div><div class="est-meta-value">[ павильон ]</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Погода</div><div class="est-meta-value">+18 / +9°C</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Начало</div><div class="est-meta-value">07:00</div></div>
-        <div class="est-meta-item"><div class="est-meta-label">Wrap</div><div class="est-meta-value">22:30</div></div>
-      </div>
-      <div class="section-title" style="margin-top: 0;">Инциденты / отклонения от плана</div>
-      <div style="background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; overflow: hidden;">
-        <div style="padding: 10px 14px; border-bottom: 1px dashed var(--line); display: grid; grid-template-columns: 50px 1fr 100px; gap: 12px; font-size: 12px; align-items: center;">
-          <div style="background: rgba(217,119,6,0.15); color: var(--amber); padding: 3px 6px; border-radius: 3px; text-align: center; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 11px;">SEV 2</div>
-          <div><b>Артист опоздал на 45 минут</b><div style="color: var(--muted); margin-top: 2px;">Сдвиг тайминга сцены вечерней тусовки</div></div>
-          <div style="text-align: right; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px;">+45 мин</div>
-        </div>
-        <div style="padding: 10px 14px; display: grid; grid-template-columns: 50px 1fr 100px; gap: 12px; font-size: 12px; align-items: center;">
-          <div style="background: rgba(30,158,78,0.15); color: var(--green); padding: 3px 6px; border-radius: 3px; text-align: center; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 11px;">SEV 1</div>
-          <div><b>Перебой Wi-Fi на 10 минут</b><div style="color: var(--muted); margin-top: 2px;">Не повлияло на смену</div></div>
-          <div style="text-align: right; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px;">0 мин</div>
-        </div>
-      </div>
-    </div>
-    <div class="doc-footer">
-      <div class="doc-footer-info">REPORT-NEB-2026-D01 · v.1</div>
-      <button class="btn">⚡ Сгенерировать DOCX</button>
-    </div>
+    <div class="doc-body" id="report-body" style="padding:0;"></div>
   </div>
 </div>
 
 <!-- POST-PROD TASK -->
 <div class="modal-overlay" id="m-postprod">
-  <div class="doc-overlay">
+  <div class="doc-overlay" style="max-width:1000px;width:96vw;">
     <div class="doc-header">
       <div class="doc-header-l">
         <div class="doc-header-icon">✂</div>
         <div>
-          <div class="doc-section-label">Документ · из вашего шаблона</div>
-          <div class="doc-header-title">ТЗ пост-продакшн · продюсер + монтажёр</div>
+          <div class="doc-section-label">Документ · пост-продакшн</div>
+          <div class="doc-header-title" id="postprod-title">ТЗ пост-продакшн</div>
         </div>
       </div>
       <div class="doc-actions-h">
-        <button class="btn btn-dark">⤓ DOCX</button>
+        <button class="btn" onclick="exportPostprodToPdf()">⤓ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
-    <div class="doc-body">
-      <div class="smart-fill">
-        <div class="sf-icon">⚡</div>
-        <div class="sf-text">
-          <strong>Из шаблона «шаблон ТЗ пост-продакшн».docx</strong>
-          Совместный документ: [П] — пост-продюсер, [М] — режиссёр монтажа.
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
-        <div style="background: var(--bg-paper); border: 1px solid #e8dec4; border-radius: 4px; padding: 12px 14px;">
-          <div style="font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--brand-red); margin-bottom: 4px;">[ П ] Пост-продюсер</div>
-          <div style="font-weight: 700;">Табриз Залов</div>
-          <div style="font-size: 11px; color: var(--muted);">Telegram · @tabrizzalov</div>
-        </div>
-        <div style="background: var(--bg-paper); border: 1px solid #e8dec4; border-radius: 4px; padding: 12px 14px;">
-          <div style="font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--brand-red); margin-bottom: 4px;">[ М ] Режиссёр монтажа</div>
-          <div style="font-weight: 700;">[ ФИО монтажёра ]</div>
-          <div style="font-size: 11px; color: var(--muted);">Telegram · @...</div>
-        </div>
-      </div>
-      <div class="section-title" style="margin-top: 0;">Структура ТЗ</div>
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>0.</b> Регулярный sync пост-продюсера и монтажёра · OWNER: П + М</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>1.</b> Передача материала · структура папок, нейминг, прокси, звук с площадки · OWNER: П → М</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>2.</b> Логлайн и драматургия по таймкодам · OWNER: М</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>3.</b> Темп, ритм, склейки, переходы · OWNER: М</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>4.</b> Референсы / анти-референсы · OWNER: П → М</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>5.</b> Музыка: трек, лицензия, акценты под монтаж · OWNER: П → М</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>6.</b> Цветокор и грейд · OWNER: П (координация) + М (XML/EDL/AAF)</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>7.</b> VFX / моушн / графика · OWNER: М (помечает шоты) + П (брифует)</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>8.</b> Титры, шрифты, лого · OWNER: П</div>
-        <div style="padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 12px;"><b>9.</b> Юр. требования: 18+, дисклеймеры, маркировка</div>
-      </div>
-    </div>
-    <div class="doc-footer">
-      <div class="doc-footer-info">POSTPROD-NEB-2026 · v.1</div>
-      <button class="btn">⚡ Сгенерировать DOCX</button>
-    </div>
+    <div class="doc-body" id="postprod-body" style="padding:0;"></div>
   </div>
 </div>
 
@@ -7560,6 +7488,16 @@ function openDoc(type) {
   // Матрица рисков — открываем редактор
   if (type === 'risks' && _currentProjectId) {
     openRisksEditor();
+    return;
+  }
+  // Продакшн-рапорт — открываем редактор
+  if (type === 'report' && _currentProjectId) {
+    openReportEditor();
+    return;
+  }
+  // ТЗ пост-продакшн — открываем редактор
+  if (type === 'postprod' && _currentProjectId) {
+    openPostprodEditor();
     return;
   }
   const map = {
@@ -12381,6 +12319,1438 @@ function buildRisksPrintHTML(project, r) {
   return c;
 }
 /* ===== END Матрица рисков ===== */
+
+/* =====================================================
+   ТЗ ПОСТ-ПРОДАКШН — редактор + PDF
+   ===================================================== */
+const POSTPROD_SECTIONS = [
+  { id: 'sync',     n: 0, title: 'Регулярный sync пост-продюсера и монтажёра', owner: 'П + М', placeholder: 'Когда созваниваемся, в каком чате, какие чек-ины, частота правок' },
+  { id: 'handoff',  n: 1, title: 'Передача материала', owner: 'П → М', placeholder: 'Структура папок, нейминг, прокси (RAW/H264/ProRes), звук с площадки, метаданные' },
+  { id: 'story',    n: 2, title: 'Логлайн и драматургия по таймкодам', owner: 'М', placeholder: 'Логлайн фильма, ключевые beats, ритм по таймкодам, эмоциональная дуга' },
+  { id: 'pacing',   n: 3, title: 'Темп, ритм, склейки, переходы', owner: 'М', placeholder: 'Стиль монтажа, динамика, что хочется по склейкам, кросс-кат / J-K / match cut' },
+  { id: 'refs',     n: 4, title: 'Референсы / анти-референсы', owner: 'П → М', placeholder: 'Ссылки + что именно понравилось/не понравилось. Можно перечислить таймкоды' },
+  { id: 'music',    n: 5, title: 'Музыка: трек, лицензия, акценты под монтаж', owner: 'П → М', placeholder: 'Финальный трек или варианты, лицензия (есть/в работе/нужна), акценты под склейки' },
+  { id: 'color',    n: 6, title: 'Цветокор и грейд', owner: 'П (координация) + М (XML/EDL/AAF)', placeholder: 'Колорист, LUT/референсы, формат для экспорта в DaVinci, обратный пайплайн' },
+  { id: 'vfx',      n: 7, title: 'VFX / моушн / графика', owner: 'М (помечает шоты) + П (брифует)', placeholder: 'Список VFX-шотов (таймкоды), студия/исполнитель, тип графики, дедлайны' },
+  { id: 'titles',   n: 8, title: 'Титры, шрифты, лого', owner: 'П', placeholder: 'Начальные/конечные титры, шрифты (файлы), позиционирование, лого клиента/продакшна, дисклеймеры' },
+  { id: 'legal',    n: 9, title: 'Юр. требования', owner: 'П', placeholder: '18+, дисклеймеры, маркировка рекламы, ИП-реквизиты на конце, цензура' },
+];
+
+let _currentPostprodProjectId = null;
+let _postprodSaveTimer = null;
+
+function ensurePostprod(project) {
+  if (!project.postprod) project.postprod = {};
+  const pp = project.postprod;
+  if (pp.externalLink == null) pp.externalLink = '';
+  if (pp.postProducer == null) pp.postProducer = { name: 'Табриз Залов', telegram: '@tabrizzalov' };
+  if (pp.editor == null) pp.editor = { name: '', telegram: '' };
+  if (!pp.sections) pp.sections = {};
+  POSTPROD_SECTIONS.forEach(s => {
+    if (!pp.sections[s.id]) pp.sections[s.id] = { content: '', deadline: '', status: 'open' };
+  });
+  if (pp.deliverables == null) pp.deliverables = [];
+  if (pp.version == null) pp.version = 1;
+  if (pp.updated == null) pp.updated = new Date().toISOString().slice(0, 10);
+  return pp;
+}
+
+function openPostprodEditor() {
+  if (!_currentProjectId) return;
+  closeAll();
+  _currentPostprodProjectId = _currentProjectId;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  ensurePostprod(project);
+  document.getElementById('m-postprod').classList.add('active');
+  document.getElementById('postprod-title').textContent = 'ТЗ пост-продакшн · ' + (project.name || 'проект');
+  renderPostprodEditor();
+}
+
+function schedulePostprodSave() {
+  if (_postprodSaveTimer) clearTimeout(_postprodSaveTimer);
+  _postprodSaveTimer = setTimeout(savePostprodNow, 350);
+}
+function savePostprodNow() {
+  if (!_currentPostprodProjectId) return;
+  const project = DB.getProject(_currentPostprodProjectId);
+  if (!project || !project.postprod) return;
+  project.postprod.updated = new Date().toISOString().slice(0, 10);
+  DB.updateProject(_currentPostprodProjectId, { postprod: project.postprod });
+}
+
+function onPostprodField(path, value) {
+  const project = DB.getProject(_currentPostprodProjectId);
+  if (!project || !project.postprod) return;
+  const parts = path.split('.');
+  let ref = project.postprod;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!ref[parts[i]]) ref[parts[i]] = {};
+    ref = ref[parts[i]];
+  }
+  ref[parts[parts.length - 1]] = value;
+  schedulePostprodSave();
+}
+
+function onPostprodSectionStatus(sectionId, value) {
+  onPostprodField(`sections.${sectionId}.status`, value);
+  renderPostprodEditor();
+}
+
+function addPostprodDeliverable() {
+  const project = DB.getProject(_currentPostprodProjectId);
+  if (!project || !project.postprod) return;
+  project.postprod.deliverables.push({ name: '', spec: '', deadline: '', done: false });
+  savePostprodNow();
+  renderPostprodEditor();
+}
+function deletePostprodDeliverable(idx) {
+  const project = DB.getProject(_currentPostprodProjectId);
+  if (!project || !project.postprod) return;
+  project.postprod.deliverables.splice(idx, 1);
+  savePostprodNow();
+  renderPostprodEditor();
+}
+function onPostprodDeliverableField(idx, field, value) {
+  const project = DB.getProject(_currentPostprodProjectId);
+  if (!project || !project.postprod) return;
+  if (!project.postprod.deliverables[idx]) return;
+  project.postprod.deliverables[idx][field] = value;
+  schedulePostprodSave();
+}
+function togglePostprodDeliverableDone(idx) {
+  const project = DB.getProject(_currentPostprodProjectId);
+  if (!project || !project.postprod) return;
+  if (!project.postprod.deliverables[idx]) return;
+  project.postprod.deliverables[idx].done = !project.postprod.deliverables[idx].done;
+  savePostprodNow();
+  renderPostprodEditor();
+}
+
+function renderPostprodEditor() {
+  const project = DB.getProject(_currentPostprodProjectId);
+  if (!project) return;
+  const pp = ensurePostprod(project);
+  const body = document.getElementById('postprod-body');
+  if (!body) return;
+
+  const sectionStatus = (sid) => (pp.sections[sid] && pp.sections[sid].status) || 'open';
+  const sectionBadge = (st) => st === 'done' ? '<span style="background:#e8f5e9;color:#0a8a3a;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:800;letter-spacing:0.5px;">✓ ГОТОВО</span>'
+                              : st === 'inprog' ? '<span style="background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:800;letter-spacing:0.5px;">⚡ В РАБОТЕ</span>'
+                              : '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:800;letter-spacing:0.5px;">○ ОТКРЫТО</span>';
+
+  const done = POSTPROD_SECTIONS.filter(s => sectionStatus(s.id) === 'done').length;
+  const inprog = POSTPROD_SECTIONS.filter(s => sectionStatus(s.id) === 'inprog').length;
+  const total = POSTPROD_SECTIONS.length;
+  const progress = Math.round((done / total) * 100);
+
+  let html = `
+    <div style="padding:18px 22px;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;font-weight:700;">Post-production brief · продюсер + монтажёр</div>
+          <div style="font-size:22px;font-weight:900;margin-top:4px;line-height:1.1;">${escapeHtml(project.name || '—')}</div>
+          <div style="font-size:11px;opacity:0.8;margin-top:3px;font-weight:600;">${escapeHtml(project.type || '—')} · обновлено ${escapeHtml(pp.updated || '')} · v${pp.version || 1}</div>
+        </div>
+        <div style="text-align:right;font-size:11px;">
+          <div style="opacity:0.7;letter-spacing:1px;text-transform:uppercase;font-weight:700;">Готовность ТЗ</div>
+          <div style="font-size:24px;font-weight:900;margin-top:2px;line-height:1;">${progress}%</div>
+          <div style="font-size:10px;opacity:0.8;margin-top:2px;">${done}/${total} разделов · ${inprog} в работе</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <input type="url" placeholder="🔗 Внешняя ссылка (Notion / Frame.io / Google Doc)" value="${escapeHtml(pp.externalLink || '')}" oninput="onPostprodField('externalLink',this.value)" style="width:100%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:white;padding:6px 10px;border-radius:4px;font-size:12px;font-family:'Inter',sans-serif;">
+      </div>
+    </div>`;
+
+  // ─ Роли
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);background:#fafaf5;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:white;border:1px solid #e8dec4;border-radius:6px;padding:12px 14px;">
+        <div style="font-size:10px;letter-spacing:1.5px;color:#6b1d1f;font-weight:800;text-transform:uppercase;margin-bottom:6px;">[ П ] Пост-продюсер</div>
+        <input class="cs-input" value="${escapeHtml(pp.postProducer.name || '')}" placeholder="ФИО" oninput="onPostprodField('postProducer.name',this.value)" style="padding:5px 8px;font-size:12px;font-weight:700;margin-bottom:4px;">
+        <input class="cs-input" value="${escapeHtml(pp.postProducer.telegram || '')}" placeholder="Telegram · @username" oninput="onPostprodField('postProducer.telegram',this.value)" style="padding:5px 8px;font-size:11px;">
+      </div>
+      <div style="background:white;border:1px solid #e8dec4;border-radius:6px;padding:12px 14px;">
+        <div style="font-size:10px;letter-spacing:1.5px;color:#6b1d1f;font-weight:800;text-transform:uppercase;margin-bottom:6px;">[ М ] Режиссёр монтажа</div>
+        <input class="cs-input" value="${escapeHtml(pp.editor.name || '')}" placeholder="ФИО монтажёра" oninput="onPostprodField('editor.name',this.value)" style="padding:5px 8px;font-size:12px;font-weight:700;margin-bottom:4px;">
+        <input class="cs-input" value="${escapeHtml(pp.editor.telegram || '')}" placeholder="Telegram · @username" oninput="onPostprodField('editor.telegram',this.value)" style="padding:5px 8px;font-size:11px;">
+      </div>
+    </div>`;
+
+  // ─ Разделы
+  html += `<div style="padding:14px 22px;">`;
+  POSTPROD_SECTIONS.forEach(s => {
+    const sec = pp.sections[s.id] || { content: '', deadline: '', status: 'open' };
+    const st = sec.status || 'open';
+    html += `
+      <div style="background:var(--bg-2);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="background:#6b1d1f;color:white;width:28px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;">${s.n}</div>
+            <div>
+              <div style="font-weight:800;font-size:14px;color:var(--ink);">${escapeHtml(s.title)}</div>
+              <div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-top:2px;">OWNER: ${escapeHtml(s.owner)}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${sectionBadge(st)}
+            <select class="cs-input" style="padding:4px 6px;font-size:11px;width:auto;" onchange="onPostprodSectionStatus('${s.id}',this.value)">
+              <option value="open" ${st==='open'?'selected':''}>Открыто</option>
+              <option value="inprog" ${st==='inprog'?'selected':''}>В работе</option>
+              <option value="done" ${st==='done'?'selected':''}>Готово</option>
+            </select>
+            <input type="date" class="cs-input" value="${escapeHtml(sec.deadline || '')}" oninput="onPostprodField('sections.${s.id}.deadline',this.value)" style="padding:4px 6px;font-size:11px;width:auto;" title="Дедлайн раздела">
+          </div>
+        </div>
+        <textarea class="cs-input" rows="3" placeholder="${escapeHtml(s.placeholder)}" oninput="onPostprodField('sections.${s.id}.content',this.value)" style="resize:vertical;font-size:12px;line-height:1.45;">${escapeHtml(sec.content || '')}</textarea>
+      </div>`;
+  });
+  html += `</div>`;
+
+  // ─ Deliverables
+  html += `
+    <div style="padding:14px 22px;border-top:1px solid var(--line);background:#fafaf5;">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>📦 Финальные мастер-форматы</span>
+        <button onclick="addPostprodDeliverable()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Формат</button>
+      </div>
+      ${pp.deliverables.length === 0 ? '<div style="font-size:11px;color:var(--muted);padding:8px 0;">Добавь мастер-форматы: например <b>16×9 1080p H.264 @ 25fps</b>, <b>9×16 для соцсетей</b>, <b>Cinema DCP</b>…</div>' : ''}
+      ${pp.deliverables.map((d, idx) => `
+        <div style="display:grid;grid-template-columns:30px 1fr 2fr 130px 30px;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);">
+          <div onclick="togglePostprodDeliverableDone(${idx})" style="cursor:pointer;text-align:center;font-size:18px;">${d.done ? '✅' : '⬜'}</div>
+          <input class="cs-input" value="${escapeHtml(d.name || '')}" placeholder="Название (16:9 1080p)" style="padding:4px 6px;font-size:11px;" oninput="onPostprodDeliverableField(${idx},'name',this.value)">
+          <input class="cs-input" value="${escapeHtml(d.spec || '')}" placeholder="H.264 25fps стерео LUFS −14" style="padding:4px 6px;font-size:11px;" oninput="onPostprodDeliverableField(${idx},'spec',this.value)">
+          <input class="cs-input" type="date" value="${escapeHtml(d.deadline || '')}" style="padding:4px 6px;font-size:11px;" oninput="onPostprodDeliverableField(${idx},'deadline',this.value)">
+          <button onclick="deletePostprodDeliverable(${idx})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:14px;">×</button>
+        </div>
+      `).join('')}
+    </div>`;
+
+  body.innerHTML = html;
+}
+
+/* ===== PDF ТЗ пост-продакшна ===== */
+async function exportPostprodToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  if (!_currentPostprodProjectId) return;
+  const project = DB.getProject(_currentPostprodProjectId);
+  if (!project || !project.postprod) return;
+  const pp = ensurePostprod(project);
+  toast('Готовлю PDF...', 'success');
+  const container = buildPostprodPrintHTML(project, pp);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 2000); });
+    }));
+    const canvas = await html2canvas(container, {
+      scale: 2.5, useCORS: true, backgroundColor: '#ffffff',
+      logging: false, windowWidth: 794
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.height / canvas.width;
+    const imgW = pdfW;
+    const imgH = imgW * ratio;
+    const totalPages = Math.ceil(imgH / pdfH);
+    const imgData = canvas.toDataURL('image/png');
+    let pos = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pos -= pdfH;
+    }
+    const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`ТЗ_постпрод_${slug}_v${pp.version || 1}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка PDF: ' + e.message, 'error');
+  }
+}
+
+function buildPostprodPrintHTML(project, pp) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:500;line-height:1.4;';
+  const PAD = 28;
+
+  let html = `
+    <div style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:18px ${PAD}px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="logo.png" alt="ZALOVE" style="height:24px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+        <div>
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;opacity:0.85;font-weight:700;">Post-production brief</div>
+          <div style="font-size:20px;font-weight:900;margin-top:2px;line-height:1;">ТЗ ПОСТ-ПРОДАКШН</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;">
+        <div style="font-size:13px;font-weight:800;">${escapeHtml(project.name || '')}</div>
+        <div style="opacity:0.8;margin-top:2px;">${escapeHtml(project.type || '')} · v${pp.version || 1} · ${escapeHtml(pp.updated || '')}</div>
+      </div>
+    </div>`;
+
+  // Роли
+  html += `
+    <div style="padding:14px ${PAD}px;display:grid;grid-template-columns:1fr 1fr;gap:14px;background:#f5f5f0;">
+      <div style="background:white;border:1px solid #e8dec4;border-radius:4px;padding:10px 14px;">
+        <div style="font-size:10px;letter-spacing:1.5px;color:#6b1d1f;font-weight:800;text-transform:uppercase;">[ П ] Пост-продюсер</div>
+        <div style="font-weight:800;font-size:13px;margin-top:4px;">${escapeHtml(pp.postProducer.name || '—')}</div>
+        <div style="font-size:10.5px;color:#666;margin-top:2px;">${escapeHtml(pp.postProducer.telegram || '')}</div>
+      </div>
+      <div style="background:white;border:1px solid #e8dec4;border-radius:4px;padding:10px 14px;">
+        <div style="font-size:10px;letter-spacing:1.5px;color:#6b1d1f;font-weight:800;text-transform:uppercase;">[ М ] Режиссёр монтажа</div>
+        <div style="font-weight:800;font-size:13px;margin-top:4px;">${escapeHtml(pp.editor.name || '—')}</div>
+        <div style="font-size:10.5px;color:#666;margin-top:2px;">${escapeHtml(pp.editor.telegram || '')}</div>
+      </div>
+    </div>`;
+
+  // Внешняя ссылка
+  if (pp.externalLink) {
+    html += `<div style="padding:8px ${PAD}px;background:#eef2ff;color:#4338ca;font-size:10px;font-weight:600;">🔗 ${escapeHtml(pp.externalLink)}</div>`;
+  }
+
+  // Разделы
+  POSTPROD_SECTIONS.forEach(s => {
+    const sec = pp.sections[s.id] || {};
+    const st = sec.status || 'open';
+    const stBadge = st === 'done' ? { bg: '#e8f5e9', fg: '#0a8a3a', label: '✓ ГОТОВО' }
+                  : st === 'inprog' ? { bg: '#fef9c3', fg: '#a16207', label: '⚡ В РАБОТЕ' }
+                  : { bg: '#fee2e2', fg: '#991b1b', label: '○ ОТКРЫТО' };
+    html += `
+      <div style="padding:8px ${PAD}px 6px;page-break-inside:avoid;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="background:#6b1d1f;color:white;width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;">${s.n}</div>
+            <div style="font-weight:800;font-size:12px;">${escapeHtml(s.title)}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span style="background:${stBadge.bg};color:${stBadge.fg};padding:1px 6px;border-radius:3px;font-size:8px;font-weight:800;letter-spacing:0.5px;">${stBadge.label}</span>
+            ${sec.deadline ? `<span style="font-size:9px;color:#666;font-weight:700;">→ ${escapeHtml(formatDateRu(sec.deadline))}</span>` : ''}
+          </div>
+        </div>
+        <div style="font-size:8.5px;color:#888;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;margin-left:30px;">OWNER · ${escapeHtml(s.owner)}</div>
+        <div style="font-size:11px;color:#333;line-height:1.5;font-weight:500;margin-left:30px;background:#fafafa;border-left:3px solid #6b1d1f;padding:6px 10px;border-radius:0 3px 3px 0;white-space:pre-wrap;">${escapeHtml(sec.content || '—')}</div>
+      </div>`;
+  });
+
+  // Deliverables
+  if (pp.deliverables.length > 0) {
+    html += `
+      <div style="padding:12px ${PAD}px;">
+        <div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;background:#f5f5f0;padding:6px 12px;border-left:5px solid #6b1d1f;border-radius:0 4px 4px 0;">📦 Финальные мастер-форматы</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;background:white;">
+          <thead><tr style="background:#0a0907;color:white;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;">
+            <th style="padding:5px 8px;width:30px;text-align:center;">✓</th>
+            <th style="padding:5px 8px;text-align:left;width:24%;">Формат</th>
+            <th style="padding:5px 8px;text-align:left;">Спека</th>
+            <th style="padding:5px 8px;text-align:left;width:18%;">Дедлайн</th>
+          </tr></thead>
+          <tbody>
+            ${pp.deliverables.map((d, idx) => `
+              <tr style="background:${idx % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #ececec;">
+                <td style="padding:5px 8px;text-align:center;font-weight:700;">${d.done ? '✅' : '○'}</td>
+                <td style="padding:5px 8px;font-weight:700;">${escapeHtml(d.name || '')}</td>
+                <td style="padding:5px 8px;color:#333;">${escapeHtml(d.spec || '')}</td>
+                <td style="padding:5px 8px;color:#555;">${d.deadline ? escapeHtml(formatDateRu(d.deadline)) : ''}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  html += `
+    <div style="padding:8px ${PAD}px 14px;font-size:8.5px;color:#999;text-align:center;line-height:1.5;font-weight:600;border-top:1px solid #ddd;margin-top:10px;">
+      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670 · ${escapeHtml(project.name || '')} · ТЗ пост-продакшн v${pp.version || 1} · ${new Date().toLocaleDateString('ru-RU')}
+    </div>`;
+
+  c.innerHTML = html;
+  return c;
+}
+/* ===== END ТЗ пост-продакшна ===== */
+
+/* =====================================================
+   ПРОДАКШН-РАПОРТ — wrap отчёт смены
+   ===================================================== */
+let _currentReportProjectId = null;
+let _currentReportDay = 1;
+let _reportSaveTimer = null;
+
+const REPORT_TIMING_STAGES = ['Crew call', 'Артисты на площадке', 'Первая команда «Мотор»', 'Обед / перерыв', 'Последняя команда «Стоп»', 'Wrap'];
+const REPORT_CREW_DEFAULTS = ['Режиссёр', 'DOP', 'Продюсер', 'Гафер / свет', '1AC / фокус-пуллер', 'Звук', 'Художник / реквизит', 'Костюм / грим'];
+const REPORT_EQUIPMENT_DEFAULTS = ['Камера / оптика', 'Свет', 'Звук', 'Стабилизация / тележка / кран', 'Грузовая / транспорт'];
+const REPORT_FINANCE_DEFAULTS = ['Гонорары команды', 'Гонорары артистов', 'Техника / аренда', 'Локация', 'Транспорт', 'Кейтеринг', 'Прочие расходы'];
+
+function ensureReport(project) {
+  if (!project.reports) project.reports = {};
+  return project.reports;
+}
+function ensureReportDay(project, day) {
+  ensureReport(project);
+  if (!project.reports[day]) {
+    project.reports[day] = {
+      day, // номер смены
+      version: 1,
+      updated: new Date().toISOString().slice(0, 10),
+      // 1. Информация
+      info: {
+        date: '',
+        type: project.type || '',
+        location: '',
+        client: project.client || '',
+        brand: project.client || '',
+        artist: project.artist || '',
+        productionCompany: 'ZALOVE PRODUCTION',
+        director: '', dop: '', producer: '', setManager: '',
+        productionDesigner: '', costumer: '', castingDirector: '', soundEngineer: '',
+        totalDays: project.days || 0,
+        currentDay: day,
+        weather: '',
+        sunrise: ''
+      },
+      // 2. Тайминг план/факт
+      timing: REPORT_TIMING_STAGES.map(s => ({ stage: s, plan: '', fact: '', delta: '', comment: '' })),
+      shotStats: { plannedSetups: '', shotSetups: '', shotTakes: '', overtime: '', plannedShots: '', shotShots: '', defects: '', materialGb: '' },
+      // 3-4. Артисты + Крю
+      cast: [],
+      crew: REPORT_CREW_DEFAULTS.map(role => ({ role, name: '', call: '', arrived: '', late: '', notes: '' })),
+      // 5. Техника
+      equipment: REPORT_EQUIPMENT_DEFAULTS.map(unit => ({ unit, state: '', breakdowns: '', replacements: '', owner: '' })),
+      // 6. Логистика
+      logistics: { permits: '', transport: '', catering: '', water: '', safety: '', conflicts: '', cleanup: '', noise: '' },
+      // 7. Финансы
+      finance: REPORT_FINANCE_DEFAULTS.map(item => ({ item, budget: '', fact: '', delta: '', reason: '' })),
+      // 8. Ошибки
+      mistakes: [],
+      // 9. Что сработало / не сработало
+      keepDoing: ['', '', ''],
+      fixStop: ['', '', ''],
+      // 10. План к следующей смене
+      actionItems: [],
+      // 11. Оценка
+      eval: {
+        rating: '',
+        goalsAchieved: '',
+        needsReshoot: '',
+        reshootDetails: '',
+        readyForEdit: '',
+        crewMood: '',
+        artistSatisfaction: '',
+        clientSatisfaction: '',
+        siteReadiness: ''
+      },
+      // 12. Общие комментарии
+      comments: '',
+      // 13. Подписи
+      producerName: '',
+      directorName: '',
+      producerDate: '',
+      directorDate: ''
+    };
+  }
+  return project.reports[day];
+}
+
+function openReportEditor() {
+  if (!_currentProjectId) return;
+  closeAll();
+  _currentReportProjectId = _currentProjectId;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  _currentReportDay = 1;
+  ensureReportDay(project, _currentReportDay);
+  document.getElementById('m-report').classList.add('active');
+  document.getElementById('report-title').textContent = 'Продакшн-рапорт · ' + (project.name || 'проект');
+  renderReportEditor();
+}
+
+function scheduleReportSave() {
+  if (_reportSaveTimer) clearTimeout(_reportSaveTimer);
+  _reportSaveTimer = setTimeout(saveReportNow, 350);
+}
+function saveReportNow() {
+  if (!_currentReportProjectId) return;
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project || !project.reports) return;
+  const rep = project.reports[_currentReportDay];
+  if (!rep) return;
+  rep.updated = new Date().toISOString().slice(0, 10);
+  DB.updateProject(_currentReportProjectId, { reports: project.reports });
+}
+
+function onReportField(path, value) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  const parts = path.split('.');
+  let ref = rep;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const k = parts[i];
+    // Support indexes like timing.0.fact
+    if (!isNaN(Number(k))) {
+      ref = ref[Number(k)];
+    } else {
+      if (!ref[k]) ref[k] = {};
+      ref = ref[k];
+    }
+  }
+  const last = parts[parts.length - 1];
+  if (!isNaN(Number(last))) {
+    ref[Number(last)] = value;
+  } else {
+    ref[last] = value;
+  }
+  // Авто-считаем дельты для тайминга и финансов
+  if (parts[0] === 'timing') {
+    const t = rep.timing[Number(parts[1])];
+    if (t && t.plan && t.fact) t.delta = _calcTimeDelta(t.plan, t.fact);
+  }
+  if (parts[0] === 'finance') {
+    const f = rep.finance[Number(parts[1])];
+    if (f && (f.budget !== '' && f.fact !== '')) {
+      const b = parseFloat(f.budget) || 0; const fc = parseFloat(f.fact) || 0;
+      f.delta = (fc - b).toString();
+    }
+  }
+  scheduleReportSave();
+}
+
+function _calcTimeDelta(plan, fact) {
+  if (!plan || !fact) return '';
+  const [pH, pM] = plan.split(':').map(Number);
+  const [fH, fM] = fact.split(':').map(Number);
+  if ([pH,pM,fH,fM].some(isNaN)) return '';
+  const diff = (fH * 60 + fM) - (pH * 60 + pM);
+  const sign = diff > 0 ? '+' : (diff < 0 ? '−' : '');
+  const abs = Math.abs(diff);
+  if (abs === 0) return '0';
+  return `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, '0')}`;
+}
+
+function setReportDay(day) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  _currentReportDay = day;
+  ensureReportDay(project, day);
+  renderReportEditor();
+}
+function pullReportFromCallsheet() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const cs = (project.callsheets || {})[_currentReportDay];
+  if (!cs) { toast('Нет вызывного на этот день', 'warn'); return; }
+  const rep = ensureReportDay(project, _currentReportDay);
+  if (!cs && !confirm('Подтянуть данные из вызывного дня ' + _currentReportDay + '?')) return;
+  rep.info.date = cs.date || rep.info.date;
+  rep.info.location = cs.locationName || rep.info.location;
+  rep.info.director = cs.directorName || rep.info.director;
+  rep.info.dop = cs.dopName || rep.info.dop;
+  rep.info.producer = cs.producerName || rep.info.producer;
+  rep.info.setManager = cs.setManagerName || rep.info.setManager;
+  // Подтянем артистов из cast вызывного
+  if (cs.cast && cs.cast.length > 0 && rep.cast.length === 0) {
+    rep.cast = cs.cast.map(p => ({ name: (p.position || '') + ' · ' + (p.name || ''), call: p.callTime || '', arrived: '', wrap: '', late: '', notes: '' }));
+  }
+  saveReportNow();
+  renderReportEditor();
+  toast('Подтянуто из вызывного дня ' + _currentReportDay + ' ✓', 'success');
+}
+
+function addReportCast() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.cast.push({ name: '', call: '', arrived: '', wrap: '', late: '', notes: '' });
+  saveReportNow(); renderReportEditor();
+}
+function deleteReportCast(idx) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.cast.splice(idx, 1);
+  saveReportNow(); renderReportEditor();
+}
+function addReportCrew() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.crew.push({ role: '', name: '', call: '', arrived: '', late: '', notes: '' });
+  saveReportNow(); renderReportEditor();
+}
+function deleteReportCrew(idx) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.crew.splice(idx, 1);
+  saveReportNow(); renderReportEditor();
+}
+function addReportEquipment() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.equipment.push({ unit: '', state: '', breakdowns: '', replacements: '', owner: '' });
+  saveReportNow(); renderReportEditor();
+}
+function deleteReportEquipment(idx) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.equipment.splice(idx, 1);
+  saveReportNow(); renderReportEditor();
+}
+function addReportFinance() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.finance.push({ item: '', budget: '', fact: '', delta: '', reason: '' });
+  saveReportNow(); renderReportEditor();
+}
+function deleteReportFinance(idx) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.finance.splice(idx, 1);
+  saveReportNow(); renderReportEditor();
+}
+function addReportMistake() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.mistakes.push({ event: '', cause: '', severity: 2, owner: '', impact: '' });
+  saveReportNow(); renderReportEditor();
+}
+function deleteReportMistake(idx) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.mistakes.splice(idx, 1);
+  saveReportNow(); renderReportEditor();
+}
+function addReportAction() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.actionItems.push({ todo: '', owner: '', deadline: '', status: 'open' });
+  saveReportNow(); renderReportEditor();
+}
+function deleteReportAction(idx) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.actionItems.splice(idx, 1);
+  saveReportNow(); renderReportEditor();
+}
+function addKeepDoing() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.keepDoing.push(''); saveReportNow(); renderReportEditor();
+}
+function addFixStop() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.fixStop.push(''); saveReportNow(); renderReportEditor();
+}
+
+function _sevColor(s) {
+  s = Number(s) || 0;
+  if (s <= 1) return { bg: '#e8f5e9', fg: '#0a8a3a', label: 'SEV 1' };
+  if (s === 2) return { bg: '#fef9c3', fg: '#a16207', label: 'SEV 2' };
+  if (s === 3) return { bg: '#fed7aa', fg: '#9a3412', label: 'SEV 3' };
+  if (s === 4) return { bg: '#fecaca', fg: '#991b1b', label: 'SEV 4' };
+  return { bg: '#6b1d1f', fg: '#ffffff', label: 'SEV 5' };
+}
+
+function renderReportEditor() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  const body = document.getElementById('report-body');
+  if (!body) return;
+
+  const totalDays = Math.max(1, project.days || rep.info.totalDays || 1);
+
+  // === Шапка
+  let html = `
+    <div style="padding:16px 22px;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;font-weight:700;">Shoot Day Wrap · продакшн-рапорт смены</div>
+          <div style="font-size:22px;font-weight:900;margin-top:3px;line-height:1.1;">${escapeHtml(project.name || '—')}</div>
+          <div style="font-size:11px;opacity:0.8;margin-top:3px;font-weight:600;">День ${_currentReportDay} из ${totalDays} · обновлено ${escapeHtml(rep.updated || '')}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button onclick="pullReportFromCallsheet()" style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;">↻ Из вызывного</button>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+        ${Array.from({length: totalDays}, (_, i) => i + 1).map(d => `
+          <button onclick="setReportDay(${d})" style="background:${d === _currentReportDay ? 'white' : 'rgba(255,255,255,0.15)'};color:${d === _currentReportDay ? '#3d1416' : 'white'};border:none;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:800;">День ${d}</button>
+        `).join('')}
+      </div>
+    </div>`;
+
+  // === Sec 1: Информация
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">📌 1. Информация о проекте</div>
+      <div class="cs-row-grid cs-3col">
+        <div><div class="cs-field-label">Дата съёмки</div><input class="cs-input" type="date" value="${escapeHtml(rep.info.date || '')}" oninput="onReportField('info.date',this.value)"></div>
+        <div><div class="cs-field-label">Локация</div><input class="cs-input" value="${escapeHtml(rep.info.location || '')}" placeholder="название площадки" oninput="onReportField('info.location',this.value)"></div>
+        <div><div class="cs-field-label">Погода / Темп.</div><input class="cs-input" value="${escapeHtml(rep.info.weather || '')}" placeholder="+18 / +9°C, облачно" oninput="onReportField('info.weather',this.value)"></div>
+      </div>
+      <div class="cs-row-grid cs-3col" style="margin-top:10px;">
+        <div><div class="cs-field-label">Заказчик / Лейбл</div><input class="cs-input" value="${escapeHtml(rep.info.client || '')}" oninput="onReportField('info.client',this.value)"></div>
+        <div><div class="cs-field-label">Бренд / Рекламодатель</div><input class="cs-input" value="${escapeHtml(rep.info.brand || '')}" oninput="onReportField('info.brand',this.value)"></div>
+        <div><div class="cs-field-label">Артист / Исполнитель</div><input class="cs-input" value="${escapeHtml(rep.info.artist || '')}" oninput="onReportField('info.artist',this.value)"></div>
+      </div>
+      <div class="cs-row-grid cs-3col" style="margin-top:10px;">
+        <div><div class="cs-field-label">Режиссёр</div><input class="cs-input" value="${escapeHtml(rep.info.director || '')}" oninput="onReportField('info.director',this.value)"></div>
+        <div><div class="cs-field-label">DOP</div><input class="cs-input" value="${escapeHtml(rep.info.dop || '')}" oninput="onReportField('info.dop',this.value)"></div>
+        <div><div class="cs-field-label">Продюсер</div><input class="cs-input" value="${escapeHtml(rep.info.producer || '')}" oninput="onReportField('info.producer',this.value)"></div>
+      </div>
+      <div class="cs-row-grid cs-3col" style="margin-top:10px;">
+        <div><div class="cs-field-label">Директор площадки</div><input class="cs-input" value="${escapeHtml(rep.info.setManager || '')}" oninput="onReportField('info.setManager',this.value)"></div>
+        <div><div class="cs-field-label">Художник-постановщик</div><input class="cs-input" value="${escapeHtml(rep.info.productionDesigner || '')}" oninput="onReportField('info.productionDesigner',this.value)"></div>
+        <div><div class="cs-field-label">Художник по костюмам</div><input class="cs-input" value="${escapeHtml(rep.info.costumer || '')}" oninput="onReportField('info.costumer',this.value)"></div>
+      </div>
+      <div class="cs-row-grid cs-3col" style="margin-top:10px;">
+        <div><div class="cs-field-label">Кастинг-директор</div><input class="cs-input" value="${escapeHtml(rep.info.castingDirector || '')}" oninput="onReportField('info.castingDirector',this.value)"></div>
+        <div><div class="cs-field-label">Звукорежиссёр</div><input class="cs-input" value="${escapeHtml(rep.info.soundEngineer || '')}" oninput="onReportField('info.soundEngineer',this.value)"></div>
+        <div><div class="cs-field-label">Восход / Закат</div><input class="cs-input" value="${escapeHtml(rep.info.sunrise || '')}" placeholder="05:42 / 21:18" oninput="onReportField('info.sunrise',this.value)"></div>
+      </div>
+    </div>`;
+
+  // === Sec 2: Тайминг + статистика
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">⏰ 2. Тайминг смены: план vs факт</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:1px;">
+          <th style="padding:8px 10px;text-align:left;width:24%;">Этап</th>
+          <th style="padding:8px 8px;text-align:center;width:90px;">План</th>
+          <th style="padding:8px 8px;text-align:center;width:90px;">Факт</th>
+          <th style="padding:8px 8px;text-align:center;width:80px;">Δ</th>
+          <th style="padding:8px 10px;text-align:left;">Комментарий</th>
+        </tr></thead>
+        <tbody>
+          ${rep.timing.map((t, i) => `
+            <tr style="border-top:1px solid var(--line);">
+              <td style="padding:5px 10px;font-weight:700;font-size:11px;">${escapeHtml(t.stage)}</td>
+              <td style="padding:3px;"><input class="cs-input cs-time" type="time" value="${escapeHtml(t.plan || '')}" oninput="onReportField('timing.${i}.plan',this.value)" style="padding:4px 6px;font-size:11px;text-align:center;"></td>
+              <td style="padding:3px;"><input class="cs-input cs-time" type="time" value="${escapeHtml(t.fact || '')}" oninput="onReportField('timing.${i}.fact',this.value)" style="padding:4px 6px;font-size:11px;text-align:center;"></td>
+              <td style="padding:3px;text-align:center;font-family:monospace;font-weight:800;color:${t.delta && t.delta.startsWith('+') ? '#b91c1c' : (t.delta && (t.delta.startsWith('−') || t.delta.startsWith('-')) ? '#0a8a3a' : '#666')};">${escapeHtml(t.delta || '')}</td>
+              <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(t.comment || '')}" placeholder="причина" oninput="onReportField('timing.${i}.comment',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;">
+        ${[
+          ['plannedSetups', 'План сетапов'],
+          ['shotSetups', 'Снято сетапов'],
+          ['shotTakes', 'Снято дублей (всего)'],
+          ['overtime', 'Overtime, ч'],
+          ['plannedShots', 'Запланировано кадров'],
+          ['shotShots', 'Снято кадров'],
+          ['defects', 'Брак / пересъёмка'],
+          ['materialGb', 'Материал, ГБ'],
+        ].map(([f, lbl]) => `
+          <div>
+            <div class="cs-field-label" style="font-size:9px;">${lbl}</div>
+            <input class="cs-input" value="${escapeHtml(rep.shotStats[f] || '')}" placeholder="0" oninput="onReportField('shotStats.${f}',this.value)" style="padding:5px 8px;font-size:12px;font-weight:700;">
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+
+  // === Sec 3: Артисты
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>🎭 3. Артисты / актёры (присутствие)</span>
+        <button onclick="addReportCast()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Артист</button>
+      </div>
+      ${rep.cast.length === 0 ? '<div style="font-size:11px;color:var(--muted);">Пусто. Подтяни из вызывного или добавь руками.</div>' : `
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:0.8px;">
+          <th style="padding:6px 8px;text-align:left;">ФИО / роль</th>
+          <th style="padding:6px 6px;text-align:center;width:70px;">Вызов</th>
+          <th style="padding:6px 6px;text-align:center;width:70px;">Приход</th>
+          <th style="padding:6px 6px;text-align:center;width:70px;">Wrap</th>
+          <th style="padding:6px 6px;text-align:center;width:80px;">Опозд.</th>
+          <th style="padding:6px 8px;text-align:left;">Замечания / качество</th>
+          <th style="padding:6px;width:30px;"></th>
+        </tr></thead>
+        <tbody>${rep.cast.map((c, i) => `
+          <tr style="border-top:1px solid var(--line);">
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(c.name || '')}" placeholder="Артист — Имя" oninput="onReportField('cast.${i}.name',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;"><input class="cs-input cs-time" type="time" value="${escapeHtml(c.call || '')}" oninput="onReportField('cast.${i}.call',this.value)" style="padding:4px;font-size:11px;text-align:center;"></td>
+            <td style="padding:3px;"><input class="cs-input cs-time" type="time" value="${escapeHtml(c.arrived || '')}" oninput="onReportField('cast.${i}.arrived',this.value)" style="padding:4px;font-size:11px;text-align:center;"></td>
+            <td style="padding:3px;"><input class="cs-input cs-time" type="time" value="${escapeHtml(c.wrap || '')}" oninput="onReportField('cast.${i}.wrap',this.value)" style="padding:4px;font-size:11px;text-align:center;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(c.late || '')}" placeholder="30 мин" oninput="onReportField('cast.${i}.late',this.value)" style="padding:4px;font-size:11px;text-align:center;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(c.notes || '')}" placeholder="как сыграли" oninput="onReportField('cast.${i}.notes',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;text-align:center;"><button onclick="deleteReportCast(${i})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:13px;">×</button></td>
+          </tr>`).join('')}</tbody>
+      </table>`}
+    </div>`;
+
+  // === Sec 4: Крю
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>👥 4. Съёмочная группа (присутствие)</span>
+        <button onclick="addReportCrew()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Член группы</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:0.8px;">
+          <th style="padding:6px 8px;text-align:left;width:24%;">Должность</th>
+          <th style="padding:6px 8px;text-align:left;width:20%;">ФИО</th>
+          <th style="padding:6px 6px;text-align:center;width:70px;">Вызов</th>
+          <th style="padding:6px 6px;text-align:center;width:70px;">Приход</th>
+          <th style="padding:6px 6px;text-align:center;width:80px;">Опозд./отс.</th>
+          <th style="padding:6px 8px;text-align:left;">Замечания</th>
+          <th style="padding:6px;width:30px;"></th>
+        </tr></thead>
+        <tbody>${rep.crew.map((c, i) => `
+          <tr style="border-top:1px solid var(--line);">
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(c.role || '')}" placeholder="должность" oninput="onReportField('crew.${i}.role',this.value)" style="padding:4px 6px;font-size:11px;font-weight:700;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(c.name || '')}" placeholder="ФИО" oninput="onReportField('crew.${i}.name',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;"><input class="cs-input cs-time" type="time" value="${escapeHtml(c.call || '')}" oninput="onReportField('crew.${i}.call',this.value)" style="padding:4px;font-size:11px;text-align:center;"></td>
+            <td style="padding:3px;"><input class="cs-input cs-time" type="time" value="${escapeHtml(c.arrived || '')}" oninput="onReportField('crew.${i}.arrived',this.value)" style="padding:4px;font-size:11px;text-align:center;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(c.late || '')}" placeholder="—" oninput="onReportField('crew.${i}.late',this.value)" style="padding:4px;font-size:11px;text-align:center;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(c.notes || '')}" placeholder="" oninput="onReportField('crew.${i}.notes',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;text-align:center;"><button onclick="deleteReportCrew(${i})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:13px;">×</button></td>
+          </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+
+  // === Sec 5: Техника
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>🎥 5. Техника и оборудование</span>
+        <button onclick="addReportEquipment()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Единица</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:0.8px;">
+          <th style="padding:6px 8px;text-align:left;width:22%;">Единица</th>
+          <th style="padding:6px 8px;text-align:left;width:16%;">Состояние</th>
+          <th style="padding:6px 8px;text-align:left;width:22%;">Поломки</th>
+          <th style="padding:6px 8px;text-align:left;width:18%;">Замены</th>
+          <th style="padding:6px 8px;text-align:left;">Ответственный</th>
+          <th style="padding:6px;width:30px;"></th>
+        </tr></thead>
+        <tbody>${rep.equipment.map((e, i) => `
+          <tr style="border-top:1px solid var(--line);">
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(e.unit || '')}" placeholder="Камера / оптика" oninput="onReportField('equipment.${i}.unit',this.value)" style="padding:4px 6px;font-size:11px;font-weight:700;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(e.state || '')}" placeholder="ОК / проблема" oninput="onReportField('equipment.${i}.state',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(e.breakdowns || '')}" placeholder="—" oninput="onReportField('equipment.${i}.breakdowns',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(e.replacements || '')}" oninput="onReportField('equipment.${i}.replacements',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(e.owner || '')}" oninput="onReportField('equipment.${i}.owner',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;text-align:center;"><button onclick="deleteReportEquipment(${i})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:13px;">×</button></td>
+          </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+
+  // === Sec 6: Логистика
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">📦 6. Логистика, безопасность, питание</div>
+      <div class="cs-row-grid cs-2col">
+        ${[
+          ['permits', 'Согласование локации / разрешения'],
+          ['transport', 'Транспорт (трансферы, парковка)'],
+          ['catering', 'Кейтеринг / обед'],
+          ['water', 'Питьевая вода / напитки'],
+          ['safety', 'Инциденты по безопасности / травмы'],
+          ['conflicts', 'Конфликты на площадке / третьи лица'],
+          ['cleanup', 'Уборка локации / возврат состояния'],
+          ['noise', 'Соблюдение тишины / соседи'],
+        ].map(([f, lbl]) => `
+          <div>
+            <div class="cs-field-label">${lbl}</div>
+            <input class="cs-input" value="${escapeHtml(rep.logistics[f] || '')}" oninput="onReportField('logistics.${f}',this.value)">
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+
+  // === Sec 7: Финансы
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>💰 7. Финансы: план vs факт</span>
+        <button onclick="addReportFinance()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Статья</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:0.8px;">
+          <th style="padding:6px 8px;text-align:left;width:24%;">Статья</th>
+          <th style="padding:6px 8px;text-align:right;width:14%;">Бюджет ₽</th>
+          <th style="padding:6px 8px;text-align:right;width:14%;">Факт ₽</th>
+          <th style="padding:6px 8px;text-align:right;width:12%;">Δ ₽</th>
+          <th style="padding:6px 8px;text-align:left;">Причина</th>
+          <th style="padding:6px;width:30px;"></th>
+        </tr></thead>
+        <tbody>${rep.finance.map((f, i) => {
+          const d = parseFloat(f.delta || 0);
+          const dColor = d > 0 ? '#b91c1c' : (d < 0 ? '#0a8a3a' : '#666');
+          return `
+            <tr style="border-top:1px solid var(--line);">
+              <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(f.item || '')}" oninput="onReportField('finance.${i}.item',this.value)" style="padding:4px 6px;font-size:11px;font-weight:700;"></td>
+              <td style="padding:3px;"><input class="cs-input" type="number" value="${escapeHtml(f.budget || '')}" oninput="onReportField('finance.${i}.budget',this.value)" style="padding:4px 6px;font-size:11px;text-align:right;font-family:'Montserrat',monospace;"></td>
+              <td style="padding:3px;"><input class="cs-input" type="number" value="${escapeHtml(f.fact || '')}" oninput="onReportField('finance.${i}.fact',this.value)" style="padding:4px 6px;font-size:11px;text-align:right;font-family:'Montserrat',monospace;"></td>
+              <td style="padding:5px 8px;text-align:right;font-family:'Montserrat',monospace;font-weight:800;color:${dColor};">${f.delta !== '' && !isNaN(d) ? (d > 0 ? '+' : '') + d.toLocaleString('ru-RU') : ''}</td>
+              <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(f.reason || '')}" oninput="onReportField('finance.${i}.reason',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+              <td style="padding:3px;text-align:center;"><button onclick="deleteReportFinance(${i})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:13px;">×</button></td>
+            </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+
+  // === Sec 8: Ошибки
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>⚠ 8. Ошибки и недочёты на площадке</span>
+        <button onclick="addReportMistake()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Запись</button>
+      </div>
+      ${rep.mistakes.length === 0 ? '<div style="font-size:11px;color:var(--muted);">Ничего не записано. Severity: 1 мелкое · 2 повлияло на тайминг · 3 на качество · 4 сорвало план/деньги · 5 травма/срыв.</div>' : `
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:0.8px;">
+          <th style="padding:6px;width:30px;text-align:center;">#</th>
+          <th style="padding:6px 8px;text-align:left;width:24%;">Что произошло</th>
+          <th style="padding:6px 8px;text-align:left;width:24%;">Причина (root cause)</th>
+          <th style="padding:6px 6px;text-align:center;width:80px;">Severity</th>
+          <th style="padding:6px 8px;text-align:left;width:14%;">Кто отвечает</th>
+          <th style="padding:6px 8px;text-align:left;">Последствие / impact</th>
+          <th style="padding:6px;width:30px;"></th>
+        </tr></thead>
+        <tbody>${rep.mistakes.map((m, i) => {
+          const sc = _sevColor(m.severity);
+          return `
+            <tr style="border-top:1px solid var(--line);">
+              <td style="padding:5px;text-align:center;color:var(--muted);font-weight:700;">${i + 1}</td>
+              <td style="padding:3px;"><textarea class="cs-input" rows="2" value="" oninput="onReportField('mistakes.${i}.event',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.event || '')}</textarea></td>
+              <td style="padding:3px;"><textarea class="cs-input" rows="2" oninput="onReportField('mistakes.${i}.cause',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.cause || '')}</textarea></td>
+              <td style="padding:3px;text-align:center;background:${sc.bg};color:${sc.fg};font-weight:800;">
+                <select class="cs-input" style="padding:4px;font-size:11px;text-align:center;font-weight:800;background:${sc.bg};color:${sc.fg};border:none;" onchange="onReportField('mistakes.${i}.severity',parseInt(this.value));renderReportEditor();">
+                  ${[1,2,3,4,5].map(v => `<option value="${v}" ${Number(m.severity)===v?'selected':''}>SEV ${v}</option>`).join('')}
+                </select>
+              </td>
+              <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(m.owner || '')}" oninput="onReportField('mistakes.${i}.owner',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+              <td style="padding:3px;"><textarea class="cs-input" rows="2" oninput="onReportField('mistakes.${i}.impact',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.impact || '')}</textarea></td>
+              <td style="padding:3px;text-align:center;"><button onclick="deleteReportMistake(${i})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:13px;">×</button></td>
+            </tr>`;
+        }).join('')}</tbody>
+      </table>`}
+    </div>`;
+
+  // === Sec 9: Keep Doing / Fix Stop
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">⭐ 9. Что сработало / что нужно улучшить</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div style="font-weight:800;color:#0a8a3a;font-size:12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+            <span>✓ Keep doing (что оставляем)</span>
+            <button onclick="addKeepDoing()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:11px;">＋</button>
+          </div>
+          ${rep.keepDoing.map((v, i) => `<input class="cs-input" value="${escapeHtml(v || '')}" placeholder="• что хорошо сработало" oninput="onReportField('keepDoing.${i}',this.value)" style="margin-bottom:5px;font-size:12px;">`).join('')}
+        </div>
+        <div>
+          <div style="font-weight:800;color:#b91c1c;font-size:12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+            <span>✗ Fix / stop (что улучшить)</span>
+            <button onclick="addFixStop()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:11px;">＋</button>
+          </div>
+          ${rep.fixStop.map((v, i) => `<input class="cs-input" value="${escapeHtml(v || '')}" placeholder="• что надо исправить" oninput="onReportField('fixStop.${i}',this.value)" style="margin-bottom:5px;font-size:12px;">`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  // === Sec 10: План действий
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>🎯 10. План действий к следующей смене</span>
+        <button onclick="addReportAction()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Задача</button>
+      </div>
+      ${rep.actionItems.length === 0 ? '<div style="font-size:11px;color:var(--muted);">Добавь action items для следующей смены.</div>' : `
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:0.8px;">
+          <th style="padding:6px;width:30px;text-align:center;">#</th>
+          <th style="padding:6px 8px;text-align:left;">Что делаем</th>
+          <th style="padding:6px 8px;text-align:left;width:16%;">Кто</th>
+          <th style="padding:6px 8px;text-align:center;width:130px;">Дедлайн</th>
+          <th style="padding:6px 8px;text-align:left;width:100px;">Статус</th>
+          <th style="padding:6px;width:30px;"></th>
+        </tr></thead>
+        <tbody>${rep.actionItems.map((a, i) => `
+          <tr style="border-top:1px solid var(--line);">
+            <td style="padding:5px;text-align:center;color:var(--muted);font-weight:700;">${i + 1}</td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(a.todo || '')}" placeholder="что делаем" oninput="onReportField('actionItems.${i}.todo',this.value)" style="padding:4px 6px;font-size:11px;font-weight:700;"></td>
+            <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(a.owner || '')}" placeholder="кто" oninput="onReportField('actionItems.${i}.owner',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;"><input class="cs-input" type="date" value="${escapeHtml(a.deadline || '')}" oninput="onReportField('actionItems.${i}.deadline',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+            <td style="padding:3px;">
+              <select class="cs-input" onchange="onReportField('actionItems.${i}.status',this.value)" style="padding:4px 6px;font-size:11px;">
+                <option value="open" ${a.status==='open'?'selected':''}>Открыто</option>
+                <option value="inprog" ${a.status==='inprog'?'selected':''}>В работе</option>
+                <option value="done" ${a.status==='done'?'selected':''}>Готово</option>
+              </select>
+            </td>
+            <td style="padding:3px;text-align:center;"><button onclick="deleteReportAction(${i})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:13px;">×</button></td>
+          </tr>`).join('')}</tbody>
+      </table>`}
+    </div>`;
+
+  // === Sec 11: Оценка смены
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">📊 11. Итоговая оценка смены</div>
+      <div class="cs-row-grid cs-3col">
+        <div>
+          <div class="cs-field-label">Оценка смены (1–10)</div>
+          <input class="cs-input" type="number" min="1" max="10" value="${escapeHtml(rep.eval.rating || '')}" oninput="onReportField('eval.rating',this.value)" style="font-weight:800;font-size:14px;">
+        </div>
+        <div>
+          <div class="cs-field-label">Цели смены достигнуты?</div>
+          <select class="cs-input" onchange="onReportField('eval.goalsAchieved',this.value)">
+            <option value="">—</option>
+            <option value="full" ${rep.eval.goalsAchieved==='full'?'selected':''}>✓ Да</option>
+            <option value="partial" ${rep.eval.goalsAchieved==='partial'?'selected':''}>⚡ Частично</option>
+            <option value="no" ${rep.eval.goalsAchieved==='no'?'selected':''}>✗ Нет</option>
+          </select>
+        </div>
+        <div>
+          <div class="cs-field-label">Требуется пересъёмка?</div>
+          <select class="cs-input" onchange="onReportField('eval.needsReshoot',this.value);renderReportEditor();">
+            <option value="">—</option>
+            <option value="no" ${rep.eval.needsReshoot==='no'?'selected':''}>Нет</option>
+            <option value="yes" ${rep.eval.needsReshoot==='yes'?'selected':''}>Да</option>
+          </select>
+        </div>
+      </div>
+      ${rep.eval.needsReshoot === 'yes' ? `
+        <div style="margin-top:10px;">
+          <div class="cs-field-label">Что именно пересъёмка</div>
+          <input class="cs-input" value="${escapeHtml(rep.eval.reshootDetails || '')}" placeholder="сцена, причина, бюджет" oninput="onReportField('eval.reshootDetails',this.value)">
+        </div>` : ''}
+      <div class="cs-row-grid cs-2col" style="margin-top:10px;">
+        <div>
+          <div class="cs-field-label">Материал готов к монтажу?</div>
+          <select class="cs-input" onchange="onReportField('eval.readyForEdit',this.value)">
+            <option value="">—</option>
+            <option value="yes" ${rep.eval.readyForEdit==='yes'?'selected':''}>✓ Да</option>
+            <option value="after" ${rep.eval.readyForEdit==='after'?'selected':''}>После доработки</option>
+          </select>
+        </div>
+        <div>
+          <div class="cs-field-label">Готовность площадки на старте</div>
+          <select class="cs-input" onchange="onReportField('eval.siteReadiness',this.value)">
+            <option value="">—</option>
+            <option value="full" ${rep.eval.siteReadiness==='full'?'selected':''}>Полная</option>
+            <option value="partial" ${rep.eval.siteReadiness==='partial'?'selected':''}>Частичная</option>
+            <option value="low" ${rep.eval.siteReadiness==='low'?'selected':''}>Низкая</option>
+          </select>
+        </div>
+      </div>
+      <div class="cs-row-grid cs-3col" style="margin-top:10px;">
+        <div>
+          <div class="cs-field-label">Настроение в группе</div>
+          <select class="cs-input" onchange="onReportField('eval.crewMood',this.value)">
+            <option value="">—</option>
+            <option value="great" ${rep.eval.crewMood==='great'?'selected':''}>Отлично</option>
+            <option value="ok" ${rep.eval.crewMood==='ok'?'selected':''}>Норм</option>
+            <option value="tense" ${rep.eval.crewMood==='tense'?'selected':''}>Напряжённо</option>
+          </select>
+        </div>
+        <div>
+          <div class="cs-field-label">Удовлетворённость артиста</div>
+          <select class="cs-input" onchange="onReportField('eval.artistSatisfaction',this.value)">
+            <option value="">—</option>
+            <option value="high" ${rep.eval.artistSatisfaction==='high'?'selected':''}>Высокая</option>
+            <option value="medium" ${rep.eval.artistSatisfaction==='medium'?'selected':''}>Средняя</option>
+            <option value="low" ${rep.eval.artistSatisfaction==='low'?'selected':''}>Низкая</option>
+          </select>
+        </div>
+        <div>
+          <div class="cs-field-label">Удовлетворённость заказчика</div>
+          <select class="cs-input" onchange="onReportField('eval.clientSatisfaction',this.value)">
+            <option value="">—</option>
+            <option value="high" ${rep.eval.clientSatisfaction==='high'?'selected':''}>Высокая</option>
+            <option value="medium" ${rep.eval.clientSatisfaction==='medium'?'selected':''}>Средняя</option>
+            <option value="low" ${rep.eval.clientSatisfaction==='low'?'selected':''}>Низкая</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+
+  // === Sec 12: Комментарии
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;">💬 12. Общие комментарии и выводы</div>
+      <textarea class="cs-input" rows="5" placeholder="Что важно зафиксировать словами по итогам смены" oninput="onReportField('comments',this.value)" style="font-size:12px;line-height:1.5;resize:vertical;">${escapeHtml(rep.comments || '')}</textarea>
+    </div>`;
+
+  // === Sec 13: Подписи
+  html += `
+    <div style="padding:14px 22px;background:#fafaf5;">
+      <div class="cs-section-title" style="margin-bottom:10px;">✍ 13. Подписи</div>
+      <div class="cs-row-grid cs-2col">
+        <div>
+          <div class="cs-field-label">Продюсер</div>
+          <input class="cs-input" value="${escapeHtml(rep.producerName || '')}" placeholder="ФИО" oninput="onReportField('producerName',this.value)">
+          <input class="cs-input" type="date" value="${escapeHtml(rep.producerDate || '')}" oninput="onReportField('producerDate',this.value)" style="margin-top:5px;">
+        </div>
+        <div>
+          <div class="cs-field-label">Режиссёр</div>
+          <input class="cs-input" value="${escapeHtml(rep.directorName || '')}" placeholder="ФИО" oninput="onReportField('directorName',this.value)">
+          <input class="cs-input" type="date" value="${escapeHtml(rep.directorDate || '')}" oninput="onReportField('directorDate',this.value)" style="margin-top:5px;">
+        </div>
+      </div>
+    </div>`;
+
+  body.innerHTML = html;
+}
+
+/* ===== PDF продакшн-рапорта ===== */
+async function exportReportToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  if (!_currentReportProjectId) return;
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  toast('Готовлю PDF...', 'success');
+  const container = buildReportPrintHTML(project, rep);
+  document.body.appendChild(container);
+  try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 2000); });
+    }));
+    const canvas = await html2canvas(container, {
+      scale: 2, useCORS: true, backgroundColor: '#ffffff',
+      logging: false, windowWidth: 794
+    });
+    document.body.removeChild(container);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.height / canvas.width;
+    const imgW = pdfW;
+    const imgH = imgW * ratio;
+    const totalPages = Math.ceil(imgH / pdfH);
+    const imgData = canvas.toDataURL('image/png');
+    let pos = 0;
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pos -= pdfH;
+    }
+    const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+    pdf.save(`Рапорт_${slug}_день${_currentReportDay}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('PDF скачан ✓', 'success');
+  } catch (e) {
+    if (container.parentNode) container.parentNode.removeChild(container);
+    console.error(e);
+    toast('Ошибка PDF: ' + e.message, 'error');
+  }
+}
+
+function buildReportPrintHTML(project, rep) {
+  const c = document.createElement('div');
+  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:500;line-height:1.35;';
+  const PAD = 22;
+
+  let html = `
+    <div style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;padding:14px ${PAD}px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="logo.png" alt="ZALOVE" style="height:22px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+        <div>
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;opacity:0.85;font-weight:700;">Shoot Day Wrap</div>
+          <div style="font-size:18px;font-weight:900;margin-top:2px;line-height:1;">ПРОДАКШН-РАПОРТ</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:10.5px;">
+        <div style="font-size:12px;font-weight:800;">${escapeHtml(project.name || '')}</div>
+        <div style="opacity:0.85;margin-top:1px;">День ${_currentReportDay}${project.days ? ' из ' + project.days : ''} · ${escapeHtml(rep.info.date ? formatDateRu(rep.info.date) : rep.updated || '')}</div>
+      </div>
+    </div>`;
+
+  // Info grid
+  const fields = [
+    ['Локация', rep.info.location],
+    ['Заказчик', rep.info.client],
+    ['Бренд', rep.info.brand],
+    ['Артист', rep.info.artist],
+    ['Режиссёр', rep.info.director],
+    ['DOP', rep.info.dop],
+    ['Продюсер', rep.info.producer],
+    ['Дир. площадки', rep.info.setManager],
+    ['Худ-постан.', rep.info.productionDesigner],
+    ['Костюм', rep.info.costumer],
+    ['Звук', rep.info.soundEngineer],
+    ['Погода', rep.info.weather],
+  ].filter(f => f[1]);
+  html += `<div style="padding:10px ${PAD}px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#f5f5f0;font-size:9.5px;">
+    ${fields.map(([k,v]) => `<div><div style="font-size:7.5px;color:#888;letter-spacing:0.8px;text-transform:uppercase;font-weight:700;">${escapeHtml(k)}</div><div style="font-weight:700;margin-top:1px;">${escapeHtml(v)}</div></div>`).join('')}
+  </div>`;
+
+  // Section helper
+  const sec = (title, body, pageBreak) => `
+    <div style="padding:8px ${PAD}px 4px;${pageBreak ? 'page-break-before:always;' : ''}">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;background:#f5f5f0;padding:5px 10px;border-left:4px solid #6b1d1f;border-radius:0 3px 3px 0;margin-bottom:5px;">${title}</div>
+      ${body}
+    </div>`;
+
+  // Timing
+  html += sec('⏰ Тайминг план/факт', `
+    <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+      <thead><tr style="background:#0a0907;color:white;font-size:8px;letter-spacing:0.5px;">
+        <th style="padding:4px 6px;text-align:left;">Этап</th><th style="padding:4px 6px;text-align:center;">План</th><th style="padding:4px 6px;text-align:center;">Факт</th><th style="padding:4px 6px;text-align:center;">Δ</th><th style="padding:4px 6px;text-align:left;">Коммент</th>
+      </tr></thead>
+      <tbody>${rep.timing.map(t => `
+        <tr style="background:#fafafa;border-bottom:1px solid #ececec;">
+          <td style="padding:4px 6px;font-weight:700;">${escapeHtml(t.stage)}</td>
+          <td style="padding:4px 6px;text-align:center;font-family:monospace;">${escapeHtml(t.plan || '—')}</td>
+          <td style="padding:4px 6px;text-align:center;font-family:monospace;">${escapeHtml(t.fact || '—')}</td>
+          <td style="padding:4px 6px;text-align:center;font-family:monospace;font-weight:800;color:${t.delta && t.delta.startsWith('+') ? '#b91c1c' : (t.delta && (t.delta.startsWith('−') || t.delta.startsWith('-')) ? '#0a8a3a' : '#666')};">${escapeHtml(t.delta || '')}</td>
+          <td style="padding:4px 6px;color:#444;">${escapeHtml(t.comment || '')}</td>
+        </tr>`).join('')}</tbody>
+    </table>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px;font-size:9px;">
+      ${[
+        ['План сетапов', rep.shotStats.plannedSetups],['Снято сетапов', rep.shotStats.shotSetups],
+        ['Дублей', rep.shotStats.shotTakes],['Overtime, ч', rep.shotStats.overtime],
+        ['План кадров', rep.shotStats.plannedShots],['Снято кадров', rep.shotStats.shotShots],
+        ['Брак', rep.shotStats.defects],['Материал, ГБ', rep.shotStats.materialGb]
+      ].map(([k,v]) => `<div style="background:#fafafa;border:1px solid #ececec;padding:4px 6px;border-radius:3px;"><div style="font-size:7.5px;color:#888;letter-spacing:0.5px;text-transform:uppercase;font-weight:700;">${k}</div><div style="font-weight:800;margin-top:1px;">${escapeHtml(v || '—')}</div></div>`).join('')}
+    </div>
+  `);
+
+  // Cast + Crew
+  if (rep.cast.length > 0) {
+    html += sec('🎭 Артисты', `
+      <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+        <thead><tr style="background:#5a1719;color:white;font-size:8px;letter-spacing:0.5px;">
+          <th style="padding:4px 6px;text-align:left;">ФИО / роль</th><th style="padding:4px 6px;text-align:center;">Вызов</th><th style="padding:4px 6px;text-align:center;">Приход</th><th style="padding:4px 6px;text-align:center;">Wrap</th><th style="padding:4px 6px;text-align:center;">Опозд.</th><th style="padding:4px 6px;text-align:left;">Замечания</th>
+        </tr></thead>
+        <tbody>${rep.cast.map(c => `
+          <tr style="background:#faf3f3;border-bottom:1px solid #ececec;">
+            <td style="padding:4px 6px;font-weight:700;">${escapeHtml(c.name || '')}</td>
+            <td style="padding:4px 6px;text-align:center;font-family:monospace;">${escapeHtml(c.call || '')}</td>
+            <td style="padding:4px 6px;text-align:center;font-family:monospace;">${escapeHtml(c.arrived || '')}</td>
+            <td style="padding:4px 6px;text-align:center;font-family:monospace;">${escapeHtml(c.wrap || '')}</td>
+            <td style="padding:4px 6px;text-align:center;color:#b91c1c;font-weight:700;">${escapeHtml(c.late || '')}</td>
+            <td style="padding:4px 6px;color:#444;">${escapeHtml(c.notes || '')}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+    `);
+  }
+
+  html += sec('👥 Съёмочная группа', `
+    <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+      <thead><tr style="background:#0a0907;color:white;font-size:8px;letter-spacing:0.5px;">
+        <th style="padding:4px 6px;text-align:left;">Должность</th><th style="padding:4px 6px;text-align:left;">ФИО</th><th style="padding:4px 6px;text-align:center;">Вызов</th><th style="padding:4px 6px;text-align:center;">Приход</th><th style="padding:4px 6px;text-align:center;">Опозд.</th><th style="padding:4px 6px;text-align:left;">Замечания</th>
+      </tr></thead>
+      <tbody>${rep.crew.map(c => `
+        <tr style="background:#fafafa;border-bottom:1px solid #ececec;">
+          <td style="padding:4px 6px;font-weight:700;">${escapeHtml(c.role || '—')}</td>
+          <td style="padding:4px 6px;">${escapeHtml(c.name || '')}</td>
+          <td style="padding:4px 6px;text-align:center;font-family:monospace;">${escapeHtml(c.call || '')}</td>
+          <td style="padding:4px 6px;text-align:center;font-family:monospace;">${escapeHtml(c.arrived || '')}</td>
+          <td style="padding:4px 6px;text-align:center;color:#b91c1c;font-weight:700;">${escapeHtml(c.late || '')}</td>
+          <td style="padding:4px 6px;color:#444;">${escapeHtml(c.notes || '')}</td>
+        </tr>`).join('')}</tbody>
+    </table>
+  `);
+
+  html += sec('🎥 Техника', `
+    <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+      <thead><tr style="background:#3c3c3c;color:white;font-size:8px;letter-spacing:0.5px;">
+        <th style="padding:4px 6px;text-align:left;">Единица</th><th style="padding:4px 6px;text-align:left;">Состояние</th><th style="padding:4px 6px;text-align:left;">Поломки</th><th style="padding:4px 6px;text-align:left;">Замены</th><th style="padding:4px 6px;text-align:left;">Отв.</th>
+      </tr></thead>
+      <tbody>${rep.equipment.map(e => `
+        <tr style="background:#fafafa;border-bottom:1px solid #ececec;">
+          <td style="padding:4px 6px;font-weight:700;">${escapeHtml(e.unit || '')}</td>
+          <td style="padding:4px 6px;">${escapeHtml(e.state || '')}</td>
+          <td style="padding:4px 6px;color:#b91c1c;">${escapeHtml(e.breakdowns || '')}</td>
+          <td style="padding:4px 6px;">${escapeHtml(e.replacements || '')}</td>
+          <td style="padding:4px 6px;color:#555;">${escapeHtml(e.owner || '')}</td>
+        </tr>`).join('')}</tbody>
+    </table>
+  `);
+
+  // Логистика
+  const logKeys = [
+    ['permits', 'Разрешения'],['transport', 'Транспорт'],['catering', 'Кейтеринг'],['water', 'Вода'],
+    ['safety', 'Безопасность / травмы'],['conflicts', 'Конфликты'],['cleanup', 'Уборка'],['noise', 'Тишина']
+  ];
+  html += sec('📦 Логистика и безопасность', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9.5px;">
+      ${logKeys.map(([k,lbl]) => `<div style="background:#fafafa;border:1px solid #ececec;padding:5px 8px;border-radius:3px;"><div style="font-size:7.5px;color:#888;letter-spacing:0.5px;text-transform:uppercase;font-weight:700;">${lbl}</div><div style="margin-top:2px;font-weight:600;">${escapeHtml(rep.logistics[k] || '—')}</div></div>`).join('')}
+    </div>
+  `);
+
+  // Финансы
+  if (rep.finance.some(f => f.budget || f.fact)) {
+    let totalB = 0, totalF = 0;
+    rep.finance.forEach(f => { totalB += parseFloat(f.budget || 0); totalF += parseFloat(f.fact || 0); });
+    const totalD = totalF - totalB;
+    html += sec('💰 Финансы план/факт', `
+      <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+        <thead><tr style="background:#0a0907;color:white;font-size:8px;letter-spacing:0.5px;">
+          <th style="padding:4px 6px;text-align:left;">Статья</th><th style="padding:4px 6px;text-align:right;">Бюджет ₽</th><th style="padding:4px 6px;text-align:right;">Факт ₽</th><th style="padding:4px 6px;text-align:right;">Δ ₽</th><th style="padding:4px 6px;text-align:left;">Причина</th>
+        </tr></thead>
+        <tbody>${rep.finance.map(f => {
+          const d = (parseFloat(f.fact || 0) - parseFloat(f.budget || 0));
+          return `
+            <tr style="background:#fafafa;border-bottom:1px solid #ececec;">
+              <td style="padding:4px 6px;font-weight:700;">${escapeHtml(f.item || '')}</td>
+              <td style="padding:4px 6px;text-align:right;font-family:monospace;">${parseFloat(f.budget || 0).toLocaleString('ru-RU')}</td>
+              <td style="padding:4px 6px;text-align:right;font-family:monospace;">${parseFloat(f.fact || 0).toLocaleString('ru-RU')}</td>
+              <td style="padding:4px 6px;text-align:right;font-family:monospace;font-weight:800;color:${d > 0 ? '#b91c1c' : (d < 0 ? '#0a8a3a' : '#666')};">${d ? (d > 0 ? '+' : '') + d.toLocaleString('ru-RU') : '0'}</td>
+              <td style="padding:4px 6px;color:#444;">${escapeHtml(f.reason || '')}</td>
+            </tr>`;
+        }).join('')}
+        <tr style="background:#5a1719;color:white;font-weight:800;">
+          <td style="padding:5px 6px;">ИТОГО</td>
+          <td style="padding:5px 6px;text-align:right;font-family:monospace;">${totalB.toLocaleString('ru-RU')}</td>
+          <td style="padding:5px 6px;text-align:right;font-family:monospace;">${totalF.toLocaleString('ru-RU')}</td>
+          <td style="padding:5px 6px;text-align:right;font-family:monospace;">${totalD ? (totalD > 0 ? '+' : '') + totalD.toLocaleString('ru-RU') : '0'}</td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
+    `);
+  }
+
+  // Mistakes
+  if (rep.mistakes.length > 0) {
+    html += sec('⚠ Ошибки и недочёты', `
+      <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+        <thead><tr style="background:#0a0907;color:white;font-size:8px;letter-spacing:0.5px;">
+          <th style="padding:4px 6px;text-align:center;width:20px;">#</th><th style="padding:4px 6px;text-align:left;">Что произошло</th><th style="padding:4px 6px;text-align:left;">Причина</th><th style="padding:4px 6px;text-align:center;width:50px;">SEV</th><th style="padding:4px 6px;text-align:left;width:14%;">Отв.</th><th style="padding:4px 6px;text-align:left;">Impact</th>
+        </tr></thead>
+        <tbody>${rep.mistakes.map((m, i) => {
+          const sc = _sevColor(m.severity);
+          return `
+            <tr style="background:#fafafa;border-bottom:1px solid #ececec;">
+              <td style="padding:4px 6px;text-align:center;color:#666;font-weight:700;">${i + 1}</td>
+              <td style="padding:4px 6px;font-weight:700;">${escapeHtml(m.event || '')}</td>
+              <td style="padding:4px 6px;color:#333;">${escapeHtml(m.cause || '')}</td>
+              <td style="padding:4px 6px;text-align:center;background:${sc.bg};color:${sc.fg};font-weight:800;">${sc.label}</td>
+              <td style="padding:4px 6px;">${escapeHtml(m.owner || '')}</td>
+              <td style="padding:4px 6px;color:#333;">${escapeHtml(m.impact || '')}</td>
+            </tr>`;
+        }).join('')}</tbody>
+      </table>
+    `);
+  }
+
+  // Keep / Fix
+  html += sec('⭐ Что сработало / что улучшить', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:10px;">
+      <div>
+        <div style="font-weight:800;color:#0a8a3a;font-size:10px;margin-bottom:4px;">✓ KEEP DOING</div>
+        ${rep.keepDoing.filter(x => x).map(x => `<div style="background:#e8f5e9;border-left:3px solid #0a8a3a;padding:4px 8px;margin-bottom:3px;border-radius:0 3px 3px 0;">${escapeHtml(x)}</div>`).join('') || '<div style="color:#999;">—</div>'}
+      </div>
+      <div>
+        <div style="font-weight:800;color:#b91c1c;font-size:10px;margin-bottom:4px;">✗ FIX / STOP</div>
+        ${rep.fixStop.filter(x => x).map(x => `<div style="background:#fee2e2;border-left:3px solid #b91c1c;padding:4px 8px;margin-bottom:3px;border-radius:0 3px 3px 0;">${escapeHtml(x)}</div>`).join('') || '<div style="color:#999;">—</div>'}
+      </div>
+    </div>
+  `);
+
+  // Action items
+  if (rep.actionItems.length > 0) {
+    html += sec('🎯 План к следующей смене', `
+      <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+        <thead><tr style="background:#3c3c3c;color:white;font-size:8px;letter-spacing:0.5px;">
+          <th style="padding:4px 6px;text-align:center;width:20px;">#</th><th style="padding:4px 6px;text-align:left;">Что делаем</th><th style="padding:4px 6px;text-align:left;width:16%;">Кто</th><th style="padding:4px 6px;text-align:center;width:80px;">Дедлайн</th><th style="padding:4px 6px;text-align:center;width:60px;">Статус</th>
+        </tr></thead>
+        <tbody>${rep.actionItems.map((a, i) => `
+          <tr style="background:#fafafa;border-bottom:1px solid #ececec;">
+            <td style="padding:4px 6px;text-align:center;color:#666;">${i + 1}</td>
+            <td style="padding:4px 6px;font-weight:700;">${escapeHtml(a.todo || '')}</td>
+            <td style="padding:4px 6px;">${escapeHtml(a.owner || '')}</td>
+            <td style="padding:4px 6px;text-align:center;">${a.deadline ? escapeHtml(formatDateRu(a.deadline)) : '—'}</td>
+            <td style="padding:4px 6px;text-align:center;font-weight:700;">${a.status === 'done' ? '✓' : (a.status === 'inprog' ? '⚡' : '○')}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+    `);
+  }
+
+  // Оценка
+  const evalLabels = {
+    goalsAchieved: {full:'✓ Да',partial:'⚡ Частично',no:'✗ Нет'},
+    needsReshoot: {no:'Нет',yes:'Да'},
+    readyForEdit: {yes:'✓ Да',after:'После доработки'},
+    siteReadiness: {full:'Полная',partial:'Частичная',low:'Низкая'},
+    crewMood: {great:'Отлично',ok:'Норм',tense:'Напряжённо'},
+    artistSatisfaction: {high:'Высокая',medium:'Средняя',low:'Низкая'},
+    clientSatisfaction: {high:'Высокая',medium:'Средняя',low:'Низкая'}
+  };
+  const ev = rep.eval;
+  html += sec('📊 Итоговая оценка', `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:9.5px;">
+      <div style="background:#6b1d1f;color:white;padding:6px 10px;border-radius:3px;text-align:center;">
+        <div style="font-size:7.5px;letter-spacing:1px;opacity:0.85;">ОЦЕНКА</div>
+        <div style="font-size:20px;font-weight:900;line-height:1;margin-top:2px;">${escapeHtml(ev.rating || '—')}/10</div>
+      </div>
+      ${[
+        ['Цели', evalLabels.goalsAchieved[ev.goalsAchieved] || '—'],
+        ['Пересъёмка', evalLabels.needsReshoot[ev.needsReshoot] || '—'],
+        ['К монтажу', evalLabels.readyForEdit[ev.readyForEdit] || '—'],
+        ['Готовность', evalLabels.siteReadiness[ev.siteReadiness] || '—'],
+        ['Команда', evalLabels.crewMood[ev.crewMood] || '—'],
+        ['Артист', evalLabels.artistSatisfaction[ev.artistSatisfaction] || '—'],
+        ['Заказчик', evalLabels.clientSatisfaction[ev.clientSatisfaction] || '—'],
+      ].map(([k,v]) => `<div style="background:#fafafa;border:1px solid #ececec;padding:6px 8px;border-radius:3px;"><div style="font-size:7.5px;color:#888;letter-spacing:0.5px;text-transform:uppercase;font-weight:700;">${k}</div><div style="font-weight:700;margin-top:2px;">${escapeHtml(v)}</div></div>`).join('')}
+    </div>
+    ${ev.needsReshoot === 'yes' && ev.reshootDetails ? `<div style="background:#fee2e2;border-left:4px solid #b91c1c;padding:6px 10px;margin-top:6px;border-radius:0 3px 3px 0;font-size:10px;"><b>Пересъёмка:</b> ${escapeHtml(ev.reshootDetails)}</div>` : ''}
+  `);
+
+  // Комментарии
+  if (rep.comments && rep.comments.trim()) {
+    html += sec('💬 Комментарии и выводы', `
+      <div style="background:#fafafa;border:1px solid #ececec;padding:8px 12px;border-radius:3px;font-size:10.5px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(rep.comments)}</div>
+    `);
+  }
+
+  // Подписи + футер
+  html += `
+    <div style="padding:14px ${PAD}px 8px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid #ddd;margin-top:6px;">
+      <div>
+        <div style="font-size:8px;color:#888;letter-spacing:1px;font-weight:700;text-transform:uppercase;">Продюсер</div>
+        <div style="border-bottom:1px solid #888;padding:12px 0 3px;font-weight:700;font-size:10.5px;">${escapeHtml(rep.producerName || '')}</div>
+        <div style="font-size:9px;color:#888;margin-top:2px;">${rep.producerDate ? escapeHtml(formatDateRu(rep.producerDate)) : ''}</div>
+      </div>
+      <div>
+        <div style="font-size:8px;color:#888;letter-spacing:1px;font-weight:700;text-transform:uppercase;">Режиссёр</div>
+        <div style="border-bottom:1px solid #888;padding:12px 0 3px;font-weight:700;font-size:10.5px;">${escapeHtml(rep.directorName || '')}</div>
+        <div style="font-size:9px;color:#888;margin-top:2px;">${rep.directorDate ? escapeHtml(formatDateRu(rep.directorDate)) : ''}</div>
+      </div>
+    </div>
+    <div style="padding:4px ${PAD}px 12px;font-size:8px;color:#999;text-align:center;line-height:1.5;font-weight:600;">
+      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670 · ${escapeHtml(project.name || '')} · день ${_currentReportDay} · v${rep.version || 1} · ${new Date().toLocaleDateString('ru-RU')}
+    </div>`;
+
+  c.innerHTML = html;
+  return c;
+}
+/* ===== END Продакшн-рапорт ===== */
 
 
 function openCallsheetEditor(dayNum = 1) {
