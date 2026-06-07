@@ -8,6 +8,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Supabase config — self-hosted на VPS Timeweb
+  window.SUPABASE_URL = 'https://147-45-100-91.sslip.io';
+  window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgwNzkzMjU4LCJleHAiOjIwOTYxNTMyNTh9.sBiKXeqW1EZTwkqcar2VwWwpO0r0jXdEqVk_F335JRc';
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap');
 
@@ -5249,9 +5255,85 @@ body.dark-theme .task-deadline:focus { background: white; }
   .topbar h1 { font-size: 18px; }
   .doc-overlay { border-radius: 0; }
 }
+
+/* ============================================================
+   LOGIN OVERLAY (Supabase auth)
+   ============================================================ */
+#login-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg, #fafaf8);
+  z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Inter', sans-serif;
+}
+#login-overlay.hidden { display: none; }
+#login-overlay .lo-card {
+  width: min(420px, 92vw);
+  background: #fff;
+  border: 1px solid var(--line, #ececea);
+  border-radius: 18px;
+  padding: 36px 32px 28px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.08);
+}
+#login-overlay .lo-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; letter-spacing: 0.04em;
+  color: var(--text, #0a0a0a);
+  margin-bottom: 4px;
+}
+#login-overlay .lo-sub {
+  font-size: 13px; color: var(--muted, #8c8a85);
+  margin-bottom: 24px;
+}
+#login-overlay label {
+  display: block; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-2, #4a4a4a);
+  margin: 16px 0 6px;
+}
+#login-overlay input {
+  width: 100%; padding: 12px 14px;
+  border: 1px solid var(--line, #ececea);
+  border-radius: 10px; font-size: 14px;
+  background: #fafaf8;
+  font-family: 'Inter', sans-serif;
+}
+#login-overlay input:focus { outline: none; border-color: #1a1a1a; background: #fff; }
+#login-overlay button {
+  width: 100%; margin-top: 22px;
+  padding: 14px; border: none; border-radius: 10px;
+  background: #1a1a1a; color: #fff;
+  font-weight: 700; font-size: 14px;
+  letter-spacing: 0.02em; cursor: pointer;
+  transition: background 0.15s;
+}
+#login-overlay button:hover:not(:disabled) { background: #000; }
+#login-overlay button:disabled { opacity: 0.5; cursor: progress; }
+#login-overlay .lo-err {
+  margin-top: 14px; font-size: 13px;
+  color: #c53030; min-height: 16px;
+}
+#login-overlay .lo-foot {
+  margin-top: 18px; font-size: 11px;
+  color: var(--muted, #8c8a85);
+  text-align: center;
+}
 </style>
 </head>
 <body>
+<div id="login-overlay">
+  <form class="lo-card" onsubmit="return doLogin(event)">
+    <div class="lo-title">ZALOVE PRODUCTION</div>
+    <div class="lo-sub">Вход в рабочую среду</div>
+    <label>Email</label>
+    <input type="email" id="lo-email" required autocomplete="email" value="zalov.production@gmail.com">
+    <label>Пароль</label>
+    <input type="password" id="lo-pass" required autocomplete="current-password">
+    <button type="submit" id="lo-btn">Войти</button>
+    <div class="lo-err" id="lo-err"></div>
+    <div class="lo-foot">Self-hosted Supabase · 147.45.100.91</div>
+  </form>
+</div>
 
 <!-- Мобильный гамбургер + overlay -->
 <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Меню">☰</button>
@@ -6672,6 +6754,25 @@ body.dark-theme .task-deadline:focus { background: white; }
   </div>
 </div>
 
+<!-- BULK EXPENSE PASTE (из ТГ) -->
+<div class="modal-overlay" id="m-bulk-expense">
+  <div class="doc-overlay" style="max-width:1080px;width:96vw;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">📥</div>
+        <div>
+          <div class="doc-section-label">Bulk paste · из Telegram</div>
+          <div class="doc-header-title">Вставить расходы пачкой</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body" id="bulk-expense-body" style="padding:0;"></div>
+  </div>
+</div>
+
 <!-- EXPENSES JOURNAL -->
 <div class="modal-overlay" id="m-expenses">
   <div class="doc-overlay" style="max-width:1180px;width:96vw;">
@@ -7883,15 +7984,177 @@ setTimeout(loadWeather, 500);
 /* ============================================================
    ЛОКАЛЬНАЯ БАЗА ДАННЫХ (localStorage)
    ============================================================ */
+// ============================================================
+// БАЗА ДАННЫХ (Supabase + локальный кэш в localStorage)
+// ============================================================
+// Архитектура: write-through cache.
+//   • На старте: DB.init() аутентифицирует пользователя и гидратирует
+//     кэш проектов из Supabase в localStorage (тот же ключ zalove_data_v1).
+//   • Все геттеры (load / getProjects / getProject) — синхронные, читают
+//     из кэша. Это сохраняет совместимость со старым кодом, который ждал
+//     синхронных ответов.
+//   • Все мутации (addProject / updateProject / deleteProject) обновляют
+//     кэш сразу и параллельно отправляют изменения на сервер
+//     (fire-and-forget с логированием ошибок).
+//   • Поля верхнего уровня (name/type/client/artist/status/mood/poster/
+//     deadline/days/budget/coverImage) — это плоские колонки таблицы.
+//     Всё остальное (tasks, team, brief, estimate, timing, creative и
+//     прочее) живёт в колонке data jsonb.
 const DB = {
   KEY: 'zalove_data_v1',
 
+  // ── Состояние сессии ──
+  client: null,         // Supabase-клиент
+  user: null,           // { id, email, ... }
+  ready: false,         // true после успешного init+hydrate
+  _pending: 0,          // счётчик незавершённых сетевых мутаций
+
+  // Какие JSON-ключи маппятся в плоские колонки таблицы
+  _FLAT_KEYS: ['name','type','client','artist','status','mood','poster','deadline','days','budget'],
+
+  // ── Инициализация ──
+  async init() {
+    if (!window.supabase || !window.supabase.createClient) {
+      console.error('supabase-js не загружен');
+      return false;
+    }
+    this.client = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true }
+    });
+    const { data: { session } } = await this.client.auth.getSession();
+    if (session?.user) {
+      this.user = session.user;
+      await this.hydrate();
+      this.ready = true;
+      return true;
+    }
+    return false;  // нужен логин
+  },
+
+  async signIn(email, password) {
+    const { data, error } = await this.client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    this.user = data.user;
+    await this.hydrate();
+    this.ready = true;
+    return data.user;
+  },
+
+  async signOut() {
+    await this.client.auth.signOut();
+    localStorage.removeItem(this.KEY);
+    this.user = null;
+    this.ready = false;
+    location.reload();
+  },
+
+  // ── Преобразования между DB-строкой и JSON-проектом ──
+  _fromDb(row) {
+    // row: { id, owner_id, name, type, ..., data: {...}, created_at, updated_at }
+    const flat = {
+      id: row.id,
+      name: row.name || '',
+      type: row.type || '',
+      client: row.client || '',
+      artist: row.artist || '',
+      status: row.status || 'preprod',
+      mood: row.mood || 'calm',
+      poster: row.poster || 'poster-1',
+      deadline: row.deadline || '',
+      days: row.days ?? 1,
+      budget: row.budget ?? 0,
+      coverImage: row.cover_image || '',
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+    // Распакуем data jsonb поверх (tasks, team, brief, ...)
+    return { ...flat, ...(row.data || {}) };
+  },
+
+  _toDb(p) {
+    // Разделяем плоское и json + нормализуем пустые значения
+    // (Postgres не принимает "" в колонках типа date/integer/bigint — нужен NULL)
+    const flat = { owner_id: this.user?.id };
+    const data = {};
+    const norm = (key, v) => {
+      // Пустая строка / undefined → null для типизированных колонок
+      if (v === '' || v === undefined) {
+        if (key === 'deadline' || key === 'days' || key === 'budget') return null;
+        return v === undefined ? null : '';
+      }
+      // Числовые поля — приводим к Number если пришла строка с числом
+      if ((key === 'days' || key === 'budget') && typeof v === 'string') {
+        const n = Number(v); return isNaN(n) ? null : n;
+      }
+      return v;
+    };
+    for (const [k, v] of Object.entries(p || {})) {
+      if (this._FLAT_KEYS.includes(k)) {
+        flat[k] = norm(k, v);
+      } else if (k === 'coverImage') {
+        flat.cover_image = v || null;
+      } else if (k === 'id' || k === 'createdAt' || k === 'updatedAt') {
+        // эти поля — управляются сервером, не отправляем
+      } else {
+        data[k] = v;
+      }
+    }
+    flat.data = data;
+    return flat;
+  },
+
+  // ── Гидратация: грузим всё в кэш ──
+  async hydrate() {
+    // 1. Проекты
+    const { data: projects, error: pErr } = await this.client
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (pErr) { console.error('hydrate projects', pErr); return; }
+
+    // 2. Профиль (brand-данные внутри profiles.data.brand)
+    let brand = {};
+    try {
+      const { data: prof, error: prErr } = await this.client
+        .from('profiles')
+        .select('data')
+        .eq('id', this.user.id)
+        .single();
+      if (!prErr) brand = (prof?.data?.brand) || {};
+    } catch (e) { console.warn('hydrate profile', e); }
+
+    const cache = {
+      version: 1,
+      projects: (projects || []).map(r => this._fromDb(r)),
+      brand
+    };
+    this._lastBrand = JSON.stringify(brand);
+    try { localStorage.setItem(this.KEY, JSON.stringify(cache)); }
+    catch (e) { console.warn('cache write', e); }
+  },
+
+  // Синк brand в profiles.data, если изменился
+  _syncBrandIfChanged(data) {
+    if (!this.user || !this.client) return;
+    const b = data?.brand || {};
+    const ser = JSON.stringify(b);
+    if (ser === this._lastBrand) return;
+    this._lastBrand = ser;
+    this._pending++;
+    this.client.from('profiles').update({ data: { brand: b } }).eq('id', this.user.id)
+      .then(({ error }) => {
+        this._pending--;
+        if (error) console.error('brand sync', error);
+      });
+  },
+
+  // ── Чтение (сразу из кэша) ──
   load() {
     try {
       const stored = localStorage.getItem(this.KEY);
       if (stored) return JSON.parse(stored);
     } catch (e) { console.warn('DB load fail', e); }
-    return this.seed();
+    return { version: 1, projects: [] };
   },
 
   save(data) {
@@ -7899,52 +8162,85 @@ const DB = {
       localStorage.setItem(this.KEY, JSON.stringify(data));
     } catch (e) {
       console.error('DB save fail', e);
-      toast('Не удалось сохранить (превышен лимит)', 'error');
+      if (typeof toast === 'function') toast('Не удалось сохранить кэш (превышен лимит)', 'error');
     }
-  },
-
-  seed() {
-    const data = {
-      version: 1,
-      projects: [
-        { id: 'p_seed_1', name: 'Nebula', client: 'Samsung', type: 'TVC', artist: '', budget: 4200000, days: 3, deadline: '2026-06-04', progress: 65, status: 'production', mood: 'fire', poster: 'poster-1', createdAt: new Date().toISOString() },
-        { id: 'p_seed_2', name: 'Echo in the City', client: 'Nike', type: 'DOC', artist: '', budget: 8500000, days: 12, deadline: '2026-07-30', progress: 20, status: 'preprod', mood: 'calm', poster: 'poster-2', createdAt: new Date().toISOString() },
-        { id: 'p_seed_3', name: 'Vertigo', client: 'Sber', type: 'CG', artist: '', budget: 2800000, days: 0, deadline: '2026-05-25', progress: 88, status: 'post', mood: 'sos', poster: 'poster-3', createdAt: new Date().toISOString() },
-        { id: 'p_seed_4', name: 'Outliers', client: 'Yandex', type: 'BRAND FILM', artist: '', budget: 6100000, days: 5, deadline: '2026-06-12', progress: 45, status: 'production', mood: 'calm', poster: 'poster-4', createdAt: new Date().toISOString() },
-        { id: 'p_seed_5', name: 'Salt', client: 'VK', type: 'MV', artist: '', budget: 1400000, days: 2, deadline: '2026-07-08', progress: 12, status: 'preprod', mood: 'calm', poster: 'poster-5', createdAt: new Date().toISOString() },
-        { id: 'p_seed_6', name: 'Static Noise', client: 'Tinkoff', type: 'TVC', artist: '', budget: 3600000, days: 4, deadline: '2026-05-30', progress: 92, status: 'post', mood: 'fire', poster: 'poster-6', createdAt: new Date().toISOString() }
-      ]
-    };
-    this.save(data);
-    return data;
+    // Если поменялся brand — синкаем в profiles.data
+    try { this._syncBrandIfChanged(data); } catch (e) { console.warn('syncBrand', e); }
   },
 
   getProjects() { return this.load().projects || []; },
 
   getProject(id) { return this.getProjects().find(p => p.id === id); },
 
+  // ── Мутации (кэш + async sync) ──
   addProject(p) {
+    // Оптимистично: создаём временный id, отрисуем сразу,
+    // потом подменим на реальный uuid от сервера.
+    const tempId = 'tmp_' + Date.now();
+    const now = new Date().toISOString();
+    const project = { ...p, id: tempId, createdAt: now, updatedAt: now };
     const data = this.load();
-    p.id = 'p_' + Date.now();
-    p.createdAt = new Date().toISOString();
-    data.projects.unshift(p);
+    data.projects.unshift(project);
     this.save(data);
-    return p;
+
+    this._pending++;
+    this.client.from('projects').insert(this._toDb(p)).select().single()
+      .then(({ data: row, error }) => {
+        this._pending--;
+        if (error) {
+          console.error('insert error:', error);
+          if (typeof toast === 'function') toast('Сервер: ' + (error.message || 'ошибка сохранения'), 'error');
+          return;
+        }
+        const cache = this.load();
+        const idx = cache.projects.findIndex(x => x.id === tempId);
+        if (idx >= 0) {
+          cache.projects[idx] = this._fromDb(row);
+          this.save(cache);
+        }
+      })
+      .catch(err => {
+        this._pending--;
+        console.error('insert throw:', err);
+        if (typeof toast === 'function') toast('Сетевая ошибка: ' + (err?.message || err), 'error');
+      });
+
+    return project;
   },
 
   updateProject(id, updates) {
     const data = this.load();
     const idx = data.projects.findIndex(x => x.id === id);
     if (idx === -1) return null;
-    data.projects[idx] = { ...data.projects[idx], ...updates, updatedAt: new Date().toISOString() };
+    const merged = { ...data.projects[idx], ...updates, updatedAt: new Date().toISOString() };
+    data.projects[idx] = merged;
     this.save(data);
-    return data.projects[idx];
+
+    // Отправляем на сервер только если это реальный uuid (не временный tmp_)
+    if (!String(id).startsWith('tmp_')) {
+      this._pending++;
+      this.client.from('projects').update(this._toDb(merged)).eq('id', id)
+        .then(({ error }) => {
+          this._pending--;
+          if (error) { console.error('update', error); if (typeof toast === 'function') toast('Ошибка синка с сервером', 'error'); }
+        });
+    }
+    return merged;
   },
 
   deleteProject(id) {
     const data = this.load();
     data.projects = data.projects.filter(p => p.id !== id);
     this.save(data);
+
+    if (!String(id).startsWith('tmp_')) {
+      this._pending++;
+      this.client.from('projects').delete().eq('id', id)
+        .then(({ error }) => {
+          this._pending--;
+          if (error) console.error('delete', error);
+        });
+    }
   },
 
   reset() {
@@ -14879,6 +15175,7 @@ function renderExpensesJournal() {
           <div style="font-size:11px;opacity:0.85;margin-top:3px;font-weight:600;">${all.length} расход(ов) всего · ${filtered.length} по фильтру</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="openBulkExpenseFromJournal()" style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:800;">📥 Из ТГ</button>
           <button onclick="exportExpensesToXlsx()" style="background:rgba(255,255,255,0.9);color:#3d1416;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:800;">⤓ Excel</button>
         </div>
       </div>
@@ -15013,6 +15310,449 @@ async function exportExpensesToXlsx() {
   toast('Excel скачан ✓', 'success');
 }
 /* ===== END Журнал расходов ===== */
+
+
+/* =====================================================
+   BULK-ВСТАВКА РАСХОДОВ ИЗ ТГ — парсер + ревью
+   ===================================================== */
+let _bulkExpenseRawText = '';
+let _bulkExpenseParsed = [];
+let _bulkExpenseMode = 'client'; // 'client' | 'team'
+let _bulkExpenseDefaultDate = '';
+
+/* Ключевые слова для авто-матчинга на разделы сметы */
+const BULK_KEYWORD_MAP = [
+  { kw: ['такси','uber','болт','яндекс такси','каршеринг','делимобиль','яндекс go','aero','ё-такси'], sectionHint: ['transport','logistics','лог'] },
+  { kw: ['метро','автобус','маршрутка','троллейбус','общ. транспорт','общ транспорт'], sectionHint: ['transport','logistics'] },
+  { kw: ['бензин','топливо','азс','лукойл','роснефть','газпром нефть','газпромнефть','shell','тнк','bp'], sectionHint: ['transport','logistics'] },
+  { kw: ['газель','грузовая','грузовик','рент авто','аренда машины','аренда авто','перевозка'], sectionHint: ['transport','logistics'] },
+  { kw: ['обед','завтрак','ужин','кофе','пирожок','питание','еда','сэндвич','перекус','перекусы','кейтеринг','лимонад'], sectionHint: ['catering','logistics','catr'] },
+  { kw: ['вода','напитки','чай','кофеварка','капсулы','доставка воды'], sectionHint: ['catering','logistics'] },
+  { kw: ['лампа','свет','hmi','arri','аренда света','осветитель','свет аренда','dedolight'], sectionHint: ['tech','light','свет','свет.','light.'] },
+  { kw: ['камера','оптика','объектив','alexa','arri','red','sony venice','стеди','кран','tripod','штатив','рентал','rentphoto','prorental','аренда техники','аренда камеры','аренда оптики'], sectionHint: ['tech','camera','rental'] },
+  { kw: ['звук','микрофон','пушка','петля','рекордер','sound device','tascam','zoom recorder'], sectionHint: ['tech','sound'] },
+  { kw: ['батареи','аккумулятор','sd','ssd','флешка','носитель','dit','cfexpress','xqd','sd-карта'], sectionHint: ['tech'] },
+  { kw: ['реквизит','декор','цех','стайлинг','постель','посуда','аксессуары','предмет'], sectionHint: ['art','prop'] },
+  { kw: ['костюм','одежда','стилист','винтаж','секонд','аренда костюма'], sectionHint: ['costume','art'] },
+  { kw: ['грим','визажист','make-up','макияж','грим расход'], sectionHint: ['makeup','art'] },
+  { kw: ['локация','павильон','аренда локации','лофт','студия','пав'], sectionHint: ['loc','location'] },
+  { kw: ['кастинг','артист','актёр','актер','модель','эпизод','гонорар арт','гонорар актеру'], sectionHint: ['cast','casting'] },
+  { kw: ['продюсер','координатор','гонорар','зарплата','оплата команды','команда оплата'], sectionHint: ['team','crew'] },
+  { kw: ['монтаж','постпрод','грейд','цветокор','vfx','графика','анимация','постпродакшн'], sectionHint: ['post','postprod'] },
+  { kw: ['медик','аптечка','страховка','охрана','секьюрити'], sectionHint: ['safety','logistics'] },
+  { kw: ['налог','усн','банк','рко','эквайринг','комиссия','перевод','тинькофф','точка'], sectionHint: ['admin','prep'] },
+  { kw: ['пост','доставка','курьер','dpd','сдэк','боксберри','деловые'], sectionHint: ['logistics','transport'] },
+];
+
+/* Месяцы для парсинга кириллических дат */
+const RU_MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+function parseBulkExpenseText(text) {
+  if (!text) return [];
+  const out = [];
+  const todayIso = new Date().toISOString().slice(0,10);
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayIso = yesterday.toISOString().slice(0,10);
+  const currentYear = new Date().getFullYear();
+
+  // Раздел текста на строки, очистка
+  const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+
+  lines.forEach((origLine, idx) => {
+    let line = origLine;
+    let date = '';
+
+    // 1. Попробовать вытащить дату
+    // Pattern dd.mm.yyyy or dd.mm.yy or dd.mm or dd/mm or dd-mm
+    let dateMatch = line.match(/(?:^|[\s,;])(\d{1,2})[.\/-](\d{1,2})(?:[.\/-](\d{2,4}))?(?=\s|$|,|;)/);
+    if (dateMatch) {
+      const d = dateMatch[1].padStart(2, '0');
+      const mo = dateMatch[2].padStart(2, '0');
+      const y = dateMatch[3] ? (dateMatch[3].length === 2 ? '20' + dateMatch[3] : dateMatch[3]) : currentYear;
+      // Валидация
+      if (Number(d) >= 1 && Number(d) <= 31 && Number(mo) >= 1 && Number(mo) <= 12) {
+        date = `${y}-${mo}-${d}`;
+        line = line.replace(dateMatch[0], ' ').trim();
+      }
+    }
+
+    // Pattern "12 июня" / "12 июн"
+    if (!date) {
+      const ruMatch = line.match(/(\d{1,2})\s+(январ|феврал|март|апрел|ма[йя]|июн|июл|август|сентябр|октябр|ноябр|декабр)/i);
+      if (ruMatch) {
+        const d = ruMatch[1].padStart(2, '0');
+        const monthPrefix = ruMatch[2].toLowerCase();
+        const moIdx = RU_MONTHS.findIndex(m => m.startsWith(monthPrefix));
+        if (moIdx >= 0) {
+          date = `${currentYear}-${String(moIdx + 1).padStart(2, '0')}-${d}`;
+          line = line.replace(ruMatch[0], ' ').trim();
+        }
+      }
+    }
+
+    // Pattern "сегодня" / "вчера"
+    if (!date) {
+      if (/(^|\s)сегодня(\s|$)/i.test(line)) {
+        date = todayIso;
+        line = line.replace(/(^|\s)сегодня(\s|$)/i, ' ').trim();
+      } else if (/(^|\s)вчера(\s|$)/i.test(line)) {
+        date = yesterdayIso;
+        line = line.replace(/(^|\s)вчера(\s|$)/i, ' ').trim();
+      }
+    }
+
+    // 2. Извлечь сумму. Поддержка форматов:
+    // "1200", "1 200", "1.2k", "1,200₽", "1200 руб", "1200р"
+    // Возьмём последнее число в строке — обычно сумма стоит после описания
+    let amount = 0;
+    let amountReplaced = false;
+
+    // Try to find "X.Yk" (1.5k = 1500)
+    const kMatch = line.match(/(\d+(?:[.,]\d+)?)\s*[kк](?:\s|₽|руб|р|$)/i);
+    if (kMatch) {
+      amount = Math.round(parseFloat(kMatch[1].replace(',', '.')) * 1000);
+      line = line.replace(kMatch[0], ' ').trim();
+      amountReplaced = true;
+    }
+
+    if (!amountReplaced) {
+      // Try generic number with optional spaces inside, optional currency
+      // First scan all numbers, pick the largest one if there are multiple
+      const allMatches = [];
+      const re = /(\d[\d\s]*\d|\d)\s*(?:₽|руб\.?|р\.?|rub|usd|\$|€)?/gi;
+      let m;
+      while ((m = re.exec(line)) !== null) {
+        const raw = m[1].replace(/\s/g, '');
+        const num = parseFloat(raw);
+        // Skip very small numbers that look like dates/times — but date already parsed out
+        if (num >= 1 && num <= 100000000) {
+          allMatches.push({ raw: m[0], num, start: m.index, end: m.index + m[0].length });
+        }
+      }
+      if (allMatches.length > 0) {
+        // Берём максимум — обычно сумма
+        let best = allMatches[0];
+        allMatches.forEach(x => { if (x.num > best.num) best = x; });
+        amount = best.num;
+        line = (line.slice(0, best.start) + ' ' + line.slice(best.end)).replace(/\s+/g, ' ').trim();
+      }
+    }
+
+    // 3. Comment = остаток строки
+    let comment = line
+      .replace(/[—–-]+\s*$/, '')
+      .replace(/^[—–-]+/, '')
+      .replace(/\s+/g, ' ')
+      .replace(/[,:;]+$/, '')
+      .trim();
+
+    if (amount > 0) {
+      // 4. Автоматический матчинг на раздел/строку
+      const guess = guessSectionRow(comment);
+      out.push({
+        idx,
+        original: origLine,
+        date: date || '',
+        amount,
+        comment: comment || origLine,
+        sectionId: guess.sectionId || '',
+        rowId: guess.rowId || '',
+        confidence: guess.confidence,
+        approved: amount > 0,
+      });
+    } else {
+      // Сохраняем как «не распознано» — пользователь может назначить вручную
+      out.push({
+        idx,
+        original: origLine,
+        date: date || '',
+        amount: 0,
+        comment: origLine,
+        sectionId: '',
+        rowId: '',
+        confidence: 0,
+        approved: false,
+      });
+    }
+  });
+
+  return out;
+}
+
+function guessSectionRow(comment) {
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return { sectionId: '', rowId: '', confidence: 0 };
+  const lowered = comment.toLowerCase();
+
+  // Ищем подходящий sectionHint
+  let matchedHints = [];
+  BULK_KEYWORD_MAP.forEach(rule => {
+    rule.kw.forEach(k => {
+      if (lowered.includes(k.toLowerCase())) {
+        matchedHints = matchedHints.concat(rule.sectionHint);
+      }
+    });
+  });
+
+  if (matchedHints.length === 0) return { sectionId: '', rowId: '', confidence: 0 };
+
+  // Пробуем найти секцию из estimate, имя которой содержит подсказку
+  const est = _bulkExpenseMode === 'team' ? (project.estimateTeam || {}) : (project.estimate || {});
+  const sections = est.sections || {};
+  let bestSection = null;
+  Object.entries(sections).forEach(([secId, sec]) => {
+    const idLower = secId.toLowerCase();
+    const nameLower = (sec.title || '').toLowerCase();
+    matchedHints.forEach(h => {
+      if (idLower.includes(h.toLowerCase()) || nameLower.includes(h.toLowerCase())) {
+        if (!bestSection) bestSection = secId;
+      }
+    });
+  });
+
+  if (!bestSection) return { sectionId: '', rowId: '', confidence: 0.3 };
+
+  // Найдём подходящую строку в этом разделе
+  const sec = sections[bestSection];
+  let bestRow = null;
+  let bestRowScore = 0;
+  [...(sec.rows || []), ...(sec.customRows || [])].forEach(r => {
+    if (!r.name) return;
+    const rowName = r.name.toLowerCase();
+    let score = 0;
+    BULK_KEYWORD_MAP.forEach(rule => {
+      rule.kw.forEach(k => {
+        if (lowered.includes(k.toLowerCase()) && rowName.includes(k.toLowerCase())) {
+          score += 2;
+        }
+      });
+    });
+    // Прямой матч слов из comment в названии строки
+    const commentWords = lowered.split(/\s+/).filter(w => w.length > 3);
+    commentWords.forEach(w => { if (rowName.includes(w)) score += 1; });
+    if (score > bestRowScore) { bestRowScore = score; bestRow = r.id; }
+  });
+
+  return { sectionId: bestSection, rowId: bestRow || '', confidence: bestRow ? 0.8 : 0.5 };
+}
+
+function openBulkExpenseFromJournal() {
+  openBulkExpenseFlow();
+}
+
+function openBulkExpenseFlow() {
+  if (!_currentProjectId) return;
+  closeAll();
+  _bulkExpenseRawText = '';
+  _bulkExpenseParsed = [];
+  _bulkExpenseMode = 'client';
+  _bulkExpenseDefaultDate = new Date().toISOString().slice(0, 10);
+  document.getElementById('m-bulk-expense').classList.add('active');
+  renderBulkExpenseEditor();
+}
+
+function onBulkExpenseTextChange(value) {
+  _bulkExpenseRawText = value;
+}
+
+function runBulkExpenseParse() {
+  _bulkExpenseParsed = parseBulkExpenseText(_bulkExpenseRawText);
+  // Применяем дефолтную дату ко всем без даты
+  _bulkExpenseParsed.forEach(p => {
+    if (!p.date) p.date = _bulkExpenseDefaultDate;
+  });
+  renderBulkExpenseEditor();
+  if (_bulkExpenseParsed.length === 0) toast('Не нашёл расходы — проверь текст', 'warn');
+  else toast(`Найдено ${_bulkExpenseParsed.length} расход(ов)`, 'success');
+}
+
+function onBulkExpenseField(idx, field, value) {
+  const p = _bulkExpenseParsed[idx];
+  if (!p) return;
+  if (field === 'amount') p.amount = parseFloat(value) || 0;
+  else p[field] = value;
+  if (field === 'sectionId') { p.rowId = ''; renderBulkExpenseEditor(); }
+}
+function toggleBulkExpenseApprove(idx) {
+  const p = _bulkExpenseParsed[idx];
+  if (!p) return;
+  p.approved = !p.approved;
+  renderBulkExpenseEditor();
+}
+function deleteBulkExpenseRow(idx) {
+  _bulkExpenseParsed.splice(idx, 1);
+  renderBulkExpenseEditor();
+}
+
+function commitBulkExpenses() {
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const toAdd = _bulkExpenseParsed.filter(p => p.approved && p.sectionId && p.rowId && p.amount > 0);
+  if (toAdd.length === 0) { toast('Нечего добавлять — отметь подходящие строки и назначь раздел/позицию', 'warn'); return; }
+
+  // Получаем нужную смету (client / team)
+  const est = _bulkExpenseMode === 'team'
+    ? (project.estimateTeam = project.estimateTeam || { sections: {} })
+    : (project.estimate = project.estimate || { sections: {} });
+  const sections = est.sections = est.sections || {};
+
+  let added = 0;
+  toAdd.forEach(p => {
+    const sec = sections[p.sectionId];
+    if (!sec) return;
+    const allRows = [...(sec.rows || []), ...(sec.customRows || [])];
+    const row = allRows.find(r => r.id === p.rowId);
+    if (!row) return;
+    if (!Array.isArray(row.entries)) row.entries = [];
+    row.entries.push({
+      id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      date: p.date || '',
+      comment: p.comment || '',
+      amount: p.amount
+    });
+    added++;
+  });
+
+  // Сохраняем
+  const patch = {};
+  patch[_bulkExpenseMode === 'team' ? 'estimateTeam' : 'estimate'] = est;
+  DB.updateProject(project.id, patch);
+  toast(`Добавлено ${added} расход(ов) ✓`, 'success');
+  closeAll();
+  // Если открыт журнал — перерисуем
+  const expBody = document.getElementById('expenses-body');
+  if (expBody && document.getElementById('m-expenses').classList.contains('active')) {
+    renderExpensesJournal();
+  }
+}
+
+function renderBulkExpenseEditor() {
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const body = document.getElementById('bulk-expense-body');
+  if (!body) return;
+
+  const est = _bulkExpenseMode === 'team' ? (project.estimateTeam || {}) : (project.estimate || {});
+  const sections = est.sections || {};
+  const sectionOptions = Object.entries(sections).map(([id, sec]) => ({ id, name: sec.title || id }));
+
+  const approvedCount = _bulkExpenseParsed.filter(p => p.approved && p.sectionId && p.rowId && p.amount > 0).length;
+  const approvedSum = _bulkExpenseParsed.filter(p => p.approved && p.sectionId && p.rowId && p.amount > 0).reduce((acc, p) => acc + (p.amount || 0), 0);
+
+  let html = `
+    <div style="padding:16px 22px;background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;font-weight:700;">Bulk paste · из Telegram</div>
+          <div style="font-size:20px;font-weight:900;margin-top:3px;line-height:1.1;">${escapeHtml(project.name || '—')}</div>
+          <div style="font-size:11px;opacity:0.85;margin-top:3px;font-weight:600;">Вставь сюда сообщения из ТГ — парсер раскладывает на строки сметы</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-end;">
+          <div>
+            <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;opacity:0.85;font-weight:700;margin-bottom:2px;">Смета</div>
+            <select onchange="_bulkExpenseMode=this.value;runBulkExpenseParse();" style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);color:white;padding:5px 8px;border-radius:4px;font-size:11px;font-weight:700;">
+              <option value="client" ${_bulkExpenseMode==='client'?'selected':''}>💼 Клиент</option>
+              <option value="team" ${_bulkExpenseMode==='team'?'selected':''}>👥 Команда</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;opacity:0.85;font-weight:700;margin-bottom:2px;">Дата по умолчанию</div>
+            <input type="date" value="${escapeHtml(_bulkExpenseDefaultDate)}" oninput="_bulkExpenseDefaultDate=this.value" style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);color:white;padding:5px 8px;border-radius:4px;font-size:11px;font-weight:700;">
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // Textarea + кнопка парсинга
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:8px;">📥 Сообщения из Telegram</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.45;">
+        Каждая строка = один расход. Парсер умеет: <b>«04.06 Такси Кирилл 1200»</b> · <b>«сегодня Обед 4500»</b> · <b>«1.5k Бензин»</b> · <b>«12 июня штатив 8000₽»</b>. Если даты нет — подставится дата по умолчанию ↑.
+      </div>
+      <textarea id="bulk-expense-input" oninput="onBulkExpenseTextChange(this.value)" rows="6" placeholder="04.06 Такси Кирилл 1200&#10;04.06 Обед на площадке 4500&#10;04.06 Аренда генератора 8000&#10;Vodafone Roaming 350" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono','Inter',monospace;font-size:12px;line-height:1.5;color:var(--ink);resize:vertical;">${escapeHtml(_bulkExpenseRawText)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+        <button onclick="runBulkExpenseParse()" style="background:#6b1d1f;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:800;">→ Распарсить</button>
+        ${_bulkExpenseParsed.length > 0 ? `<span style="font-size:11px;color:var(--muted);font-weight:600;">Найдено: ${_bulkExpenseParsed.length} | Готово к импорту: <b style="color:#0a8a3a;">${approvedCount}</b> на <b>${approvedSum.toLocaleString('ru-RU')} ₽</b></span>` : ''}
+      </div>
+    </div>`;
+
+  // Превью распарсенных
+  if (_bulkExpenseParsed.length > 0) {
+    html += `<div style="padding:14px 22px;">
+      <div class="cs-section-title" style="margin-bottom:10px;">📋 Превью — назначь раздел и позицию</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
+        <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:0.8px;">
+          <th style="padding:6px;width:30px;text-align:center;">✓</th>
+          <th style="padding:6px 8px;text-align:center;width:120px;">Дата</th>
+          <th style="padding:6px 8px;text-align:right;width:100px;">Сумма</th>
+          <th style="padding:6px 8px;text-align:left;width:24%;">Комментарий</th>
+          <th style="padding:6px 8px;text-align:left;width:18%;">Раздел сметы</th>
+          <th style="padding:6px 8px;text-align:left;">Строка</th>
+          <th style="padding:6px;width:30px;"></th>
+        </tr></thead>
+        <tbody>`;
+
+    _bulkExpenseParsed.forEach((p, idx) => {
+      const sec = sections[p.sectionId];
+      const rows = sec ? [...(sec.rows || []), ...(sec.customRows || [])] : [];
+      const isOk = p.approved && p.sectionId && p.rowId && p.amount > 0;
+      const isRecognized = p.amount > 0;
+      const rowBg = !isRecognized ? '#fee2e2' : (isOk ? 'white' : '#fef9c3');
+
+      html += `
+        <tr style="background:${rowBg};border-top:1px solid var(--line);">
+          <td style="padding:5px;text-align:center;">
+            <input type="checkbox" ${p.approved ? 'checked' : ''} onchange="toggleBulkExpenseApprove(${idx})" style="cursor:pointer;width:16px;height:16px;">
+          </td>
+          <td style="padding:3px;">
+            <input class="cs-input" type="date" value="${escapeHtml(p.date || '')}" style="padding:4px 6px;font-size:11px;" oninput="onBulkExpenseField(${idx},'date',this.value)">
+          </td>
+          <td style="padding:3px;">
+            <input class="cs-input" type="number" value="${p.amount || 0}" style="padding:4px 6px;font-size:11px;text-align:right;font-family:'Montserrat',monospace;font-weight:800;color:#6b1d1f;" oninput="onBulkExpenseField(${idx},'amount',this.value)">
+          </td>
+          <td style="padding:3px;">
+            <input class="cs-input" value="${escapeHtml(p.comment || '')}" style="padding:4px 6px;font-size:11px;" oninput="onBulkExpenseField(${idx},'comment',this.value)">
+          </td>
+          <td style="padding:3px;">
+            <select class="cs-input" style="padding:4px 6px;font-size:11px;" onchange="onBulkExpenseField(${idx},'sectionId',this.value)">
+              <option value="">— выбери —</option>
+              ${sectionOptions.map(s => `<option value="${s.id}" ${p.sectionId===s.id?'selected':''}>${escapeHtml(s.name)}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:3px;">
+            <select class="cs-input" style="padding:4px 6px;font-size:11px;" onchange="onBulkExpenseField(${idx},'rowId',this.value)" ${!p.sectionId ? 'disabled' : ''}>
+              <option value="">— выбери —</option>
+              ${rows.map(r => `<option value="${r.id}" ${p.rowId===r.id?'selected':''}>${escapeHtml(r.name || 'без названия')}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:3px;text-align:center;">
+            <button onclick="deleteBulkExpenseRow(${idx})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:14px;">×</button>
+          </td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>
+      <div style="display:flex;gap:8px;margin-top:14px;align-items:center;justify-content:flex-end;">
+        <button onclick="closeAll()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;">Отмена</button>
+        <button onclick="commitBulkExpenses()" style="background:#0a8a3a;color:white;border:none;padding:8px 20px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:800;${approvedCount === 0 ? 'opacity:0.5;pointer-events:none;' : ''}">
+          ✓ Добавить ${approvedCount} расход(ов) на ${approvedSum.toLocaleString('ru-RU')} ₽
+        </button>
+      </div>
+    </div>`;
+  } else {
+    html += `
+      <div style="padding:24px 22px;text-align:center;color:var(--muted);">
+        <div style="font-size:32px;opacity:0.4;margin-bottom:8px;">💬</div>
+        <div style="font-size:12px;font-weight:600;">Скопируй сообщения из ТГ-канала с расходами и нажми «Распарсить»</div>
+        <div style="font-size:11px;margin-top:4px;opacity:0.7;">Можно вставлять много строк сразу</div>
+      </div>`;
+  }
+
+  body.innerHTML = html;
+}
+/* ===== END Bulk expense paste ===== */
+
 
 
 
@@ -21252,17 +21992,54 @@ function buildTimingPrintHTML(project, t) {
 }
 
 /* ============================================================
-   INIT
+   INIT — авторизация → гидратация кэша из Supabase → рендер
    ============================================================ */
-renderProjects();
-// Обновим счётчик задач при загрузке
-setTimeout(() => {
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('lo-btn');
+  const err = document.getElementById('lo-err');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Входим…';
   try {
-    const tasks = (GLOBAL_VIEWS.tasks.collect(DB.getProjects()) || []).length;
-    const el = document.getElementById('nav-count-tasks');
-    if (el) el.textContent = tasks;
-  } catch (e) {}
-}, 100);
+    const email = document.getElementById('lo-email').value.trim();
+    const pass = document.getElementById('lo-pass').value;
+    await DB.signIn(email, pass);
+    document.getElementById('login-overlay').classList.add('hidden');
+    bootAfterAuth();
+  } catch (ex) {
+    err.textContent = ex.message || String(ex);
+    btn.disabled = false; btn.textContent = 'Войти';
+  }
+  return false;
+}
+
+async function bootApp() {
+  const restored = await DB.init();
+  if (restored) {
+    // была сохранена сессия — пропускаем логин
+    document.getElementById('login-overlay').classList.add('hidden');
+    bootAfterAuth();
+  }
+  // иначе остаётся логин-оверлей и ждём submit формы
+}
+
+function bootAfterAuth() {
+  renderProjects();
+  setTimeout(() => {
+    try {
+      const tasks = (GLOBAL_VIEWS.tasks.collect(DB.getProjects()) || []).length;
+      const el = document.getElementById('nav-count-tasks');
+      if (el) el.textContent = tasks;
+    } catch (e) {}
+  }, 100);
+  // Если на странице есть renderBrandHealth — пересчитаем тоже
+  if (typeof renderBrandHealth === 'function') {
+    try { renderBrandHealth(); } catch (e) {}
+  }
+}
+
+// Запускаем сразу, supabase-js уже загружен в head
+bootApp();
 function openNewDoc() { closeAll(); document.getElementById('m-new').classList.add('active'); }
 function closeAll() {
   // Сохранить смету немедленно, если есть несохранённые правки
