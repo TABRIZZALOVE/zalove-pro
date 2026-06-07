@@ -5471,6 +5471,34 @@ body.dark-theme .task-deadline:focus { background: white; }
     min-width: 0 !important;
   }
 
+  /* === Team-row в рейтинге проекта — стек grid === */
+  .team-row {
+    display: grid !important;
+    grid-template-columns: 40px 1fr !important;
+    grid-template-areas:
+      "avatar info"
+      "note note"
+      "bar bar"
+      "score score" !important;
+    gap: 8px 10px !important;
+    align-items: center !important;
+    padding: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .team-row .team-avatar { grid-area: avatar; }
+  .team-row .team-info { grid-area: info; min-width: 0; }
+  .team-row .team-note-input { grid-area: note; width: 100% !important; min-width: 0 !important; }
+  .team-row .team-rating-bar { grid-area: bar; width: 100% !important; }
+  .team-row > input[type="number"] { grid-area: score; width: 100% !important; max-width: 100px; }
+  .team-row > div:not([class]) { display: none; }  /* "—" разделитель не нужен на мобиле */
+
+  /* Финальный фикс smeta-promo — flex теперь нет overflow */
+  .smeta-promo > * { overflow-wrap: anywhere; }
+
+  /* Любой horizontal-scroll контейнер — компактный padding */
+  [class*="financial"] { max-width: 100% !important; }
+
   /* === Project detail (хирея проекта) — стек на мобиле === */
   .project-detail, #detail, .detail-page { overflow-x: hidden; }
   .detail-hero {
