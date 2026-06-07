@@ -5259,6 +5259,98 @@ body.dark-theme .task-deadline:focus { background: white; }
   .sidebar-section.optional-on-mobile { display: none; }
 }
 
+/* ============================================================
+   МОБИЛЬНАЯ ПОЛИРОВКА для PWA (iPhone home screen experience)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Safe area для iPhone-выреза и home-индикатора */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-tap-highlight-color: transparent;  /* убираем синий тап-флеш */
+    -webkit-touch-callout: none;
+    overscroll-behavior: contain;  /* без баунса всей страницы */
+  }
+
+  /* Кнопки и тап-таргеты — 44px по Apple HIG */
+  button, .btn, .doc-card, .nav-item, .stat-card, .brand-card,
+  .project-card, .creative-card, .t-brush, .tc-opt {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  button, .btn { min-height: 44px; }
+
+  /* Гамбургер крупнее и в правом верхнем углу (привычка с iOS) */
+  .mobile-menu-btn {
+    width: 44px; height: 44px;
+    font-size: 22px;
+    border-radius: 12px;
+    top: calc(env(safe-area-inset-top) + 12px);
+    right: 12px; left: auto !important;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  /* Sidebar drawer выезжает СПРАВА (под кнопку), с safe-area сверху */
+  .sidebar {
+    width: 86vw !important;
+    max-width: 320px;
+    right: 0; left: auto !important;
+    transform: translateX(100%);
+    padding-top: env(safe-area-inset-top);
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Topbar — компактнее, поиск во второй ряд */
+  .topbar {
+    position: sticky;
+    top: env(safe-area-inset-top);
+    background: var(--bg);
+    z-index: 50;
+    padding: 12px 14px 8px;
+    margin: -12px -14px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar h1 { font-size: 22px; letter-spacing: 0.02em; }
+  .topbar .topbar-meta { font-size: 10px; opacity: 0.7; }
+  .topbar .topbar-controls { width: 100%; }
+  .topbar input[type="search"], .topbar input[type="text"] {
+    width: 100%; max-width: none;
+  }
+
+  /* Карточки проектов компактнее */
+  .project-card {
+    border-radius: 14px;
+    min-height: 160px;
+  }
+  .project-card .p-name { font-size: 18px; }
+
+  /* Скрываем второстепенные блоки на узких экранах */
+  .greeting-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  /* Хорошее scroll-поведение */
+  * { -webkit-overflow-scrolling: touch; }
+}
+
+/* ───── Когда запущено как PWA с домашнего экрана ───── */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  /* Дополнительный padding под status bar (iPhone уже учитывает env) */
+  .topbar { padding-top: max(12px, env(safe-area-inset-top)); }
+
+  /* Запрещаем выделение всего что не текстовое поле */
+  body { user-select: none; -webkit-user-select: none; }
+  input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
+
+  /* Скрываем "Открыть в браузере" и подобные если будут */
+  .browser-only { display: none !important; }
+}
+
 /* ───── Очень узкие телефоны (до 380px) ───── */
 @media (max-width: 380px) {
   .docs-grid, .creative-cards, .stats, .brand-grid { grid-template-columns: 1fr; }
