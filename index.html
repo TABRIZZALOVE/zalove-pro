@@ -5260,94 +5260,158 @@ body.dark-theme .task-deadline:focus { background: white; }
 }
 
 /* ============================================================
-   МОБИЛЬНАЯ ПОЛИРОВКА для PWA (iPhone home screen experience)
+   МОБИЛЬНАЯ ПОЛИРОВКА — полный стек, без горизонтального скролла
    ============================================================ */
 @media (max-width: 768px) {
-  /* Safe area для iPhone-выреза и home-индикатора */
+  /* Жёстко запрещаем горизонтальный скролл всей страницы */
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: contain;
+  }
   body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
-    -webkit-tap-highlight-color: transparent;  /* убираем синий тап-флеш */
-    -webkit-touch-callout: none;
-    overscroll-behavior: contain;  /* без баунса всей страницы */
   }
-
-  /* Кнопки и тап-таргеты — 44px по Apple HIG */
-  button, .btn, .doc-card, .nav-item, .stat-card, .brand-card,
-  .project-card, .creative-card, .t-brush, .tc-opt {
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
+  .main {
+    overflow-x: hidden;
+    max-width: 100vw;
+    padding: 60px 14px 80px !important;
   }
-  button, .btn { min-height: 44px; }
+  /* Защита от широких потомков */
+  .dashboard, .project-detail, .topbar, .stats, .filter-bar,
+  .projects-grid, .access-info { max-width: 100% !important; }
 
-  /* Гамбургер крупнее и в правом верхнем углу (привычка с iOS) */
+  /* === TOPBAR — вертикальный стек, всё во всю ширину === */
+  .topbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .page-title-block { width: 100%; min-width: 0; }
+  .greeting-line {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .page-title { font-size: 32px; line-height: 1; margin: 2px 0 6px; }
+  .page-counter {
+    font-size: 10px;
+    line-height: 1.3;
+    color: var(--muted);
+    opacity: 0.75;
+    /* На айфоне обрезаем длинный ОГРНИП до одной строки */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .topbar-actions .search-box { grid-column: 1 / -1; width: 100%; }
+  .topbar-actions .search-box input { width: 100%; }
+  .topbar-actions .btn {
+    min-height: 44px;
+    font-size: 13px;
+    padding: 0 12px;
+    justify-content: center;
+  }
+  /* «Новый проект» — на всю ширину как primary CTA */
+  .topbar-actions > .btn:not(.btn-secondary) { grid-column: 1 / -1; }
+
+  /* === STATS — одна колонка для читаемости === */
+  .stats {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    padding: 14px 16px !important;
+    border-radius: 14px;
+  }
+  .stat-label { font-size: 11px; }
+  .stat-value { font-size: 28px !important; }
+
+  /* === FILTER-BAR — стек и компактные чипы === */
+  .filter-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .view-tabs {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .view-tabs::-webkit-scrollbar { display: none; }
+  .view-tab { flex-shrink: 0; padding: 10px 14px; font-size: 13px; }
+  .filter-chip { padding: 8px 12px; font-size: 12px; min-height: 36px; }
+
+  /* === Access-info (синяя плашка) меньше padding === */
+  .access-info { padding: 10px 12px !important; font-size: 12px; gap: 8px; }
+  .access-info > div:last-child { font-size: 12px; line-height: 1.4; }
+
+  /* === Гамбургер — справа сверху с safe-area === */
   .mobile-menu-btn {
     width: 44px; height: 44px;
     font-size: 22px;
     border-radius: 12px;
-    top: calc(env(safe-area-inset-top) + 12px);
-    right: 12px; left: auto !important;
+    top: calc(env(safe-area-inset-top) + 10px) !important;
+    right: 12px !important;
+    left: auto !important;
     background: rgba(255,255,255,0.92);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    z-index: 999;
   }
 
-  /* Sidebar drawer выезжает СПРАВА (под кнопку), с safe-area сверху */
+  /* === Sidebar — drawer СПРАВА === */
   .sidebar {
     width: 86vw !important;
     max-width: 320px;
-    right: 0; left: auto !important;
+    right: 0;
+    left: auto !important;
     transform: translateX(100%);
-    padding-top: env(safe-area-inset-top);
+    padding-top: calc(env(safe-area-inset-top) + 20px);
   }
   .sidebar.open { transform: translateX(0); }
 
-  /* Topbar — компактнее, поиск во второй ряд */
-  .topbar {
-    position: sticky;
-    top: env(safe-area-inset-top);
-    background: var(--bg);
-    z-index: 50;
-    padding: 12px 14px 8px;
-    margin: -12px -14px 12px;
-    border-bottom: 1px solid var(--line);
-  }
-  .topbar h1 { font-size: 22px; letter-spacing: 0.02em; }
-  .topbar .topbar-meta { font-size: 10px; opacity: 0.7; }
-  .topbar .topbar-controls { width: 100%; }
-  .topbar input[type="search"], .topbar input[type="text"] {
-    width: 100%; max-width: none;
+  /* === Кнопки и тап-таргеты === */
+  button, .btn { min-height: 44px; }
+  .doc-card, .nav-item, .stat-card, .brand-card,
+  .project-card, .creative-card, .t-brush, .tc-opt {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
 
-  /* Карточки проектов компактнее */
-  .project-card {
-    border-radius: 14px;
-    min-height: 160px;
-  }
-  .project-card .p-name { font-size: 18px; }
-
-  /* Скрываем второстепенные блоки на узких экранах */
-  .greeting-line {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-  }
-
-  /* Хорошее scroll-поведение */
   * { -webkit-overflow-scrolling: touch; }
+}
+
+/* === Очень узкие телефоны (≤ 380px) — ещё компактнее === */
+@media (max-width: 380px) {
+  .page-title { font-size: 28px !important; }
+  .page-counter { font-size: 9px !important; }
+  .topbar-actions { grid-template-columns: 1fr !important; }
+  .topbar-actions .btn { width: 100%; }
 }
 
 /* ───── Когда запущено как PWA с домашнего экрана ───── */
 @media (display-mode: standalone), (display-mode: fullscreen) {
-  /* Дополнительный padding под status bar (iPhone уже учитывает env) */
   .topbar { padding-top: max(12px, env(safe-area-inset-top)); }
-
-  /* Запрещаем выделение всего что не текстовое поле */
   body { user-select: none; -webkit-user-select: none; }
   input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
-
-  /* Скрываем "Открыть в браузере" и подобные если будут */
   .browser-only { display: none !important; }
 }
 
