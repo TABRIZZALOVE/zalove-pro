@@ -8613,6 +8613,51 @@ const DB = {
     } catch (e) { console.warn('profile load', e); this.profile = null; }
   },
 
+  // ── Retry-обёртка для серверных мутаций ──
+  // Делает до 3 попыток с экспоненциальной задержкой (300мс, 900мс, 2700мс).
+  // На 401 пытается обновить сессию через supabase-js (он сам refresh).
+  // Возвращает { data, error } совместимое с supabase-js.
+  async _withRetry(fn, label) {
+    const delays = [300, 900, 2700];
+    let lastError = null;
+    for (let attempt = 0; attempt <= delays.length; attempt++) {
+      try {
+        const { data, error } = await fn();
+        if (!error) return { data, error: null };
+        lastError = error;
+        // Если 401/JWT-протух — попробуем рефрешнуть сессию и повторить сразу
+        const isAuthErr = (error.code === 'PGRST301' || error.status === 401 ||
+          (error.message && (error.message.includes('JWT') || error.message.includes('expired'))));
+        if (isAuthErr) {
+          try { await this.client.auth.refreshSession(); } catch (e) { /* пусть упадёт на следующей попытке */ }
+          continue;
+        }
+        // Не сетевая ошибка (например, валидация Postgres) — нет смысла повторять
+        if (error.code && !String(error.code).startsWith('5')) {
+          return { data: null, error };
+        }
+      } catch (e) {
+        lastError = { message: e?.message || String(e), code: 'NETWORK' };
+      }
+      if (attempt < delays.length) await new Promise(r => setTimeout(r, delays[attempt]));
+    }
+    console.error(`[DB] ${label} failed after retries:`, lastError);
+    return { data: null, error: lastError };
+  },
+
+  // Человеческий текст для toast по типу ошибки
+  _errToast(label, error) {
+    if (!error) return;
+    const msg = error.message || '';
+    let txt;
+    if (msg.includes('JWT') || error.status === 401) txt = 'Сессия истекла — обнови страницу (Cmd+R)';
+    else if (msg.includes('Failed to fetch') || error.code === 'NETWORK') txt = 'Нет связи с сервером — проверь интернет';
+    else if (msg.includes('row-level security') || error.code === '42501') txt = 'Нет прав на изменение';
+    else if (error.code === '22007') txt = 'Неверный формат даты';
+    else txt = 'Сервер: ' + (msg || 'ошибка ' + (error.code || '?'));
+    if (typeof toast === 'function') toast(txt, 'error');
+  },
+
   async signOut() {
     await this.client.auth.signOut();
     localStorage.removeItem(this.KEY);
@@ -8714,11 +8759,14 @@ const DB = {
     if (ser === this._lastBrand) return;
     this._lastBrand = ser;
     this._pending++;
-    this.client.from('profiles').update({ data: { brand: b } }).eq('id', this.user.id)
-      .then(({ error }) => {
-        this._pending--;
-        if (error) console.error('brand sync', error);
-      });
+    this._withRetry(
+      () => this.client.from('profiles').update({ data: { brand: b } }).eq('id', this.user.id),
+      'brand sync'
+    ).then(({ error }) => {
+      this._pending--;
+      if (error) console.error('brand sync', error);
+      // brand sync — без toast, чтобы не спамить
+    });
   },
 
   // ── Чтение (сразу из кэша) ──
@@ -8757,26 +8805,19 @@ const DB = {
     this.save(data);
 
     this._pending++;
-    this.client.from('projects').insert(this._toDb(p)).select().single()
-      .then(({ data: row, error }) => {
-        this._pending--;
-        if (error) {
-          console.error('insert error:', error);
-          if (typeof toast === 'function') toast('Сервер: ' + (error.message || 'ошибка сохранения'), 'error');
-          return;
-        }
-        const cache = this.load();
-        const idx = cache.projects.findIndex(x => x.id === tempId);
-        if (idx >= 0) {
-          cache.projects[idx] = this._fromDb(row);
-          this.save(cache);
-        }
-      })
-      .catch(err => {
-        this._pending--;
-        console.error('insert throw:', err);
-        if (typeof toast === 'function') toast('Сетевая ошибка: ' + (err?.message || err), 'error');
-      });
+    this._withRetry(
+      () => this.client.from('projects').insert(this._toDb(p)).select().single(),
+      'insert'
+    ).then(({ data: row, error }) => {
+      this._pending--;
+      if (error) { this._errToast('insert', error); return; }
+      const cache = this.load();
+      const idx = cache.projects.findIndex(x => x.id === tempId);
+      if (idx >= 0) {
+        cache.projects[idx] = this._fromDb(row);
+        this.save(cache);
+      }
+    });
 
     return project;
   },
@@ -8792,11 +8833,13 @@ const DB = {
     // Отправляем на сервер только если это реальный uuid (не временный tmp_)
     if (!String(id).startsWith('tmp_')) {
       this._pending++;
-      this.client.from('projects').update(this._toDb(merged)).eq('id', id)
-        .then(({ error }) => {
-          this._pending--;
-          if (error) { console.error('update', error); if (typeof toast === 'function') toast('Ошибка синка с сервером', 'error'); }
-        });
+      this._withRetry(
+        () => this.client.from('projects').update(this._toDb(merged)).eq('id', id),
+        'update'
+      ).then(({ error }) => {
+        this._pending--;
+        if (error) this._errToast('update', error);
+      });
     }
     return merged;
   },
@@ -8808,11 +8851,13 @@ const DB = {
 
     if (!String(id).startsWith('tmp_')) {
       this._pending++;
-      this.client.from('projects').delete().eq('id', id)
-        .then(({ error }) => {
-          this._pending--;
-          if (error) console.error('delete', error);
-        });
+      this._withRetry(
+        () => this.client.from('projects').delete().eq('id', id),
+        'delete'
+      ).then(({ error }) => {
+        this._pending--;
+        if (error) this._errToast('delete', error);
+      });
     }
   },
 
@@ -19366,10 +19411,18 @@ function buildPpmSlides(project, p, metas, logoMeta) {
     slides.push(ppmSlideShell(buildCastSlide(project, p.cast.slice(i, i + 2), metas, i + 1, p.cast.length)));
   }
 
-  // === 05. Костюмы === — 1 костюмный сет / слайд (3 опции)
+  // === 05. Костюмы === — 6 опций / слайд (2 ряда × 3), пагинация если >6
   p.costumes.forEach((co, i) => {
     const actor = p.cast.find(a => a.id === co.castId);
-    slides.push(ppmSlideShell(buildCostumeSlide(project, co, actor, metas, i + 1, p.costumes.length)));
+    const options = co.options || [];
+    const optsPerSlide = 6;
+    const pages = Math.max(1, Math.ceil(options.length / optsPerSlide));
+    for (let pg = 0; pg < pages; pg++) {
+      const slice = options.slice(pg * optsPerSlide, (pg + 1) * optsPerSlide);
+      const coSlice = { ...co, options: slice };
+      const pageLabel = pages > 1 ? ` (стр. ${pg + 1}/${pages})` : '';
+      slides.push(ppmSlideShell(buildCostumeSlide(project, coSlice, actor, metas, i + 1, p.costumes.length, pageLabel)));
+    }
   });
 
   // === 06. Грим === — 1 / слайд
@@ -19393,14 +19446,41 @@ function buildPpmSlides(project, p, metas, logoMeta) {
     }
   });
 
-  // === 09. Музыка ===
+  // === 09. Музыка === — 4 трека / слайд, рекомендация на первом
   if (p.music.tracks.length > 0 || p.music.recommendation) {
-    slides.push(ppmSlideShell(buildMusicSlide(project, p.music)));
+    const tracks = p.music.tracks || [];
+    const tracksPerSlide = 4;
+    if (tracks.length === 0) {
+      slides.push(ppmSlideShell(buildMusicSlide(project, { ...p.music, tracks: [] }, 1, 1)));
+    } else {
+      const pages = Math.ceil(tracks.length / tracksPerSlide);
+      for (let pg = 0; pg < pages; pg++) {
+        const slice = tracks.slice(pg * tracksPerSlide, (pg + 1) * tracksPerSlide);
+        // Рекомендацию показываем только на первом слайде
+        const musicSlice = {
+          ...p.music,
+          tracks: slice,
+          recommendation: pg === 0 ? p.music.recommendation : ''
+        };
+        slides.push(ppmSlideShell(buildMusicSlide(project, musicSlice, pg + 1, pages)));
+      }
+    }
   }
 
-  // === 10. Съёмочный план === — 1 день / слайд
+  // === 10. Съёмочный план === — 1 день / слайд, пагинация по 10 строк
   p.shootPlan.forEach((day, i) => {
-    slides.push(ppmSlideShell(buildShootSlide(project, day, i + 1, p.shootPlan.length)));
+    const rows = day.rows || [];
+    const rowsPerSlide = 10;
+    if (rows.length === 0) {
+      slides.push(ppmSlideShell(buildShootSlide(project, day, i + 1, p.shootPlan.length, 1, 1)));
+    } else {
+      const pages = Math.ceil(rows.length / rowsPerSlide);
+      for (let pg = 0; pg < pages; pg++) {
+        const slice = rows.slice(pg * rowsPerSlide, (pg + 1) * rowsPerSlide);
+        const daySlice = { ...day, rows: slice };
+        slides.push(ppmSlideShell(buildShootSlide(project, daySlice, i + 1, p.shootPlan.length, pg + 1, pages)));
+      }
+    }
   });
 
   // === 11+. Кастомные секции ===
@@ -19515,22 +19595,25 @@ function buildCastSlide(project, actors, metas, fromIdx, total) {
   `;
 }
 
-function buildCostumeSlide(project, co, actor, metas, idx, total) {
+function buildCostumeSlide(project, co, actor, metas, idx, total, pageLabel) {
+  // 6 опций: 2 ряда × 3 колонки
   const cellW = (PPM_SLIDE_W - 70 * 2 - 24 * 2) / 3;
-  const cellH = 460;
+  const cellH = 220;
+  const options = co.options || [];
   return `
-    <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
-      ${ppmSecLabel('05', `Костюм ${idx} из ${total}`)}
-      <div style="margin-bottom:24px;">
-        <div style="font-size:24px;font-weight:900;color:#0a0907;line-height:1;">${actor ? escapeHtml(actor.name) : 'Образ'} ${actor && actor.category ? `<span style="font-size:14px;color:#888;font-weight:600;">· ${escapeHtml(actor.category)}</span>` : ''}</div>
+    <div style="width:100%;height:100%;padding:40px 70px;box-sizing:border-box;">
+      ${ppmSecLabel('05', `Костюм ${idx} из ${total}${pageLabel || ''}`)}
+      <div style="margin-bottom:16px;">
+        <div style="font-size:22px;font-weight:900;color:#0a0907;line-height:1;">${actor ? escapeHtml(actor.name) : 'Образ'} ${actor && actor.category ? `<span style="font-size:14px;color:#888;font-weight:600;">· ${escapeHtml(actor.category)}</span>` : ''}</div>
         ${co.description ? `<div style="font-size:12px;color:#555;margin-top:4px;">${escapeHtml(co.description)}</div>` : ''}
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3, ${cellW}px);gap:24px;">
-        ${[0, 1, 2].map(idx => {
-          const opt = (co.options || [])[idx] || {};
+      <div style="display:grid;grid-template-columns:repeat(3, ${cellW}px);grid-template-rows:repeat(2, auto);gap:16px 24px;">
+        ${[0, 1, 2, 3, 4, 5].map(i => {
+          const opt = options[i];
+          if (!opt) return `<div></div>`;
           return `<div>
             ${ppmImageBox(metas[opt.image], cellW, cellH, 4)}
-            <div style="font-size:9px;color:#999;margin-top:6px;letter-spacing:1px;">ОПЦИЯ ${idx + 1}</div>
+            <div style="font-size:9px;color:#999;margin-top:6px;letter-spacing:1px;">ОПЦИЯ ${i + 1}${opt.dirReco ? ' · DIR RECO' : ''}</div>
             ${opt.caption ? `<div style="font-size:11px;color:#444;margin-top:2px;">${escapeHtml(opt.caption)}</div>` : ''}
           </div>`;
         }).join('')}
@@ -19604,10 +19687,11 @@ function buildPropsSlide(project, cat, items, metas) {
   `;
 }
 
-function buildMusicSlide(project, music) {
+function buildMusicSlide(project, music, page, totalPages) {
+  const pageLabel = (totalPages && totalPages > 1) ? ` (стр. ${page}/${totalPages})` : '';
   return `
     <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
-      ${ppmSecLabel('09', 'Музыкальное сопровождение')}
+      ${ppmSecLabel('09', 'Музыкальное сопровождение' + pageLabel)}
       ${music.recommendation ? `<div style="margin-bottom:30px;padding:16px 20px;background:#fafafa;border-left:3px solid #0a0907;font-size:13px;color:#444;font-style:italic;line-height:1.6;">${escapeHtml(music.recommendation)}</div>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
         ${music.tracks.map((t, i) => `
@@ -19625,10 +19709,11 @@ function buildMusicSlide(project, music) {
   `;
 }
 
-function buildShootSlide(project, day, idx, total) {
+function buildShootSlide(project, day, idx, total, page, totalPages) {
+  const pageLabel = (totalPages && totalPages > 1) ? ` · стр. ${page}/${totalPages}` : '';
   return `
     <div style="width:100%;height:100%;padding:50px 70px;box-sizing:border-box;">
-      ${ppmSecLabel('10', `Съёмочный план · ${escapeHtml(day.title || 'День ' + idx)}${day.date ? ' · ' + formatDateRu(day.date) : ''}`)}
+      ${ppmSecLabel('10', `Съёмочный план · ${escapeHtml(day.title || 'День ' + idx)}${day.date ? ' · ' + formatDateRu(day.date) : ''}${pageLabel}`)}
       <table style="width:100%;border-collapse:collapse;font-size:11px;">
         <thead><tr style="background:#0a0907;color:#fff;font-size:9px;letter-spacing:1px;text-transform:uppercase;">
           <th style="padding:10px 12px;text-align:left;width:80px;">Время</th>
