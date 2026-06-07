@@ -8669,8 +8669,14 @@ const DB = {
   // ── Преобразования между DB-строкой и JSON-проектом ──
   _fromDb(row) {
     // row: { id, owner_id, name, type, ..., data: {...}, created_at, updated_at }
-    const flat = {
-      id: row.id,
+    // ВАЖНО: data jsonb может содержать устаревшие id/legacy_id (от миграции из localStorage).
+    // Поэтому распаковываем data ПЕРВЫМ, а серверные поля поверх — чтобы реальный UUID не был перезаписан.
+    const data = { ...(row.data || {}) };
+    delete data.id;          // чистим legacy id из data, чтоб не путал
+    delete data.legacy_id;   // тоже на всякий
+    return {
+      ...data,               // tasks, team, brief, estimate, timing, ...
+      id: row.id,            // настоящий UUID из БД
       name: row.name || '',
       type: row.type || '',
       client: row.client || '',
@@ -8685,8 +8691,6 @@ const DB = {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
-    // Распакуем data jsonb поверх (tasks, team, brief, ...)
-    return { ...flat, ...(row.data || {}) };
   },
 
   _toDb(p) {
