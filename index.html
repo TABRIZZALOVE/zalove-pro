@@ -8574,6 +8574,7 @@ const DB = {
     const { data: { session } } = await this.client.auth.getSession();
     if (session?.user) {
       this.user = session.user;
+      await this._loadProfile();
       await this.hydrate();
       this.ready = true;
       return true;
@@ -8585,9 +8586,17 @@ const DB = {
     const { data, error } = await this.client.auth.signInWithPassword({ email, password });
     if (error) throw error;
     this.user = data.user;
+    await this._loadProfile();
     await this.hydrate();
     this.ready = true;
     return data.user;
+  },
+
+  async _loadProfile() {
+    try {
+      const { data: prof } = await this.client.from('profiles').select('id,name,role').eq('id', this.user.id).single();
+      this.profile = prof || null;
+    } catch (e) { console.warn('profile load', e); this.profile = null; }
   },
 
   async signOut() {
@@ -22574,6 +22583,28 @@ async function bootApp() {
 }
 
 function bootAfterAuth() {
+  // Если залогинен ассистент — принудительно режим «глазами команды» и прячем переключатель
+  if (DB.profile && DB.profile.role && DB.profile.role !== 'producer') {
+    try {
+      setRole('team');
+      const rt = document.querySelector('.role-tabs');
+      if (rt) rt.style.display = 'none';
+      // Имя в user-card
+      const un = document.querySelector('.user-name');
+      const ur = document.querySelector('.user-role');
+      const ua = document.querySelector('.user-avatar');
+      if (un) un.textContent = DB.profile.name || 'Ассистент';
+      if (ur) ur.textContent = 'Ассистент · без доступа к финансам';
+      if (ua) ua.textContent = (DB.profile.name || 'А').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    } catch (e) { console.warn('assistant boot', e); }
+  } else if (DB.profile && DB.profile.role === 'producer') {
+    // Поправляем имя продюсера если оно в профиле
+    const un = document.querySelector('.user-name');
+    if (un && DB.profile.name && DB.profile.name !== 'zalov.production') {
+      un.textContent = DB.profile.name;
+    }
+  }
+
   renderProjects();
   setTimeout(() => {
     try {
