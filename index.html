@@ -5610,10 +5610,16 @@ body.dark-theme .task-deadline:focus { background: white; }
   /* ============================================================
      ВЫЗЫВНОЙ — стек всех мета-сеток
      ============================================================ */
+  .cs-row-grid,
+  .cs-row-grid.cs-2col,
+  .cs-row-grid.cs-3col,
+  .cs-row-grid.cs-4col,
   .cs-meta-grid,
   .cs-meta-grid.cols-2,
   .cs-meta-grid.cols-3,
   .cs-meta-grid.cols-4 { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .cs-row-grid > * { min-width: 0 !important; }
+  .cs-row-grid input, .cs-row-grid select, .cs-row-grid textarea { width: 100% !important; }
   .cs-section { padding: 12px !important; }
   .cs-row { flex-wrap: wrap !important; gap: 8px !important; }
   .cs-day-tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; flex-wrap: nowrap !important; }
