@@ -18,6 +18,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // Supabase config — self-hosted на VPS Timeweb
@@ -7201,6 +7202,7 @@ body.dark-theme .task-deadline:focus { background: white; }
       </div>
       <div class="doc-actions-h">
         <button class="btn btn-dark" onclick="exportPpmToPdf()">⤓ PDF</button>
+        <button class="btn btn-dark" onclick="exportPpmToPptx()">⤓ PPTX</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
     </div>
@@ -19182,6 +19184,91 @@ function ppmSlideShell(innerHtml) {
 
 function ppmSecLabel(num, title) {
   return `<div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#999;text-transform:uppercase;margin-bottom:18px;">${num}. ${escapeHtml(title)}</div>`;
+}
+
+// ============================================================
+// ППМ → PPTX (каждая секция = 1 слайд, картинка-фон 100%)
+// ============================================================
+async function exportPpmToPptx() {
+  if (typeof window.PptxGenJS === 'undefined') {
+    toast('PptxGenJS не загружен', 'error'); return;
+  }
+  if (typeof window.html2canvas === 'undefined') {
+    toast('html2canvas не загружен', 'error'); return;
+  }
+  if (!_ppmProject) return;
+  const project = _ppmProject;
+  const p = ensurePpm(project);
+  toast('Готовлю ППМ PPTX — собираю фото...', 'success');
+
+  // Соберём метаданные всех картинок (одной пачкой) — как в PDF
+  const allImageSrcs = new Set();
+  const add = (src) => { if (src && typeof src === 'string') allImageSrcs.add(src); };
+  p.storyboard.forEach(f => add(f.image));
+  p.locations.forEach(l => add(l.image));
+  p.cast.forEach(a => add(a.image));
+  p.costumes.forEach(co => (co.options || []).forEach(o => add(o.image)));
+  p.makeup.forEach(m => { add(m.makeupRef); add(m.hairRef); });
+  p.decor.forEach(d => { add(d.floorplan); add(d.detail1); add(d.detail2); });
+  PPM_PROPS_CATEGORIES.forEach(cat => (p.props[cat.key] || []).forEach(it => add(it.image)));
+  p.customSections.forEach(cs => (cs.items || []).forEach(it => add(it.image)));
+  const metas = {};
+  await Promise.all([...allImageSrcs].map(src => loadImageMeta(src).then(m => { if (m) metas[src] = m; })));
+
+  const logoMeta = await loadImageMeta('logo.png');
+
+  // Тот же набор слайдов что и в PDF — гарантия одинаковой раскладки
+  const slides = buildPpmSlides(project, p, metas, logoMeta);
+  toast(`Готово ${slides.length} слайдов, конвертирую...`, 'success');
+
+  // Инициализируем PPTX. Размер слайда: A4 landscape (11.69 × 8.27 inches)
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';  // 13.333 × 7.5"
+  // Перенастроим под наш ratio 1123/794 ≈ 1.414 → 11.69 × 8.27
+  pptx.defineLayout({ name: 'PPM_A4_LANDSCAPE', width: 11.69, height: 8.27 });
+  pptx.layout = 'PPM_A4_LANDSCAPE';
+  pptx.title = `ППМ — ${project.name || 'project'}`;
+  pptx.author = 'ZALOVE PRODUCTION';
+  pptx.company = 'ZALOVE PRODUCTION';
+
+  // Конвертируем каждый HTML-слайд в PNG и кладём в PPTX как фон
+  for (let i = 0; i < slides.length; i++) {
+    const el = slides[i];
+    document.body.appendChild(el);
+    try {
+      // Ждём загрузки картинок
+      await Promise.all(Array.from(el.querySelectorAll('img')).map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+        return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 4000); });
+      }));
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: PPM_SLIDE_W,
+        height: PPM_SLIDE_H,
+        windowWidth: PPM_SLIDE_W,
+        windowHeight: PPM_SLIDE_H,
+        letterRendering: true,
+        allowTaint: false,
+        imageTimeout: 15000
+      });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+      const slide = pptx.addSlide();
+      // Картинка занимает всю площадь слайда
+      slide.addImage({
+        data: dataUrl,
+        x: 0, y: 0, w: 11.69, h: 8.27
+      });
+    } finally {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }
+  }
+
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  await pptx.writeFile({ fileName: `ППМ_${slug}_${new Date().toISOString().slice(0,10)}.pptx` });
+  toast(`ППМ PPTX скачан · ${slides.length} слайдов ✓`, 'success');
 }
 
 async function exportPpmToPdf() {
