@@ -5402,25 +5402,50 @@ body.dark-theme .task-deadline:focus { background: white; }
   body.has-reel .shutter-toggle,
   body.has-reel .theme-toggle { right: 12px !important; }
 
-  /* === Project detail — нормальный стек === */
-  .project-detail-header {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 10px;
+  /* === Project detail (хирея проекта) — стек на мобиле === */
+  .detail-hero {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
   }
-  .project-detail-header > * { width: 100%; }
-  .project-detail-header .actions { flex-wrap: wrap; }
-  .project-detail-cover {
-    aspect-ratio: 16/10;
-    max-height: 280px;
+  .detail-poster {
+    height: 240px !important;
     border-radius: 14px;
   }
+  .detail-poster .poster-num {
+    font-size: 100px !important;
+  }
+  .detail-info { min-width: 0; width: 100%; }
+  .detail-h1 {
+    font-size: 28px !important;
+    line-height: 1.05 !important;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  .detail-meta-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .detail-meta-item { padding: 10px !important; }
+  .detail-meta-item .value { font-size: 16px !important; }
+  .detail-meta-item .value.small { font-size: 13px !important; }
+  .detail-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .detail-actions .btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 140px;
+    justify-content: center;
+  }
   /* «◀ Все проекты» — крупная навигация назад */
-  .back-link, .breadcrumbs {
+  .back-link, .breadcrumbs, [onclick*="showDashboard"] {
     min-height: 44px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     font-size: 14px;
+    padding: 4px 0;
   }
 
   /* Smart Fill / прочие плавающие плашки внизу — над home-индикатором iPhone */
