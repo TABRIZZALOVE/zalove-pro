@@ -6154,9 +6154,21 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
 
-      <!-- PERSONAL BRAND HEALTH -->
-      <div class="section-title">Личный бренд <span class="pill" id="brand-pill">шкала падает со временем · «Я запостил» обновляет</span></div>
-      <div class="brand-grid" id="brandGrid"></div>
+      <!-- PERSONAL BRAND HEALTH (виден только продюсеру) -->
+      <div id="personalBrandSection">
+        <div class="section-title">Личный бренд <span class="pill" id="brand-pill">шкала падает со временем · «Я запостил» обновляет</span></div>
+        <div class="brand-grid" id="brandGrid"></div>
+      </div>
+
+      <!-- TEAM ACTIVITY LOG (виден только продюсеру) -->
+      <div id="teamActivitySection" style="display:none">
+        <div class="section-title">Активность команды
+          <span class="pill" id="activity-pill">сегодня</span>
+        </div>
+        <div id="teamActivityList" style="background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-height: 80px;">
+          <div style="color: var(--muted); font-size: 13px; text-align: center; padding: 16px;">Загружаю…</div>
+        </div>
+      </div>
       <div class="brand-grid" style="display:none">
 
         <!-- Instagram -->
@@ -22572,6 +22584,83 @@ async function doLogin(e) {
   return false;
 }
 
+// ===== TEAM ACTIVITY (audit log) =====
+async function renderTeamActivity() {
+  const list = document.getElementById('teamActivityList');
+  if (!list || !DB.client) return;
+  try {
+    // События с начала сегодняшнего дня, не от продюсера
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const { data: rows, error } = await DB.client
+      .from('audit_log')
+      .select('user_name,user_role,action,row_name,table_name,changes,ts')
+      .gte('ts', startOfDay.toISOString())
+      .neq('user_role', 'producer')
+      .order('ts', { ascending: false })
+      .limit(100);
+    if (error) {
+      list.innerHTML = '<div style="color:#c53030;font-size:12px;">Ошибка загрузки: ' + (error.message || '?') + '</div>';
+      return;
+    }
+    if (!rows || rows.length === 0) {
+      list.innerHTML = '<div style="color: var(--muted); font-size: 13px; text-align: center; padding: 14px;">Сегодня команда ещё ничего не правила.</div>';
+      return;
+    }
+    // Группируем по пользователю
+    const byUser = {};
+    rows.forEach(r => {
+      const k = r.user_name || 'Аноним';
+      (byUser[k] = byUser[k] || []).push(r);
+    });
+    const fmtTime = ts => {
+      const d = new Date(ts);
+      return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    };
+    const actionRu = a => ({ INSERT: 'создал', UPDATE: 'изменил', DELETE: 'удалил' }[a] || a);
+    const fieldRu = k => ({
+      name: 'название', status: 'статус', mood: 'настроение', deadline: 'дедлайн',
+      days: 'дни', budget: 'бюджет', poster: 'обложку', client: 'клиента',
+      artist: 'артиста', type: 'тип', cover_image: 'обложку',
+      data: 'данные', updated_at: '', created_at: ''
+    }[k] || k);
+    const summarizeDiff = (d) => {
+      if (!d) return '';
+      const keys = Object.keys(d).filter(k => k !== 'updated_at' && k !== 'created_at');
+      if (keys.length === 0) return '';
+      if (keys.length === 1) {
+        const k = keys[0]; const v = d[k];
+        if (k === 'data') return 'правки внутри (задачи / команда / документы)';
+        return fieldRu(k) + ': «' + JSON.stringify(v.was).slice(0,30) + '» → «' + JSON.stringify(v.now).slice(0,30) + '»';
+      }
+      return keys.map(fieldRu).filter(Boolean).join(', ');
+    };
+    let html = '';
+    Object.entries(byUser).forEach(([uname, items]) => {
+      html += '<div style="margin-bottom:14px">';
+      html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+uname+' · '+items.length+' дейст.</div>';
+      items.forEach(e => {
+        const t = fmtTime(e.ts);
+        const proj = e.row_name ? '«'+e.row_name+'»' : '';
+        let detail = '';
+        if (e.action === 'UPDATE' && e.changes?.diff) {
+          detail = summarizeDiff(e.changes.diff);
+          if (detail) detail = ' — ' + detail;
+        }
+        html += '<div style="font-size:12px;color:var(--text-2);padding:4px 0;border-bottom:1px dashed var(--line)">'
+          + '<span style="color:var(--muted);font-family:monospace">' + t + '</span> '
+          + actionRu(e.action) + ' ' + proj + detail
+          + '</div>';
+      });
+      html += '</div>';
+    });
+    list.innerHTML = html;
+  } catch (e) {
+    list.innerHTML = '<div style="color:#c53030;font-size:12px;">Сетевая ошибка</div>';
+    console.error('renderTeamActivity', e);
+  }
+}
+
 async function bootApp() {
   const restored = await DB.init();
   if (restored) {
@@ -22596,12 +22685,27 @@ function bootAfterAuth() {
       if (un) un.textContent = DB.profile.name || 'Ассистент';
       if (ur) ur.textContent = 'Ассистент · без доступа к финансам';
       if (ua) ua.textContent = (DB.profile.name || 'А').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      // Скрываем «Личный бренд» от ассистентов
+      const brand = document.getElementById('personalBrandSection');
+      if (brand) brand.style.display = 'none';
+      // Активность команды — тоже не для ассистентов
+      const activity = document.getElementById('teamActivitySection');
+      if (activity) activity.style.display = 'none';
     } catch (e) { console.warn('assistant boot', e); }
   } else if (DB.profile && DB.profile.role === 'producer') {
     // Поправляем имя продюсера если оно в профиле
     const un = document.querySelector('.user-name');
     if (un && DB.profile.name && DB.profile.name !== 'zalov.production') {
       un.textContent = DB.profile.name;
+    }
+    // Показываем и заполняем «Активность команды»
+    const activity = document.getElementById('teamActivitySection');
+    if (activity) {
+      activity.style.display = '';
+      renderTeamActivity();
+      // Обновляем каждые 30 сек чтобы видеть свежие действия
+      if (window._teamActivityInterval) clearInterval(window._teamActivityInterval);
+      window._teamActivityInterval = setInterval(renderTeamActivity, 30000);
     }
   }
 
