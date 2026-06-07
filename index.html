@@ -5502,8 +5502,13 @@ body.dark-theme .task-deadline:focus { background: white; }
   /* ============================================================
      ВСЕ ДОКУМЕНТЫ-МОДАЛКИ — fullscreen на мобиле
      ============================================================ */
-  .modal-overlay { padding: 0 !important; align-items: stretch !important; }
-  .doc-overlay {
+  .modal-overlay.active { padding: 0 !important; align-items: stretch !important; }
+  .modal-overlay.active > .doc-overlay,
+  .modal-overlay.active > .smeta-overlay,
+  .modal-overlay.active > .timing-overlay,
+  .modal-overlay.active > .callsheet-overlay,
+  .modal-overlay.active > .brief-overlay,
+  .modal-overlay.active > .ppm-overlay {
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
@@ -5512,7 +5517,6 @@ body.dark-theme .task-deadline:focus { background: white; }
     max-height: 100dvh !important;
     margin: 0 !important;
     border-radius: 0 !important;
-    display: flex !important;
     flex-direction: column !important;
   }
   .doc-header {
