@@ -5396,6 +5396,43 @@ body.dark-theme .task-deadline:focus { background: white; }
     user-select: none;
   }
 
+  /* === Кинолента справа — скрыта на телефоне === */
+  .film-reel { display: none !important; }
+  body.has-reel .main { padding-right: 14px !important; }
+  body.has-reel .shutter-toggle,
+  body.has-reel .theme-toggle { right: 12px !important; }
+
+  /* === Project detail — нормальный стек === */
+  .project-detail-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px;
+  }
+  .project-detail-header > * { width: 100%; }
+  .project-detail-header .actions { flex-wrap: wrap; }
+  .project-detail-cover {
+    aspect-ratio: 16/10;
+    max-height: 280px;
+    border-radius: 14px;
+  }
+  /* «◀ Все проекты» — крупная навигация назад */
+  .back-link, .breadcrumbs {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+  }
+
+  /* Smart Fill / прочие плавающие плашки внизу — над home-индикатором iPhone */
+  .smart-fill {
+    margin-bottom: calc(env(safe-area-inset-bottom) + 12px);
+  }
+
+  /* Floating actions (тема, звук) сдвигаем выше iPhone home-индикатора */
+  .shutter-toggle, .theme-toggle {
+    bottom: calc(env(safe-area-inset-bottom) + 16px) !important;
+  }
+
   * { -webkit-overflow-scrolling: touch; }
 }
 
@@ -7906,7 +7943,7 @@ function injectDocLinkBar(modalId, docKey) {
   else if (h < 22) greet = 'Добрый вечер';
   else greet = 'Поздний час';
   const el = document.getElementById('greetingLine');
-  if (el) el.innerHTML = greet + ', <span class="name">Табриз</span>. Сегодня смена по Nebula — ни пуха.';
+  if (el) el.innerHTML = greet + ', <span class="name">Табриз</span>.';
 })();
 
 // --- Цитата внизу страницы ---
