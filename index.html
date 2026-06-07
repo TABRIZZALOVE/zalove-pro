@@ -5620,6 +5620,19 @@ body.dark-theme .task-deadline:focus { background: white; }
   .cs-meta-grid.cols-4 { grid-template-columns: 1fr !important; gap: 10px !important; }
   .cs-row-grid > * { min-width: 0 !important; }
   .cs-row-grid input, .cs-row-grid select, .cs-row-grid textarea { width: 100% !important; }
+  .cs-editor, .cs-section, .cs-section *, .cs-input { max-width: 100% !important; box-sizing: border-box !important; }
+  .cs-input { width: 100% !important; }
+
+  /* === Универсальный фикс: в doc-body не даём ничего выходить за пределы === */
+  /* Исключения для специальных широких компонентов (timing matrix etc) */
+  .doc-body:not(:has(.timing-grid-wrap)) > * { max-width: 100% !important; }
+  .doc-body input:not([type=checkbox]):not([type=radio]):not(.t-proc-name),
+  .doc-body select,
+  .doc-body textarea { box-sizing: border-box !important; max-width: 100% !important; }
+  .doc-body .cs-input,
+  .doc-body .brief-input,
+  .doc-body .ppm-input,
+  .doc-body .est-input { max-width: 100% !important; }
   .cs-section { padding: 12px !important; }
   .cs-row { flex-wrap: wrap !important; gap: 8px !important; }
   .cs-day-tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; flex-wrap: nowrap !important; }
