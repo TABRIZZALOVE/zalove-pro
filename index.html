@@ -12267,7 +12267,7 @@ function storyboardAddRow() {
   if (!_sbProject) return;
   if (!_sbProject.storyboard) _sbProject.storyboard = { rows: [] };
   _sbProject.storyboard.rows.push({ id: 'sb_' + Date.now(), image: '', description: '', timing: '' });
-  storyboardSave();
+  storyboardSave(true);  // структурное изменение — сохраняем сразу
   renderStoryboardEditor();
 }
 
@@ -12275,14 +12275,14 @@ function storyboardRemoveRow(idx) {
   if (!_sbProject?.storyboard?.rows) return;
   if (!confirm('Удалить этот кадр?')) return;
   _sbProject.storyboard.rows.splice(idx, 1);
-  storyboardSave();
+  storyboardSave(true);  // структурное — сразу
   renderStoryboardEditor();
 }
 
 function storyboardUpdateRow(idx, field, val) {
   if (!_sbProject?.storyboard?.rows?.[idx]) return;
   _sbProject.storyboard.rows[idx][field] = val;
-  storyboardSave();
+  storyboardSave();  // текст — debounced
 }
 
 async function storyboardUploadImage(idx, input) {
@@ -12297,7 +12297,7 @@ async function storyboardUploadImage(idx, input) {
     const compressed = await _sbCompressImage(file, 1200, 0.72);
     if (!_sbProject?.storyboard?.rows?.[idx]) return;
     _sbProject.storyboard.rows[idx].image = compressed;
-    storyboardSave();
+    storyboardSave(true);  // картинка — сразу
     renderStoryboardEditor();
     toast('Референс добавлен ✓', 'success');
   } catch (e) {
@@ -12336,14 +12336,26 @@ function _sbCompressImage(file, maxW = 1200, quality = 0.72) {
 function storyboardRemoveImage(idx) {
   if (!_sbProject?.storyboard?.rows?.[idx]) return;
   _sbProject.storyboard.rows[idx].image = '';
-  storyboardSave();
+  storyboardSave(true);
   renderStoryboardEditor();
 }
 
-function storyboardSave() {
+// Debounce: пушим в БД через 600мс после последнего изменения, иначе сервер захлёбывается
+// (каждый нажатый символ в textarea вызывал PATCH — пул соединений Postgres иссякал).
+let _sbSaveTimer = null;
+function storyboardSave(immediate = false) {
   if (!_sbProject || !_currentProjectId) return;
-  DB.updateProject(_currentProjectId, { storyboard: _sbProject.storyboard });
+  if (_sbSaveTimer) { clearTimeout(_sbSaveTimer); _sbSaveTimer = null; }
+  const fire = () => {
+    _sbSaveTimer = null;
+    if (!_sbProject || !_currentProjectId) return;
+    DB.updateProject(_currentProjectId, { storyboard: _sbProject.storyboard });
+  };
+  if (immediate) fire();
+  else _sbSaveTimer = setTimeout(fire, 600);
 }
+// Если юзер закрывает модалку — флушим сразу, чтобы не потерять изменения
+window.addEventListener('beforeunload', () => { if (_sbSaveTimer) storyboardSave(true); });
 
 function pluralRu(n, one, few, many) {
   const m10 = n % 10, m100 = n % 100;
