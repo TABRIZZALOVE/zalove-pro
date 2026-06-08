@@ -12407,7 +12407,7 @@ async function exportStoryboardToPdf() {
             <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#888;font-weight:700;${FONT_CSS}">РАСКАДРОВКА</div>
           </div>
           <div style="text-align:right;${FONT_CSS}">
-            ${artist ? `<div style="font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#666;font-weight:700;margin-bottom:2px;">${escapeHtml(artist)}</div>` : ''}
+            ${(artist && artist.toLowerCase() !== trackName.toLowerCase() && !trackName.toLowerCase().includes(artist.toLowerCase())) ? `<div style="font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#666;font-weight:700;margin-bottom:2px;">${escapeHtml(artist)}</div>` : ''}
             <div style="font-size:24px;font-weight:900;letter-spacing:-0.5px;line-height:1;">${escapeHtml(trackName)}</div>
             <div style="font-size:9px;color:#999;font-weight:600;margin-top:4px;letter-spacing:1px;">${new Date().toLocaleDateString('ru-RU')}${totalPages > 1 ? ' · стр. ' + (pg + 1) + '/' + totalPages : ''}</div>
           </div>
