@@ -11842,9 +11842,12 @@ function smetaFooter(project) {
 function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) {
   const taxPct = est.taxPercent || 0;
   const isEn = _smetaPdfLang === 'en';
-  // EN: упрощённая таблица — только Позиция и Итого. Без описаний, к-ва, дней, цены.
-  // RU: полная таблица с описанием/к-вом/днями/ценой/итого.
-  const colCount = isEn ? 2 : 6; // для colspan в разделителях
+  // EN: курс рассчитывается так, чтобы итог = $31 000
+  const USD_TARGET = 31000;
+  const usdRate = isEn && totals.final > 0 ? (totals.final / USD_TARGET) : null;
+  const toUsd = (rub) => usdRate ? Math.round(rub / usdRate) : 0;
+  const fmtUsd = (n) => '$' + Number(n).toLocaleString('en-US');
+
   let bodyRows = '';
   nonEmptySections.forEach((tmpl, secIdx) => {
     const sec = est.sections[tmpl.id];
@@ -11858,6 +11861,7 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
         <tr style="background:#0a0907;color:white;">
           <td style="padding:6px 12px;font-weight:800;font-size:9px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(tmpl.n)} · ${escapeHtml(t(customTitle))}</td>
           <td style="padding:6px 12px;text-align:right;font-weight:900;font-size:10px;">${tNum(secSum)} ${tCur()}</td>
+          <td style="padding:6px 12px;text-align:right;font-weight:900;font-size:10px;background:#1a1a1a;">${fmtUsd(toUsd(secSum))}</td>
         </tr>
       `;
     } else {
@@ -11875,6 +11879,7 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
           <tr style="background:${i % 2 ? '#fafafa' : '#ffffff'};border-bottom:1px solid #f0f0eb;">
             <td style="padding:4px 12px;font-weight:600;color:#0a0907;font-size:10px;">${escapeHtml(t(row.name || ''))}</td>
             <td style="padding:4px 12px;text-align:right;font-weight:800;color:#0a0907;font-size:10px;">${tNum(total)} ${tCur()}</td>
+            <td style="padding:4px 12px;text-align:right;font-weight:800;color:#6b1d1f;font-size:10px;background:#fafaf5;">${fmtUsd(toUsd(total))}</td>
           </tr>
         `;
       } else {
@@ -11911,7 +11916,8 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
           ${isEn ? `
           <tr style="background:#3c3c3c;color:white;">
             <th style="text-align:left;padding:9px 14px;font-weight:800;font-size:9px;letter-spacing:0.8px;text-transform:uppercase;">${t('Позиция')}</th>
-            <th style="text-align:right;padding:9px 14px;font-weight:800;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:25%;">Total</th>
+            <th style="text-align:right;padding:9px 14px;font-weight:800;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:18%;">Total RUB</th>
+            <th style="text-align:right;padding:9px 14px;font-weight:800;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;width:15%;background:#2a2a2a;">Total USD</th>
           </tr>
           ` : `
           <tr style="background:#3c3c3c;color:white;">
@@ -11930,14 +11936,20 @@ function buildSmetaCoverPage(project, est, totals, modeLabel, nonEmptySections) 
           <tr style="background:#f5f5f0;border-top:2px solid #0a0907;">
             <td style="padding:10px 14px;text-align:right;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#444;">${t('Сумма разделов')}</td>
             <td style="padding:10px 14px;text-align:right;font-weight:900;font-size:14px;color:#0a0907;">${tNum(totals.subtotal)} ${tCur()}</td>
+            <td style="padding:10px 14px;text-align:right;font-weight:900;font-size:14px;color:#6b1d1f;background:#efefe8;">${fmtUsd(toUsd(totals.subtotal))}</td>
           </tr>
           <tr style="background:#f5f5f0;">
             <td style="padding:8px 14px;text-align:right;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#444;">${t('Налог')} ${taxPct}%</td>
             <td style="padding:8px 14px;text-align:right;font-weight:800;font-size:13px;color:#666;">${tNum(totals.tax)} ${tCur()}</td>
+            <td style="padding:8px 14px;text-align:right;font-weight:800;font-size:13px;color:#6b1d1f;background:#efefe8;">${fmtUsd(toUsd(totals.tax))}</td>
           </tr>
           <tr style="background:linear-gradient(135deg,#6b1d1f,#3d1416);color:white;">
             <td style="background:#6b1d1f;padding:14px 14px;text-align:right;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:white;">${t('Итого с налогом')}</td>
-            <td style="background:#3d1416;padding:14px 14px;text-align:right;font-weight:900;font-size:20px;color:white;">${tNum(totals.final)} ${tCur()}</td>
+            <td style="background:#3d1416;padding:14px 14px;text-align:right;font-weight:900;font-size:18px;color:white;">${tNum(totals.final)} ${tCur()}</td>
+            <td style="background:#1a1a1a;padding:14px 14px;text-align:right;font-weight:900;font-size:22px;color:#ffd28c;">${fmtUsd(USD_TARGET)}</td>
+          </tr>
+          <tr style="background:#fafafa;">
+            <td colspan="3" style="padding:6px 14px;text-align:right;font-size:9px;color:#888;font-weight:600;letter-spacing:0.5px;">Exchange rate: 1 USD = ${tNum(Math.round(usdRate))} RUB · for client reference</td>
           </tr>
           ` : `
           <tr style="background:#f5f5f0;border-top:2px solid #0a0907;">
