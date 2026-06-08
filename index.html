@@ -10188,23 +10188,25 @@ function openAddMember(memberId = null) {
   document.querySelector('#m-add-member .doc-header-title').textContent = isEdit ? 'Редактировать участника' : 'Новый участник';
   document.getElementById('mb-name-ru').value = m?.name_ru || '';
   document.getElementById('mb-name-en').value = m?.name_en || '';
-  document.getElementById('mb-role').value = m?.role || 'Режиссёр';
+  document.getElementById('mb-role').value = m?.role || '';
   // Английская версия роли — либо из сохранённого, либо авто
-  document.getElementById('mb-role-en').value = m?.role_en || translateRole(m?.role || 'Режиссёр');
+  document.getElementById('mb-role-en').value = m?.role_en || translateRole(m?.role || '');
   // При смене русской роли — автоматически переводим в английскую (если поле EN пустое или совпадает с предыдущим переводом)
   const roleSelEl = document.getElementById('mb-role');
   const roleEnEl = document.getElementById('mb-role-en');
   let lastTranslation = roleEnEl.value;
-  roleSelEl.addEventListener('change', () => {
+  // Меняем перевод при каждом изменении (input + change для input-with-datalist)
+  const onRoleChange = () => {
     const newTrans = translateRole(roleSelEl.value);
-    // Перетираем поле EN только если юзер не редактировал его сам (т.е. оно совпадает с предыдущим переводом)
     if (!roleEnEl.value || roleEnEl.value === lastTranslation) {
       roleEnEl.value = newTrans;
       lastTranslation = newTrans;
     } else {
       lastTranslation = roleEnEl.value;
     }
-  });
+  };
+  roleSelEl.addEventListener('change', onRoleChange);
+  roleSelEl.addEventListener('input', onRoleChange);
   document.getElementById('mb-telegram').value = m?.telegram || '';
   document.getElementById('mb-instagram').value = m?.instagram || '';
   document.getElementById('mb-phone').value = m?.phone || '';
@@ -10296,10 +10298,13 @@ function setupKnownPeopleAutocomplete() {
     };
     setIfEmpty('mb-name-en', found.name_en);
     if (found.role) {
-      const roleSel = document.getElementById('mb-role');
-      // Проверим что такая роль есть в списке
-      const opt = Array.from(roleSel.options).find(o => o.value === found.role);
-      if (opt) roleSel.value = found.role;
+      const roleEl = document.getElementById('mb-role');
+      if (roleEl && !roleEl.value) {
+        roleEl.value = found.role;
+        // Также обновим английскую роль если она пустая
+        const enEl = document.getElementById('mb-role-en');
+        if (enEl && !enEl.value) enEl.value = translateRole(found.role);
+      }
     }
     setIfEmpty('mb-telegram', found.telegram);
     setIfEmpty('mb-instagram', found.instagram);
@@ -12073,6 +12078,30 @@ function buildSmetaSectionPage(project, section, tmpl, totals, pageIdx, pagesCou
 // ============================================================
 // ТИТРЫ команды — PDF и копирование в буфер
 // ============================================================
+// Иерархия раздела команды для титров: режиссёр → продюсеры → оператор → …
+const TEAM_CREDIT_HIERARCHY = [
+  { keys: ['режисс', 'арт-директор', 'сценарист', 'супервайз'] },                                                        // 0 Режиссура
+  { keys: ['продюсер', 'producer'] },                                                                                       // 1 Продюсеры
+  { keys: ['оператор', 'камерам', 'фокус-пул', 'плейбек', 'логгер', 'стедикам', 'кран', 'долли',
+            'гаффер', 'осветит', 'кейгрип', 'ригер', 'звукорежис'] },                                                       // 2 Камера / свет / звук
+  { keys: ['кастинг'] },                                                                                                    // 3 Кастинг
+  { keys: ['грим', 'визажист', 'стилист', 'барбер', 'волос', 'костюм'] },                                                   // 4 Стиль и грим
+  { keys: ['художник', 'постановщик', 'декоратор', 'реквизит'] },                                                           // 5 Худ. департамент
+  { keys: ['администратор', 'локейшн', 'водитель', 'курьер', 'буфетчик', 'площадк', 'хелпер', 'рабоч'] },                  // 6 Администрация
+  { keys: ['бэкстейдж', 'backstage', 'bts', 'видеограф', 'фотограф'] },                                                     // 7 Бэкстейдж
+  { keys: ['актёр', 'актер', 'танцор', 'хореограф', 'музыкант', 'амс'] },                                                   // 8 Актёры
+  { keys: ['монтаж', 'композитор', 'диктор', 'колорист', 'sound', 'моушн', 'cg', 'ai-', 'графич'] }                         // 9 Пост-продакшн
+];
+function _getRoleCategoryIndex(role) {
+  if (!role) return TEAM_CREDIT_HIERARCHY.length;
+  // Если несколько ролей через запятую — берём первую для категоризации
+  const first = role.split(',')[0].trim().toLowerCase();
+  for (let i = 0; i < TEAM_CREDIT_HIERARCHY.length; i++) {
+    if (TEAM_CREDIT_HIERARCHY[i].keys.some(k => first.includes(k))) return i;
+  }
+  return TEAM_CREDIT_HIERARCHY.length;
+}
+
 function _buildTeamCreditsText() {
   if (!_currentProjectId) return null;
   const project = DB.getProject(_currentProjectId);
@@ -12082,22 +12111,33 @@ function _buildTeamCreditsText() {
     toast('Команда пустая — добавь хотя бы одного участника', 'error');
     return null;
   }
+  // Сортируем по иерархии — в порядке твоего списка для титров
+  const sorted = [...team].sort((a, b) => {
+    const ai = _getRoleCategoryIndex(a.role);
+    const bi = _getRoleCategoryIndex(b.role);
+    return ai - bi;
+  });
+  // Формат: «Должность - Имя Фамилия @instagram»
   const lineRu = (m) => {
-    const name = (m.name_ru || m.name_en || '').trim();
     const role = (m.role || '').trim();
+    const name = (m.name_ru || m.name_en || '').trim();
     const ig = (m.instagram || '').trim();
-    return [name, role, ig].filter(Boolean).join(', ');
+    if (!name) return '';
+    const igPart = ig ? ' ' + (ig.startsWith('@') ? ig : '@' + ig) : '';
+    return role ? `${role} - ${name}${igPart}` : `${name}${igPart}`;
   };
   const lineEn = (m) => {
-    const name = (m.name_en || m.name_ru || '').trim();
     const role = (m.role_en || translateRole(m.role || '') || '').trim();
+    const name = (m.name_en || m.name_ru || '').trim();
     const ig = (m.instagram || '').trim();
-    return [name, role, ig].filter(Boolean).join(', ');
+    if (!name) return '';
+    const igPart = ig ? ' ' + (ig.startsWith('@') ? ig : '@' + ig) : '';
+    return role ? `${role} - ${name}${igPart}` : `${name}${igPart}`;
   };
   return {
     title: project.name || 'Проект',
-    ru: team.map(lineRu).filter(l => l),
-    en: team.map(lineEn).filter(l => l)
+    ru: sorted.map(lineRu).filter(l => l),
+    en: sorted.map(lineEn).filter(l => l)
   };
 }
 
