@@ -6550,6 +6550,14 @@ body.dark-theme .task-deadline:focus { background: white; }
           <div class="doc-meta" id="shootplan-meta">по дням съёмок</div>
         </div>
 
+        <div class="doc-card loaded" id="doc-card-storyboard" onclick="openDoc('storyboard')">
+          <div class="loaded-badge" id="storyboard-badge">редактор</div>
+          <div class="doc-status status-loaded"></div>
+          <div class="doc-icon">🎞️</div>
+          <div class="doc-name">Раскадровка</div>
+          <div class="doc-meta" id="storyboard-meta">кадр · референс · тайминг</div>
+        </div>
+
         <div class="doc-card loaded" id="doc-card-callsheet" onclick="openCallsheetsList()">
           <div class="loaded-badge" id="callsheet-badge">N дней</div>
           <div class="doc-status status-loaded"></div>
@@ -7192,6 +7200,116 @@ body.dark-theme .task-deadline:focus { background: white; }
     </div>
   </div>
 </div>
+
+<!-- РАСКАДРОВКА — РЕДАКТОР -->
+<div class="modal-overlay" id="m-storyboard">
+  <div class="doc-overlay" style="width: 1100px; max-width: 96vw; max-height: 94vh;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">🎞️</div>
+        <div>
+          <div class="doc-section-label">Раскадровка · авто-сохранение</div>
+          <div class="doc-header-title" id="sb-title">Раскадровка</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-dark" onclick="exportStoryboardToPdf()">⤓ PDF</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body" id="storyboard-editor-root">
+      <!-- renderStoryboardEditor() -->
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="sb-footer-info">—</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-secondary btn" onclick="storyboardAddRow()">＋ кадр</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .sb-headers, .sb-row {
+    display: grid;
+    grid-template-columns: 50px 200px 1fr 140px 32px;
+    gap: 12px;
+    align-items: start;
+    padding: 10px 14px;
+  }
+  .sb-headers {
+    position: sticky; top: 0; background: var(--bg-2, #fff);
+    border-bottom: 2px solid var(--line);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); font-weight: 700;
+    z-index: 2;
+  }
+  .sb-row { border-bottom: 1px solid var(--line); align-items: center; }
+  .sb-row:hover { background: var(--bg-3); }
+  .sb-num {
+    font-family: 'JetBrains Mono', monospace; font-weight: 800;
+    font-size: 18px; color: var(--text);
+    text-align: center; padding-top: 6px;
+  }
+  .sb-img-wrap {
+    position: relative;
+    width: 200px; height: 130px;
+    border-radius: 8px; overflow: hidden;
+    background: var(--bg-3); border: 1px dashed var(--line-2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sb-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .sb-upload {
+    cursor: pointer; padding: 12px 20px; font-size: 11px;
+    color: var(--muted); font-weight: 700;
+    letter-spacing: 0.05em; text-align: center;
+    text-transform: uppercase;
+  }
+  .sb-upload:hover { color: var(--brand-red, #c41818); }
+  .sb-img-del {
+    position: absolute; top: 6px; right: 6px;
+    width: 24px; height: 24px; border: none; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: #fff; cursor: pointer;
+    font-size: 14px; line-height: 1;
+  }
+  .sb-desc {
+    width: 100%; min-height: 110px; resize: vertical;
+    padding: 10px 12px; font-size: 13px; line-height: 1.4;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg-2, #fff); font-family: inherit;
+  }
+  .sb-desc:focus { border-color: var(--text); outline: none; }
+  .sb-timing {
+    width: 100%; padding: 10px 12px; font-size: 14px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg-2, #fff); font-family: 'JetBrains Mono', monospace;
+    text-align: center; font-weight: 700;
+  }
+  .sb-timing:focus { border-color: var(--text); outline: none; }
+  .sb-row-del {
+    width: 32px; height: 32px; border: none; border-radius: 50%;
+    background: transparent; color: var(--muted); cursor: pointer;
+    font-size: 16px; opacity: 0; transition: opacity 0.15s, background 0.15s;
+  }
+  .sb-row:hover .sb-row-del { opacity: 1; }
+  .sb-row-del:hover { background: #fee2e2; color: #991b1b; opacity: 1; }
+  @media (max-width: 768px) {
+    .sb-headers { display: none; }
+    .sb-row {
+      grid-template-columns: 50px 1fr 32px !important;
+      grid-template-areas:
+        "num desc del"
+        "img desc del"
+        "img timing del";
+      gap: 8px 10px;
+    }
+    .sb-row .sb-num { grid-area: num; }
+    .sb-row .sb-img-wrap { grid-area: img; width: 100%; height: auto; aspect-ratio: 16/10; }
+    .sb-row .sb-desc { grid-area: desc; min-height: 90px; }
+    .sb-row .sb-timing { grid-area: timing; }
+    .sb-row .sb-row-del { grid-area: del; opacity: 1; }
+  }
+</style>
 
 <!-- PPM BOOK — РЕДАКТОР -->
 <div class="modal-overlay" id="m-ppm">
@@ -8156,6 +8274,10 @@ function openDoc(type) {
     return;
   }
   // Шутинг-план — открываем редактор
+  if (type === 'storyboard' && _currentProjectId) {
+    openStoryboardEditor();
+    return;
+  }
   if (type === 'shootplan' && _currentProjectId) {
     openShootplanEditor();
     return;
@@ -12075,6 +12197,223 @@ function buildSmetaSectionPage(project, section, tmpl, totals, pageIdx, pagesCou
 }
 
 // Английская версия — просто меняет lang и вызывает обычный экспорт
+// ============================================================
+// РАСКАДРОВКА — редактор + PDF
+// ============================================================
+let _sbProject = null;
+
+function openStoryboardEditor() {
+  if (!_currentProjectId) { toast('Сначала открой проект', 'error'); return; }
+  closeAll();
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  _sbProject = project;
+  if (!project.storyboard) project.storyboard = { rows: [] };
+  if (!project.storyboard.rows) project.storyboard.rows = [];
+  document.getElementById('sb-title').textContent = 'Раскадровка · ' + (project.name || '');
+  renderStoryboardEditor();
+  document.getElementById('m-storyboard').classList.add('active');
+}
+
+function renderStoryboardEditor() {
+  const root = document.getElementById('storyboard-editor-root');
+  const rows = _sbProject?.storyboard?.rows || [];
+  const headersHtml = `
+    <div class="sb-headers">
+      <div>№</div>
+      <div>Референс</div>
+      <div>Что в кадре</div>
+      <div>Тайминг трека</div>
+      <div></div>
+    </div>`;
+  const rowsHtml = rows.length === 0
+    ? `<div style="padding: 60px 20px; text-align: center; color: var(--muted);">
+         <div style="font-size: 48px; margin-bottom: 12px;">🎞️</div>
+         <div style="font-size: 14px; margin-bottom: 16px;">Раскадровка пустая</div>
+         <button class="btn" onclick="storyboardAddRow()">＋ Добавить первый кадр</button>
+       </div>`
+    : rows.map((r, i) => storyboardRowHtml(r, i)).join('');
+  root.innerHTML = headersHtml + rowsHtml;
+  // footer info
+  const info = document.getElementById('sb-footer-info');
+  if (info) info.textContent = rows.length > 0 ? `${rows.length} ${pluralRu(rows.length, 'кадр', 'кадра', 'кадров')}` : '—';
+}
+
+function storyboardRowHtml(row, idx) {
+  return `<div class="sb-row" data-idx="${idx}">
+    <div class="sb-num">${idx + 1}</div>
+    <div class="sb-img-wrap">
+      ${row.image
+        ? `<img src="${row.image}" alt="кадр ${idx + 1}">
+           <button class="sb-img-del" title="Удалить картинку" onclick="storyboardRemoveImage(${idx})">✕</button>`
+        : `<label class="sb-upload">＋ референс<input type="file" accept="image/*" hidden onchange="storyboardUploadImage(${idx}, this)"></label>`}
+    </div>
+    <textarea class="sb-desc" placeholder="Что будет в кадре..." oninput="storyboardUpdateRow(${idx}, 'description', this.value)">${escapeHtml(row.description || '')}</textarea>
+    <input class="sb-timing" placeholder="0:00-0:15" value="${escapeHtml(row.timing || '')}" oninput="storyboardUpdateRow(${idx}, 'timing', this.value)">
+    <button class="sb-row-del" title="Удалить кадр" onclick="storyboardRemoveRow(${idx})">🗑</button>
+  </div>`;
+}
+
+function storyboardAddRow() {
+  if (!_sbProject) return;
+  if (!_sbProject.storyboard) _sbProject.storyboard = { rows: [] };
+  _sbProject.storyboard.rows.push({ id: 'sb_' + Date.now(), image: '', description: '', timing: '' });
+  storyboardSave();
+  renderStoryboardEditor();
+}
+
+function storyboardRemoveRow(idx) {
+  if (!_sbProject?.storyboard?.rows) return;
+  if (!confirm('Удалить этот кадр?')) return;
+  _sbProject.storyboard.rows.splice(idx, 1);
+  storyboardSave();
+  renderStoryboardEditor();
+}
+
+function storyboardUpdateRow(idx, field, val) {
+  if (!_sbProject?.storyboard?.rows?.[idx]) return;
+  _sbProject.storyboard.rows[idx][field] = val;
+  storyboardSave();
+}
+
+function storyboardUploadImage(idx, input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    toast('Картинка слишком большая (макс 5 МБ)', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (!_sbProject?.storyboard?.rows?.[idx]) return;
+    _sbProject.storyboard.rows[idx].image = e.target.result;
+    storyboardSave();
+    renderStoryboardEditor();
+  };
+  reader.readAsDataURL(file);
+}
+
+function storyboardRemoveImage(idx) {
+  if (!_sbProject?.storyboard?.rows?.[idx]) return;
+  _sbProject.storyboard.rows[idx].image = '';
+  storyboardSave();
+  renderStoryboardEditor();
+}
+
+function storyboardSave() {
+  if (!_sbProject || !_currentProjectId) return;
+  DB.updateProject(_currentProjectId, { storyboard: _sbProject.storyboard });
+}
+
+function pluralRu(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m100 >= 11 && m100 <= 14) return many;
+  if (m10 === 1) return one;
+  if (m10 >= 2 && m10 <= 4) return few;
+  return many;
+}
+
+async function exportStoryboardToPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились', 'error'); return;
+  }
+  if (!_sbProject) return;
+  const project = _sbProject;
+  const rows = project.storyboard?.rows || [];
+  if (rows.length === 0) {
+    toast('Раскадровка пустая — добавь хотя бы один кадр', 'error');
+    return;
+  }
+  toast('Готовлю PDF раскадровки…', 'success');
+
+  // A4 portrait при 96dpi: 794 × 1123 px
+  const PAGE_W = 794;
+  const PAGE_H = 1123;
+  const ROWS_PER_PAGE = 4;
+  const totalPages = Math.ceil(rows.length / ROWS_PER_PAGE);
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
+  const pdfW = pdf.internal.pageSize.getWidth();
+  const pdfH = pdf.internal.pageSize.getHeight();
+
+  for (let pg = 0; pg < totalPages; pg++) {
+    const slice = rows.slice(pg * ROWS_PER_PAGE, (pg + 1) * ROWS_PER_PAGE);
+    const pageHtml = `
+      <div style="width:${PAGE_W}px;height:${PAGE_H}px;background:#fff;color:#0a0907;font-family:'Montserrat',-apple-system,Arial,sans-serif;padding:50px 50px 40px;box-sizing:border-box;">
+        <!-- header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #0a0907;margin-bottom:24px;">
+          <div>
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;font-weight:700;">РАСКАДРОВКА</div>
+            <div style="font-size:22px;font-weight:900;letter-spacing:-0.5px;margin-top:2px;">${escapeHtml(project.name || 'Проект')}</div>
+          </div>
+          <div style="font-size:11px;color:#888;font-weight:600;text-align:right;">
+            <div>${new Date().toLocaleDateString('ru-RU')}</div>
+            ${totalPages > 1 ? `<div style="margin-top:2px;">стр. ${pg + 1}/${totalPages}</div>` : ''}
+          </div>
+        </div>
+        <!-- rows -->
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          ${slice.map((r, i) => {
+            const globalIdx = pg * ROWS_PER_PAGE + i;
+            return `
+              <div style="display:grid;grid-template-columns:46px 240px 1fr 100px;gap:16px;align-items:stretch;background:#fafaf8;border:1px solid #ececea;border-radius:8px;padding:12px;height:200px;box-sizing:border-box;">
+                <div style="display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:900;color:#0a0907;">${globalIdx + 1}</div>
+                <div style="width:240px;height:176px;background:#e8e6e0;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                  ${r.image
+                    ? `<img src="${r.image}" style="width:100%;height:100%;object-fit:cover;display:block;" crossorigin="anonymous">`
+                    : `<div style="color:#aaa;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Без референса</div>`}
+                </div>
+                <div style="padding:4px 6px;font-size:13px;line-height:1.45;color:#222;white-space:pre-wrap;word-break:break-word;overflow:hidden;font-weight:500;">${escapeHtml(r.description || '')}</div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;text-align:right;">
+                  <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px;">Тайминг</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:#0a0907;">${escapeHtml(r.timing || '—')}</div>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+        <!-- footer -->
+        <div style="position:absolute;bottom:24px;left:50px;right:50px;font-size:9px;color:#999;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;border-top:1px solid #ddd;padding-top:10px;display:flex;justify-content:space-between;">
+          <span>ZALOVE PRODUCTION</span>
+          <span>${rows.length} ${pluralRu(rows.length, 'кадр', 'кадра', 'кадров')}</span>
+        </div>
+      </div>
+    `;
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;left:-99999px;top:0;`;
+    el.innerHTML = pageHtml;
+    document.body.appendChild(el);
+    try {
+      // Ждём загрузки картинок
+      await Promise.all(Array.from(el.querySelectorAll('img')).map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+        return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 4000); });
+      }));
+      const canvas = await html2canvas(el.firstElementChild, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: PAGE_W,
+        height: PAGE_H,
+        windowWidth: PAGE_W,
+        windowHeight: PAGE_H,
+        letterRendering: true,
+        imageTimeout: 15000
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      if (pg > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
+    } finally {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }
+  }
+
+  const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
+  pdf.save(`Раскадровка_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast(`PDF · ${totalPages} стр., ${rows.length} ${pluralRu(rows.length, 'кадр', 'кадра', 'кадров')} ✓`, 'success');
+}
+
 // ============================================================
 // ТИТРЫ команды — PDF и копирование в буфер
 // ============================================================
