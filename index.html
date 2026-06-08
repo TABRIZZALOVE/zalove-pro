@@ -7277,15 +7277,24 @@ body.dark-theme .task-deadline:focus { background: white; }
     padding: 10px 12px; font-size: 13px; line-height: 1.4;
     border: 1px solid var(--line); border-radius: 8px;
     background: var(--bg-2, #fff); font-family: inherit;
+    color: var(--text);
   }
+  .sb-desc::placeholder { color: var(--muted); opacity: 0.7; }
   .sb-desc:focus { border-color: var(--text); outline: none; }
   .sb-timing {
     width: 100%; padding: 10px 12px; font-size: 14px;
     border: 1px solid var(--line); border-radius: 8px;
     background: var(--bg-2, #fff); font-family: 'JetBrains Mono', monospace;
     text-align: center; font-weight: 700;
+    color: var(--text);
   }
+  .sb-timing::placeholder { color: var(--muted); opacity: 0.6; }
   .sb-timing:focus { border-color: var(--text); outline: none; }
+  /* Тёмная тема — белые буквы, фон чуть светлее карточки */
+  body.dark-mode .sb-desc, body.dark-mode .sb-timing {
+    background: #1a1a18; color: #f0f0eb; border-color: #2a2a26;
+  }
+  body.dark-mode .sb-desc::placeholder, body.dark-mode .sb-timing::placeholder { color: #6a6a65; }
   .sb-row-del {
     width: 32px; height: 32px; border: none; border-radius: 50%;
     background: transparent; color: var(--muted); cursor: pointer;
@@ -12276,21 +12285,52 @@ function storyboardUpdateRow(idx, field, val) {
   storyboardSave();
 }
 
-function storyboardUploadImage(idx, input) {
+async function storyboardUploadImage(idx, input) {
   const file = input.files?.[0];
   if (!file) return;
-  if (file.size > 5 * 1024 * 1024) {
-    toast('Картинка слишком большая (макс 5 МБ)', 'error');
+  if (file.size > 15 * 1024 * 1024) {
+    toast('Файл слишком большой (макс 15 МБ)', 'error');
     return;
   }
-  const reader = new FileReader();
-  reader.onload = (e) => {
+  try {
+    toast('Сжимаю картинку…', 'success');
+    const compressed = await _sbCompressImage(file, 1200, 0.72);
     if (!_sbProject?.storyboard?.rows?.[idx]) return;
-    _sbProject.storyboard.rows[idx].image = e.target.result;
+    _sbProject.storyboard.rows[idx].image = compressed;
     storyboardSave();
     renderStoryboardEditor();
-  };
-  reader.readAsDataURL(file);
+    toast('Референс добавлен ✓', 'success');
+  } catch (e) {
+    toast('Не удалось загрузить картинку: ' + (e?.message || e), 'error');
+  }
+}
+
+// Сжимает картинку в data URL: ресайз до maxW + JPEG quality.
+// Превращает 2-5 МБ в 100-300 КБ — чтобы влезало и в localStorage кэш, и в Supabase JSON.
+function _sbCompressImage(file, maxW = 1200, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('не картинка или повреждена'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('не получилось прочитать файл'));
+    reader.readAsDataURL(file);
+  });
 }
 
 function storyboardRemoveImage(idx) {
