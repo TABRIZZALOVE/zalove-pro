@@ -6436,6 +6436,10 @@ body.dark-theme .task-deadline:focus { background: white; }
           </tbody>
         </table>
         <div class="team-add-row" onclick="openAddMember()">＋ Добавить участника</div>
+        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="exportTeamCreditsPdf()" title="Скачать список команды в PDF — для титров">📄 Титры PDF</button>
+          <button class="btn btn-secondary" onclick="copyTeamCreditsText()" title="Скопировать список команды в буфер">⧉ Копировать титры</button>
+        </div>
       </div>
 
       <!-- INTEGRATIONS (только для музыкальных клипов) -->
@@ -7512,14 +7516,13 @@ body.dark-theme .task-deadline:focus { background: white; }
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div>
           <label class="form-label">Роль на проекте (рус) *</label>
-          <select class="form-select" id="mb-role">
-            <optgroup label="🎬 Продюсерский цех">
+          <input class="form-input" id="mb-role" list="dl-roles-ru" placeholder="Начни вводить или выбери из списка · можно через запятую если несколько">
+          <datalist id="dl-roles-ru">
               <option>Генеральный продюсер</option>
               <option>Исполнительный продюсер</option>
               <option>Линейный продюсер</option>
               <option>Креативный продюсер</option>
               <option>Ассистент продюсера</option>
-            </optgroup>
             <optgroup label="📝 Режиссура и сценарий">
               <option>Режиссёр</option>
               <option>Второй режиссёр</option>
@@ -7603,7 +7606,8 @@ body.dark-theme .task-deadline:focus { background: white; }
             <optgroup label="—">
               <option>Другая</option>
             </optgroup>
-          </select>
+          </datalist>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Можно выбрать из списка или ввести своё. Несколько ролей через запятую: <i>Режиссёр, Сценарист</i></div>
         </div>
         <div>
           <label class="form-label">Position (EN)</label>
@@ -9672,6 +9676,14 @@ const ROLE_TRANSLATIONS = {
   'Другая': 'Other'
 };
 function translateRole(roleRu) {
+  if (!roleRu) return '';
+  // Поддержка нескольких ролей через запятую: «Режиссёр, Сценарист» → «Director, Writer»
+  if (roleRu.includes(',')) {
+    return roleRu.split(',').map(r => {
+      const trimmed = r.trim();
+      return trimmed ? (ROLE_TRANSLATIONS[trimmed] || trimmed) : '';
+    }).filter(Boolean).join(', ');
+  }
   return ROLE_TRANSLATIONS[roleRu] || roleRu;
 }
 
@@ -12058,6 +12070,97 @@ function buildSmetaSectionPage(project, section, tmpl, totals, pageIdx, pagesCou
 }
 
 // Английская версия — просто меняет lang и вызывает обычный экспорт
+// ============================================================
+// ТИТРЫ команды — PDF и копирование в буфер
+// ============================================================
+function _buildTeamCreditsText() {
+  if (!_currentProjectId) return null;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return null;
+  const team = project.team || [];
+  if (team.length === 0) {
+    toast('Команда пустая — добавь хотя бы одного участника', 'error');
+    return null;
+  }
+  const lineRu = (m) => {
+    const name = (m.name_ru || m.name_en || '').trim();
+    const role = (m.role || '').trim();
+    const ig = (m.instagram || '').trim();
+    return [name, role, ig].filter(Boolean).join(', ');
+  };
+  const lineEn = (m) => {
+    const name = (m.name_en || m.name_ru || '').trim();
+    const role = (m.role_en || translateRole(m.role || '') || '').trim();
+    const ig = (m.instagram || '').trim();
+    return [name, role, ig].filter(Boolean).join(', ');
+  };
+  return {
+    title: project.name || 'Проект',
+    ru: team.map(lineRu).filter(l => l),
+    en: team.map(lineEn).filter(l => l)
+  };
+}
+
+function copyTeamCreditsText() {
+  const data = _buildTeamCreditsText();
+  if (!data) return;
+  const txt = data.title + '\n\nКоманда:\n' + data.ru.join('\n') + '\n\nTeam:\n' + data.en.join('\n');
+  navigator.clipboard.writeText(txt).then(
+    () => toast('Скопировано в буфер ✓', 'success'),
+    () => toast('Не получилось скопировать (нет прав)', 'error')
+  );
+}
+
+async function exportTeamCreditsPdf() {
+  if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+    toast('Библиотеки не загрузились. Перезагрузите страницу.', 'error');
+    return;
+  }
+  const data = _buildTeamCreditsText();
+  if (!data) return;
+  toast('Готовлю PDF титров…', 'success');
+
+  // Строим один HTML-лист A4 portrait
+  const PAGE_W = 794;  // ~ 210mm at 96dpi
+  const el = document.createElement('div');
+  el.style.cssText = `position:absolute;left:-99999px;top:0;width:${PAGE_W}px;background:#ffffff;color:#0a0907;font-family:'Montserrat',-apple-system,Arial,sans-serif;font-weight:500;padding:60px 70px;box-sizing:border-box;`;
+  el.innerHTML = `
+    <div style="font-size:36px;font-weight:900;letter-spacing:-1px;line-height:1.1;border-bottom:3px solid #0a0907;padding-bottom:16px;margin-bottom:32px;">
+      ${escapeHtml(data.title)}
+    </div>
+    <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:2px;font-weight:800;margin-bottom:8px;">Команда</div>
+    <div style="font-size:14px;line-height:1.9;font-weight:600;margin-bottom:36px;white-space:pre-wrap;">${escapeHtml(data.ru.join('\n'))}</div>
+    <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:2px;font-weight:800;margin-bottom:8px;">Team</div>
+    <div style="font-size:14px;line-height:1.9;font-weight:600;margin-bottom:36px;white-space:pre-wrap;">${escapeHtml(data.en.join('\n'))}</div>
+    <div style="margin-top:40px;padding-top:14px;border-top:1px solid #ddd;font-size:9px;color:#999;letter-spacing:1.5px;text-transform:uppercase;">ZALOVE PRODUCTION · ${new Date().toLocaleDateString('ru-RU')}</div>
+  `;
+  document.body.appendChild(el);
+  try {
+    const canvas = await html2canvas(el, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: PAGE_W,
+      windowWidth: PAGE_W
+    });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    // Вписываем в один лист с сохранением пропорций
+    const scale = Math.min(pdfW / canvas.width, pdfH / canvas.height);
+    const w = canvas.width * scale;
+    const h = canvas.height * scale;
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pdfW - w) / 2, (pdfH - h) / 2, w, h, undefined, 'FAST');
+    const slug = (data.title || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 40);
+    pdf.save(`Титры_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('Титры PDF скачаны ✓', 'success');
+  } finally {
+    if (el.parentNode) el.parentNode.removeChild(el);
+  }
+}
+
 async function exportEstimateToPdfEn() {
   _smetaPdfLang = 'en';
   try {
