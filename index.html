@@ -12417,12 +12417,12 @@ async function exportStoryboardToPdf() {
           ${slice.map((r, i) => {
             const globalIdx = pg * ROWS_PER_PAGE + i;
             return `
-              <div style="display:grid;grid-template-columns:54px 360px 1fr 150px;gap:18px;align-items:stretch;background:#fafaf8;border:1px solid #ececea;border-radius:10px;padding:14px;height:204px;box-sizing:border-box;${FONT_CSS}">
+              <div style="display:grid;grid-template-columns:54px 380px 1fr 150px;gap:18px;align-items:stretch;background:#fafaf8;border:1px solid #ececea;border-radius:10px;padding:14px;height:228px;box-sizing:border-box;${FONT_CSS}">
                 <div style="display:flex;align-items:center;justify-content:center;${FONT_CSS}font-size:42px;font-weight:900;color:#0a0907;line-height:1;">${globalIdx + 1}</div>
-                <div style="width:360px;height:176px;background:#eae8e2;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                <div style="width:380px;height:200px;background:#fafaf8;border-radius:6px;overflow:hidden;display:block;">
                   ${r.image
-                    ? `<img src="${r.image}" style="width:100%;height:100%;object-fit:contain;display:block;background:#0a0907;" crossorigin="anonymous">`
-                    : `<div style="color:#aaa;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;${FONT_CSS}">Без референса</div>`}
+                    ? `<img src="${r.image}" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;" crossorigin="anonymous">`
+                    : `<div style="color:#aaa;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;line-height:200px;text-align:center;${FONT_CSS}">Без референса</div>`}
                 </div>
                 <div style="padding:4px 8px;font-size:14px;line-height:1.48;color:#1a1a18;white-space:pre-wrap;word-break:break-word;overflow:hidden;font-weight:500;${FONT_CSS}">${escapeHtml(r.description || '')}</div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;text-align:right;${FONT_CSS}">
