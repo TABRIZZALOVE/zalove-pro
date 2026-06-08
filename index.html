@@ -12378,54 +12378,62 @@ async function exportStoryboardToPdf() {
   }
   toast('Готовлю PDF раскадровки…', 'success');
 
-  // A4 portrait при 96dpi: 794 × 1123 px
-  const PAGE_W = 794;
-  const PAGE_H = 1123;
-  const ROWS_PER_PAGE = 4;
+  // A4 landscape — больше места для картинок и текста
+  const PAGE_W = 1123;
+  const PAGE_H = 794;
+  const ROWS_PER_PAGE = 3;  // 3 строки чтобы каждая картинка была крупной
   const totalPages = Math.ceil(rows.length / ROWS_PER_PAGE);
 
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4', compress: true });
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
   const pdfW = pdf.internal.pageSize.getWidth();
   const pdfH = pdf.internal.pageSize.getHeight();
+
+  // Montserrat для рендера через html2canvas (подгружаем @import-ом)
+  const FONT_CSS = "font-family:'Montserrat',-apple-system,Helvetica,Arial,sans-serif;";
+
+  // Метаданные проекта для шапки
+  const artist = (project.artist || '').trim();
+  const trackName = (project.name || 'Проект').trim();
 
   for (let pg = 0; pg < totalPages; pg++) {
     const slice = rows.slice(pg * ROWS_PER_PAGE, (pg + 1) * ROWS_PER_PAGE);
     const pageHtml = `
-      <div style="width:${PAGE_W}px;height:${PAGE_H}px;background:#fff;color:#0a0907;font-family:'Montserrat',-apple-system,Arial,sans-serif;padding:50px 50px 40px;box-sizing:border-box;">
-        <!-- header -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #0a0907;margin-bottom:24px;">
-          <div>
-            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;font-weight:700;">РАСКАДРОВКА</div>
-            <div style="font-size:22px;font-weight:900;letter-spacing:-0.5px;margin-top:2px;">${escapeHtml(project.name || 'Проект')}</div>
+      <div style="width:${PAGE_W}px;height:${PAGE_H}px;background:#fff;color:#0a0907;${FONT_CSS}padding:40px 50px 32px;box-sizing:border-box;position:relative;font-weight:500;">
+        <!-- header: logo left · artist + track right -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:2px solid #0a0907;margin-bottom:22px;">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <img src="logo.png" alt="ZALOVE" style="height:32px;width:auto;display:block;" crossorigin="anonymous">
+            <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#888;font-weight:700;${FONT_CSS}">РАСКАДРОВКА</div>
           </div>
-          <div style="font-size:11px;color:#888;font-weight:600;text-align:right;">
-            <div>${new Date().toLocaleDateString('ru-RU')}</div>
-            ${totalPages > 1 ? `<div style="margin-top:2px;">стр. ${pg + 1}/${totalPages}</div>` : ''}
+          <div style="text-align:right;${FONT_CSS}">
+            ${artist ? `<div style="font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#666;font-weight:700;margin-bottom:2px;">${escapeHtml(artist)}</div>` : ''}
+            <div style="font-size:24px;font-weight:900;letter-spacing:-0.5px;line-height:1;">${escapeHtml(trackName)}</div>
+            <div style="font-size:9px;color:#999;font-weight:600;margin-top:4px;letter-spacing:1px;">${new Date().toLocaleDateString('ru-RU')}${totalPages > 1 ? ' · стр. ' + (pg + 1) + '/' + totalPages : ''}</div>
           </div>
         </div>
         <!-- rows -->
-        <div style="display:flex;flex-direction:column;gap:18px;">
+        <div style="display:flex;flex-direction:column;gap:14px;">
           ${slice.map((r, i) => {
             const globalIdx = pg * ROWS_PER_PAGE + i;
             return `
-              <div style="display:grid;grid-template-columns:46px 240px 1fr 100px;gap:16px;align-items:stretch;background:#fafaf8;border:1px solid #ececea;border-radius:8px;padding:12px;height:200px;box-sizing:border-box;">
-                <div style="display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:900;color:#0a0907;">${globalIdx + 1}</div>
-                <div style="width:240px;height:176px;background:#e8e6e0;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+              <div style="display:grid;grid-template-columns:54px 360px 1fr 150px;gap:18px;align-items:stretch;background:#fafaf8;border:1px solid #ececea;border-radius:10px;padding:14px;height:204px;box-sizing:border-box;${FONT_CSS}">
+                <div style="display:flex;align-items:center;justify-content:center;${FONT_CSS}font-size:42px;font-weight:900;color:#0a0907;line-height:1;">${globalIdx + 1}</div>
+                <div style="width:360px;height:176px;background:#eae8e2;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
                   ${r.image
-                    ? `<img src="${r.image}" style="width:100%;height:100%;object-fit:cover;display:block;" crossorigin="anonymous">`
-                    : `<div style="color:#aaa;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Без референса</div>`}
+                    ? `<img src="${r.image}" style="width:100%;height:100%;object-fit:contain;display:block;background:#0a0907;" crossorigin="anonymous">`
+                    : `<div style="color:#aaa;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;${FONT_CSS}">Без референса</div>`}
                 </div>
-                <div style="padding:4px 6px;font-size:13px;line-height:1.45;color:#222;white-space:pre-wrap;word-break:break-word;overflow:hidden;font-weight:500;">${escapeHtml(r.description || '')}</div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;text-align:right;">
-                  <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px;">Тайминг</div>
-                  <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:#0a0907;">${escapeHtml(r.timing || '—')}</div>
+                <div style="padding:4px 8px;font-size:14px;line-height:1.48;color:#1a1a18;white-space:pre-wrap;word-break:break-word;overflow:hidden;font-weight:500;${FONT_CSS}">${escapeHtml(r.description || '')}</div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;text-align:right;${FONT_CSS}">
+                  <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px;">Тайминг</div>
+                  <div style="font-size:17px;font-weight:800;color:#0a0907;letter-spacing:0.5px;white-space:nowrap;${FONT_CSS}">${escapeHtml(r.timing || '—')}</div>
                 </div>
               </div>`;
           }).join('')}
         </div>
         <!-- footer -->
-        <div style="position:absolute;bottom:24px;left:50px;right:50px;font-size:9px;color:#999;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;border-top:1px solid #ddd;padding-top:10px;display:flex;justify-content:space-between;">
+        <div style="position:absolute;bottom:18px;left:50px;right:50px;font-size:9px;color:#999;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border-top:1px solid #ddd;padding-top:10px;display:flex;justify-content:space-between;${FONT_CSS}">
           <span>ZALOVE PRODUCTION</span>
           <span>${rows.length} ${pluralRu(rows.length, 'кадр', 'кадра', 'кадров')}</span>
         </div>
