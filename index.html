@@ -8953,7 +8953,11 @@ const DB = {
       brand
     };
     this._lastBrand = JSON.stringify(brand);
-    // Используем this.save() — у него двухуровневая стратегия (полный → без base64 → fail)
+    // RBAC: ассистент не должен иметь финансовые данные ДАЖЕ в локальном кэше.
+    // Если профиль — не продюсер, вырезаем смету/бюджет/finance перед сохранением.
+    if (this._isFinancialBlocked()) {
+      cache.projects = (cache.projects || []).map(p => this._stripFinancials(p));
+    }
     this.save(cache);
   },
 
@@ -9037,9 +9041,45 @@ const DB = {
     return clone;
   },
 
-  getProjects() { return this.load().projects || []; },
+  // RBAC: для ассистентов вырезаем финансовые поля ПЕРЕД возвратом —
+  // ни смета, ни командная смета, ни финансы в рапорте, ни бюджет
+  // не попадают даже в DOM. Это слой 1 защиты; слой 2 — серверная RLS.
+  _isFinancialBlocked() {
+    return !!(this.profile && this.profile.role && this.profile.role !== 'producer');
+  },
+  _stripFinancials(project) {
+    if (!project) return project;
+    const p = { ...project };
+    delete p.estimate;
+    delete p.estimateTeam;
+    delete p.subestimates;
+    delete p.budget; // верхний бюджет
+    delete p.budgetClient;
+    if (p.reports) {
+      // Финансовая секция в рапорте — вычищаем по дням
+      const reps = { ...p.reports };
+      Object.keys(reps).forEach(k => {
+        if (reps[k]) {
+          const r = { ...reps[k] };
+          delete r.finance;
+          reps[k] = r;
+        }
+      });
+      p.reports = reps;
+    }
+    return p;
+  },
+  getProjects() {
+    const raw = this.load().projects || [];
+    if (this._isFinancialBlocked()) return raw.map(p => this._stripFinancials(p));
+    return raw;
+  },
 
-  getProject(id) { return this.getProjects().find(p => p.id === id); },
+  getProject(id) {
+    const p = this.getProjects().find(p => p.id === id);
+    // getProjects уже отфильтровал — двойной фильтр не нужен
+    return p;
+  },
 
   // ── Мутации (кэш + async sync) ──
   addProject(p) {
@@ -11729,6 +11769,10 @@ function deleteEstimateSection(sid) {
 }
 
 function exportEstimateToXlsx() {
+  // RBAC
+  if (DB && DB._isFinancialBlocked && DB._isFinancialBlocked()) {
+    toast('Доступ только для продюсера', 'error'); return;
+  }
   if (typeof XLSX === 'undefined') {
     toast('Библиотека XLSX не загрузилась. Перезагрузите страницу.', 'error');
     return;
@@ -12814,6 +12858,10 @@ async function exportEstimateToPdfEn() {
 }
 
 async function exportEstimateToPdf() {
+  // RBAC
+  if (DB && DB._isFinancialBlocked && DB._isFinancialBlocked()) {
+    toast('Доступ только для продюсера', 'error'); return;
+  }
   if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
     toast('Библиотеки не загрузились. Перезагрузите страницу.', 'error');
     return;
@@ -22368,6 +22416,12 @@ let _projectFilters = {
 };
 
 function navTo(target, el) {
+  // RBAC: ассистент не может зайти в финансовые разделы
+  const financialTargets = ['finance', 'estimates', 'subestimates'];
+  if (financialTargets.includes(target) && DB && DB._isFinancialBlocked && DB._isFinancialBlocked()) {
+    if (typeof toast === 'function') toast('Доступ только для продюсера', 'error');
+    return;
+  }
   _currentNav = target;
   document.querySelectorAll('.sidebar .nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
