@@ -19261,16 +19261,41 @@ async function exportShootplanToPdf() {
   const container = buildShootplanPrintHTML(_spProject, sp);
   document.body.appendChild(container);
   try {
-    await Promise.all(Array.from(container.querySelectorAll('img')).map(img => {
-      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
-      return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
+    // === TWO-PASS RENDERING ===
+    // Pass 1: html2canvas рисует разметку без картинок (плейсхолдеры — пустые белые боксы).
+    // Pass 2: jsPDF вставляет оригинальные base64 поверх — без re-rasterization, кристальное качество.
+
+    // Соберём метаданные плейсхолдеров ДО html2canvas:
+    // натуральные размеры (для aspect-fit) + позиция/размер в container CSS px
+    const containerRect = container.getBoundingClientRect();
+    const placeholders = Array.from(container.querySelectorAll('[data-pdf-img]'));
+    const placeholderMeta = await Promise.all(placeholders.map(async (el) => {
+      const url = el.dataset.pdfImg;
+      const cellW = parseFloat(el.dataset.pdfW) || el.offsetWidth;
+      const cellH = parseFloat(el.dataset.pdfH) || el.offsetHeight;
+      const rect = el.getBoundingClientRect();
+      const cssX = rect.left - containerRect.left;
+      const cssY = rect.top - containerRect.top;
+      // Получаем натуральные размеры картинки для aspect-fit
+      const natural = await new Promise(res => {
+        const im = new Image();
+        im.onload = () => res({ w: im.naturalWidth, h: im.naturalHeight });
+        im.onerror = () => res({ w: cellW, h: cellH });
+        im.src = url;
+        setTimeout(() => res({ w: cellW, h: cellH }), 3000);
+      });
+      return { url, cellW, cellH, cssX, cssY, natW: natural.w, natH: natural.h };
     }));
+
+    // Render canvas (placeholders теперь пустые — рендер быстрее и без проблем качества)
     const canvas = await html2canvas(container, {
-      scale: 3.5, useCORS: true, backgroundColor: '#ffffff', logging: false,
+      scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
       windowWidth: 1240, letterRendering: true, allowTaint: false,
       imageTimeout: 0
     });
+    const containerCssW = container.offsetWidth; // 1240
     document.body.removeChild(container);
+
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
     const pdfW = pdf.internal.pageSize.getWidth();
@@ -19279,13 +19304,47 @@ async function exportShootplanToPdf() {
     const ratio = canvas.height / canvas.width;
     const imgH = imgW * ratio;
     const totalPages = Math.ceil(imgH / pdfH);
-    const imgData = canvas.toDataURL('image/png');
+    const ptPerCssPx = pdfW / containerCssW;
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
     let pos = 0;
     for (let i = 0; i < totalPages; i++) {
       if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, pos, imgW, imgH, undefined, 'FAST');
+      pdf.addImage(imgData, 'JPEG', 0, pos, imgW, imgH, undefined, 'SLOW');
       pos -= pdfH;
     }
+
+    // Pass 2: для каждой картинки кладём оригинальный base64 поверх через addImage —
+    // jsPDF embed'ит JPEG-байты без перерасчёта, исходное качество сохраняется.
+    for (const ph of placeholderMeta) {
+      if (!ph.url) continue;
+      const xPt = ph.cssX * ptPerCssPx;
+      const yPt = ph.cssY * ptPerCssPx;
+      const cellWPt = ph.cellW * ptPerCssPx;
+      const cellHPt = ph.cellH * ptPerCssPx;
+      // Aspect-fit (contain) внутри ячейки
+      const imgAspect = ph.natW / ph.natH;
+      const cellAspect = cellWPt / cellHPt;
+      let drawW, drawH;
+      if (imgAspect > cellAspect) {
+        drawW = cellWPt; drawH = cellWPt / imgAspect;
+      } else {
+        drawH = cellHPt; drawW = cellHPt * imgAspect;
+      }
+      const drawX = xPt + (cellWPt - drawW) / 2;
+      const drawY = yPt + (cellHPt - drawH) / 2;
+      // Определить страницу для этой картинки
+      const pageIdx = Math.floor(yPt / pdfH);
+      const yOnPage = drawY - pageIdx * pdfH;
+      if (pageIdx + 1 > totalPages) continue;
+      pdf.setPage(pageIdx + 1);
+      const fmt = ph.url.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      try {
+        pdf.addImage(ph.url, fmt, drawX, yOnPage, drawW, drawH, undefined, 'NONE');
+      } catch (e) {
+        console.warn('PDF addImage fail', e);
+      }
+    }
+
     const slug = (_spProject.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
     pdf.save(`Шутинг_${slug}_${new Date().toISOString().slice(0,10)}.pdf`);
     toast('Шутинг-план PDF скачан ✓', 'success');
@@ -19333,17 +19392,17 @@ function buildShootplanPrintHTML(project, sp) {
                 <td style="padding:5px 4px;border-right:1px solid #ececec;text-align:center;color:#888;font-weight:600;background:#fafafa;">${ri + 1}</td>
                 <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:170px;">
                   ${row.image
-                    ? `<div style="width:160px;height:90px;background-image:url('${row.image.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
+                    ? `<div data-pdf-img="${escapeHtml(row.image)}" data-pdf-w="160" data-pdf-h="90" style="width:160px;height:90px;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
                     : `<div style="width:160px;height:90px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
                 <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:108px;">
                   ${row.costumeArtistImg
-                    ? `<div style="width:100px;height:150px;background-image:url('${row.costumeArtistImg.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
+                    ? `<div data-pdf-img="${escapeHtml(row.costumeArtistImg)}" data-pdf-w="100" data-pdf-h="150" style="width:100px;height:150px;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
                     : `<div style="width:100px;height:150px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
                 <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:108px;">
                   ${row.costumeHeroImg
-                    ? `<div style="width:100px;height:150px;background-image:url('${row.costumeHeroImg.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
+                    ? `<div data-pdf-img="${escapeHtml(row.costumeHeroImg)}" data-pdf-w="100" data-pdf-h="150" style="width:100px;height:150px;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
                     : `<div style="width:100px;height:150px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
                 ${SP_COLUMNS.map(col => `<td style="padding:5px 8px;border-right:1px solid #ececec;vertical-align:top;">${escapeHtml(row[col.key] || '—')}</td>`).join('')}
