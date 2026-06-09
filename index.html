@@ -19283,17 +19283,17 @@ function buildShootplanPrintHTML(project, sp) {
                 <td style="padding:5px 4px;border-right:1px solid #ececec;text-align:center;color:#888;font-weight:600;background:#fafafa;">${ri + 1}</td>
                 <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:130px;">
                   ${row.image
-                    ? `<div style="width:122px;height:68px;display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:3px;overflow:hidden;"><img src="${row.image}" style="max-width:122px;max-height:68px;width:auto;height:auto;display:block;" crossorigin="anonymous"></div>`
+                    ? `<div style="width:122px;height:68px;background-image:url('${row.image.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
                     : `<div style="width:122px;height:68px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
                 <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:84px;">
                   ${row.costumeArtistImg
-                    ? `<div style="width:76px;height:114px;display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:3px;overflow:hidden;"><img src="${row.costumeArtistImg}" style="max-width:76px;max-height:114px;width:auto;height:auto;display:block;" crossorigin="anonymous"></div>`
+                    ? `<div style="width:76px;height:114px;background-image:url('${row.costumeArtistImg.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
                     : `<div style="width:76px;height:114px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
                 <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:84px;">
                   ${row.costumeHeroImg
-                    ? `<div style="width:76px;height:114px;display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:3px;overflow:hidden;"><img src="${row.costumeHeroImg}" style="max-width:76px;max-height:114px;width:auto;height:auto;display:block;" crossorigin="anonymous"></div>`
+                    ? `<div style="width:76px;height:114px;background-image:url('${row.costumeHeroImg.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
                     : `<div style="width:76px;height:114px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
                 ${SP_COLUMNS.map(col => `<td style="padding:5px 8px;border-right:1px solid #ececec;vertical-align:top;">${escapeHtml(row[col.key] || '—')}</td>`).join('')}
