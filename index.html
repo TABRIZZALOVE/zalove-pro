@@ -8839,13 +8839,25 @@ const DB = {
   _errToast(label, error) {
     if (!error) return;
     const msg = error.message || '';
-    let txt;
-    if (msg.includes('JWT') || error.status === 401) txt = 'Сессия истекла — обнови страницу (Cmd+R)';
-    else if (msg.includes('Failed to fetch') || error.code === 'NETWORK') txt = 'Нет связи с сервером — проверь интернет';
-    else if (msg.includes('row-level security') || error.code === '42501') txt = 'Нет прав на изменение';
-    else if (error.code === '22007') txt = 'Неверный формат даты';
-    else txt = 'Сервер: ' + (msg || 'ошибка ' + (error.code || '?'));
-    if (typeof toast === 'function') toast(txt, 'error');
+    // Тихий режим: фоновые ошибки сети/ретраев пишутся в консоль, юзера не дёргаем.
+    // Показываем только то, на что юзер реально должен среагировать.
+    if (msg.includes('JWT') || error.status === 401) {
+      // Истёкшая сессия — критично, юзеру надо обновить
+      if (typeof toast === 'function') toast('Сессия истекла — обнови страницу (Cmd+R)', 'error');
+      return;
+    }
+    if (msg.includes('row-level security') || error.code === '42501') {
+      if (typeof toast === 'function') toast('Нет прав на это действие', 'error');
+      return;
+    }
+    if (error.code === '22007' || error.code === '22P02') {
+      // Неверный формат даты/числа — критично для пользователя
+      if (typeof toast === 'function') toast('Неверный формат поля (дата или число)', 'error');
+      return;
+    }
+    // Всё остальное (сетевые блипы, временные сбои, прочая шелуха) — только в консоль.
+    // Если что-то реально потерялось, hydrate при обновлении вернёт всё с сервера.
+    console.warn('[DB ' + label + ']', error);
   },
 
   async signOut() {
@@ -8941,8 +8953,8 @@ const DB = {
       brand
     };
     this._lastBrand = JSON.stringify(brand);
-    try { localStorage.setItem(this.KEY, JSON.stringify(cache)); }
-    catch (e) { console.warn('cache write', e); }
+    // Используем this.save() — у него двухуровневая стратегия (полный → без base64 → fail)
+    this.save(cache);
   },
 
   // Синк brand в profiles.data, если изменился
@@ -12385,13 +12397,14 @@ function storyboardUpdateRow(idx, field, val) {
 async function storyboardUploadImage(idx, input) {
   const file = input.files?.[0];
   if (!file) return;
-  if (file.size > 15 * 1024 * 1024) {
-    toast('Файл слишком большой (макс 15 МБ)', 'error');
+  if (file.size > 20 * 1024 * 1024) {
+    toast('Файл слишком большой (макс 20 МБ)', 'error');
     return;
   }
   try {
     toast('Сжимаю картинку…', 'success');
-    const compressed = await _sbCompressImage(file, 1200, 0.72);
+    // HQ-сжатие: max 1800px по длинной стороне, quality 92% — кристальная резкость в PDF
+    const compressed = await _sbCompressImageHQ(file, 1800, 0.92);
     if (!_sbProject?.storyboard?.rows?.[idx]) return;
     _sbProject.storyboard.rows[idx].image = compressed;
     storyboardSave(true);  // картинка — сразу
@@ -18939,17 +18952,11 @@ function createShootplanRow() {
 async function spUploadImage(di, ri, input, field = 'image') {
   const file = input.files?.[0];
   if (!file) return;
-  if (file.size > 15 * 1024 * 1024) { toast('Файл слишком большой (макс 15 МБ)', 'error'); return; }
+  if (file.size > 20 * 1024 * 1024) { toast('Файл слишком большой (макс 20 МБ)', 'error'); return; }
   try {
-    let dataUrl;
-    if (field === 'costumeArtistImg' || field === 'costumeHeroImg') {
-      // Костюмы: исходные пропорции, мягкое сжатие. Resize только если самая длинная
-      // сторона > 1600px (чтобы сохранить вертикали ~1080×1920 без потерь).
-      dataUrl = await _sbCompressImageHQ(file, 1600, 0.92);
-    } else {
-      // Кадры: горизонтальные, агрессивней сжатие для экономии места.
-      dataUrl = await _sbCompressImage(file, 1200, 0.72);
-    }
+    // HQ для всех картинок шутинга — кристальная резкость в PDF.
+    // Resize только если самая длинная сторона > 1800px, JPEG quality 92%.
+    const dataUrl = await _sbCompressImageHQ(file, 1800, 0.92);
     if (!_spProject?.shootplan?.days?.[di]?.rows?.[ri]) return;
     _spProject.shootplan.days[di].rows[ri][field] = dataUrl;
     saveShootplanNow();
@@ -19259,8 +19266,9 @@ async function exportShootplanToPdf() {
       return new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
     }));
     const canvas = await html2canvas(container, {
-      scale: 2.5, useCORS: true, backgroundColor: '#ffffff', logging: false,
-      windowWidth: 1240, letterRendering: true, allowTaint: false
+      scale: 3.5, useCORS: true, backgroundColor: '#ffffff', logging: false,
+      windowWidth: 1240, letterRendering: true, allowTaint: false,
+      imageTimeout: 0
     });
     document.body.removeChild(container);
     const { jsPDF } = window.jspdf;
@@ -19313,9 +19321,9 @@ function buildShootplanPrintHTML(project, sp) {
           <thead>
             <tr style="background:#f5f5f0;color:#555;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;">
               <th style="padding:6px 4px;border-right:1px solid #ececec;width:25px;">#</th>
-              <th style="padding:6px 6px;border-right:1px solid #ececec;width:130px;text-align:center;">Кадр</th>
-              <th style="padding:6px 6px;border-right:1px solid #ececec;width:84px;text-align:center;">Костюм артиста</th>
-              <th style="padding:6px 6px;border-right:1px solid #ececec;width:84px;text-align:center;">Костюм ГГ</th>
+              <th style="padding:6px 6px;border-right:1px solid #ececec;width:170px;text-align:center;">Кадр</th>
+              <th style="padding:6px 6px;border-right:1px solid #ececec;width:108px;text-align:center;">Костюм артиста</th>
+              <th style="padding:6px 6px;border-right:1px solid #ececec;width:108px;text-align:center;">Костюм ГГ</th>
               ${SP_COLUMNS.map(col => `<th style="padding:6px 8px;border-right:1px solid #ececec;text-align:left;">${escapeHtml(col.label)}</th>`).join('')}
             </tr>
           </thead>
@@ -19323,20 +19331,20 @@ function buildShootplanPrintHTML(project, sp) {
             ${(day.rows || []).map((row, ri) => `
               <tr style="border-top:1px solid #ececec;">
                 <td style="padding:5px 4px;border-right:1px solid #ececec;text-align:center;color:#888;font-weight:600;background:#fafafa;">${ri + 1}</td>
-                <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:130px;">
+                <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:170px;">
                   ${row.image
-                    ? `<div style="width:122px;height:68px;background-image:url('${row.image.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
-                    : `<div style="width:122px;height:68px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
+                    ? `<div style="width:160px;height:90px;background-image:url('${row.image.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
+                    : `<div style="width:160px;height:90px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
-                <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:84px;">
+                <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:108px;">
                   ${row.costumeArtistImg
-                    ? `<div style="width:76px;height:114px;background-image:url('${row.costumeArtistImg.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
-                    : `<div style="width:76px;height:114px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
+                    ? `<div style="width:100px;height:150px;background-image:url('${row.costumeArtistImg.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
+                    : `<div style="width:100px;height:150px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
-                <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:84px;">
+                <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:108px;">
                   ${row.costumeHeroImg
-                    ? `<div style="width:76px;height:114px;background-image:url('${row.costumeHeroImg.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
-                    : `<div style="width:76px;height:114px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
+                    ? `<div style="width:100px;height:150px;background-image:url('${row.costumeHeroImg.replace(/'/g, "\\'")}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
+                    : `<div style="width:100px;height:150px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
                 ${SP_COLUMNS.map(col => `<td style="padding:5px 8px;border-right:1px solid #ececec;vertical-align:top;">${escapeHtml(row[col.key] || '—')}</td>`).join('')}
               </tr>
