@@ -19297,15 +19297,30 @@ function renderShootplanEditor() {
   const autoGrow = (el) => {
     if (el.tagName !== 'TEXTAREA') return;
     el.style.height = 'auto';
-    el.style.height = (el.scrollHeight + 2) + 'px';
+    el.style.height = Math.max(28, el.scrollHeight) + 'px';
   };
-  root.querySelectorAll('[data-row-fld]').forEach(el => {
-    autoGrow(el); // первичный рост при рендере (если уже есть многострочный текст)
+  const textareas = root.querySelectorAll('textarea[data-row-fld]');
+  // Первичный рост — через rAF чтобы layout успел посчитаться (без этого scrollHeight=0)
+  requestAnimationFrame(() => {
+    textareas.forEach(autoGrow);
+    // ещё раз с небольшой задержкой — на случай если шрифт/стиль ещё не успел применится
+    setTimeout(() => textareas.forEach(autoGrow), 50);
+  });
+  textareas.forEach(el => {
     el.addEventListener('input', e => {
       const di = +e.target.dataset.dayIdx;
       const ri = +e.target.dataset.rowIdx;
       _spProject.shootplan.days[di].rows[ri][e.target.dataset.rowFld] = e.target.value;
       autoGrow(e.target);
+      scheduleShootplanSave();
+    });
+  });
+  // Обычные input-поля (data-row-fld но не textarea — оставлено для совместимости)
+  root.querySelectorAll('input[data-row-fld]').forEach(el => {
+    el.addEventListener('input', e => {
+      const di = +e.target.dataset.dayIdx;
+      const ri = +e.target.dataset.rowIdx;
+      _spProject.shootplan.days[di].rows[ri][e.target.dataset.rowFld] = e.target.value;
       scheduleShootplanSave();
     });
   });
