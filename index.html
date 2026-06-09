@@ -14295,6 +14295,9 @@ function buildPostprodPrintHTML(project, pp) {
 let _currentReportProjectId = null;
 let _currentReportDay = 1;
 let _reportSaveTimer = null;
+// Кэш проекта в памяти — все мутации идут через него, save пушит этот объект в DB.
+// Без этого DB.getProject() каждый раз возвращал свежую копию и мутации терялись.
+let _reportCache = null;
 
 const REPORT_TIMING_STAGES = ['Crew call', 'Артисты на площадке', 'Первая команда «Мотор»', 'Обед / перерыв', 'Последняя команда «Стоп»', 'Wrap'];
 const REPORT_CREW_DEFAULTS = ['Режиссёр', 'DOP', 'Продюсер', 'Гафер / свет', '1AC / фокус-пуллер', 'Звук', 'Художник / реквизит', 'Костюм / грим'];
@@ -14387,6 +14390,7 @@ function openReportEditor() {
   if (!project) return;
   _currentReportDay = 1;
   ensureReportDay(project, _currentReportDay);
+  _reportCache = project; // ← держим референс в памяти, мутируем его
   document.getElementById('m-report').classList.add('active');
   document.getElementById('report-title').textContent = 'Продакшн-рапорт · ' + (project.name || 'проект');
   renderReportEditor();
@@ -14397,18 +14401,20 @@ function scheduleReportSave() {
   _reportSaveTimer = setTimeout(saveReportNow, 350);
 }
 function saveReportNow() {
-  if (!_currentReportProjectId) return;
-  const project = DB.getProject(_currentReportProjectId);
-  if (!project || !project.reports) return;
-  const rep = project.reports[_currentReportDay];
+  if (!_currentReportProjectId || !_reportCache) return;
+  const rep = _reportCache.reports?.[_currentReportDay];
   if (!rep) return;
   rep.updated = new Date().toISOString().slice(0, 10);
-  DB.updateProject(_currentReportProjectId, { reports: project.reports });
+  DB.updateProject(_currentReportProjectId, { reports: _reportCache.reports });
 }
 
 function onReportField(path, value) {
-  const project = DB.getProject(_currentReportProjectId);
-  if (!project) return;
+  if (!_reportCache) {
+    const project = DB.getProject(_currentReportProjectId);
+    if (!project) return;
+    _reportCache = project;
+  }
+  const project = _reportCache;
   const rep = ensureReportDay(project, _currentReportDay);
   const parts = path.split('.');
   let ref = rep;
@@ -14456,14 +14462,14 @@ function _calcTimeDelta(plan, fact) {
 }
 
 function setReportDay(day) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   _currentReportDay = day;
   ensureReportDay(project, day);
   renderReportEditor();
 }
 function pullReportFromCallsheet() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const cs = (project.callsheets || {})[_currentReportDay];
   if (!cs) { toast('Нет вызывного на этот день', 'warn'); return; }
@@ -14485,125 +14491,125 @@ function pullReportFromCallsheet() {
 }
 
 function addReportCast() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.cast.push({ name: '', call: '', arrived: '', wrap: '', late: '', notes: '' });
   saveReportNow(); renderReportEditor();
 }
 function deleteReportCast(idx) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.cast.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addReportCrew() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.crew.push({ role: '', name: '', call: '', arrived: '', late: '', notes: '' });
   saveReportNow(); renderReportEditor();
 }
 function deleteReportCrew(idx) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.crew.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addReportEquipment() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.equipment.push({ unit: '', state: '', breakdowns: '', replacements: '', owner: '' });
   saveReportNow(); renderReportEditor();
 }
 function deleteReportEquipment(idx) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.equipment.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addReportFinance() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.finance.push({ item: '', budget: '', fact: '', delta: '', reason: '' });
   saveReportNow(); renderReportEditor();
 }
 function deleteReportFinance(idx) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.finance.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addReportMistake() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.mistakes.push({ event: '', cause: '', severity: 2, owner: '', impact: '' });
   saveReportNow(); renderReportEditor();
 }
 function deleteReportMistake(idx) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.mistakes.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addReportMistakePreprod() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.mistakesPreprod.push({ event: '', cause: '', severity: 2, owner: '', impact: '' });
   saveReportNow(); renderReportEditor();
 }
 function deleteReportMistakePreprod(idx) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.mistakesPreprod.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addReportMistakePostprod() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.mistakesPostprod.push({ event: '', cause: '', severity: 2, owner: '', impact: '' });
   saveReportNow(); renderReportEditor();
 }
 function deleteReportMistakePostprod(idx) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.mistakesPostprod.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addReportAction() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.actionItems.push({ todo: '', owner: '', deadline: '', status: 'open' });
   saveReportNow(); renderReportEditor();
 }
 function deleteReportAction(idx) {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.actionItems.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addKeepDoing() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.keepDoing.push(''); saveReportNow(); renderReportEditor();
 }
 function addFixStop() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.fixStop.push(''); saveReportNow(); renderReportEditor();
@@ -14619,7 +14625,7 @@ function _sevColor(s) {
 }
 
 function renderReportEditor() {
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   const body = document.getElementById('report-body');
@@ -15103,7 +15109,7 @@ async function exportReportToPdf() {
     toast('Библиотеки не загрузились', 'error'); return;
   }
   if (!_currentReportProjectId) return;
-  const project = DB.getProject(_currentReportProjectId);
+  const project = _reportCache || (_reportCache = DB.getProject(_currentReportProjectId));
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   toast('Готовлю PDF...', 'success');
@@ -23770,6 +23776,13 @@ function closeAll() {
     clearTimeout(_ppmSaveTimer);
     savePpmNow();
   }
+  // Сохранить продакшн-рапорт немедленно
+  if (_reportSaveTimer) {
+    clearTimeout(_reportSaveTimer);
+    _reportSaveTimer = null;
+    saveReportNow();
+  }
+  _reportCache = null; // очищаем кэш чтобы при следующем открытии подтянулись свежие данные
   // Сохранить шутинг-план немедленно
   if (_spSaveTimer) {
     clearTimeout(_spSaveTimer);
