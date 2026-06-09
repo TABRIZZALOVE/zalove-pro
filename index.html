@@ -8929,11 +8929,23 @@ const DB = {
 
   // ── Гидратация: грузим всё в кэш ──
   async hydrate() {
-    // 1. Проекты
-    const { data: projects, error: pErr } = await this.client
-      .from('projects')
+    // 1. Проекты — читаем через projects_safe view (если есть на сервере),
+    // он автоматически вырезает финансы для не-продюсеров.
+    // Если view ещё не создан — fallback на projects table.
+    let { data: projects, error: pErr } = await this.client
+      .from('projects_safe')
       .select('*')
       .order('created_at', { ascending: false });
+    if (pErr) {
+      // VIEW ещё не накатили на сервер — читаем напрямую
+      console.warn('hydrate: projects_safe недоступен, читаю projects напрямую', pErr.message);
+      const fallback = await this.client
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+      projects = fallback.data;
+      pErr = fallback.error;
+    }
     if (pErr) { console.error('hydrate projects', pErr); return; }
 
     // 2. Профиль (brand-данные внутри profiles.data.brand)
