@@ -12460,41 +12460,41 @@ async function exportStoryboardToPdf() {
   for (let pg = 0; pg < totalPages; pg++) {
     const slice = rows.slice(pg * ROWS_PER_PAGE, (pg + 1) * ROWS_PER_PAGE);
     const pageHtml = `
-      <div style="width:${PAGE_W}px;height:${PAGE_H}px;background:#fff;color:#0a0907;${FONT_CSS}padding:40px 50px 32px;box-sizing:border-box;position:relative;font-weight:500;">
+      <div style="width:${PAGE_W}px;height:${PAGE_H}px;background:#fff;color:#0a0907;${FONT_CSS}padding:32px 46px 28px;box-sizing:border-box;position:relative;font-weight:500;">
         <!-- header: logo left · artist + track right -->
-        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:2px solid #0a0907;margin-bottom:22px;">
-          <div style="display:flex;align-items:center;gap:16px;">
-            <img src="logo.png" alt="ZALOVE" style="height:32px;width:auto;display:block;" crossorigin="anonymous">
-            <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#888;font-weight:700;${FONT_CSS}">РАСКАДРОВКА</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:2px solid #0a0907;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <img src="logo.png" alt="ZALOVE" style="height:26px;width:auto;display:block;" crossorigin="anonymous">
+            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#888;font-weight:700;${FONT_CSS}">РАСКАДРОВКА</div>
           </div>
           <div style="text-align:right;${FONT_CSS}">
-            ${(artist && artist.toLowerCase() !== trackName.toLowerCase() && !trackName.toLowerCase().includes(artist.toLowerCase())) ? `<div style="font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#666;font-weight:700;margin-bottom:2px;">${escapeHtml(artist)}</div>` : ''}
-            <div style="font-size:24px;font-weight:900;letter-spacing:-0.5px;line-height:1;">${escapeHtml(trackName)}</div>
-            <div style="font-size:9px;color:#999;font-weight:600;margin-top:4px;letter-spacing:1px;">${new Date().toLocaleDateString('ru-RU')}${totalPages > 1 ? ' · стр. ' + (pg + 1) + '/' + totalPages : ''}</div>
+            ${(artist && artist.toLowerCase() !== trackName.toLowerCase() && !trackName.toLowerCase().includes(artist.toLowerCase())) ? `<div style="font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#666;font-weight:700;margin-bottom:2px;">${escapeHtml(artist)}</div>` : ''}
+            <div style="font-size:20px;font-weight:900;letter-spacing:-0.5px;line-height:1;">${escapeHtml(trackName)}</div>
+            <div style="font-size:8px;color:#999;font-weight:600;margin-top:3px;letter-spacing:1px;">${new Date().toLocaleDateString('ru-RU')}${totalPages > 1 ? ' · стр. ' + (pg + 1) + '/' + totalPages : ''}</div>
           </div>
         </div>
         <!-- rows -->
-        <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
           ${slice.map((r, i) => {
             const globalIdx = pg * ROWS_PER_PAGE + i;
             return `
-              <div style="display:grid;grid-template-columns:54px 380px 1fr 150px;gap:18px;align-items:stretch;background:#fafaf8;border:1px solid #ececea;border-radius:10px;padding:14px;height:228px;box-sizing:border-box;${FONT_CSS}">
-                <div style="display:flex;align-items:center;justify-content:center;${FONT_CSS}font-size:42px;font-weight:900;color:#0a0907;line-height:1;">${globalIdx + 1}</div>
-                <div style="width:380px;height:200px;background:#fafaf8;border-radius:6px;overflow:hidden;display:block;">
+              <div style="display:grid;grid-template-columns:46px 320px 1fr 130px;gap:14px;align-items:stretch;background:#fafaf8;border:1px solid #ececea;border-radius:8px;padding:11px;height:186px;box-sizing:border-box;${FONT_CSS}">
+                <div style="display:flex;align-items:center;justify-content:center;${FONT_CSS}font-size:34px;font-weight:900;color:#0a0907;line-height:1;">${globalIdx + 1}</div>
+                <div style="width:320px;height:164px;background:#fafaf8;border-radius:5px;overflow:hidden;display:block;">
                   ${r.image
                     ? `<img src="${r.image}" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;" crossorigin="anonymous">`
-                    : `<div style="color:#aaa;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;line-height:200px;text-align:center;${FONT_CSS}">Без референса</div>`}
+                    : `<div style="color:#aaa;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;line-height:164px;text-align:center;${FONT_CSS}">Без референса</div>`}
                 </div>
-                <div style="padding:4px 8px;font-size:14px;line-height:1.48;color:#1a1a18;white-space:pre-wrap;word-break:break-word;overflow:hidden;font-weight:500;${FONT_CSS}">${escapeHtml(r.description || '')}</div>
+                <div style="padding:2px 6px;font-size:12.5px;line-height:1.45;color:#1a1a18;white-size:pre-wrap;white-space:pre-wrap;word-break:break-word;overflow:hidden;font-weight:500;${FONT_CSS}">${escapeHtml(r.description || '')}</div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;text-align:right;${FONT_CSS}">
-                  <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px;">Тайминг</div>
-                  <div style="font-size:17px;font-weight:800;color:#0a0907;letter-spacing:0.5px;white-space:nowrap;${FONT_CSS}">${escapeHtml(r.timing || '—')}</div>
+                  <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:6px;">Тайминг</div>
+                  <div style="font-size:15px;font-weight:800;color:#0a0907;letter-spacing:0.5px;white-space:nowrap;${FONT_CSS}">${escapeHtml(r.timing || '—')}</div>
                 </div>
               </div>`;
           }).join('')}
         </div>
         <!-- footer -->
-        <div style="position:absolute;bottom:18px;left:50px;right:50px;font-size:9px;color:#999;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border-top:1px solid #ddd;padding-top:10px;display:flex;justify-content:space-between;${FONT_CSS}">
+        <div style="position:absolute;bottom:14px;left:46px;right:46px;font-size:8px;color:#999;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border-top:1px solid #ddd;padding-top:8px;display:flex;justify-content:space-between;${FONT_CSS}">
           <span>ZALOVE PRODUCTION</span>
           <span>${rows.length} ${pluralRu(rows.length, 'кадр', 'кадра', 'кадров')}</span>
         </div>
