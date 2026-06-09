@@ -8970,6 +8970,9 @@ const DB = {
     if (this._isFinancialBlocked()) {
       cache.projects = (cache.projects || []).map(p => this._stripFinancials(p));
     }
+    // КЛЮЧЕВОЕ: держим FULL версию в RAM, даже если localStorage пришлось урезать.
+    // _memCache — источник правды для рендера, картинки никогда не теряются.
+    this._memCache = cache.projects;
     this.save(cache);
   },
 
@@ -9082,7 +9085,14 @@ const DB = {
     return p;
   },
   getProjects() {
-    const raw = this.load().projects || [];
+    // In-memory кэш (с картинками) приоритетнее localStorage (может быть без картинок
+    // из-за quota). _memCache хранит свежие данные после hydrate/мутаций.
+    let raw;
+    if (this._memCache && Array.isArray(this._memCache)) {
+      raw = this._memCache;
+    } else {
+      raw = this.load().projects || [];
+    }
     if (this._isFinancialBlocked()) return raw.map(p => this._stripFinancials(p));
     return raw;
   },
@@ -9102,6 +9112,7 @@ const DB = {
     const project = { ...p, id: tempId, createdAt: now, updatedAt: now };
     const data = this.load();
     data.projects.unshift(project);
+    if (this._memCache) this._memCache.unshift(project);
     this.save(data);
 
     this._pending++;
@@ -9116,6 +9127,10 @@ const DB = {
       if (idx >= 0) {
         cache.projects[idx] = this._fromDb(row);
         this.save(cache);
+        if (this._memCache) {
+          const mi = this._memCache.findIndex(x => x.id === tempId);
+          if (mi >= 0) this._memCache[mi] = this._fromDb(row);
+        }
       }
     });
 
@@ -9123,12 +9138,23 @@ const DB = {
   },
 
   updateProject(id, updates) {
-    const data = this.load();
-    const idx = data.projects.findIndex(x => x.id === id);
+    // Берём данные из memCache (full версия с картинками), а не из localStorage —
+    // localStorage может быть slim из-за quota, тогда updateProject затрёт картинки.
+    let projects;
+    if (this._memCache && Array.isArray(this._memCache)) {
+      projects = this._memCache;
+    } else {
+      projects = this.load().projects || [];
+    }
+    const idx = projects.findIndex(x => x.id === id);
     if (idx === -1) return null;
-    const merged = { ...data.projects[idx], ...updates, updatedAt: new Date().toISOString() };
-    data.projects[idx] = merged;
-    this.save(data);
+    const merged = { ...projects[idx], ...updates, updatedAt: new Date().toISOString() };
+    projects[idx] = merged;
+    // Сохраняем full в RAM, slim (если надо) в localStorage
+    this._memCache = projects;
+    const cacheToSave = { ...this.load(), projects };
+    this.save(cacheToSave);
+    const data = cacheToSave;
 
     // Отправляем на сервер только если это реальный uuid (не временный tmp_)
     if (!String(id).startsWith('tmp_')) {
@@ -9147,6 +9173,7 @@ const DB = {
   deleteProject(id) {
     const data = this.load();
     data.projects = data.projects.filter(p => p.id !== id);
+    if (this._memCache) this._memCache = this._memCache.filter(p => p.id !== id);
     this.save(data);
 
     if (!String(id).startsWith('tmp_')) {
