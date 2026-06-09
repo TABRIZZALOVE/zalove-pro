@@ -8973,14 +8973,56 @@ const DB = {
   },
 
   save(data) {
+    // Стратегия: сначала пробуем полный кэш (с картинками). Если localStorage переполнен,
+    // деградируем — сохраняем только мета (без base64 картинок). Картинки остаются в RAM
+    // и на сервере — при следующем hydrate они вернутся в localStorage.
     try {
       localStorage.setItem(this.KEY, JSON.stringify(data));
     } catch (e) {
-      console.error('DB save fail', e);
-      if (typeof toast === 'function') toast('Не удалось сохранить кэш (превышен лимит)', 'error');
+      console.warn('DB save: full cache не помещается, пробую без base64 картинок', e?.message);
+      try {
+        const slim = this._stripBase64Images(data);
+        localStorage.setItem(this.KEY, JSON.stringify(slim));
+        // Тихо — не пугаем пользователя, на сервере всё ок
+        console.info('DB save: сохранено без base64 (картинки в Supabase, подтянутся при F5)');
+      } catch (e2) {
+        console.error('DB save fail (даже без картинок)', e2);
+        // Финальный fallback: только если совсем катастрофа — показываем тост
+        if (typeof toast === 'function') toast('localStorage переполнен', 'error');
+      }
     }
     // Если поменялся brand — синкаем в profiles.data
     try { this._syncBrandIfChanged(data); } catch (e) { console.warn('syncBrand', e); }
+  },
+
+  // Глубокий клон с обрезкой base64 картинок (для fallback кэша в localStorage)
+  _stripBase64Images(data) {
+    const isData = (v) => typeof v === 'string' && v.startsWith('data:');
+    const clone = JSON.parse(JSON.stringify(data));
+    (clone.projects || []).forEach(p => {
+      // Шутинг-план
+      (p.shootplan?.days || []).forEach(day => {
+        (day.rows || []).forEach(row => {
+          if (isData(row.image)) row.image = '';
+          if (isData(row.costumeArtistImg)) row.costumeArtistImg = '';
+          if (isData(row.costumeHeroImg)) row.costumeHeroImg = '';
+        });
+      });
+      // Раскадровка
+      (p.storyboard?.rows || []).forEach(row => {
+        if (isData(row.image)) row.image = '';
+      });
+      // Обложка проекта
+      if (isData(p.coverImage)) p.coverImage = '';
+      // PPM-book может содержать картинки в blocks (на всякий случай)
+      if (p.ppm && Array.isArray(p.ppm.blocks)) {
+        p.ppm.blocks.forEach(b => {
+          if (isData(b.image)) b.image = '';
+          (b.images || []).forEach((img, i) => { if (isData(img)) b.images[i] = ''; });
+        });
+      }
+    });
+    return clone;
   },
 
   getProjects() { return this.load().projects || []; },
