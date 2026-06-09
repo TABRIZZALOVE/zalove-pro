@@ -3875,6 +3875,14 @@ body.has-reel .theme-toggle { right: 158px; }
   box-sizing: border-box;
   min-height: 28px;
 }
+.sp-table textarea.sp-cell-area {
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.45;
+  display: block;
+  vertical-align: top;
+}
 .sp-table input:focus,
 .sp-table textarea:focus {
   background: #fff8e1;
@@ -19239,7 +19247,7 @@ function renderShootplanEditor() {
                         : `<label class="sp-img-upload-v" title="Костюм главного героя">＋<input type="file" accept="image/*" hidden onchange="spUploadImage(${di}, ${ri}, this, 'costumeHeroImg')"></label>`}
                     </td>
                     ${SP_COLUMNS.map(c => `
-                      <td><input data-row-fld="${c.key}" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(row[c.key] || '')}"></td>
+                      <td><textarea data-row-fld="${c.key}" data-day-idx="${di}" data-row-idx="${ri}" rows="1" class="sp-cell-area">${escapeHtml(row[c.key] || '')}</textarea></td>
                     `).join('')}
                     <td><button class="sp-row-del-btn" onclick="shootplanDeleteRow(${di}, ${ri})">×</button></td>
                   </tr>
@@ -19285,11 +19293,19 @@ function renderShootplanEditor() {
       scheduleShootplanSave();
     });
   });
+  // Авто-рост высоты textarea-ячеек — чтобы текст не обрезался при переносе строк
+  const autoGrow = (el) => {
+    if (el.tagName !== 'TEXTAREA') return;
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 2) + 'px';
+  };
   root.querySelectorAll('[data-row-fld]').forEach(el => {
+    autoGrow(el); // первичный рост при рендере (если уже есть многострочный текст)
     el.addEventListener('input', e => {
       const di = +e.target.dataset.dayIdx;
       const ri = +e.target.dataset.rowIdx;
       _spProject.shootplan.days[di].rows[ri][e.target.dataset.rowFld] = e.target.value;
+      autoGrow(e.target);
       scheduleShootplanSave();
     });
   });
@@ -19550,7 +19566,7 @@ function buildShootplanPrintHTML(project, sp) {
                     ? `<div data-pdf-img="${escapeHtml(row.costumeHeroImg)}" data-pdf-w="100" data-pdf-h="150" style="width:100px;height:150px;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
                     : `<div style="width:100px;height:150px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
-                ${SP_COLUMNS.map(col => `<td style="padding:5px 8px;border-right:1px solid #ececec;vertical-align:top;">${escapeHtml(row[col.key] || '—')}</td>`).join('')}
+                ${SP_COLUMNS.map(col => `<td style="padding:5px 8px;border-right:1px solid #ececec;vertical-align:top;white-space:pre-wrap;word-wrap:break-word;">${escapeHtml(row[col.key] || '—')}</td>`).join('')}
               </tr>
             `).join('')}
           </tbody>
