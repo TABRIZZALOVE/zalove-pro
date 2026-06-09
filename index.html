@@ -11137,6 +11137,12 @@ function clearTeamEstimate() {
 
 function renderEstimate(project) {
   if (!project) return;
+  // RBAC: ассистент не должен видеть смету. Закрываем и тихо возвращаемся.
+  if (DB && DB.profile && DB.profile.role && DB.profile.role !== 'producer') {
+    const modal = document.getElementById('m-estimate');
+    if (modal) modal.classList.remove('active');
+    return;
+  }
   const est = ensureEstimateOfMode(project, _estimateMode);
   _currentEstimate = est;
   _estimateProjectId = project.id; // запоминаем какому проекту принадлежит загруженная смета
@@ -19287,13 +19293,65 @@ async function exportShootplanToPdf() {
       return { url, cellW, cellH, cssX, cssY, natW: natural.w, natH: natural.h };
     }));
 
+    const containerCssW = container.offsetWidth; // 1240
+
+    // === ИЗБЕГАЕМ РАЗРЫВОВ СТРОК НА ГРАНИЦАХ СТРАНИЦ ===
+    // Считаем pageH в CSS пикселях, потом смотрим какие строки попадают на стык
+    // и пушим их на следующую страницу через невидимый spacer-tr.
+    const _tempPdf = new (window.jspdf.jsPDF)({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const _pdfW = _tempPdf.internal.pageSize.getWidth();
+    const _pdfH = _tempPdf.internal.pageSize.getHeight();
+    const _ptPerCssPx = _pdfW / containerCssW;
+    const pageHCss = _pdfH / _ptPerCssPx; // высота страницы в CSS пикселях контейнера
+
+    const allRowsForPaging = Array.from(container.querySelectorAll('tr[data-row-idx], .sp-day-block-wrap'));
+    // Прямой подход: идём по строкам сверху вниз, читая getBoundingClientRect (он
+    // меняется по мере вставки spacer'ов — это нам и нужно).
+    const trList = Array.from(container.querySelectorAll('tbody tr[data-row-idx]'));
+    for (const tr of trList) {
+      const trRect = tr.getBoundingClientRect();
+      const cRect = container.getBoundingClientRect();
+      const top = trRect.top - cRect.top;
+      const bot = top + trRect.height;
+      const curPage = Math.floor(top / pageHCss);
+      const pageEnd = (curPage + 1) * pageHCss;
+      // Если строка не помещается на текущей странице (хвост > 4px пересекает границу)
+      if (bot > pageEnd + 4 && top < pageEnd) {
+        const spacerH = Math.ceil(pageEnd - top) + 2;
+        const spacer = document.createElement('tr');
+        spacer.setAttribute('data-pdf-spacer', '1');
+        // colspan побольше, чтобы покрыть все колонки в любом дне
+        spacer.innerHTML = `<td colspan="32" style="height:${spacerH}px;background:#fff;border:none;padding:0;line-height:0;"></td>`;
+        tr.parentNode.insertBefore(spacer, tr);
+      }
+    }
+
     // Render canvas (placeholders теперь пустые — рендер быстрее и без проблем качества)
     const canvas = await html2canvas(container, {
       scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
       windowWidth: 1240, letterRendering: true, allowTaint: false,
       imageTimeout: 0
     });
-    const containerCssW = container.offsetWidth; // 1240
+    // Пере-собираем плейсхолдеры после вставки spacer'ов — позиции изменились
+    placeholderMeta.length = 0;
+    const newPlaceholders = Array.from(container.querySelectorAll('[data-pdf-img]'));
+    for (const el of newPlaceholders) {
+      const url = el.dataset.pdfImg;
+      const cellW = parseFloat(el.dataset.pdfW) || el.offsetWidth;
+      const cellH = parseFloat(el.dataset.pdfH) || el.offsetHeight;
+      const rect = el.getBoundingClientRect();
+      const cRect2 = container.getBoundingClientRect();
+      const cssX = rect.left - cRect2.left;
+      const cssY = rect.top - cRect2.top;
+      const natural = await new Promise(res => {
+        const im = new Image();
+        im.onload = () => res({ w: im.naturalWidth, h: im.naturalHeight });
+        im.onerror = () => res({ w: cellW, h: cellH });
+        im.src = url;
+        setTimeout(() => res({ w: cellW, h: cellH }), 3000);
+      });
+      placeholderMeta.push({ url, cellW, cellH, cssX, cssY, natW: natural.w, natH: natural.h });
+    }
     document.body.removeChild(container);
 
     const { jsPDF } = window.jspdf;
@@ -24185,6 +24243,13 @@ function removeCover() {
 
 // ===== ROLE / PRIVACY TOGGLE =====
 function setRole(role) {
+  // Жёсткое RBAC: не продюсер не может переключиться в режим «Я · Продюсер»,
+  // даже если попытается через консоль/инспектор/клик по скрытой вкладке.
+  if (role === 'producer' && DB && DB.profile && DB.profile.role && DB.profile.role !== 'producer') {
+    console.warn('setRole: попытка ассистента переключиться в режим продюсера — заблокировано');
+    if (typeof toast === 'function') toast('Доступ только для продюсера', 'error');
+    return;
+  }
   const body = document.body;
   const tabs = document.querySelectorAll('.role-tab');
   tabs.forEach(t => t.classList.remove('active'));
