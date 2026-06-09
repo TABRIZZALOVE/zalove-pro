@@ -12382,14 +12382,24 @@ function migrateStoryboardToShootplan() {
   const sbRows = _sbProject.storyboard?.rows || [];
   if (sbRows.length === 0) { toast('В раскадровке пусто', 'error'); return; }
   if (!confirm(`Перенести ${sbRows.length} ${pluralRu(sbRows.length, 'кадр', 'кадра', 'кадров')} в шутинг-план новым днём?\nСуществующие дни и строки останутся как были.`)) return;
-  if (typeof ensureShootplan !== 'function') { toast('Шутинг-план не загружен', 'error'); return; }
-  const sp = ensureShootplan(_sbProject);
+  if (typeof ensureShootplan !== 'function' || typeof newSpId !== 'function' || typeof SP_COLUMNS === 'undefined') {
+    toast('Шутинг-план не загружен', 'error'); return;
+  }
+  // Сначала флашим любой дебаунс-сейв раскадровки, чтобы _sbProject точно был актуален
+  if (typeof _sbSaveTimer !== 'undefined' && _sbSaveTimer) {
+    clearTimeout(_sbSaveTimer); _sbSaveTimer = null;
+    DB.updateProject(_currentProjectId, { storyboard: _sbProject.storyboard });
+  }
+  // Перечитываем проект из БД, чтобы получить актуальный шутинг (могли править его в этой же сессии)
+  const fresh = DB.getProject(_currentProjectId);
+  if (!fresh) { toast('Проект не найден', 'error'); return; }
+  const sp = ensureShootplan(fresh);
   const newDay = {
-    id: (typeof newSpId === 'function' ? newSpId('day') : 'day_' + Date.now()),
+    id: newSpId('day'),
     title: 'Из раскадровки · день ' + (sp.days.length + 1),
     date: '', callTime: '', locationName: '', address: '', contact: '', weather: '', notes: '',
     rows: sbRows.map(sb => {
-      const row = { id: (typeof newSpId === 'function' ? newSpId('row') : 'row_' + Math.random().toString(36).slice(2,9)), image: sb.image || '' };
+      const row = { id: newSpId('row'), image: sb.image || '' };
       SP_COLUMNS.forEach(c => row[c.key] = '');
       row.time = sb.timing || '';
       row.notes = sb.description || '';
@@ -12398,7 +12408,20 @@ function migrateStoryboardToShootplan() {
   };
   sp.days.push(newDay);
   DB.updateProject(_currentProjectId, { shootplan: sp });
-  toast(`${sbRows.length} ${pluralRu(sbRows.length, 'кадр', 'кадра', 'кадров')} → шутинг-план ✓`, 'success');
+  // Если шутинг уже открывали в этой сессии — обновим его внутреннее состояние
+  if (typeof _spProject !== 'undefined' && _spProject && _spProject.id === _currentProjectId) {
+    _spProject.shootplan = sp;
+  }
+  // Заставляем шутинг при следующем открытии РАСКРЫТЬ именно новый день
+  if (typeof _spOpenDays !== 'undefined') {
+    _spOpenDays.clear();
+    _spOpenDays.add(newDay.id);
+  }
+  toast(`${sbRows.length} ${pluralRu(sbRows.length, 'кадр', 'кадра', 'кадров')} → шутинг-план ✓ (новый день «Из раскадровки» в конце)`, 'success');
+  // Перерисуем шутинг, если он открыт сейчас за раскадровкой (на всякий)
+  if (typeof renderShootplanEditor === 'function' && document.getElementById('m-shootplan')?.classList.contains('active')) {
+    try { renderShootplanEditor(); } catch (e) {}
+  }
 }
 
 // Debounce: пушим в БД через 600мс после последнего изменения, иначе сервер захлёбывается
