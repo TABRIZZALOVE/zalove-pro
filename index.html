@@ -7331,6 +7331,25 @@ body.dark-theme .task-deadline:focus { background: white; }
     background: rgba(0,0,0,0.7); color: #fff;
     font-size: 12px; cursor: pointer; line-height: 1;
   }
+  /* Вертикальные ячейки для образов (костюмы артиста/ГГ) */
+  .sp-img-cell-v { padding: 4px !important; vertical-align: middle; }
+  .sp-img-upload-v {
+    display: flex; align-items: center; justify-content: center;
+    width: 80px; height: 120px; border: 1px dashed var(--line-2);
+    border-radius: 6px; background: var(--bg-3);
+    cursor: pointer; font-size: 22px; color: var(--muted);
+    transition: all 0.15s; margin: 0 auto;
+  }
+  .sp-img-upload-v:hover { border-color: var(--brand-red); color: var(--brand-red); }
+  .sp-img-thumb-v {
+    position: relative; width: 80px; height: 120px;
+    border-radius: 6px; overflow: hidden; background: #f5f5f0;
+    margin: 0 auto;
+  }
+  .sp-img-thumb-v img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    background: #f5f5f0;
+  }
   .sb-row-del {
     width: 32px; height: 32px; border: none; border-radius: 50%;
     background: transparent; color: var(--muted); cursor: pointer;
@@ -18805,7 +18824,6 @@ const SP_COLUMNS = [
   { key: 'frame', label: 'Кадры', w: 90 },
   { key: 'location', label: 'Локация', w: 140 },
   { key: 'cast', label: 'Актёры', w: 130 },
-  { key: 'costume', label: 'Костюм', w: 110 },
   { key: 'light', label: 'Свет', w: 110 },
   { key: 'camera', label: 'Камера / оптика', w: 130 },
   { key: 'sound', label: 'Звук', w: 90 },
@@ -18841,7 +18859,7 @@ function openShootplanEditor() {
   // День считается «с данными» если в нём >1 строки ИЛИ хотя бы одна строка с заполненным
   // временем/сценой/заметками/картинкой. Пустые дни остаются свёрнутыми.
   if (_spOpenDays.size === 0) {
-    const isRowFilled = (r) => !!(r.image || r.time || r.shootTime || r.scene || r.notes || r.location || r.cast || r.frame);
+    const isRowFilled = (r) => !!(r.image || r.costumeArtistImg || r.costumeHeroImg || r.time || r.shootTime || r.scene || r.notes || r.location || r.cast || r.frame);
     const dayHasData = (d) => (d.rows || []).length > 1 || (d.rows || []).some(isRowFilled) || d.date || d.locationName;
     sp.days.forEach(d => { if (dayHasData(d)) _spOpenDays.add(d.id); });
     // Если все дни пустые — раскрываем первый, чтобы что-то было видно
@@ -18867,20 +18885,31 @@ function createShootplanDay(num) {
   };
 }
 function createShootplanRow() {
-  const row = { id: newSpId('row'), image: '' };
+  const row = { id: newSpId('row'), image: '', costumeArtistImg: '', costumeHeroImg: '' };
   SP_COLUMNS.forEach(c => row[c.key] = '');
   return row;
 }
 
 // === КАРТИНКА в строке шутинг-плана ===
-async function spUploadImage(di, ri, input) {
+// Загрузка картинки в любое поле строки шутинга.
+// field: 'image' (горизонтальный кадр) | 'costumeArtistImg' | 'costumeHeroImg' (вертикальные костюмы)
+// Костюмы — без обрезки и растягивания, минимальное сжатие, высокое качество.
+async function spUploadImage(di, ri, input, field = 'image') {
   const file = input.files?.[0];
   if (!file) return;
   if (file.size > 15 * 1024 * 1024) { toast('Файл слишком большой (макс 15 МБ)', 'error'); return; }
   try {
-    const compressed = await _sbCompressImage(file, 1200, 0.72);
+    let dataUrl;
+    if (field === 'costumeArtistImg' || field === 'costumeHeroImg') {
+      // Костюмы: исходные пропорции, мягкое сжатие. Resize только если самая длинная
+      // сторона > 1600px (чтобы сохранить вертикали ~1080×1920 без потерь).
+      dataUrl = await _sbCompressImageHQ(file, 1600, 0.92);
+    } else {
+      // Кадры: горизонтальные, агрессивней сжатие для экономии места.
+      dataUrl = await _sbCompressImage(file, 1200, 0.72);
+    }
     if (!_spProject?.shootplan?.days?.[di]?.rows?.[ri]) return;
-    _spProject.shootplan.days[di].rows[ri].image = compressed;
+    _spProject.shootplan.days[di].rows[ri][field] = dataUrl;
     saveShootplanNow();
     renderShootplanEditor();
     toast('Картинка добавлена ✓', 'success');
@@ -18888,11 +18917,46 @@ async function spUploadImage(di, ri, input) {
     toast('Не получилось загрузить: ' + (e?.message || e), 'error');
   }
 }
-function spRemoveImage(di, ri) {
+function spRemoveImage(di, ri, field = 'image') {
   if (!_spProject?.shootplan?.days?.[di]?.rows?.[ri]) return;
-  _spProject.shootplan.days[di].rows[ri].image = '';
+  _spProject.shootplan.days[di].rows[ri][field] = '';
   saveShootplanNow();
   renderShootplanEditor();
+}
+
+// HQ-сжатие для вертикальных образов: сохраняет пропорции, не обрезает.
+// Resize только если самая длинная сторона больше maxLongSide.
+function _sbCompressImageHQ(file, maxLongSide, quality) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) return reject(new Error('Не картинка'));
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const longSide = Math.max(img.width, img.height);
+        const ratio = longSide > maxLongSide ? maxLongSide / longSide : 1;
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        // Без подложки — оставляем прозрачность если есть, но JPEG не поддерживает,
+        // так что заливаем белым для JPEG-конвертации без артефактов.
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch (err) { reject(err); }
+      };
+      img.onerror = () => reject(new Error('Не удалось распарсить изображение'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+    reader.readAsDataURL(file);
+  });
 }
 
 // === DRAG-АНД-ДРОП перестановка строк ===
@@ -19001,6 +19065,8 @@ function renderShootplanEditor() {
                   <th style="width:18px;" title="Перетащи строку"></th>
                   <th class="sp-row-num">#</th>
                   <th style="width:140px;">Кадр</th>
+                  <th style="width:100px;">Костюм артиста</th>
+                  <th style="width:100px;">Костюм ГГ</th>
                   ${SP_COLUMNS.map(c => `<th style="min-width:${c.w}px;">${escapeHtml(c.label)}</th>`).join('')}
                   <th style="width:24px;"></th>
                 </tr>
@@ -19017,8 +19083,18 @@ function renderShootplanEditor() {
                     <td class="sp-row-num">${ri + 1}</td>
                     <td class="sp-img-cell">
                       ${row.image
-                        ? `<div class="sp-img-thumb"><img src="${row.image}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri})">×</button></div>`
-                        : `<label class="sp-img-upload">＋<input type="file" accept="image/*" hidden onchange="spUploadImage(${di}, ${ri}, this)"></label>`}
+                        ? `<div class="sp-img-thumb"><img src="${row.image}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'image')">×</button></div>`
+                        : `<label class="sp-img-upload">＋<input type="file" accept="image/*" hidden onchange="spUploadImage(${di}, ${ri}, this, 'image')"></label>`}
+                    </td>
+                    <td class="sp-img-cell-v">
+                      ${row.costumeArtistImg
+                        ? `<div class="sp-img-thumb-v"><img src="${row.costumeArtistImg}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'costumeArtistImg')">×</button></div>`
+                        : `<label class="sp-img-upload-v" title="Костюм артиста">＋<input type="file" accept="image/*" hidden onchange="spUploadImage(${di}, ${ri}, this, 'costumeArtistImg')"></label>`}
+                    </td>
+                    <td class="sp-img-cell-v">
+                      ${row.costumeHeroImg
+                        ? `<div class="sp-img-thumb-v"><img src="${row.costumeHeroImg}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'costumeHeroImg')">×</button></div>`
+                        : `<label class="sp-img-upload-v" title="Костюм главного героя">＋<input type="file" accept="image/*" hidden onchange="spUploadImage(${di}, ${ri}, this, 'costumeHeroImg')"></label>`}
                     </td>
                     ${SP_COLUMNS.map(c => `
                       <td><input data-row-fld="${c.key}" data-day-idx="${di}" data-row-idx="${ri}" value="${escapeHtml(row[c.key] || '')}"></td>
@@ -19196,6 +19272,8 @@ function buildShootplanPrintHTML(project, sp) {
             <tr style="background:#f5f5f0;color:#555;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;">
               <th style="padding:6px 4px;border-right:1px solid #ececec;width:25px;">#</th>
               <th style="padding:6px 6px;border-right:1px solid #ececec;width:130px;text-align:center;">Кадр</th>
+              <th style="padding:6px 6px;border-right:1px solid #ececec;width:84px;text-align:center;">Костюм артиста</th>
+              <th style="padding:6px 6px;border-right:1px solid #ececec;width:84px;text-align:center;">Костюм ГГ</th>
               ${SP_COLUMNS.map(col => `<th style="padding:6px 8px;border-right:1px solid #ececec;text-align:left;">${escapeHtml(col.label)}</th>`).join('')}
             </tr>
           </thead>
@@ -19207,6 +19285,16 @@ function buildShootplanPrintHTML(project, sp) {
                   ${row.image
                     ? `<img src="${row.image}" style="width:122px;height:68px;object-fit:contain;object-position:center;border-radius:3px;display:inline-block;background:#fff;" crossorigin="anonymous">`
                     : `<div style="width:122px;height:68px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
+                </td>
+                <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:84px;">
+                  ${row.costumeArtistImg
+                    ? `<img src="${row.costumeArtistImg}" style="width:76px;height:114px;object-fit:contain;object-position:center;border-radius:3px;display:inline-block;background:#fff;" crossorigin="anonymous">`
+                    : `<div style="width:76px;height:114px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
+                </td>
+                <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:84px;">
+                  ${row.costumeHeroImg
+                    ? `<img src="${row.costumeHeroImg}" style="width:76px;height:114px;object-fit:contain;object-position:center;border-radius:3px;display:inline-block;background:#fff;" crossorigin="anonymous">`
+                    : `<div style="width:76px;height:114px;display:inline-flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;letter-spacing:1px;text-transform:uppercase;background:#fff;border-radius:3px;">—</div>`}
                 </td>
                 ${SP_COLUMNS.map(col => `<td style="padding:5px 8px;border-right:1px solid #ececec;vertical-align:top;">${escapeHtml(row[col.key] || '—')}</td>`).join('')}
               </tr>
