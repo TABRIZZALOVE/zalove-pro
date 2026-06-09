@@ -18831,8 +18831,16 @@ function openShootplanEditor() {
   if (sp.days.length === 0) {
     sp.days.push(createShootplanDay(1));
   }
-  // Открыть первый день
-  if (_spOpenDays.size === 0 && sp.days[0]) _spOpenDays.add(sp.days[0].id);
+  // Авто-раскрытие: если ничего не было раскрыто, открываем все дни с данными.
+  // День считается «с данными» если в нём >1 строки ИЛИ хотя бы одна строка с заполненным
+  // временем/сценой/заметками/картинкой. Пустые дни остаются свёрнутыми.
+  if (_spOpenDays.size === 0) {
+    const isRowFilled = (r) => !!(r.image || r.time || r.shootTime || r.scene || r.notes || r.location || r.cast || r.frame);
+    const dayHasData = (d) => (d.rows || []).length > 1 || (d.rows || []).some(isRowFilled) || d.date || d.locationName;
+    sp.days.forEach(d => { if (dayHasData(d)) _spOpenDays.add(d.id); });
+    // Если все дни пустые — раскрываем первый, чтобы что-то было видно
+    if (_spOpenDays.size === 0 && sp.days[0]) _spOpenDays.add(sp.days[0].id);
+  }
   document.getElementById('sp-title').textContent = 'Шутинг-план · ' + (project.name || 'проект');
   renderShootplanEditor();
   document.getElementById('m-shootplan').classList.add('active');
