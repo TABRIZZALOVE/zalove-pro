@@ -12381,19 +12381,59 @@ function migrateStoryboardToShootplan() {
   if (!_sbProject || !_currentProjectId) return;
   const sbRows = _sbProject.storyboard?.rows || [];
   if (sbRows.length === 0) { toast('В раскадровке пусто', 'error'); return; }
-  if (!confirm(`Перенести ${sbRows.length} ${pluralRu(sbRows.length, 'кадр', 'кадра', 'кадров')} в шутинг-план новым днём?\nСуществующие дни и строки останутся как были.`)) return;
   if (typeof ensureShootplan !== 'function' || typeof newSpId !== 'function' || typeof SP_COLUMNS === 'undefined') {
     toast('Шутинг-план не загружен', 'error'); return;
   }
-  // Сначала флашим любой дебаунс-сейв раскадровки, чтобы _sbProject точно был актуален
+  // Флашим любые несохранённые правки раскадровки и шутинга, чтобы НИЧЕГО не потерять
   if (typeof _sbSaveTimer !== 'undefined' && _sbSaveTimer) {
     clearTimeout(_sbSaveTimer); _sbSaveTimer = null;
     DB.updateProject(_currentProjectId, { storyboard: _sbProject.storyboard });
+  }
+  if (typeof _spSaveTimer !== 'undefined' && _spSaveTimer && typeof _spProject !== 'undefined' && _spProject && _spProject.id === _currentProjectId) {
+    clearTimeout(_spSaveTimer); _spSaveTimer = null;
+    DB.updateProject(_currentProjectId, { shootplan: _spProject.shootplan });
   }
   // Перечитываем проект из БД, чтобы получить актуальный шутинг (могли править его в этой же сессии)
   const fresh = DB.getProject(_currentProjectId);
   if (!fresh) { toast('Проект не найден', 'error'); return; }
   const sp = ensureShootplan(fresh);
+
+  // Если день «Из раскадровки» уже существует — спрашиваем, что делать
+  const existingMigrationDay = sp.days.find(d => (d.title || '').toLowerCase().includes('из раскадровки'));
+  if (existingMigrationDay) {
+    const rowCount = (existingMigrationDay.rows || []).length;
+    const choice = prompt(
+      `Уже есть день "${existingMigrationDay.title}" с ${rowCount} строк и твоими правками.\n\n` +
+      'Что делать?\n' +
+      '  1 — Создать новый день (старый не трогать)\n' +
+      '  2 — Перезаписать старый день кадрами из раскадровки (ВНИМАНИЕ: твои правки в нём потеряются)\n' +
+      '  3 — Отменить\n\n' +
+      'Введи цифру:',
+      '1'
+    );
+    if (!choice || choice === '3') return;
+    if (choice === '2') {
+      // Перезаписываем строки в существующем дне
+      existingMigrationDay.rows = sbRows.map(sb => {
+        const row = { id: newSpId('row'), image: sb.image || '' };
+        SP_COLUMNS.forEach(c => row[c.key] = '');
+        row.time = sb.timing || '';
+        row.notes = sb.description || '';
+        return row;
+      });
+      DB.updateProject(_currentProjectId, { shootplan: sp });
+      if (typeof _spProject !== 'undefined' && _spProject && _spProject.id === _currentProjectId) _spProject.shootplan = sp;
+      if (typeof _spOpenDays !== 'undefined') { _spOpenDays.clear(); _spOpenDays.add(existingMigrationDay.id); }
+      toast(`Перезаписано: ${sbRows.length} ${pluralRu(sbRows.length, 'кадр', 'кадра', 'кадров')}`, 'success');
+      if (typeof renderShootplanEditor === 'function' && document.getElementById('m-shootplan')?.classList.contains('active')) {
+        try { renderShootplanEditor(); } catch (e) {}
+      }
+      return;
+    }
+    // choice === '1' → продолжаем создавать новый день
+  } else {
+    if (!confirm(`Перенести ${sbRows.length} ${pluralRu(sbRows.length, 'кадр', 'кадра', 'кадров')} в шутинг-план новым днём?\nСуществующие дни и строки останутся как были.`)) return;
+  }
   const newDay = {
     id: newSpId('day'),
     title: 'Из раскадровки · день ' + (sp.days.length + 1),
@@ -14300,8 +14340,12 @@ function ensureReportDay(project, day) {
       logistics: { permits: '', transport: '', catering: '', water: '', safety: '', conflicts: '', cleanup: '', noise: '' },
       // 7. Финансы
       finance: REPORT_FINANCE_DEFAULTS.map(item => ({ item, budget: '', fact: '', delta: '', reason: '' })),
-      // 8. Ошибки
+      // 8a. Ошибки на препродакшне
+      mistakesPreprod: [],
+      // 8. Ошибки на площадке
       mistakes: [],
+      // 8b. Ошибки на постпродакшне
+      mistakesPostprod: [],
       // 9. Что сработало / не сработало
       keepDoing: ['', '', ''],
       fixStop: ['', '', ''],
@@ -14328,7 +14372,11 @@ function ensureReportDay(project, day) {
       directorDate: ''
     };
   }
-  return project.reports[day];
+  // Backward-compat: убедимся, что у старых рапортов есть новые массивы
+  const r = project.reports[day];
+  if (!Array.isArray(r.mistakesPreprod)) r.mistakesPreprod = [];
+  if (!Array.isArray(r.mistakesPostprod)) r.mistakesPostprod = [];
+  return r;
 }
 
 function openReportEditor() {
@@ -14504,6 +14552,34 @@ function deleteReportMistake(idx) {
   if (!project) return;
   const rep = ensureReportDay(project, _currentReportDay);
   rep.mistakes.splice(idx, 1);
+  saveReportNow(); renderReportEditor();
+}
+function addReportMistakePreprod() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.mistakesPreprod.push({ event: '', cause: '', severity: 2, owner: '', impact: '' });
+  saveReportNow(); renderReportEditor();
+}
+function deleteReportMistakePreprod(idx) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.mistakesPreprod.splice(idx, 1);
+  saveReportNow(); renderReportEditor();
+}
+function addReportMistakePostprod() {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.mistakesPostprod.push({ event: '', cause: '', severity: 2, owner: '', impact: '' });
+  saveReportNow(); renderReportEditor();
+}
+function deleteReportMistakePostprod(idx) {
+  const project = DB.getProject(_currentReportProjectId);
+  if (!project) return;
+  const rep = ensureReportDay(project, _currentReportDay);
+  rep.mistakesPostprod.splice(idx, 1);
   saveReportNow(); renderReportEditor();
 }
 function addReportAction() {
@@ -14788,14 +14864,12 @@ function renderReportEditor() {
       </table>
     </div>`;
 
-  // === Sec 8: Ошибки
-  html += `
-    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
-      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
-        <span>⚠ 8. Ошибки и недочёты на площадке</span>
-        <button onclick="addReportMistake()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Запись</button>
-      </div>
-      ${rep.mistakes.length === 0 ? '<div style="font-size:11px;color:var(--muted);">Ничего не записано. Severity: 1 мелкое · 2 повлияло на тайминг · 3 на качество · 4 сорвало план/деньги · 5 травма/срыв.</div>' : `
+  // === Sec 8: Ошибки (3 блока: препрод, площадка, постпрод)
+  const renderMistakesTable = (list, fieldKey, addFn, delFn) => {
+    if (list.length === 0) {
+      return `<div style="font-size:11px;color:var(--muted);">Ничего не записано. Severity: 1 мелкое · 2 повлияло на тайминг · 3 на качество · 4 сорвало план/деньги · 5 травма/срыв.</div>`;
+    }
+    return `
       <table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;">
         <thead><tr style="background:var(--bg-3);color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:0.8px;">
           <th style="padding:6px;width:30px;text-align:center;">#</th>
@@ -14806,24 +14880,54 @@ function renderReportEditor() {
           <th style="padding:6px 8px;text-align:left;">Последствие / impact</th>
           <th style="padding:6px;width:30px;"></th>
         </tr></thead>
-        <tbody>${rep.mistakes.map((m, i) => {
+        <tbody>${list.map((m, i) => {
           const sc = _sevColor(m.severity);
           return `
             <tr style="border-top:1px solid var(--line);">
               <td style="padding:5px;text-align:center;color:var(--muted);font-weight:700;">${i + 1}</td>
-              <td style="padding:3px;"><textarea class="cs-input" rows="2" value="" oninput="onReportField('mistakes.${i}.event',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.event || '')}</textarea></td>
-              <td style="padding:3px;"><textarea class="cs-input" rows="2" oninput="onReportField('mistakes.${i}.cause',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.cause || '')}</textarea></td>
+              <td style="padding:3px;"><textarea class="cs-input" rows="2" oninput="onReportField('${fieldKey}.${i}.event',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.event || '')}</textarea></td>
+              <td style="padding:3px;"><textarea class="cs-input" rows="2" oninput="onReportField('${fieldKey}.${i}.cause',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.cause || '')}</textarea></td>
               <td style="padding:3px;text-align:center;background:${sc.bg};color:${sc.fg};font-weight:800;">
-                <select class="cs-input" style="padding:4px;font-size:11px;text-align:center;font-weight:800;background:${sc.bg};color:${sc.fg};border:none;" onchange="onReportField('mistakes.${i}.severity',parseInt(this.value));renderReportEditor();">
+                <select class="cs-input" style="padding:4px;font-size:11px;text-align:center;font-weight:800;background:${sc.bg};color:${sc.fg};border:none;" onchange="onReportField('${fieldKey}.${i}.severity',parseInt(this.value));renderReportEditor();">
                   ${[1,2,3,4,5].map(v => `<option value="${v}" ${Number(m.severity)===v?'selected':''}>SEV ${v}</option>`).join('')}
                 </select>
               </td>
-              <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(m.owner || '')}" oninput="onReportField('mistakes.${i}.owner',this.value)" style="padding:4px 6px;font-size:11px;"></td>
-              <td style="padding:3px;"><textarea class="cs-input" rows="2" oninput="onReportField('mistakes.${i}.impact',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.impact || '')}</textarea></td>
-              <td style="padding:3px;text-align:center;"><button onclick="deleteReportMistake(${i})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:13px;">×</button></td>
+              <td style="padding:3px;"><input class="cs-input" value="${escapeHtml(m.owner || '')}" oninput="onReportField('${fieldKey}.${i}.owner',this.value)" style="padding:4px 6px;font-size:11px;"></td>
+              <td style="padding:3px;"><textarea class="cs-input" rows="2" oninput="onReportField('${fieldKey}.${i}.impact',this.value)" style="padding:4px 6px;font-size:11px;resize:vertical;">${escapeHtml(m.impact || '')}</textarea></td>
+              <td style="padding:3px;text-align:center;"><button onclick="${delFn}(${i})" style="background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:13px;">×</button></td>
             </tr>`;
         }).join('')}</tbody>
-      </table>`}
+      </table>`;
+  };
+
+  // 8a. Препрод
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>⚠ 8a. Ошибки и недочёты на препродакшне</span>
+        <button onclick="addReportMistakePreprod()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Запись</button>
+      </div>
+      ${renderMistakesTable(rep.mistakesPreprod, 'mistakesPreprod', 'addReportMistakePreprod', 'deleteReportMistakePreprod')}
+    </div>`;
+
+  // 8. Площадка (старый блок)
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>⚠ 8. Ошибки и недочёты на площадке</span>
+        <button onclick="addReportMistake()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Запись</button>
+      </div>
+      ${renderMistakesTable(rep.mistakes, 'mistakes', 'addReportMistake', 'deleteReportMistake')}
+    </div>`;
+
+  // 8b. Постпрод
+  html += `
+    <div style="padding:14px 22px;border-bottom:1px solid var(--line);">
+      <div class="cs-section-title" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>⚠ 8b. Ошибки и недочёты на постпродакшне</span>
+        <button onclick="addReportMistakePostprod()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">＋ Запись</button>
+      </div>
+      ${renderMistakesTable(rep.mistakesPostprod, 'mistakesPostprod', 'addReportMistakePostprod', 'deleteReportMistakePostprod')}
     </div>`;
 
   // === Sec 9: Keep Doing / Fix Stop
@@ -15208,27 +15312,33 @@ function buildReportPrintHTML(project, rep) {
     `);
   }
 
-  // Mistakes
+  // Mistakes — 3 блока (препрод, площадка, постпрод)
+  const pdfMistakesTable = (list) => `
+    <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+      <thead><tr style="background:#0a0907;color:white;font-size:8px;letter-spacing:0.5px;">
+        <th style="padding:4px 6px;text-align:center;width:20px;">#</th><th style="padding:4px 6px;text-align:left;">Что произошло</th><th style="padding:4px 6px;text-align:left;">Причина</th><th style="padding:4px 6px;text-align:center;width:50px;">SEV</th><th style="padding:4px 6px;text-align:left;width:14%;">Отв.</th><th style="padding:4px 6px;text-align:left;">Impact</th>
+      </tr></thead>
+      <tbody>${list.map((m, i) => {
+        const sc = _sevColor(m.severity);
+        return `
+          <tr style="background:#fafafa;border-bottom:1px solid #ececec;">
+            <td style="padding:4px 6px;text-align:center;color:#666;font-weight:700;">${i + 1}</td>
+            <td style="padding:4px 6px;font-weight:700;">${escapeHtml(m.event || '')}</td>
+            <td style="padding:4px 6px;color:#333;">${escapeHtml(m.cause || '')}</td>
+            <td style="padding:4px 6px;text-align:center;background:${sc.bg};color:${sc.fg};font-weight:800;">${sc.label}</td>
+            <td style="padding:4px 6px;">${escapeHtml(m.owner || '')}</td>
+            <td style="padding:4px 6px;color:#333;">${escapeHtml(m.impact || '')}</td>
+          </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  if ((rep.mistakesPreprod || []).length > 0) {
+    html += sec('⚠ Ошибки и недочёты на препродакшне', pdfMistakesTable(rep.mistakesPreprod));
+  }
   if (rep.mistakes.length > 0) {
-    html += sec('⚠ Ошибки и недочёты', `
-      <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
-        <thead><tr style="background:#0a0907;color:white;font-size:8px;letter-spacing:0.5px;">
-          <th style="padding:4px 6px;text-align:center;width:20px;">#</th><th style="padding:4px 6px;text-align:left;">Что произошло</th><th style="padding:4px 6px;text-align:left;">Причина</th><th style="padding:4px 6px;text-align:center;width:50px;">SEV</th><th style="padding:4px 6px;text-align:left;width:14%;">Отв.</th><th style="padding:4px 6px;text-align:left;">Impact</th>
-        </tr></thead>
-        <tbody>${rep.mistakes.map((m, i) => {
-          const sc = _sevColor(m.severity);
-          return `
-            <tr style="background:#fafafa;border-bottom:1px solid #ececec;">
-              <td style="padding:4px 6px;text-align:center;color:#666;font-weight:700;">${i + 1}</td>
-              <td style="padding:4px 6px;font-weight:700;">${escapeHtml(m.event || '')}</td>
-              <td style="padding:4px 6px;color:#333;">${escapeHtml(m.cause || '')}</td>
-              <td style="padding:4px 6px;text-align:center;background:${sc.bg};color:${sc.fg};font-weight:800;">${sc.label}</td>
-              <td style="padding:4px 6px;">${escapeHtml(m.owner || '')}</td>
-              <td style="padding:4px 6px;color:#333;">${escapeHtml(m.impact || '')}</td>
-            </tr>`;
-        }).join('')}</tbody>
-      </table>
-    `);
+    html += sec('⚠ Ошибки и недочёты на площадке', pdfMistakesTable(rep.mistakes));
+  }
+  if ((rep.mistakesPostprod || []).length > 0) {
+    html += sec('⚠ Ошибки и недочёты на постпродакшне', pdfMistakesTable(rep.mistakesPostprod));
   }
 
   // Keep / Fix
