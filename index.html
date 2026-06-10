@@ -9175,19 +9175,26 @@ const DB = {
 
     // 2. Профиль (brand-данные внутри profiles.data.brand)
     let brand = {};
+    let people = {};
     try {
       const { data: prof, error: prErr } = await this.client
         .from('profiles')
         .select('data')
         .eq('id', this.user.id)
         .single();
-      if (!prErr) brand = (prof?.data?.brand) || {};
+      if (!prErr) {
+        brand = (prof?.data?.brand) || {};
+        people = (prof?.data?.people) || {};
+        // Запоминаем целиком data в this.profile для merge-sync
+        if (this.profile) this.profile.data = prof?.data || {};
+      }
     } catch (e) { console.warn('hydrate profile', e); }
 
     const cache = {
       version: 1,
       projects: (projects || []).map(r => this._fromDb(r)),
-      brand
+      brand,
+      people
     };
     this._lastBrand = JSON.stringify(brand);
     // RBAC: ассистент не должен иметь финансовые данные ДАЖЕ в локальном кэше.
@@ -9201,6 +9208,65 @@ const DB = {
     this.save(cache);
   },
 
+  // === ГЛОБАЛЬНЫЙ РЕЕСТР ЛЮДЕЙ ===
+  // Ключ: telegram-юзернейм (приоритет), иначе name_ru в lowercase.
+  // Профиль каждого человека хранится в profiles.data.people[key] = { avatar, bio, experience, website, name_ru, name_en, role, role_en, telegram, instagram, phone, email }
+  _personKey(m) {
+    if (!m) return null;
+    const tg = (m.telegram || '').trim().replace(/^@/, '').toLowerCase();
+    if (tg) return 'tg:' + tg;
+    const name = (m.name_ru || m.name_en || '').trim().toLowerCase();
+    if (name) return 'name:' + name;
+    return null;
+  },
+  getPeople() {
+    return (this.load()?.people) || {};
+  },
+  resolvePersonProfile(m) {
+    const key = this._personKey(m);
+    if (!key) return null;
+    return this.getPeople()[key] || null;
+  },
+  // Резолвит аватар: сначала из локального member.avatar, потом из глобального реестра
+  resolveAvatar(m) {
+    if (m?.avatar) return m.avatar;
+    const p = this.resolvePersonProfile(m);
+    return p?.avatar || '';
+  },
+  // Сохраняет полный профиль человека в глобальный реестр и синкает на сервер
+  savePersonProfile(m) {
+    const key = this._personKey(m);
+    if (!key) return;
+    const cache = this.load();
+    if (!cache.people) cache.people = {};
+    const existing = cache.people[key] || {};
+    // Сохраняем поля профиля; пустые значения НЕ затирают существующие
+    const fields = ['avatar', 'bio', 'experience', 'website', 'name_ru', 'name_en', 'role', 'role_en', 'telegram', 'instagram', 'phone', 'email'];
+    const merged = { ...existing };
+    fields.forEach(f => { if (m[f]) merged[f] = m[f]; });
+    cache.people[key] = merged;
+    this.save(cache);
+    this._syncPeopleToServer(cache.people);
+  },
+  _peopleSyncTimer: null,
+  _syncPeopleToServer(people) {
+    if (!this.user || !this.client) return;
+    // Debounce 1.5s — собираем серию правок в один request
+    clearTimeout(this._peopleSyncTimer);
+    this._peopleSyncTimer = setTimeout(() => {
+      // Мерджим в profile.data чтобы не затереть brand
+      const currentData = (this.profile && this.profile.data) || {};
+      const newData = { ...currentData, people };
+      this._withRetry(
+        () => this.client.from('profiles').update({ data: newData }).eq('id', this.user.id),
+        'people sync'
+      ).then(({ error }) => {
+        if (error) console.error('people sync', error);
+        else if (this.profile) this.profile.data = newData;
+      });
+    }, 1500);
+  },
+
   // Синк brand в profiles.data, если изменился
   _syncBrandIfChanged(data) {
     if (!this.user || !this.client) return;
@@ -9208,14 +9274,17 @@ const DB = {
     const ser = JSON.stringify(b);
     if (ser === this._lastBrand) return;
     this._lastBrand = ser;
+    // Мерджим: brand + текущий people (из RAM) — чтобы не затереть глобальный реестр людей
+    const currentData = (this.profile && this.profile.data) || {};
+    const newData = { ...currentData, brand: b };
     this._pending++;
     this._withRetry(
-      () => this.client.from('profiles').update({ data: { brand: b } }).eq('id', this.user.id),
+      () => this.client.from('profiles').update({ data: newData }).eq('id', this.user.id),
       'brand sync'
     ).then(({ error }) => {
       this._pending--;
       if (error) console.error('brand sync', error);
-      // brand sync — без toast, чтобы не спамить
+      else if (this.profile) this.profile.data = newData;
     });
   },
 
@@ -10752,8 +10821,9 @@ function renderTeamMembers(project) {
   tbody.innerHTML = members.map(m => {
     const roleEn = m.role_en || translateRole(m.role);
     const initials = (m.name_ru || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
-    const avatarCell = m.avatar
-      ? `<div class="tm-avatar tm-avatar-img" style="background-image:url('${m.avatar.replace(/'/g, "\\'")}')" onclick="event.stopPropagation(); pickTeamAvatar('${m.id}')" title="Сменить фото"><span class="tm-avatar-edit">✎</span></div>`
+    const av = DB.resolveAvatar(m); // глобальный реестр имеет приоритет если member.avatar пуст
+    const avatarCell = av
+      ? `<div class="tm-avatar tm-avatar-img" style="background-image:url('${av.replace(/'/g, "\\'")}')" onclick="event.stopPropagation(); pickTeamAvatar('${m.id}')" title="Сменить фото"><span class="tm-avatar-edit">✎</span></div>`
       : `<div class="tm-avatar tm-avatar-init" onclick="event.stopPropagation(); pickTeamAvatar('${m.id}')" title="Загрузить фото">${escapeHtml(initials || '?')}<span class="tm-avatar-edit">＋</span></div>`;
     return `
     <tr>
@@ -10963,9 +11033,11 @@ function saveTeamMember() {
     team.unshift(data);
   }
   DB.updateProject(_currentProjectId, { team });
+  // Глобальный реестр: профиль человека (avatar/bio/опыт/контакты) для использования во всех проектах
+  DB.savePersonProfile(data);
   closeAll();
   renderTeamMembers(DB.getProject(_currentProjectId));
-  toast(_editingMemberId ? 'Участник обновлён' : 'Участник добавлен 🎬', 'success');
+  toast(_editingMemberId ? 'Участник обновлён · профиль синхронизирован' : 'Участник добавлен 🎬', 'success');
 }
 
 // Pre-clip круглый аватар: возвращает PNG-data-url с круглой формой и прозрачными углами.
@@ -11131,13 +11203,32 @@ function _personChipHtml(name, avatar, kind = 'compact') {
   }
   return `<span class="person-chip person-chip-init-only" style="width:${size}px;height:${size}px;font-size:${fz}px;" title="${escapeHtml(name || '')}">${escapeHtml(initials)}</span>`;
 }
-// Поиск аватара по имени в команде проекта (для авто-резолвинга в крю/касте)
+// Поиск аватара по имени: сначала в команде проекта, потом в глобальном реестре людей
 function _findAvatarByName(project, name) {
-  if (!project || !name) return '';
+  if (!name) return '';
   const target = String(name).trim().toLowerCase();
   if (!target) return '';
-  const m = (project.team || []).find(x => (x.name_ru || '').trim().toLowerCase() === target || (x.name_en || '').trim().toLowerCase() === target);
-  return m?.avatar || '';
+  // 1) В команде текущего проекта
+  if (project) {
+    const m = (project.team || []).find(x => (x.name_ru || '').trim().toLowerCase() === target || (x.name_en || '').trim().toLowerCase() === target);
+    if (m?.avatar) return m.avatar;
+    // если в команде есть запись без аватара — пробуем глобально по её ключу
+    if (m) {
+      const fromGlobal = DB.resolveAvatar(m);
+      if (fromGlobal) return fromGlobal;
+    }
+  }
+  // 2) Глобальный реестр — ищем по name_ru / name_en
+  try {
+    const people = DB.getPeople();
+    for (const key in people) {
+      const p = people[key];
+      if ((p.name_ru || '').trim().toLowerCase() === target || (p.name_en || '').trim().toLowerCase() === target) {
+        if (p.avatar) return p.avatar;
+      }
+    }
+  } catch (e) {}
+  return '';
 }
 
 // === Аватар в форме «Новый/Редактировать участник»
@@ -11195,10 +11286,13 @@ function pickTeamAvatar(memberId) {
     openAvatarCropper(file, (dataUrl) => {
       const project = DB.getProject(_currentProjectId);
       if (!project) return;
+      const target = (project.team || []).find(m => m.id === memberId);
       const team = (project.team || []).map(m => m.id === memberId ? { ...m, avatar: dataUrl } : m);
       DB.updateProject(_currentProjectId, { team });
+      // Глобальный реестр: аватар привязывается к человеку — появится во всех проектах
+      if (target) DB.savePersonProfile({ ...target, avatar: dataUrl });
       renderTeamMembers(DB.getProject(_currentProjectId));
-      toast('Аватар обновлён ✓', 'success');
+      toast('Аватар обновлён ✓ (синхронизирован между проектами)', 'success');
     });
   };
   document.body.appendChild(inp);
