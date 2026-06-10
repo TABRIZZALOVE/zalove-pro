@@ -3875,6 +3875,29 @@ body.has-reel .theme-toggle { right: 158px; }
   box-sizing: border-box;
   min-height: 28px;
 }
+.cs-location-img-wrap { display:flex; align-items:center; }
+.cs-location-img-upload {
+  display:flex; align-items:center; justify-content:center;
+  width:100%; min-height:90px; border:1px dashed var(--line-2,#e5e5e5);
+  border-radius:8px; background:var(--bg-3,#fafafa);
+  cursor:pointer; font-size:12px; color:var(--muted,#888); font-weight:600;
+  transition:all .15s; padding:14px;
+}
+.cs-location-img-upload:hover { border-color:var(--brand-red,#6b1d1f); color:var(--brand-red,#6b1d1f); }
+.cs-location-img-thumb {
+  position:relative; width:100%; min-height:90px; max-height:200px;
+  border-radius:8px; overflow:hidden; background:#0a0907;
+  display:flex; align-items:center; justify-content:center;
+}
+.cs-location-img-thumb img {
+  max-width:100%; max-height:200px; width:auto; height:auto; display:block;
+}
+.cs-location-img-del {
+  position:absolute; top:6px; right:6px;
+  width:24px; height:24px; border:none; border-radius:50%;
+  background:rgba(0,0,0,0.7); color:#fff;
+  font-size:14px; cursor:pointer; line-height:1;
+}
 .sp-table textarea.sp-cell-area {
   overflow: hidden;
   white-space: pre-wrap;
@@ -17443,6 +17466,23 @@ function renderCallsheetEditor() {
           <input class="cs-input" data-cs="locationAddress" value="${escapeHtml(cs.locationAddress || '')}" placeholder="Улица, дом, корпус">
         </div>
       </div>
+      <div class="cs-row-grid cs-2col" style="margin-top:12px;">
+        <div>
+          <div class="cs-field-label" style="display:flex;align-items:center;gap:8px;">
+            <span>🔗 Ссылка на локацию (Яндекс/Google Maps)</span>
+            ${cs.locationLink ? `<a href="${escapeHtml(cs.locationLink)}" target="_blank" rel="noopener" style="color:#7dd3fc;font-size:11px;text-decoration:underline;font-weight:600;">↗ открыть</a>` : ''}
+          </div>
+          <input class="cs-input" data-cs="locationLink" type="url" value="${escapeHtml(cs.locationLink || '')}" placeholder="https://yandex.ru/maps/... или https://maps.google.com/...">
+        </div>
+        <div>
+          <div class="cs-field-label">🖼 Картинка локации</div>
+          <div class="cs-location-img-wrap" id="cs-location-img-wrap">
+            ${cs.locationImage
+              ? `<div class="cs-location-img-thumb"><img src="${cs.locationImage}" alt=""><button type="button" class="cs-location-img-del" onclick="removeCallsheetLocationImage()" title="Удалить">×</button></div>`
+              : `<label class="cs-location-img-upload">＋ загрузить кадр локации<input type="file" accept="image/*" hidden onchange="uploadCallsheetLocationImage(this)"></label>`}
+          </div>
+        </div>
+      </div>
       <div style="margin-top: 12px;">
         <div class="cs-field-label">👥 Выбрать из команды проекта</div>
         <select class="cs-input" id="cs-pick-location-contact" onchange="pickLocationContactFromTeam(this.value)">
@@ -17462,9 +17502,9 @@ function renderCallsheetEditor() {
         <div>
           <div class="cs-field-label" style="display:flex; align-items:center; gap:8px;">
             <span>Telegram</span>
-            <a onclick="openTelegramHandle('cs-loc-contact-tg', event)" style="cursor:pointer; color:#7dd3fc; font-size:11px; text-decoration:underline; font-weight:600; letter-spacing:.3px;">↗ открыть</a>
+            <a id="cs-loc-contact-tg-link" href="${cs.locationContactTelegram ? 'https://t.me/' + escapeHtml(_tgHandle(cs.locationContactTelegram)) : '#'}" target="_blank" rel="noopener" onclick="return _openTgFromInput('cs-loc-contact-tg', event, this)" style="cursor:pointer; color:#7dd3fc; font-size:11px; text-decoration:underline; font-weight:600; letter-spacing:.3px;">↗ открыть</a>
           </div>
-          <input class="cs-input" data-cs="locationContactTelegram" id="cs-loc-contact-tg" value="${escapeHtml(cs.locationContactTelegram || '')}" placeholder="@username">
+          <input class="cs-input" data-cs="locationContactTelegram" id="cs-loc-contact-tg" value="${escapeHtml(cs.locationContactTelegram || '')}" placeholder="@username" oninput="_updateTgLinkHref('cs-loc-contact-tg', 'cs-loc-contact-tg-link')">
         </div>
       </div>
       <div style="margin-top: 12px;">
@@ -17663,6 +17703,64 @@ function resetCallsheetHeaderToProject() {
 }
 
 /* ===== Открыть Telegram по @username из любого input ===== */
+// Парсер TG handle из разных форматов
+function _tgHandle(raw) {
+  if (!raw) return '';
+  return String(raw).trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^(t\.me|telegram\.me)\//i, '')
+    .replace(/^@+/, '')
+    .split(/[?#\/\s]/)[0]
+    .trim();
+}
+// Обновить href TG-ссылки при изменении input
+function _updateTgLinkHref(inputId, linkId) {
+  const input = document.getElementById(inputId);
+  const link = document.getElementById(linkId);
+  if (!input || !link) return;
+  const handle = _tgHandle(input.value);
+  link.href = handle ? `https://t.me/${handle}` : '#';
+}
+// Открыть TG — резервный обработчик клика по <a> (если href пустой или анкорный)
+function _openTgFromInput(inputId, event, linkEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return false;
+  const handle = _tgHandle(input.value);
+  if (!handle) { if (event) event.preventDefault(); toast('Сначала укажи Telegram', 'warn'); return false; }
+  // если href актуален — пусть браузер открывает сам
+  const expected = `https://t.me/${handle}`;
+  if (linkEl && linkEl.href === expected) return true;
+  // иначе синхронно обновим href и откроем
+  if (linkEl) linkEl.href = expected;
+  window.open(expected, '_blank', 'noopener,noreferrer');
+  if (event) event.preventDefault();
+  return false;
+}
+
+// === Загрузка картинки локации в вызывной (HQ — без сжатия в качество) ===
+async function uploadCallsheetLocationImage(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (file.size > 20 * 1024 * 1024) { toast('Файл слишком большой (макс 20 МБ)', 'error'); return; }
+  try {
+    toast('Сжимаю картинку…', 'success');
+    const dataUrl = await _sbCompressImageHQ(file, 1800, 0.92);
+    if (!_currentCsData) return;
+    _currentCsData.locationImage = dataUrl;
+    saveCsNow();
+    renderCallsheetEditor();
+    toast('Картинка добавлена ✓', 'success');
+  } catch (e) {
+    toast('Не получилось загрузить: ' + (e?.message || e), 'error');
+  }
+}
+function removeCallsheetLocationImage() {
+  if (!_currentCsData) return;
+  _currentCsData.locationImage = '';
+  saveCsNow();
+  renderCallsheetEditor();
+}
+
 function openTelegramHandle(inputId, event) {
   if (event) { event.preventDefault(); event.stopPropagation(); }
   const el = document.getElementById(inputId);
@@ -17985,17 +18083,24 @@ function buildCallsheetPrintHTML(project, cs) {
     let contactLine = '';
     if (cs.locationContactName) contactLine += escapeHtml(cs.locationContactName);
     if (cs.locationContactPhone) contactLine += (contactLine ? ' · ' : '') + escapeHtml(cs.locationContactPhone);
-    if (cs.locationContactTelegram) contactLine += (contactLine ? ' · ' : '') + escapeHtml(cs.locationContactTelegram);
+    if (cs.locationContactTelegram) {
+      const tg = _tgHandle(cs.locationContactTelegram);
+      contactLine += (contactLine ? ' · ' : '') + (tg ? `<a href="https://t.me/${escapeHtml(tg)}" style="color:#0a0907;text-decoration:underline;">@${escapeHtml(tg)}</a>` : escapeHtml(cs.locationContactTelegram));
+    }
     html += `
-      <div style="margin:0 ${PAD_X}px 8px;background:#faf3f3;border-left:4px solid #6b1d1f;padding:8px 12px;border-radius:0 4px 4px 0;">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
-          <div>
-            <span style="font-size:8px;color:#888;font-weight:800;letter-spacing:1px;">ГДЕ СНИМАЕМ</span>
-            <span style="font-size:14px;font-weight:800;margin-left:8px;">${escapeHtml(cs.locationName || '—')}</span>
+      <div style="margin:0 ${PAD_X}px 8px;background:#faf3f3;border-left:4px solid #6b1d1f;padding:8px 12px;border-radius:0 4px 4px 0;display:flex;gap:12px;align-items:flex-start;">
+        ${cs.locationImage ? `<div style="width:120px;height:90px;flex-shrink:0;background-image:url('${cs.locationImage.replace(/'/g, "\\'")}');background-size:cover;background-position:center;background-color:#fff;border-radius:4px;"></div>` : ''}
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+            <div>
+              <span style="font-size:8px;color:#888;font-weight:800;letter-spacing:1px;">ГДЕ СНИМАЕМ</span>
+              <span style="font-size:14px;font-weight:800;margin-left:8px;">${escapeHtml(cs.locationName || '—')}</span>
+            </div>
+            ${contactLine ? `<div style="font-size:10px;color:#555;font-weight:600;">${contactLine}</div>` : ''}
           </div>
-          ${contactLine ? `<div style="font-size:10px;color:#555;font-weight:600;">${contactLine}</div>` : ''}
+          ${cs.locationAddress ? `<div style="font-size:10.5px;margin-top:3px;color:#333;font-weight:600;">${escapeHtml(cs.locationAddress)}</div>` : ''}
+          ${cs.locationLink ? `<div style="margin-top:3px;font-size:10px;"><a href="${escapeHtml(cs.locationLink)}" style="color:#1d4ed8;text-decoration:underline;font-weight:600;">📍 ${escapeHtml(cs.locationLink.replace(/^https?:\/\//, '').slice(0, 60))}</a></div>` : ''}
         </div>
-        ${cs.locationAddress ? `<div style="font-size:10.5px;margin-top:3px;color:#333;font-weight:600;">${escapeHtml(cs.locationAddress)}</div>` : ''}
       </div>`;
   }
 
