@@ -7941,6 +7941,8 @@ body.dark-theme .task-deadline:focus { background: white; }
               <option>Ассистент по реквизиту</option>
               <option>Художник по костюмам / Стилист</option>
               <option>Ассистент художника по костюмам / стилиста</option>
+              <option>Ассистент по костюмам</option>
+              <option>Ассистент стилиста</option>
             </optgroup>
             <optgroup label="💄 Грим и волосы">
               <option>Гример / Визажист</option>
@@ -10234,6 +10236,8 @@ const ROLE_TRANSLATIONS = {
   'Ассистент по реквизиту': 'Props Assistant',
   'Художник по костюмам / Стилист': 'Costume Designer',
   'Ассистент художника по костюмам / стилиста': 'Costume Assistant',
+  'Ассистент по костюмам': 'Costume Assistant',
+  'Ассистент стилиста': 'Stylist Assistant',
   'Гример / Визажист': 'Makeup Artist',
   'Ассистент гримёра': 'Makeup Assistant',
   'Стилист по волосам': 'Hair Stylist',
@@ -10962,6 +10966,34 @@ function saveTeamMember() {
   closeAll();
   renderTeamMembers(DB.getProject(_currentProjectId));
   toast(_editingMemberId ? 'Участник обновлён' : 'Участник добавлен 🎬', 'success');
+}
+
+// Pre-clip круглый аватар: возвращает PNG-data-url с круглой формой и прозрачными углами.
+// Используется в PDF-экспорте чтобы аватары были резкими (без html2canvas re-rasterization).
+function _prerenderRoundAvatar(srcUrl, size) {
+  return new Promise((resolve) => {
+    if (!srcUrl) return resolve(srcUrl);
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.round(size);
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      // круглый clip
+      ctx.beginPath();
+      ctx.arc(c.width/2, c.height/2, c.width/2, 0, Math.PI*2);
+      ctx.closePath();
+      ctx.clip();
+      // cover: масштабируем так, чтобы малая сторона = canvas size
+      const k = Math.max(c.width / img.width, c.height / img.height);
+      const dw = img.width * k, dh = img.height * k;
+      const dx = (c.width - dw) / 2, dy = (c.height - dh) / 2;
+      ctx.drawImage(img, dx, dy, dw, dh);
+      resolve(c.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(srcUrl);
+    img.src = srcUrl;
+  });
 }
 
 // === Кроппер аватара (модал с зумом и drag-позиционированием) ===
@@ -18460,17 +18492,25 @@ async function exportCallsheetToPdf() {
       const cellW = parseFloat(el.dataset.pdfW) || el.offsetWidth;
       const cellH = parseFloat(el.dataset.pdfH) || el.offsetHeight;
       const fit = el.dataset.pdfFit || 'contain';
+      const round = el.dataset.pdfRound === '1';
       const rect = el.getBoundingClientRect();
       const cssX = rect.left - containerRect.left;
       const cssY = rect.top - containerRect.top;
+      // Для round-аватаров pre-clip через canvas → круглый PNG с прозрачным углами
+      let preparedUrl = url;
+      let preparedW = 0, preparedH = 0;
+      if (round) {
+        preparedUrl = await _prerenderRoundAvatar(url, Math.max(cellW, cellH) * 4); // ×4 для кристальной четкости
+        preparedW = preparedH = Math.max(cellW, cellH);
+      }
       const natural = await new Promise(res => {
         const im = new Image();
         im.onload = () => res({ w: im.naturalWidth, h: im.naturalHeight });
         im.onerror = () => res({ w: cellW, h: cellH });
-        im.src = url;
+        im.src = preparedUrl;
         setTimeout(() => res({ w: cellW, h: cellH }), 3000);
       });
-      return { url, cellW, cellH, cssX, cssY, natW: natural.w, natH: natural.h, fit };
+      return { url: preparedUrl, cellW, cellH, cssX, cssY, natW: natural.w, natH: natural.h, fit, round };
     }));
     const containerCssW = container.offsetWidth; // 794
 
@@ -18509,14 +18549,19 @@ async function exportCallsheetToPdf() {
       const yPt = y + ph.cssY * ptPerCssPx;
       const cellWPt = ph.cellW * ptPerCssPx;
       const cellHPt = ph.cellH * ptPerCssPx;
-      const imgAspect = ph.natW / ph.natH;
-      const cellAspect = cellWPt / cellHPt;
       let drawW, drawH;
-      // contain (preserves aspect, без обрезки)
-      if (imgAspect > cellAspect) {
-        drawW = cellWPt; drawH = cellWPt / imgAspect;
+      if (ph.round) {
+        // Круглый аватар: pre-clip уже сделал круг с прозрачностью — рисуем строго в размер ячейки
+        drawW = cellWPt; drawH = cellHPt;
       } else {
-        drawH = cellHPt; drawW = cellHPt * imgAspect;
+        const imgAspect = ph.natW / ph.natH;
+        const cellAspect = cellWPt / cellHPt;
+        // contain (preserves aspect, без обрезки)
+        if (imgAspect > cellAspect) {
+          drawW = cellWPt; drawH = cellWPt / imgAspect;
+        } else {
+          drawH = cellHPt; drawW = cellHPt * imgAspect;
+        }
       }
       const drawX = xPt + (cellWPt - drawW) / 2;
       const drawY = yPt + (cellHPt - drawH) / 2;
@@ -18685,7 +18730,9 @@ function buildCallsheetPrintHTML(project, cs) {
       const avatar = _findAvatarByName(project, p.name) || p.avatar || '';
       const initials = ((p.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2) || '?').toUpperCase();
       const avChip = avatar
-        ? `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#0a0907 center/cover no-repeat;background-image:url('${avatar.replace(/'/g, "\\'")}');vertical-align:middle;margin-right:6px;"></span>`
+        // Two-pass placeholder: html2canvas нарисует пустой круг, потом jsPDF.addImage
+        // вставит оригинальный base64 поверх — кристальная резкость без re-rasterization.
+        ? `<span data-pdf-img="${escapeHtml(avatar)}" data-pdf-w="22" data-pdf-h="22" data-pdf-fit="cover" data-pdf-round="1" style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#0a0907;vertical-align:middle;margin-right:6px;"></span>`
         : `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:8.5px;font-weight:800;vertical-align:middle;margin-right:6px;">${escapeHtml(initials)}</span>`;
       return `
         <tr style="background:${stripeBg};border-bottom:1px solid #ececec;">
