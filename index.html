@@ -7071,6 +7071,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn btn-secondary" onclick="openBrandKit()" title="Логотип, цвет, шрифт клиента — применятся к PDF">🎨 Бренд-кит</button>
         <button class="btn btn-dark" onclick="exportCallsheetToPdf()">⤓ PDF</button>
         <button class="btn-secondary btn" onclick="exportCallsheetIcs()" title="Скачать .ics для Google Calendar / Apple Calendar">📅 В календарь</button>
         <button class="btn btn-dark" onclick="exportCallsheetToXlsx()">⤓ XLSX</button>
@@ -7109,6 +7110,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn btn-secondary" onclick="openBrandKit()" title="Логотип, цвет, шрифт клиента">🎨 Бренд-кит</button>
         <button class="btn btn-dark" onclick="exportTimingToPdf()">⤓ PDF</button>
         <button class="btn-secondary btn" onclick="exportTimingIcs()" title="Скачать .ics для Google Calendar / Apple Calendar">📅 В календарь</button>
         <button class="btn btn-dark" onclick="exportTimingToXlsx()">⤓ XLSX</button>
@@ -7356,6 +7358,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn btn-secondary" onclick="openBrandKit()" title="Логотип, цвет, шрифт клиента">🎨 Бренд-кит</button>
         <button class="btn btn-dark" onclick="exportBriefToPdf()">⤓ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
@@ -7386,6 +7389,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn btn-secondary" onclick="openBrandKit()" title="Логотип, цвет, шрифт клиента">🎨 Бренд-кит</button>
         <button class="btn btn-dark" onclick="exportShootplanToPdf()">⤓ PDF</button>
         <button class="btn btn-dark" onclick="exportShootplanToXlsx()">⤓ XLSX</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
@@ -7416,6 +7420,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn btn-secondary" onclick="openBrandKit()" title="Логотип, цвет, шрифт клиента">🎨 Бренд-кит</button>
         <button class="btn btn-dark" onclick="exportStoryboardToPdf()">⤓ PDF</button>
         <button class="btn btn-secondary" onclick="migrateStoryboardToShootplan()" title="Перенести все кадры раскадровки в шутинг-план как строки">↗ В шутинг-план</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
@@ -7590,6 +7595,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn btn-secondary" onclick="openBrandKit()" title="Логотип, цвет, шрифт клиента">🎨 Бренд-кит</button>
         <button class="btn btn-dark" onclick="exportPpmToPdf()">⤓ PDF</button>
         <button class="btn btn-dark" onclick="exportPpmToPptx()">⤓ PPTX</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
@@ -7677,6 +7683,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn-secondary btn" onclick="openBrandKit()" title="Логотип, цвет, шрифт клиента">🎨 Бренд-кит</button>
         <button class="btn" onclick="exportRisksToPdf()">⤓ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
@@ -7699,6 +7706,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
       <div class="doc-actions-h">
+        <button class="btn-secondary btn" onclick="openBrandKit()" title="Логотип, цвет, шрифт клиента">🎨 Бренд-кит</button>
         <button class="btn" onclick="exportReportToPdf()">⤓ PDF</button>
         <button class="modal-close-x" onclick="closeAll()">×</button>
       </div>
@@ -7899,6 +7907,76 @@ body.dark-theme .task-deadline:focus { background: white; }
       <div style="display:flex;gap:6px;">
         <button class="btn-secondary btn" onclick="closeAvatarCropper()">Отмена</button>
         <button class="btn" onclick="_acceptAvatarCrop()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Бренд-кит проекта (логотип клиента, цвет, шрифт, сайт) -->
+<div class="modal-overlay" id="m-brand-kit">
+  <div class="doc-overlay" style="width: 600px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">🎨</div>
+        <div>
+          <div class="doc-header-title">Бренд-кит проекта</div>
+          <div class="doc-header-subtitle">Айдентика клиента/артиста — применится к PDF</div>
+        </div>
+      </div>
+      <button class="doc-close" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="doc-content" style="display:flex;flex-direction:column;gap:14px;padding:18px 22px;">
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:flex-start;">
+          <div>
+            <label class="form-label" style="margin-bottom:4px;">Логотип</label>
+            <div id="bk-logo-preview" class="tm-avatar" style="width:120px;height:120px;font-size:30px;cursor:pointer;border-radius:8px;background:#fff;color:#444;border:1.5px dashed var(--line-2,#ddd);" onclick="_pickBkLogo()" title="Загрузить логотип">＋</div>
+            <button type="button" id="bk-logo-clear" onclick="_clearBkLogo()" style="margin-top:6px;background:none;border:none;color:var(--muted,#888);font-size:11px;cursor:pointer;display:none;">× убрать</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label class="form-label">Сайт клиента / артиста</label>
+              <input class="form-input" id="bk-website" placeholder="https://yandex.ru, https://t.me/artist, https://brand.com" oninput="_updateBkAccentPreview()">
+              <div style="font-size:10.5px;color:var(--muted);margin-top:3px;">В будущем — подтяжка цветов/шрифтов автоматом</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <label class="form-label">Акцент-цвет</label>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <input type="color" id="bk-accent" value="#6b1d1f" style="width:40px;height:36px;border:1px solid var(--line-2);border-radius:4px;cursor:pointer;padding:2px;" oninput="_updateBkAccentPreview()">
+                  <input class="form-input" id="bk-accent-text" value="#6b1d1f" style="flex:1;font-family:'Montserrat',monospace;text-transform:uppercase;" oninput="document.getElementById('bk-accent').value = this.value;_updateBkAccentPreview()">
+                </div>
+              </div>
+              <div>
+                <label class="form-label">Шрифт-акцент (опционально)</label>
+                <input class="form-input" id="bk-font" placeholder="Inter, Oswald, Manrope, ...">
+                <div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Имя Google Font — пока ручной ввод</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--bg-3,#fafafa);border-radius:8px;padding:12px;border:1px solid var(--line,#eee);">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Превью</div>
+          <div id="bk-preview" style="background:#fff;padding:14px;border-radius:6px;display:flex;align-items:center;gap:12px;">
+            <div id="bk-preview-logo" style="width:48px;height:48px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#aaa;">LOGO</div>
+            <div>
+              <div id="bk-preview-bar" style="height:6px;width:200px;background:#6b1d1f;border-radius:3px;margin-bottom:4px;"></div>
+              <div style="font-size:22px;font-weight:900;letter-spacing:-0.3px;">ВЫЗЫВНОЙ</div>
+              <div id="bk-preview-meta" style="font-size:10px;color:#888;font-weight:600;">проект · клиент</div>
+            </div>
+          </div>
+        </div>
+        <button type="button" onclick="_fetchBkFromSite()" id="bk-fetch-btn" style="background:#0a0907;color:#fff;border:none;padding:10px 16px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.3px;">
+          🔮 Попробовать подтянуть с сайта (бета)
+        </button>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">Сохраняется в проекте · применяется к PDF</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-secondary btn" onclick="resetBrandKit()">Сбросить</button>
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="saveBrandKit()">💾 Сохранить</button>
       </div>
     </div>
   </div>
@@ -8733,6 +8811,7 @@ function openDoc(type) {
     'creative-upload': 'm-creative-upload',
     'add-member': 'm-add-member',
     'add-client': 'm-add-client',
+    'brand-kit': 'm-brand-kit',
     placeholder: 'm-placeholder'
   };
   const modalId = map[type] || 'm-new';
@@ -10966,6 +11045,147 @@ function renderTeamMembers(project) {
     </tr>
   `;
   }).join('');
+}
+
+// Затемнение HEX-цвета на amount (0..1). #6b1d1f → #3d1416 при 0.4
+function _darkenColor(hex, amount = 0.3) {
+  const c = String(hex || '').replace('#', '');
+  if (c.length !== 6) return hex;
+  const r = Math.max(0, Math.floor(parseInt(c.slice(0,2), 16) * (1 - amount)));
+  const g = Math.max(0, Math.floor(parseInt(c.slice(2,4), 16) * (1 - amount)));
+  const b = Math.max(0, Math.floor(parseInt(c.slice(4,6), 16) * (1 - amount)));
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+// ===== БРЕНД-КИТ ПРОЕКТА =====
+let _bkLogoTmp = '';
+function openBrandKit() {
+  if (!_currentProjectId) { toast('Сначала открой проект', 'error'); return; }
+  const project = DB.getProject(_currentProjectId);
+  const bk = project?.brandKit || {};
+  _bkLogoTmp = bk.logo || '';
+  document.getElementById('bk-website').value = bk.website || '';
+  const accent = bk.accent || '#6b1d1f';
+  document.getElementById('bk-accent').value = accent;
+  document.getElementById('bk-accent-text').value = accent;
+  document.getElementById('bk-font').value = bk.fontFamily || '';
+  _renderBkLogoPreview();
+  _updateBkAccentPreview();
+  document.getElementById('m-brand-kit').classList.add('active');
+}
+function _renderBkLogoPreview() {
+  const el = document.getElementById('bk-logo-preview');
+  const clearBtn = document.getElementById('bk-logo-clear');
+  const pv = document.getElementById('bk-preview-logo');
+  if (_bkLogoTmp) {
+    el.style.backgroundImage = `url('${_bkLogoTmp.replace(/'/g, "\\'")}')`;
+    el.style.backgroundSize = 'contain';
+    el.style.backgroundPosition = 'center';
+    el.style.backgroundRepeat = 'no-repeat';
+    el.style.background = `url('${_bkLogoTmp.replace(/'/g, "\\'")}') center/contain no-repeat #fff`;
+    el.textContent = '';
+    if (clearBtn) clearBtn.style.display = '';
+    if (pv) { pv.style.background = `url('${_bkLogoTmp.replace(/'/g, "\\'")}') center/contain no-repeat #fff`; pv.textContent = ''; }
+  } else {
+    el.style.background = '#fff';
+    el.textContent = '＋';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (pv) { pv.style.background = '#eee'; pv.textContent = 'LOGO'; }
+  }
+}
+function _updateBkAccentPreview() {
+  const accent = document.getElementById('bk-accent').value;
+  const txt = document.getElementById('bk-accent-text');
+  if (txt && txt.value !== accent) txt.value = accent;
+  const bar = document.getElementById('bk-preview-bar');
+  if (bar) bar.style.background = accent;
+  const project = DB.getProject(_currentProjectId);
+  const meta = document.getElementById('bk-preview-meta');
+  if (meta && project) meta.textContent = (project.name || 'проект') + ' · ' + (project.client || 'клиент');
+}
+function _pickBkLogo() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = async () => {
+    const file = inp.files?.[0];
+    document.body.removeChild(inp);
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) { toast('Файл слишком большой (макс 15 МБ)', 'error'); return; }
+    try {
+      _bkLogoTmp = await _sbCompressImageHQ(file, 800, 0.92);
+      _renderBkLogoPreview();
+    } catch (e) { toast('Не удалось загрузить: ' + (e?.message || e), 'error'); }
+  };
+  document.body.appendChild(inp); inp.click();
+}
+function _clearBkLogo() { _bkLogoTmp = ''; _renderBkLogoPreview(); }
+function resetBrandKit() {
+  if (!confirm('Сбросить бренд-кит проекта?')) return;
+  _bkLogoTmp = '';
+  document.getElementById('bk-website').value = '';
+  document.getElementById('bk-accent').value = '#6b1d1f';
+  document.getElementById('bk-accent-text').value = '#6b1d1f';
+  document.getElementById('bk-font').value = '';
+  _renderBkLogoPreview();
+  _updateBkAccentPreview();
+}
+function saveBrandKit() {
+  if (!_currentProjectId) return;
+  const bk = {
+    logo: _bkLogoTmp || '',
+    website: document.getElementById('bk-website').value.trim(),
+    accent: document.getElementById('bk-accent').value || '#6b1d1f',
+    fontFamily: document.getElementById('bk-font').value.trim()
+  };
+  DB.updateProject(_currentProjectId, { brandKit: bk });
+  closeAll();
+  toast('Бренд-кит сохранён ✓ применится к PDF', 'success');
+}
+async function _fetchBkFromSite() {
+  const url = document.getElementById('bk-website').value.trim();
+  if (!url) { toast('Сначала укажи URL сайта', 'warn'); return; }
+  const btn = document.getElementById('bk-fetch-btn');
+  if (btn) { btn.textContent = '⏳ Подтягиваю...'; btn.disabled = true; }
+  try {
+    // Через публичный CORS-прокси (бета-режим)
+    const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const res = await fetch(proxy);
+    if (!res.ok) throw new Error('proxy ' + res.status);
+    const json = await res.json();
+    const html = json.contents || '';
+    // theme-color
+    const tc = html.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["']([^"']+)["']/i);
+    if (tc) {
+      document.getElementById('bk-accent').value = tc[1];
+      document.getElementById('bk-accent-text').value = tc[1];
+      _updateBkAccentPreview();
+    }
+    // og:image — пробуем как лого если своего нет
+    if (!_bkLogoTmp) {
+      const og = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+      if (og) {
+        try {
+          const imgRes = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(og[1]));
+          const blob = await imgRes.blob();
+          if (blob.size > 0) {
+            const file = new File([blob], 'og-logo', { type: blob.type || 'image/png' });
+            _bkLogoTmp = await _sbCompressImageHQ(file, 800, 0.92);
+            _renderBkLogoPreview();
+          }
+        } catch (e) { console.warn('og:image fetch fail', e); }
+      }
+    }
+    // Google Fonts
+    const gf = html.match(/fonts\.googleapis\.com\/css2?\?[^"']*family=([^&"':;]+)/i);
+    if (gf && !document.getElementById('bk-font').value) {
+      document.getElementById('bk-font').value = decodeURIComponent(gf[1]).replace(/\+/g, ' ').split(':')[0].trim();
+    }
+    toast('Подтянул что нашёл ✓ Проверь и сохрани', 'success');
+  } catch (e) {
+    toast('Не получилось подтянуть: ' + (e?.message || e) + '. Заполни вручную.', 'error');
+  } finally {
+    if (btn) { btn.textContent = '🔮 Попробовать подтянуть с сайта (бета)'; btn.disabled = false; }
+  }
 }
 
 // === КЛИЕНТЫ ПРОЕКТА (список + модал) ===
@@ -19005,14 +19225,30 @@ function buildCallsheetPrintHTML(project, cs) {
   c.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#ffffff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:600;line-height:1.3;';
 
   const PAD_X = 24; // боковой паддинг — компактнее
-  const accent = isMV ? '#6b1d1f' : '#1d4ed8';
-  const accentDeep = isMV ? '#3d1416' : '#0c1e7a';
+  const bk = project.brandKit || {};
+  const accent = bk.accent || (isMV ? '#6b1d1f' : '#1d4ed8');
+  const accentDeep = bk.accent ? _darkenColor(bk.accent, 0.4) : (isMV ? '#3d1416' : '#0c1e7a');
+  const clientLogo = bk.logo || '';
+  const brandFont = bk.fontFamily ? `${bk.fontFamily}, ` : '';
+  // Если есть кастомный шрифт — переопределяем font-family контейнера
+  if (bk.fontFamily) {
+    c.style.fontFamily = `'${bk.fontFamily}', 'Montserrat', -apple-system, Arial, sans-serif`;
+    // подгружаем Google Font на лету
+    if (!document.querySelector(`link[data-bk-font="${bk.fontFamily}"]`)) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(bk.fontFamily.replace(/ /g, '+'))}:wght@400;600;700;800;900&display=swap`;
+      link.dataset.bkFont = bk.fontFamily;
+      document.head.appendChild(link);
+    }
+  }
 
   // ===== Header: лого + дата + день — единая полоса =====
   let html = `
     <div style="background:linear-gradient(135deg,${accent},${accentDeep});padding:10px ${PAD_X}px;display:flex;justify-content:space-between;align-items:center;color:white;">
       <div style="display:flex;align-items:center;gap:10px;">
         <img src="logo.png" alt="ZALOVE" style="height:20px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+        ${clientLogo ? `<span style="color:rgba(255,255,255,0.4);font-weight:300;">×</span><div data-pdf-img="${escapeHtml(clientLogo)}" data-pdf-w="48" data-pdf-h="20" data-pdf-fit="contain" style="width:48px;height:20px;background:transparent;display:inline-block;"></div>` : ''}
         <div style="font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,0.85);text-transform:uppercase;font-weight:700;">${escapeHtml(hdrSubtitle)}</div>
       </div>
       <div style="text-align:right;">
