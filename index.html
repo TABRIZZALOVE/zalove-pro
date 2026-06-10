@@ -3875,6 +3875,17 @@ body.has-reel .theme-toggle { right: 158px; }
   box-sizing: border-box;
   min-height: 28px;
 }
+.tg-contact-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  margin-top:6px; padding:6px 12px;
+  background:#229ED9; color:#fff; border:none; border-radius:6px;
+  font-size:11px; font-weight:700; letter-spacing:0.3px;
+  cursor:pointer; transition:background .15s;
+  font-family:inherit;
+}
+.tg-contact-btn:hover { background:#1c8ec0; }
+.tg-contact-btn:active { background:#176f97; }
+.tg-contact-btn .tg-ico { font-size:13px; }
 .cs-location-img-wrap { display:flex; align-items:center; }
 .cs-location-img-upload {
   display:flex; align-items:center; justify-content:center;
@@ -17550,11 +17561,11 @@ function renderCallsheetEditor() {
           <input class="cs-input" data-cs="locationContactPhone" id="cs-loc-contact-phone" value="${escapeHtml(cs.locationContactPhone || '')}" placeholder="+7 ___ ___ __ __">
         </div>
         <div>
-          <div class="cs-field-label" style="display:flex; align-items:center; gap:8px;">
-            <span>Telegram</span>
-            <a id="cs-loc-contact-tg-link" href="${cs.locationContactTelegram ? 'https://t.me/' + escapeHtml(_tgHandle(cs.locationContactTelegram)) : '#'}" target="_blank" rel="noopener" onclick="return _openTgFromInput('cs-loc-contact-tg', event, this)" style="cursor:pointer; color:#7dd3fc; font-size:11px; text-decoration:underline; font-weight:600; letter-spacing:.3px;">↗ открыть</a>
-          </div>
-          <input class="cs-input" data-cs="locationContactTelegram" id="cs-loc-contact-tg" value="${escapeHtml(cs.locationContactTelegram || '')}" placeholder="@username" oninput="_updateTgLinkHref('cs-loc-contact-tg', 'cs-loc-contact-tg-link')">
+          <div class="cs-field-label">Telegram</div>
+          <input class="cs-input" data-cs="locationContactTelegram" id="cs-loc-contact-tg" value="${escapeHtml(cs.locationContactTelegram || '')}" placeholder="@username">
+          <button type="button" class="tg-contact-btn" onclick="_openTgFromInput('cs-loc-contact-tg', event, null)" title="Связаться в Telegram">
+            <span class="tg-ico">✈</span><span>Связаться в Telegram</span>
+          </button>
         </div>
       </div>
       <div style="margin-top: 12px;">
@@ -17771,19 +17782,24 @@ function _updateTgLinkHref(inputId, linkId) {
   const handle = _tgHandle(input.value);
   link.href = handle ? `https://t.me/${handle}` : '#';
 }
-// Открыть TG — резервный обработчик клика по <a> (если href пустой или анкорный)
-function _openTgFromInput(inputId, event, linkEl) {
+// Открыть TG в новой вкладке — гарантированно через window.open от user-activation
+function _openTgFromInput(inputId, event /*, linkEl (legacy) */) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
   const input = document.getElementById(inputId);
   if (!input) return false;
   const handle = _tgHandle(input.value);
-  if (!handle) { if (event) event.preventDefault(); toast('Сначала укажи Telegram', 'warn'); return false; }
-  // если href актуален — пусть браузер открывает сам
-  const expected = `https://t.me/${handle}`;
-  if (linkEl && linkEl.href === expected) return true;
-  // иначе синхронно обновим href и откроем
-  if (linkEl) linkEl.href = expected;
-  window.open(expected, '_blank', 'noopener,noreferrer');
-  if (event) event.preventDefault();
+  if (!handle) { toast('Сначала укажи Telegram (@username)', 'warn'); return false; }
+  const url = `https://t.me/${handle}`;
+  // Сначала пробуем native window.open
+  const w = window.open(url, '_blank');
+  if (!w) {
+    // Popup заблокирован — создадим временную ссылку и кликнем её программно
+    const a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
   return false;
 }
 
