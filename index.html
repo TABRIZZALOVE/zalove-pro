@@ -18021,6 +18021,18 @@ async function exportCallsheetToPdf() {
     // === TWO-PASS: собираем placeholder'ы (картинка локации и т.п.)
     // и положим их поверх PDF напрямую через jsPDF.addImage — без re-rasterization.
     const containerRect = container.getBoundingClientRect();
+    // Собираем также data-pdf-link элементы — для кликабельных областей в PDF
+    const linkEls = Array.from(container.querySelectorAll('[data-pdf-link]'));
+    const linkMeta = linkEls.map(el => {
+      const rect = el.getBoundingClientRect();
+      return {
+        url: el.dataset.pdfLink,
+        cssX: rect.left - containerRect.left,
+        cssY: rect.top - containerRect.top,
+        cssW: rect.width,
+        cssH: rect.height
+      };
+    });
     const placeholders = Array.from(container.querySelectorAll('[data-pdf-img]'));
     const placeholderMeta = await Promise.all(placeholders.map(async (el) => {
       const url = el.dataset.pdfImg;
@@ -18091,6 +18103,16 @@ async function exportCallsheetToPdf() {
       try {
         pdf.addImage(ph.url, fmt, drawX, drawY, drawW, drawH, undefined, 'NONE');
       } catch (e) { console.warn('PDF overlay fail', e); }
+    }
+
+    // Pass 3: добавляем кликабельные ссылки поверх (TG, карты и т.д.)
+    for (const lm of linkMeta) {
+      if (!lm.url) continue;
+      const lx = x + lm.cssX * ptPerCssPx;
+      const ly = y + lm.cssY * ptPerCssPx;
+      const lw = lm.cssW * ptPerCssPx;
+      const lh = lm.cssH * ptPerCssPx;
+      try { pdf.link(lx, ly, lw, lh, { url: lm.url }); } catch (e) { console.warn('pdf.link fail', e); }
     }
 
     const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
@@ -18200,7 +18222,9 @@ function buildCallsheetPrintHTML(project, cs) {
     if (cs.locationContactPhone) contactLine += (contactLine ? ' · ' : '') + escapeHtml(cs.locationContactPhone);
     if (cs.locationContactTelegram) {
       const tg = _tgHandle(cs.locationContactTelegram);
-      contactLine += (contactLine ? ' · ' : '') + (tg ? `<a href="https://t.me/${escapeHtml(tg)}" style="color:#0a0907;text-decoration:underline;">@${escapeHtml(tg)}</a>` : escapeHtml(cs.locationContactTelegram));
+      contactLine += (contactLine ? ' · ' : '') + (tg
+        ? `<span data-pdf-link="https://t.me/${escapeHtml(tg)}" style="color:#1d4ed8;text-decoration:underline;font-weight:700;">✈ Связаться · @${escapeHtml(tg)}</span>`
+        : escapeHtml(cs.locationContactTelegram));
     }
     html += `
       <div style="margin:0 ${PAD_X}px 8px;background:#faf3f3;border-left:4px solid #6b1d1f;padding:8px 12px;border-radius:0 4px 4px 0;display:flex;gap:12px;align-items:flex-start;">
@@ -18214,7 +18238,7 @@ function buildCallsheetPrintHTML(project, cs) {
             ${contactLine ? `<div style="font-size:10px;color:#555;font-weight:600;">${contactLine}</div>` : ''}
           </div>
           ${cs.locationAddress ? `<div style="font-size:10.5px;margin-top:3px;color:#333;font-weight:600;">${escapeHtml(cs.locationAddress)}</div>` : ''}
-          ${cs.locationLink ? `<div style="margin-top:3px;font-size:10px;"><a href="${escapeHtml(cs.locationLink)}" style="color:#1d4ed8;text-decoration:underline;font-weight:600;">📍 ${escapeHtml(cs.locationLink.replace(/^https?:\/\//, '').slice(0, 60))}</a></div>` : ''}
+          ${cs.locationLink ? `<div style="margin-top:3px;font-size:10px;"><span data-pdf-link="${escapeHtml(cs.locationLink)}" style="color:#1d4ed8;text-decoration:underline;font-weight:600;">📍 ${escapeHtml(cs.locationLink.replace(/^https?:\/\//, '').slice(0, 60))}</span></div>` : ''}
         </div>
       </div>`;
   }
