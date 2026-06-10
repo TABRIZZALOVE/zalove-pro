@@ -3673,6 +3673,38 @@ body.has-reel .theme-toggle { right: 158px; }
 .team-members-table tr:last-child td { border-bottom: none; }
 .team-members-table tr:hover td { background: var(--bg-3); }
 .tm-name-ru { font-weight: 600; }
+.tm-avatar {
+  position: relative;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--bg-3, #f0eee6);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; color: var(--text, #1a1a1a);
+  cursor: pointer; user-select: none;
+  border: 1.5px solid transparent;
+  transition: border-color .15s, transform .1s;
+  letter-spacing: 0.5px;
+}
+.tm-avatar:hover { border-color: var(--brand-red, #6b1d1f); }
+.tm-avatar:active { transform: scale(0.96); }
+.tm-avatar-img {
+  background-size: cover; background-position: center;
+  background-color: #0a0907; color: transparent;
+}
+.tm-avatar-edit {
+  position: absolute; bottom: -2px; right: -2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--brand-red, #6b1d1f);
+  color: #fff;
+  font-size: 9px; line-height: 16px;
+  text-align: center;
+  opacity: 0; transition: opacity .15s;
+  border: 1.5px solid #fff;
+}
+.tm-avatar:hover .tm-avatar-edit { opacity: 1; }
+.tm-avatar-img .tm-avatar-edit { opacity: 0.85; }
+.tm-avatar-img:hover .tm-avatar-edit { opacity: 1; }
 .tm-name-en { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .tm-role-cell {
   display: inline-block;
@@ -6466,6 +6498,7 @@ body.dark-theme .task-deadline:focus { background: white; }
         <table class="team-members-table">
           <thead>
             <tr>
+              <th style="width:54px;"></th>
               <th>ФИО (рус) / Latin</th>
               <th>Роль</th>
               <th>Telegram</th>
@@ -10558,15 +10591,20 @@ function renderTeamMembers(project) {
   if (pill) pill.textContent = members.length === 0 ? 'никого' : (members.length + ' чел.');
   if (members.length === 0) {
     tbody.innerHTML = `
-      <tr><td colspan="5" style="text-align:center; padding: 28px 16px; color: var(--muted); font-size: 13px;">
+      <tr><td colspan="6" style="text-align:center; padding: 28px 16px; color: var(--muted); font-size: 13px;">
         Пока никого. Нажмите <strong style="color: var(--brand-red);">＋ Добавить участника</strong> ниже.
       </td></tr>`;
     return;
   }
   tbody.innerHTML = members.map(m => {
     const roleEn = m.role_en || translateRole(m.role);
+    const initials = (m.name_ru || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+    const avatarCell = m.avatar
+      ? `<div class="tm-avatar tm-avatar-img" style="background-image:url('${m.avatar.replace(/'/g, "\\'")}')" onclick="event.stopPropagation(); pickTeamAvatar('${m.id}')" title="Сменить фото"><span class="tm-avatar-edit">✎</span></div>`
+      : `<div class="tm-avatar tm-avatar-init" onclick="event.stopPropagation(); pickTeamAvatar('${m.id}')" title="Загрузить фото">${escapeHtml(initials || '?')}<span class="tm-avatar-edit">＋</span></div>`;
     return `
     <tr>
+      <td style="width:54px;padding-right:0;">${avatarCell}</td>
       <td>
         <div class="tm-name-ru">${escapeHtml(m.name_ru || '—')}</div>
         ${m.name_en ? `<div class="tm-name-en">${escapeHtml(m.name_en)}</div>` : ''}
@@ -10766,6 +10804,47 @@ function saveTeamMember() {
   closeAll();
   renderTeamMembers(DB.getProject(_currentProjectId));
   toast(_editingMemberId ? 'Участник обновлён' : 'Участник добавлен 🎬', 'success');
+}
+
+// === Загрузка аватара участника команды ===
+function pickTeamAvatar(memberId) {
+  // Создаём скрытый file input и кликаем его
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.style.display = 'none';
+  inp.onchange = async () => {
+    const file = inp.files?.[0];
+    if (!file) { document.body.removeChild(inp); return; }
+    if (file.size > 15 * 1024 * 1024) {
+      toast('Файл слишком большой (макс 15 МБ)', 'error');
+      document.body.removeChild(inp);
+      return;
+    }
+    try {
+      // Квадратный аватар, до 400px по длинной стороне, JPEG 88% — компактно и резко
+      const dataUrl = await _sbCompressImageHQ(file, 400, 0.88);
+      const project = DB.getProject(_currentProjectId);
+      if (!project) { document.body.removeChild(inp); return; }
+      const team = (project.team || []).map(m => m.id === memberId ? { ...m, avatar: dataUrl } : m);
+      DB.updateProject(_currentProjectId, { team });
+      renderTeamMembers(DB.getProject(_currentProjectId));
+      toast('Аватар обновлён ✓', 'success');
+    } catch (e) {
+      toast('Не удалось загрузить: ' + (e?.message || e), 'error');
+    } finally {
+      document.body.removeChild(inp);
+    }
+  };
+  document.body.appendChild(inp);
+  inp.click();
+}
+function removeTeamAvatar(memberId) {
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const team = (project.team || []).map(m => m.id === memberId ? { ...m, avatar: '' } : m);
+  DB.updateProject(_currentProjectId, { team });
+  renderTeamMembers(DB.getProject(_currentProjectId));
 }
 
 function deleteTeamMember(memberId) {
