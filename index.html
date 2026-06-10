@@ -3735,6 +3735,53 @@ body.has-reel .theme-toggle { right: 158px; }
 .cs-name-cell { padding-left: 4px !important; }
 .cs-name-row { display: flex; align-items: center; gap: 6px; }
 .cs-name-row .people-input { flex: 1; min-width: 0; }
+
+/* Avatar cropper */
+.cropper-stage {
+  position: relative;
+  width: 320px; height: 320px;
+  margin: 0 auto;
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.cropper-stage.dragging { cursor: grabbing; }
+.cropper-stage canvas { display: block; width: 320px; height: 320px; }
+.cropper-mask {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 0, transparent 158px, rgba(0,0,0,0.62) 160px);
+  border-radius: 8px;
+}
+.cropper-mask::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 316px; height: 316px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.85);
+}
+.cropper-controls {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 14px;
+}
+.cropper-ctrl-lbl {
+  font-size: 11px; font-weight: 700; color: var(--muted,#888);
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+.cropper-controls input[type="range"] {
+  flex: 1; accent-color: var(--brand-red, #6b1d1f);
+}
+.cropper-reset {
+  background: transparent; border: 1px solid var(--line-2,#e5e5e5);
+  width: 30px; height: 30px; border-radius: 50%;
+  cursor: pointer; font-size: 14px; color: var(--text,#1a1a1a);
+}
+.cropper-reset:hover { border-color: var(--brand-red,#6b1d1f); color: var(--brand-red,#6b1d1f); }
 .tm-name-en { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .tm-role-cell {
   display: inline-block;
@@ -4928,7 +4975,7 @@ body.has-reel .theme-toggle { right: 158px; }
 .tasks-list { padding: 8px 12px 12px; }
 .task-item {
   display: grid;
-  grid-template-columns: 28px 1fr 130px 130px 28px;
+  grid-template-columns: 18px 28px 1fr 130px 130px 28px;
   gap: 10px;
   padding: 10px 12px;
   background: white;
@@ -4943,6 +4990,17 @@ body.has-reel .theme-toggle { right: 158px; }
 .task-item.done { opacity: 0.5; }
 .task-item.done .task-title { text-decoration: line-through; }
 .task-item.overdue .task-deadline { color: #d63838; font-weight: 800; }
+.task-drag-handle {
+  color: var(--muted, #aaa);
+  cursor: grab;
+  font-size: 16px;
+  user-select: none;
+  text-align: center;
+  line-height: 1;
+}
+.task-drag-handle:active { cursor: grabbing; }
+.task-item-dragging { opacity: 0.4; }
+.task-item-drop-target { box-shadow: inset 0 2px 0 var(--brand-red, #6b1d1f); }
 
 .task-checkbox {
   width: 22px; height: 22px;
@@ -7769,6 +7827,43 @@ body.dark-theme .task-deadline:focus { background: white; }
 </div>
 
 <!-- ADD TEAM MEMBER -->
+<!-- Avatar Cropper Modal -->
+<div class="modal-overlay" id="m-avatar-crop" style="z-index: 10000;">
+  <div class="doc-overlay" style="width: 460px; max-width: 95vw;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">📷</div>
+        <div>
+          <div class="doc-header-title">Подгони фото</div>
+          <div class="doc-header-subtitle">Перетащи картинку и подбери зум</div>
+        </div>
+      </div>
+      <button class="doc-close" onclick="closeAvatarCropper()">×</button>
+    </div>
+    <div class="doc-content" style="padding: 18px 22px;">
+      <div class="cropper-stage" id="avatar-crop-stage">
+        <canvas id="avatar-crop-canvas" width="320" height="320"></canvas>
+        <div class="cropper-mask"></div>
+      </div>
+      <div class="cropper-controls">
+        <span class="cropper-ctrl-lbl">Зум</span>
+        <input type="range" id="avatar-crop-zoom" min="100" max="400" value="100" step="1">
+        <button type="button" class="cropper-reset" onclick="_resetAvatarCrop()" title="Сбросить">↺</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted,#888);margin-top:8px;text-align:center;">
+        Двигай картинку мышью или пальцем · крути колесо для зума
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info">JPEG, до 400×400px</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-secondary btn" onclick="closeAvatarCropper()">Отмена</button>
+        <button class="btn" onclick="_acceptAvatarCrop()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="m-add-member">
   <div class="doc-overlay" style="width: 640px;">
     <div class="doc-header">
@@ -10867,6 +10962,130 @@ function saveTeamMember() {
   toast(_editingMemberId ? 'Участник обновлён' : 'Участник добавлен 🎬', 'success');
 }
 
+// === Кроппер аватара (модал с зумом и drag-позиционированием) ===
+let _avatarCropState = null;
+function openAvatarCropper(file, onAccept) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('avatar-crop-canvas');
+      const STAGE = 320;
+      // начальный масштаб — fit-cover: масштабируем так, чтобы маленькая сторона = STAGE
+      const baseScale = Math.max(STAGE / img.width, STAGE / img.height);
+      _avatarCropState = {
+        img,
+        baseScale,
+        zoom: 1.0,           // дополнительный пользовательский множитель
+        offsetX: 0,           // смещение центра картинки относительно центра canvas
+        offsetY: 0,
+        canvas,
+        STAGE,
+        onAccept
+      };
+      const slider = document.getElementById('avatar-crop-zoom');
+      slider.value = 100;
+      _drawAvatarCrop();
+      document.getElementById('m-avatar-crop').classList.add('active');
+    };
+    img.onerror = () => toast('Не удалось открыть изображение', 'error');
+    img.src = e.target.result;
+  };
+  reader.onerror = () => toast('Не удалось прочитать файл', 'error');
+  reader.readAsDataURL(file);
+}
+function _drawAvatarCrop() {
+  const s = _avatarCropState; if (!s) return;
+  const ctx = s.canvas.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, s.STAGE, s.STAGE);
+  const k = s.baseScale * s.zoom;
+  const w = s.img.width * k, h = s.img.height * k;
+  const x = (s.STAGE - w) / 2 + s.offsetX;
+  const y = (s.STAGE - h) / 2 + s.offsetY;
+  ctx.drawImage(s.img, x, y, w, h);
+}
+function _resetAvatarCrop() {
+  const s = _avatarCropState; if (!s) return;
+  s.zoom = 1.0; s.offsetX = 0; s.offsetY = 0;
+  document.getElementById('avatar-crop-zoom').value = 100;
+  _drawAvatarCrop();
+}
+function _acceptAvatarCrop() {
+  const s = _avatarCropState; if (!s) return;
+  // Рендерим финальный квадратный canvas 400×400 с обрезкой по кругу видимой области
+  const OUT = 400;
+  const out = document.createElement('canvas');
+  out.width = OUT; out.height = OUT;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingQuality = 'high';
+  // Масштабируем то что было в canvas 320 → 400 (увеличение качества для PDF)
+  const ratio = OUT / s.STAGE;
+  const k = s.baseScale * s.zoom * ratio;
+  const w = s.img.width * k, h = s.img.height * k;
+  const x = (OUT - w) / 2 + s.offsetX * ratio;
+  const y = (OUT - h) / 2 + s.offsetY * ratio;
+  octx.fillStyle = '#fff';
+  octx.fillRect(0, 0, OUT, OUT);
+  octx.drawImage(s.img, x, y, w, h);
+  const dataUrl = out.toDataURL('image/jpeg', 0.9);
+  const cb = s.onAccept;
+  closeAvatarCropper();
+  if (cb) cb(dataUrl);
+}
+function closeAvatarCropper() {
+  document.getElementById('m-avatar-crop').classList.remove('active');
+  _avatarCropState = null;
+}
+// Drag + wheel handlers — подключаем один раз после первого DOMContentLoaded
+function _initAvatarCropperEvents() {
+  const stage = document.getElementById('avatar-crop-stage');
+  if (!stage || stage._wired) return;
+  stage._wired = true;
+  let dragging = false; let lastX = 0; let lastY = 0;
+  const startDrag = (e) => {
+    if (!_avatarCropState) return;
+    dragging = true;
+    stage.classList.add('dragging');
+    const pt = e.touches ? e.touches[0] : e;
+    lastX = pt.clientX; lastY = pt.clientY;
+    e.preventDefault();
+  };
+  const moveDrag = (e) => {
+    if (!dragging || !_avatarCropState) return;
+    const pt = e.touches ? e.touches[0] : e;
+    _avatarCropState.offsetX += (pt.clientX - lastX);
+    _avatarCropState.offsetY += (pt.clientY - lastY);
+    lastX = pt.clientX; lastY = pt.clientY;
+    _drawAvatarCrop();
+    e.preventDefault();
+  };
+  const endDrag = () => { dragging = false; stage.classList.remove('dragging'); };
+  stage.addEventListener('mousedown', startDrag);
+  window.addEventListener('mousemove', moveDrag);
+  window.addEventListener('mouseup', endDrag);
+  stage.addEventListener('touchstart', startDrag, { passive: false });
+  stage.addEventListener('touchmove', moveDrag, { passive: false });
+  stage.addEventListener('touchend', endDrag);
+  stage.addEventListener('wheel', (e) => {
+    if (!_avatarCropState) return;
+    const delta = -e.deltaY / 300; // ~0.003 per pixel
+    const newZoom = Math.max(1.0, Math.min(4.0, _avatarCropState.zoom + delta));
+    _avatarCropState.zoom = newZoom;
+    document.getElementById('avatar-crop-zoom').value = Math.round(newZoom * 100);
+    _drawAvatarCrop();
+    e.preventDefault();
+  }, { passive: false });
+  document.getElementById('avatar-crop-zoom').addEventListener('input', (e) => {
+    if (!_avatarCropState) return;
+    _avatarCropState.zoom = parseInt(e.target.value, 10) / 100;
+    _drawAvatarCrop();
+  });
+}
+document.addEventListener('DOMContentLoaded', _initAvatarCropperEvents);
+if (document.readyState !== 'loading') _initAvatarCropperEvents();
+
 // Возвращает HTML-чип для отображения человека: фото-аватар (если есть) с инициалами поверх.
 // kind: 'compact' (мелкий 24px), 'mid' (32px), 'big' (40px)
 function _personChipHtml(name, avatar, kind = 'compact') {
@@ -10912,18 +11131,15 @@ function _renderMbAvatarPreview(m) {
 function _pickMbAvatarFile() {
   const inp = document.createElement('input');
   inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
-  inp.onchange = async () => {
+  inp.onchange = () => {
     const file = inp.files?.[0];
-    if (!file) { document.body.removeChild(inp); return; }
-    if (file.size > 15 * 1024 * 1024) { toast('Файл слишком большой (макс 15 МБ)', 'error'); document.body.removeChild(inp); return; }
-    try {
-      _mbAvatarTmp = await _sbCompressImageHQ(file, 400, 0.88);
+    document.body.removeChild(inp);
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) { toast('Файл слишком большой (макс 15 МБ)', 'error'); return; }
+    openAvatarCropper(file, (dataUrl) => {
+      _mbAvatarTmp = dataUrl;
       _renderMbAvatarPreview();
-    } catch (e) {
-      toast('Не удалось загрузить: ' + (e?.message || e), 'error');
-    } finally {
-      document.body.removeChild(inp);
-    }
+    });
   };
   document.body.appendChild(inp);
   inp.click();
@@ -10933,35 +11149,23 @@ function _clearMbAvatar() {
   _renderMbAvatarPreview();
 }
 
-// === Загрузка аватара участника команды ===
+// === Загрузка аватара участника команды (с кропом) ===
 function pickTeamAvatar(memberId) {
-  // Создаём скрытый file input и кликаем его
   const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = 'image/*';
-  inp.style.display = 'none';
-  inp.onchange = async () => {
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = () => {
     const file = inp.files?.[0];
-    if (!file) { document.body.removeChild(inp); return; }
-    if (file.size > 15 * 1024 * 1024) {
-      toast('Файл слишком большой (макс 15 МБ)', 'error');
-      document.body.removeChild(inp);
-      return;
-    }
-    try {
-      // Квадратный аватар, до 400px по длинной стороне, JPEG 88% — компактно и резко
-      const dataUrl = await _sbCompressImageHQ(file, 400, 0.88);
+    document.body.removeChild(inp);
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) { toast('Файл слишком большой (макс 15 МБ)', 'error'); return; }
+    openAvatarCropper(file, (dataUrl) => {
       const project = DB.getProject(_currentProjectId);
-      if (!project) { document.body.removeChild(inp); return; }
+      if (!project) return;
       const team = (project.team || []).map(m => m.id === memberId ? { ...m, avatar: dataUrl } : m);
       DB.updateProject(_currentProjectId, { team });
       renderTeamMembers(DB.getProject(_currentProjectId));
       toast('Аватар обновлён ✓', 'success');
-    } catch (e) {
-      toast('Не удалось загрузить: ' + (e?.message || e), 'error');
-    } finally {
-      document.body.removeChild(inp);
-    }
+    });
   };
   document.body.appendChild(inp);
   inp.click();
@@ -22475,7 +22679,13 @@ function renderProjectTasks(project) {
           const isOverdue = t.status !== 'done' && t.deadline && t.deadline < today;
           const assignee = team.find(m => m.id === t.assigneeId);
           return `
-            <div class="task-item ${t.status === 'done' ? 'done' : ''} ${isOverdue ? 'overdue' : ''}" data-task-id="${t.id}">
+            <div class="task-item ${t.status === 'done' ? 'done' : ''} ${isOverdue ? 'overdue' : ''}" data-task-id="${t.id}" data-task-idx="${i}" draggable="true"
+                 ondragstart="taskDragStart(event, ${i})"
+                 ondragover="taskDragOver(event)"
+                 ondragleave="taskDragLeave(event)"
+                 ondrop="taskDrop(event, '${project.id}', ${i})"
+                 ondragend="taskDragEnd(event)">
+              <span class="task-drag-handle" title="Перетащи чтобы переставить">⠿</span>
               <div class="task-checkbox ${t.status === 'done' ? 'checked' : ''}" onclick="toggleTaskDone('${t.id}')">${t.status === 'done' ? '✓' : ''}</div>
               <input class="task-title" data-task-fld="title" value="${escapeHtml(t.title || '')}" placeholder="Задача...">
               <select class="task-assignee" data-task-fld="assigneeId">
@@ -22525,6 +22735,43 @@ function renderProjectTasks(project) {
       }
     });
   });
+}
+
+// === Drag-and-drop задач проекта ===
+let _taskDrag = null;
+function taskDragStart(e, idx) {
+  _taskDrag = { idx };
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', String(idx)); } catch (_) {}
+  e.currentTarget.classList.add('task-item-dragging');
+}
+function taskDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const tr = e.target.closest('.task-item');
+  if (tr) tr.classList.add('task-item-drop-target');
+}
+function taskDragLeave(e) {
+  const tr = e.target.closest('.task-item');
+  if (tr) tr.classList.remove('task-item-drop-target');
+}
+function taskDrop(e, projectId, dropIdx) {
+  e.preventDefault();
+  const tr = e.target.closest('.task-item');
+  if (tr) tr.classList.remove('task-item-drop-target');
+  if (!_taskDrag || _taskDrag.idx === dropIdx) return;
+  const project = DB.getProject(projectId);
+  if (!project || !Array.isArray(project.tasks)) return;
+  const tasks = [...project.tasks];
+  const [moved] = tasks.splice(_taskDrag.idx, 1);
+  tasks.splice(dropIdx, 0, moved);
+  DB.updateProject(projectId, { tasks });
+  renderProjectTasks(DB.getProject(projectId));
+}
+function taskDragEnd(e) {
+  e.currentTarget?.classList?.remove('task-item-dragging');
+  document.querySelectorAll('.task-item-drop-target').forEach(el => el.classList.remove('task-item-drop-target'));
+  _taskDrag = null;
 }
 
 // Обновить только статистику задач (без перерисовки списка)
