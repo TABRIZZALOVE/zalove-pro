@@ -11141,48 +11141,159 @@ function saveBrandKit() {
   closeAll();
   toast('Бренд-кит сохранён ✓ применится к PDF', 'success');
 }
+// Извлечение доминантного цвета из картинки (для подгонки акцент-цвета по логотипу)
+async function _dominantColorFromImg(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        const W = 64; c.width = W; c.height = W;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, W, W);
+        const data = ctx.getImageData(0, 0, W, W).data;
+        // Группируем по бинам 32 и берём самый частый цвет (исключаем белый/чёрный/прозрачный)
+        const bins = {};
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+          if (a < 200) continue;
+          // skip ~white и ~black
+          const lum = 0.299*r + 0.587*g + 0.114*b;
+          if (lum > 235 || lum < 25) continue;
+          // skip greys (R≈G≈B)
+          const maxC = Math.max(r,g,b), minC = Math.min(r,g,b);
+          if (maxC - minC < 25) continue;
+          const key = (r>>5) + ',' + (g>>5) + ',' + (b>>5);
+          if (!bins[key]) bins[key] = { count: 0, r: 0, g: 0, b: 0 };
+          bins[key].count++; bins[key].r += r; bins[key].g += g; bins[key].b += b;
+        }
+        let top = null;
+        for (const k in bins) { if (!top || bins[k].count > top.count) top = bins[k]; }
+        if (!top) return resolve(null);
+        const r = Math.round(top.r / top.count);
+        const g = Math.round(top.g / top.count);
+        const b = Math.round(top.b / top.count);
+        const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+        resolve(hex);
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
+// Загрузка картинки в base64 через несколько прокси (с таймаутами)
+async function _fetchImageAsBase64(imgUrl) {
+  const proxies = [
+    'https://corsproxy.io/?',
+    'https://api.allorigins.win/raw?url=',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+  for (const px of proxies) {
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 12000);
+      const res = await fetch(px + encodeURIComponent(imgUrl), { signal: ctrl.signal });
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      if (blob.size < 100) continue; // явно мусор
+      const file = new File([blob], 'logo', { type: blob.type || 'image/png' });
+      return await _sbCompressImageHQ(file, 800, 0.92);
+    } catch (e) { /* следующий прокси */ }
+  }
+  return null;
+}
+
 async function _fetchBkFromSite() {
   const url = document.getElementById('bk-website').value.trim();
   if (!url) { toast('Сначала укажи URL сайта', 'warn'); return; }
   const btn = document.getElementById('bk-fetch-btn');
   if (btn) { btn.textContent = '⏳ Подтягиваю...'; btn.disabled = true; }
+  const found = [];
   try {
-    // Через публичный CORS-прокси (бета-режим)
-    const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-    const res = await fetch(proxy);
-    if (!res.ok) throw new Error('proxy ' + res.status);
-    const json = await res.json();
-    const html = json.contents || '';
-    // theme-color
-    const tc = html.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["']([^"']+)["']/i);
-    if (tc) {
-      document.getElementById('bk-accent').value = tc[1];
-      document.getElementById('bk-accent-text').value = tc[1];
-      _updateBkAccentPreview();
+    // Извлекаем домен
+    let domain = '';
+    try { domain = new URL(url.startsWith('http') ? url : 'https://' + url).hostname.replace(/^www\./, ''); } catch (_) {}
+
+    // === ЛОГО: 4 стратегии ===
+    if (!_bkLogoTmp && domain) {
+      // 1) Clearbit Logo API — для известных брендов
+      const clearbit = `https://logo.clearbit.com/${domain}?size=400`;
+      const fromClearbit = await _fetchImageAsBase64(clearbit);
+      if (fromClearbit) { _bkLogoTmp = fromClearbit; found.push('лого (Clearbit)'); }
     }
-    // og:image — пробуем как лого если своего нет
-    if (!_bkLogoTmp) {
-      const og = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
-      if (og) {
-        try {
-          const imgRes = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(og[1]));
-          const blob = await imgRes.blob();
-          if (blob.size > 0) {
-            const file = new File([blob], 'og-logo', { type: blob.type || 'image/png' });
-            _bkLogoTmp = await _sbCompressImageHQ(file, 800, 0.92);
-            _renderBkLogoPreview();
-          }
-        } catch (e) { console.warn('og:image fetch fail', e); }
+    if (!_bkLogoTmp && domain) {
+      // 2) Google favicon API в большом размере
+      const gFavicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=256`;
+      const fromGoogle = await _fetchImageAsBase64(gFavicon);
+      if (fromGoogle) { _bkLogoTmp = fromGoogle; found.push('фавикон (Google)'); }
+    }
+
+    // === HTML парсинг для og:image, theme-color, fonts (если первый прокси прошёл) ===
+    let html = '';
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 18000);
+      const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url), { signal: ctrl.signal });
+      if (res.ok) {
+        const json = await res.json();
+        html = json.contents || '';
+      }
+    } catch (_) {}
+    if (!html) {
+      try {
+        const ctrl = new AbortController();
+        setTimeout(() => ctrl.abort(), 15000);
+        const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(url), { signal: ctrl.signal });
+        if (res.ok) html = await res.text();
+      } catch (_) {}
+    }
+
+    if (html.length > 500) {
+      // theme-color
+      const tc = html.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["']([^"']+)["']/i);
+      if (tc) {
+        document.getElementById('bk-accent').value = tc[1];
+        document.getElementById('bk-accent-text').value = tc[1];
+        found.push('цвет (theme-color)');
+      }
+      // og:image — заменяет лого если оно лучше favicon
+      if (!_bkLogoTmp || found.some(f => f.includes('фавикон'))) {
+        const og = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+        if (og) {
+          let ogUrl = og[1];
+          if (ogUrl.startsWith('//')) ogUrl = 'https:' + ogUrl;
+          if (ogUrl.startsWith('/')) ogUrl = (new URL(url.startsWith('http') ? url : 'https://' + url)).origin + ogUrl;
+          const fromOg = await _fetchImageAsBase64(ogUrl);
+          if (fromOg) { _bkLogoTmp = fromOg; found.push('лого (og:image)'); }
+        }
+      }
+      // Google Fonts
+      const gf = html.match(/fonts\.googleapis\.com\/css2?\?[^"']*family=([^&"':;)\s]+)/i);
+      if (gf && !document.getElementById('bk-font').value) {
+        const fontName = decodeURIComponent(gf[1]).replace(/\+/g, ' ').split(':')[0].trim();
+        document.getElementById('bk-font').value = fontName;
+        found.push('шрифт ' + fontName);
       }
     }
-    // Google Fonts
-    const gf = html.match(/fonts\.googleapis\.com\/css2?\?[^"']*family=([^&"':;]+)/i);
-    if (gf && !document.getElementById('bk-font').value) {
-      document.getElementById('bk-font').value = decodeURIComponent(gf[1]).replace(/\+/g, ' ').split(':')[0].trim();
+
+    // === ЦВЕТ: если ещё дефолт и есть лого — извлекаем доминантный цвет ===
+    if (_bkLogoTmp && document.getElementById('bk-accent').value.toLowerCase() === '#6b1d1f') {
+      const dom = await _dominantColorFromImg(_bkLogoTmp);
+      if (dom) {
+        document.getElementById('bk-accent').value = dom;
+        document.getElementById('bk-accent-text').value = dom;
+        found.push('акцент из лого');
+      }
     }
-    toast('Подтянул что нашёл ✓ Проверь и сохрани', 'success');
+
+    _renderBkLogoPreview();
+    _updateBkAccentPreview();
+    if (found.length > 0) toast('Подтянул: ' + found.join(' · ') + ' ✓ Проверь и сохрани', 'success');
+    else toast('Сайт не отдал meta-данные. Загрузи лого вручную (правой кнопкой на сайте → «Сохранить картинку»)', 'warn');
   } catch (e) {
-    toast('Не получилось подтянуть: ' + (e?.message || e) + '. Заполни вручную.', 'error');
+    toast('Ошибка: ' + (e?.message || e) + '. Заполни вручную.', 'error');
   } finally {
     if (btn) { btn.textContent = '🔮 Попробовать подтянуть с сайта (бета)'; btn.disabled = false; }
   }
