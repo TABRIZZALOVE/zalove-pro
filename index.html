@@ -18794,6 +18794,7 @@ function renderCallsheetEditor() {
       ${renderPeopleTable('cast', cs.cast || [])}
       <div class="cs-table-actions">
         <button class="cs-add-row" onclick="addCsRow('cast')">＋ Добавить позицию</button>
+        <button class="cs-pull-team" onclick="pullClientsFromProject()">⊕ Подтянуть клиентов из проекта</button>
         <button class="cs-pull-team" onclick="pullCastFromTeam()">⊕ Подтянуть актёров из проекта</button>
       </div>
     </div>
@@ -19154,6 +19155,42 @@ function pullCrewFromTeam() {
   saveCsNow();
   renderCallsheetEditor();
   toast(`Добавлено ${added} человек`, 'success');
+}
+
+function pullClientsFromProject() {
+  if (!_currentProjectId || !_currentCsData) return;
+  const project = DB.getProject(_currentProjectId);
+  const clients = project?.clients || [];
+  if (clients.length === 0) {
+    toast('В проекте нет клиентов. Добавь их в разделе «Клиенты проекта»', 'warn');
+    return;
+  }
+  const existing = new Set((_currentCsData.cast || []).map(c => (c.name || '').toLowerCase()));
+  let added = 0;
+  clients.forEach(c => {
+    if (existing.has((c.name || '').toLowerCase())) return;
+    // Позиция: роль + компания (если есть)
+    const positionParts = [];
+    if (c.role) positionParts.push(c.role);
+    if (c.company) positionParts.push(c.company);
+    const position = positionParts.join(' · ') || 'Клиент';
+    _currentCsData.cast.push({
+      position,
+      name: c.name || '',
+      phone: c.phone || '',
+      callTime: '',
+      // глобальный аватар может подтянуться через _findAvatarByName, но сохраним и локально
+      avatar: c.avatar || ''
+    });
+    added++;
+  });
+  if (added === 0) {
+    toast('Все клиенты уже в списке', 'success');
+    return;
+  }
+  saveCsNow();
+  renderCallsheetEditor();
+  toast(`Подтянуто ${added} клиент${added === 1 ? '' : added < 5 ? 'а' : 'ов'} ✓`, 'success');
 }
 
 function pullCastFromTeam() {
