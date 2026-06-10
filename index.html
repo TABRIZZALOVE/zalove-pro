@@ -9169,8 +9169,6 @@ const DB = {
   },
 
   updateProject(id, updates) {
-    // Берём данные из memCache (full версия с картинками), а не из localStorage —
-    // localStorage может быть slim из-за quota, тогда updateProject затрёт картинки.
     let projects;
     if (this._memCache && Array.isArray(this._memCache)) {
       projects = this._memCache;
@@ -9181,22 +9179,74 @@ const DB = {
     if (idx === -1) return null;
     const merged = { ...projects[idx], ...updates, updatedAt: new Date().toISOString() };
     projects[idx] = merged;
-    // Сохраняем full в RAM, slim (если надо) в localStorage
     this._memCache = projects;
     const cacheToSave = { ...this.load(), projects };
     this.save(cacheToSave);
     const data = cacheToSave;
 
-    // Отправляем на сервер только если это реальный uuid (не временный tmp_)
-    if (!String(id).startsWith('tmp_')) {
+    // КРИТИЧНО: если ассистент сохраняет — у него в memCache нет финансовых полей.
+    // Чтобы НЕ затереть смету на сервере, перед PATCH'ем подтягиваем актуальные
+    // финансы с сервера и мерджим обратно в merged перед отправкой.
+    const isBlocked = this._isFinancialBlocked();
+    const sendToServer = (rowToSend) => {
       this._pending++;
       this._withRetry(
-        () => this.client.from('projects').update(this._toDb(merged)).eq('id', id),
+        () => this.client.from('projects').update(this._toDb(rowToSend)).eq('id', id),
         'update'
       ).then(({ error }) => {
         this._pending--;
         if (error) this._errToast('update', error);
       });
+    };
+
+    // Отправляем на сервер только если это реальный uuid (не временный tmp_)
+    if (!String(id).startsWith('tmp_')) {
+      if (isBlocked) {
+        // АССИСТЕНТ: перед обновлением подтягиваем актуальные финансовые поля
+        // с сервера и подмешиваем — иначе затрётся то что ассистент НЕ имеет права видеть.
+        this._pending++;
+        this.client.from('projects').select('data,budget').eq('id', id).single()
+          .then(({ data: srv, error: e1 }) => {
+            if (e1 || !srv) {
+              this._pending--;
+              console.warn('[updateProject assistant] не смог прочитать current — НЕ отправляю update во избежание потери данных', e1);
+              return;
+            }
+            const safeMerged = JSON.parse(JSON.stringify(merged));
+            // Восстанавливаем все финансовые поля из серверных данных
+            const fin = srv.data || {};
+            ['estimate','estimateTeam','subestimates','budget','budgetClient'].forEach(k => {
+              if (fin[k] !== undefined) safeMerged[k] = fin[k];
+            });
+            // budget — отдельная колонка
+            if (srv.budget !== undefined && srv.budget !== null) safeMerged.budget = srv.budget;
+            // reports.finance тоже восстанавливаем по дням
+            if (fin.reports && safeMerged.reports) {
+              Object.keys(safeMerged.reports).forEach(day => {
+                if (fin.reports[day]?.finance && safeMerged.reports[day]) {
+                  safeMerged.reports[day] = { ...safeMerged.reports[day], finance: fin.reports[day].finance };
+                }
+              });
+            }
+            this._withRetry(
+              () => this.client.from('projects').update(this._toDb(safeMerged)).eq('id', id),
+              'update'
+            ).then(({ error }) => {
+              this._pending--;
+              if (error) this._errToast('update', error);
+            });
+          });
+      } else {
+        // ПРОДЮСЕР: полный merged, как раньше
+        this._pending++;
+        this._withRetry(
+          () => this.client.from('projects').update(this._toDb(merged)).eq('id', id),
+          'update'
+        ).then(({ error }) => {
+          this._pending--;
+          if (error) this._errToast('update', error);
+        });
+      }
     }
     return merged;
   },
