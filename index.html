@@ -18001,8 +18001,32 @@ async function exportCallsheetToPdf() {
       if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
       return new Promise((res) => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
     }));
+
+    // === TWO-PASS: собираем placeholder'ы (картинка локации и т.п.)
+    // и положим их поверх PDF напрямую через jsPDF.addImage — без re-rasterization.
+    const containerRect = container.getBoundingClientRect();
+    const placeholders = Array.from(container.querySelectorAll('[data-pdf-img]'));
+    const placeholderMeta = await Promise.all(placeholders.map(async (el) => {
+      const url = el.dataset.pdfImg;
+      const cellW = parseFloat(el.dataset.pdfW) || el.offsetWidth;
+      const cellH = parseFloat(el.dataset.pdfH) || el.offsetHeight;
+      const fit = el.dataset.pdfFit || 'contain';
+      const rect = el.getBoundingClientRect();
+      const cssX = rect.left - containerRect.left;
+      const cssY = rect.top - containerRect.top;
+      const natural = await new Promise(res => {
+        const im = new Image();
+        im.onload = () => res({ w: im.naturalWidth, h: im.naturalHeight });
+        im.onerror = () => res({ w: cellW, h: cellH });
+        im.src = url;
+        setTimeout(() => res({ w: cellW, h: cellH }), 3000);
+      });
+      return { url, cellW, cellH, cssX, cssY, natW: natural.w, natH: natural.h, fit };
+    }));
+    const containerCssW = container.offsetWidth; // 794
+
     const canvas = await html2canvas(container, {
-      scale: 3,
+      scale: 2.5,
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
@@ -18017,7 +18041,6 @@ async function exportCallsheetToPdf() {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const ratio = canvas.height / canvas.width;
-    // ── ОДНА СТРАНИЦА: авто-скейл при превышении высоты A4
     let imgW = pdfWidth;
     let imgH = pdfWidth * ratio;
     if (imgH > pdfHeight) {
@@ -18026,8 +18049,34 @@ async function exportCallsheetToPdf() {
     }
     const x = (pdfWidth - imgW) / 2;
     const y = (pdfHeight - imgH) / 2;
-    const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', x, y, imgW, imgH, undefined, 'FAST');
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    pdf.addImage(imgData, 'JPEG', x, y, imgW, imgH, undefined, 'SLOW');
+
+    // Pass 2: оверлей оригиналов поверх плейсхолдеров
+    const ptPerCssPx = imgW / containerCssW;
+    for (const ph of placeholderMeta) {
+      if (!ph.url) continue;
+      const xPt = x + ph.cssX * ptPerCssPx;
+      const yPt = y + ph.cssY * ptPerCssPx;
+      const cellWPt = ph.cellW * ptPerCssPx;
+      const cellHPt = ph.cellH * ptPerCssPx;
+      const imgAspect = ph.natW / ph.natH;
+      const cellAspect = cellWPt / cellHPt;
+      let drawW, drawH;
+      // contain (preserves aspect, без обрезки)
+      if (imgAspect > cellAspect) {
+        drawW = cellWPt; drawH = cellWPt / imgAspect;
+      } else {
+        drawH = cellHPt; drawW = cellHPt * imgAspect;
+      }
+      const drawX = xPt + (cellWPt - drawW) / 2;
+      const drawY = yPt + (cellHPt - drawH) / 2;
+      const fmt = ph.url.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      try {
+        pdf.addImage(ph.url, fmt, drawX, drawY, drawW, drawH, undefined, 'NONE');
+      } catch (e) { console.warn('PDF overlay fail', e); }
+    }
+
     const slug = (project.name || 'project').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_').slice(0, 30);
     pdf.save(`Вызывной_${slug}_день${_currentCsDay}_${new Date().toISOString().slice(0,10)}.pdf`);
     toast('Вызывной PDF скачан ✓ (1 стр.)', 'success');
@@ -18139,7 +18188,7 @@ function buildCallsheetPrintHTML(project, cs) {
     }
     html += `
       <div style="margin:0 ${PAD_X}px 8px;background:#faf3f3;border-left:4px solid #6b1d1f;padding:8px 12px;border-radius:0 4px 4px 0;display:flex;gap:12px;align-items:flex-start;">
-        ${cs.locationImage ? `<div style="width:120px;height:90px;flex-shrink:0;background-image:url('${cs.locationImage.replace(/'/g, "\\'")}');background-size:cover;background-position:center;background-color:#fff;border-radius:4px;"></div>` : ''}
+        ${cs.locationImage ? `<div data-pdf-img="${escapeHtml(cs.locationImage)}" data-pdf-w="140" data-pdf-h="105" data-pdf-fit="contain" style="width:140px;height:105px;flex-shrink:0;background-color:#fff;border-radius:4px;"></div>` : ''}
         <div style="flex:1;min-width:0;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
             <div>
