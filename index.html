@@ -3642,6 +3642,19 @@ body.has-reel .theme-toggle { right: 158px; }
 }
 
 /* ===== TEAM MEMBERS section ===== */
+.collapsible-title { cursor: pointer; user-select: none; }
+.collapsible-title:hover { color: var(--brand-red, #6b1d1f); }
+.collapse-arrow {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 11px;
+  transition: transform 0.18s;
+  color: var(--muted, #888);
+}
+.collapsible-title.collapsed .collapse-arrow { transform: rotate(-90deg); }
+.team-members-section.section-collapsed,
+#clients-section-body.section-collapsed { display: none !important; }
+
 .team-members-section {
   background: var(--bg-2);
   border: 1px solid var(--line);
@@ -6581,8 +6594,11 @@ body.dark-theme .task-deadline:focus { background: white; }
       </div>
 
       <!-- TEAM MEMBERS -->
-      <div class="section-title">Участники проекта <span class="pill" id="team-count-pill">0 человек</span></div>
-      <div class="team-members-section">
+      <div class="section-title collapsible-title" data-collapse="team" onclick="toggleSection('team')">
+        <span class="collapse-arrow" id="team-arrow">▾</span>
+        Участники проекта <span class="pill" id="team-count-pill">0 человек</span>
+      </div>
+      <div class="team-members-section" id="team-section-body">
         <table class="team-members-table">
           <thead>
             <tr>
@@ -6603,6 +6619,30 @@ body.dark-theme .task-deadline:focus { background: white; }
           <button class="btn btn-secondary" onclick="exportTeamCreditsPdf()" title="Скачать список команды в PDF — для титров">📄 Титры PDF</button>
           <button class="btn btn-secondary" onclick="copyTeamCreditsText()" title="Скопировать список команды в буфер">⧉ Копировать титры</button>
         </div>
+      </div>
+
+      <!-- CLIENTS -->
+      <div class="section-title collapsible-title" data-collapse="clients" onclick="toggleSection('clients')">
+        <span class="collapse-arrow" id="clients-arrow">▾</span>
+        Клиенты проекта <span class="pill" id="clients-count-pill">0</span>
+      </div>
+      <div class="team-members-section" id="clients-section-body">
+        <table class="team-members-table">
+          <thead>
+            <tr>
+              <th style="width:54px;"></th>
+              <th>ФИО / Компания</th>
+              <th>Должность</th>
+              <th>Telegram / Контакт</th>
+              <th>Email · Телефон</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="clientsBody">
+            <!-- Динамически из project.clients -->
+          </tbody>
+        </table>
+        <div class="team-add-row" onclick="openAddClient()">＋ Добавить клиента</div>
       </div>
 
       <!-- INTEGRATIONS (только для музыкальных клипов) -->
@@ -7864,6 +7904,86 @@ body.dark-theme .task-deadline:focus { background: white; }
   </div>
 </div>
 
+<!-- Новый клиент -->
+<div class="modal-overlay" id="m-add-client">
+  <div class="doc-overlay" style="width: 600px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">👔</div>
+        <div>
+          <div class="doc-header-title">Новый клиент</div>
+          <div class="doc-header-subtitle">Контактное лицо со стороны клиента / бренда / агентства</div>
+        </div>
+      </div>
+      <button class="doc-close" onclick="closeAll()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="doc-content" style="display:flex;flex-direction:column;gap:12px;padding:18px 22px;">
+        <div>
+          <label class="form-label">ФИО *</label>
+          <input class="form-input" id="cb-name" placeholder="Иван Иванов">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="form-label">Компания / Бренд</label>
+            <input class="form-input" id="cb-company" placeholder="Yandex Music, Sber, ...">
+          </div>
+          <div>
+            <label class="form-label">Должность</label>
+            <input class="form-input" id="cb-role" placeholder="Маркетинг-директор, Бренд-менеджер...">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="form-label">Telegram</label>
+            <input class="form-input" id="cb-telegram" placeholder="@username">
+          </div>
+          <div>
+            <label class="form-label">Телефон</label>
+            <input class="form-input" id="cb-phone" placeholder="+7 ___ ___ __ __">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="form-label">E-mail</label>
+            <input class="form-input" id="cb-email" placeholder="name@brand.ru">
+          </div>
+          <div>
+            <label class="form-label">Сайт компании</label>
+            <input class="form-input" id="cb-website" placeholder="https://...">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Заметка</label>
+          <textarea class="form-textarea" id="cb-note" rows="2" placeholder="Особенности работы, предпочтения, договорённости..."></textarea>
+        </div>
+        <hr style="margin:4px 0;border:none;border-top:1px solid var(--line,#e5e5e5);">
+        <div style="display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:flex-start;">
+          <div>
+            <label class="form-label" style="margin-bottom:4px;">Фото / Логотип</label>
+            <div id="cb-avatar-preview" class="tm-avatar" style="width:96px;height:96px;font-size:28px;cursor:pointer;border-radius:10px;" onclick="_pickCbAvatarFile()" title="Загрузить">?</div>
+            <button type="button" id="cb-avatar-clear" onclick="_clearCbAvatar()" style="margin-top:6px;background:none;border:none;color:var(--muted,#888);font-size:11px;cursor:pointer;display:none;">× убрать</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label class="form-label">О клиенте / контекст</label>
+              <textarea class="form-textarea" id="cb-bio" rows="3" placeholder="Чем занимается, какие бренды, история сотрудничества..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="cb-info">Сохранится в проекте</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-secondary btn" id="cb-delete-btn" onclick="deleteClientFromForm()" style="display:none;color:var(--brand-red);">🗑 Удалить</button>
+        <button class="btn-secondary btn" onclick="closeAll()">Отмена</button>
+        <button class="btn" onclick="saveClient()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="m-add-member">
   <div class="doc-overlay" style="width: 640px;">
     <div class="doc-header">
@@ -8612,6 +8732,7 @@ function openDoc(type) {
     'creative-script': 'm-creative-script',
     'creative-upload': 'm-creative-upload',
     'add-member': 'm-add-member',
+    'add-client': 'm-add-client',
     placeholder: 'm-placeholder'
   };
   const modalId = map[type] || 'm-new';
@@ -10845,6 +10966,190 @@ function renderTeamMembers(project) {
     </tr>
   `;
   }).join('');
+}
+
+// === КЛИЕНТЫ ПРОЕКТА (список + модал) ===
+let _editingClientId = null;
+let _cbAvatarTmp = '';
+
+function _renderCbAvatarPreview() {
+  const el = document.getElementById('cb-avatar-preview');
+  const clearBtn = document.getElementById('cb-avatar-clear');
+  if (!el) return;
+  const name = document.getElementById('cb-name')?.value || '';
+  const initials = (name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase() || '?';
+  if (_cbAvatarTmp) {
+    el.classList.add('tm-avatar-img'); el.classList.remove('tm-avatar-init');
+    el.style.backgroundImage = `url('${_cbAvatarTmp.replace(/'/g, "\\'")}')`;
+    el.textContent = '';
+    if (clearBtn) clearBtn.style.display = '';
+  } else {
+    el.classList.remove('tm-avatar-img'); el.classList.add('tm-avatar-init');
+    el.style.backgroundImage = '';
+    el.textContent = initials;
+    if (clearBtn) clearBtn.style.display = 'none';
+  }
+}
+function _pickCbAvatarFile() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = () => {
+    const file = inp.files?.[0];
+    document.body.removeChild(inp);
+    if (!file) return;
+    openAvatarCropper(file, (dataUrl) => { _cbAvatarTmp = dataUrl; _renderCbAvatarPreview(); });
+  };
+  document.body.appendChild(inp); inp.click();
+}
+function _clearCbAvatar() { _cbAvatarTmp = ''; _renderCbAvatarPreview(); }
+
+function openAddClient(clientId = null) {
+  if (!_currentProjectId) { toast('Сначала открой проект', 'error'); return; }
+  closeAll();
+  _editingClientId = clientId;
+  const project = DB.getProject(_currentProjectId);
+  const c = clientId ? (project?.clients || []).find(x => x.id === clientId) : null;
+  const isEdit = !!c;
+  document.querySelector('#m-add-client .doc-header-title').textContent = isEdit ? 'Редактировать клиента' : 'Новый клиент';
+  document.getElementById('cb-name').value = c?.name || '';
+  document.getElementById('cb-company').value = c?.company || '';
+  document.getElementById('cb-role').value = c?.role || '';
+  document.getElementById('cb-telegram').value = c?.telegram || '';
+  document.getElementById('cb-phone').value = c?.phone || '';
+  document.getElementById('cb-email').value = c?.email || '';
+  document.getElementById('cb-website').value = c?.website || '';
+  document.getElementById('cb-note').value = c?.note || '';
+  document.getElementById('cb-bio').value = c?.bio || '';
+  _cbAvatarTmp = c?.avatar || '';
+  _renderCbAvatarPreview();
+  document.getElementById('cb-delete-btn').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('cb-info').textContent = isEdit ? ('ID: ' + clientId) : 'Сохранится в проекте';
+  document.getElementById('m-add-client').classList.add('active');
+  setTimeout(() => document.getElementById('cb-name').focus(), 100);
+  // ре-рендер инициалов при наборе имени
+  const nameEl = document.getElementById('cb-name');
+  nameEl.oninput = () => { if (!_cbAvatarTmp) _renderCbAvatarPreview(); };
+}
+function saveClient() {
+  if (!_currentProjectId) return;
+  const name = document.getElementById('cb-name').value.trim();
+  if (!name) { toast('Укажите ФИО клиента', 'error'); document.getElementById('cb-name').focus(); return; }
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const clients = [...(project.clients || [])];
+  const data = {
+    name,
+    company: document.getElementById('cb-company').value.trim(),
+    role: document.getElementById('cb-role').value.trim(),
+    telegram: document.getElementById('cb-telegram').value.trim(),
+    phone: document.getElementById('cb-phone').value.trim(),
+    email: document.getElementById('cb-email').value.trim(),
+    website: document.getElementById('cb-website').value.trim(),
+    note: document.getElementById('cb-note').value.trim(),
+    bio: document.getElementById('cb-bio').value.trim(),
+    avatar: _cbAvatarTmp || ''
+  };
+  if (_editingClientId) {
+    const idx = clients.findIndex(x => x.id === _editingClientId);
+    if (idx >= 0) clients[idx] = { ...clients[idx], ...data };
+  } else {
+    data.id = 'cl_' + Date.now();
+    clients.unshift(data);
+  }
+  DB.updateProject(_currentProjectId, { clients });
+  closeAll();
+  renderClients(DB.getProject(_currentProjectId));
+  toast(_editingClientId ? 'Клиент обновлён' : 'Клиент добавлен 👔', 'success');
+}
+function deleteClient(clientId) {
+  if (!confirm('Удалить клиента?')) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const clients = (project.clients || []).filter(c => c.id !== clientId);
+  DB.updateProject(_currentProjectId, { clients });
+  renderClients(DB.getProject(_currentProjectId));
+}
+function deleteClientFromForm() {
+  if (!_editingClientId) return;
+  const id = _editingClientId;
+  closeAll();
+  deleteClient(id);
+}
+function pickClientAvatar(clientId) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = () => {
+    const file = inp.files?.[0]; document.body.removeChild(inp);
+    if (!file) return;
+    openAvatarCropper(file, (dataUrl) => {
+      const project = DB.getProject(_currentProjectId);
+      if (!project) return;
+      const clients = (project.clients || []).map(c => c.id === clientId ? { ...c, avatar: dataUrl } : c);
+      DB.updateProject(_currentProjectId, { clients });
+      renderClients(DB.getProject(_currentProjectId));
+      toast('Аватар обновлён ✓', 'success');
+    });
+  };
+  document.body.appendChild(inp); inp.click();
+}
+function renderClients(project) {
+  const tbody = document.getElementById('clientsBody');
+  const pill = document.getElementById('clients-count-pill');
+  if (!tbody) return;
+  const clients = project?.clients || [];
+  if (pill) pill.textContent = clients.length === 0 ? 'нет' : String(clients.length);
+  if (clients.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:28px 16px;color:var(--muted);font-size:13px;">Пока никого. Нажмите <strong style="color:var(--brand-red);">＋ Добавить клиента</strong> ниже.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = clients.map(c => {
+    const initials = (c.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase() || '?';
+    const avatar = c.avatar || '';
+    const avatarCell = avatar
+      ? `<div class="tm-avatar tm-avatar-img" style="background-image:url('${avatar.replace(/'/g, "\\'")}')" onclick="event.stopPropagation(); pickClientAvatar('${c.id}')" title="Сменить фото"><span class="tm-avatar-edit">✎</span></div>`
+      : `<div class="tm-avatar tm-avatar-init" onclick="event.stopPropagation(); pickClientAvatar('${c.id}')" title="Загрузить фото">${escapeHtml(initials)}<span class="tm-avatar-edit">＋</span></div>`;
+    const contactBits = [];
+    if (c.phone) contactBits.push(escapeHtml(c.phone));
+    if (c.email) contactBits.push(escapeHtml(c.email));
+    return `
+      <tr>
+        <td>${avatarCell}</td>
+        <td>
+          <div class="tm-name-ru">${escapeHtml(c.name)}</div>
+          ${c.company ? `<div class="tm-name-en">${escapeHtml(c.company)}</div>` : ''}
+        </td>
+        <td><span class="tm-role-cell">${escapeHtml(c.role || '—')}</span></td>
+        <td class="tm-handle">${c.telegram ? `<a href="https://t.me/${escapeHtml(c.telegram.replace('@',''))}" target="_blank">${escapeHtml(c.telegram.startsWith('@') ? c.telegram : '@'+c.telegram)}</a>` : '<span class="empty">—</span>'}</td>
+        <td class="tm-handle" style="font-size:11px;">${contactBits.length ? contactBits.join('<br>') : '<span class="empty">—</span>'}</td>
+        <td class="tm-actions">
+          <button onclick="event.stopPropagation(); openAddClient('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-2);font-size:14px;padding:4px;" title="Редактировать">✎</button>
+          <button onclick="event.stopPropagation(); deleteClient('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-2);font-size:14px;padding:4px;" title="Удалить">×</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// === Сворачивание/разворачивание секций (запоминается в localStorage) ===
+function toggleSection(name) {
+  const arrow = document.getElementById(name + '-arrow');
+  const body = document.getElementById(name + '-section-body');
+  const title = arrow?.closest('.collapsible-title');
+  if (!body || !title) return;
+  const collapsed = body.classList.toggle('section-collapsed');
+  title.classList.toggle('collapsed', collapsed);
+  try { localStorage.setItem('zalove_section_' + name, collapsed ? '1' : '0'); } catch (_) {}
+}
+function applyCollapseStates() {
+  ['team', 'clients'].forEach(name => {
+    const saved = (() => { try { return localStorage.getItem('zalove_section_' + name); } catch (_) { return null; } })();
+    if (saved === '1') {
+      const body = document.getElementById(name + '-section-body');
+      const arrow = document.getElementById(name + '-arrow');
+      const title = arrow?.closest('.collapsible-title');
+      if (body) body.classList.add('section-collapsed');
+      if (title) title.classList.add('collapsed');
+    }
+  });
 }
 
 function openAddMember(memberId = null) {
@@ -19646,6 +19951,8 @@ window.openProjectDetail = function(id, idx) {
   const project = DB.getProject(id);
   if (project) {
     renderTeamMembers(project);
+    renderClients(project);
+    applyCollapseStates();
     renderCreative(project);
     renderProjectTasks(project);
     renderProjectRating(project);
