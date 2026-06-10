@@ -18230,22 +18230,10 @@ function buildCallsheetPrintHTML(project, cs) {
       </div>`;
   }
 
-  // ===== Crew — фильтр TOP-ролей =====
-  const TOP_ROLES = new Set([
-    'Режиссёр',
-    'Оператор-постановщик (DOP)',
-    'Генеральный продюсер',
-    'Исполнительный продюсер',
-    'Линейный продюсер',
-    'Креативный продюсер',
-    'Арт-директор'
-  ]);
-  const topNames = new Set([cs.directorName, cs.dopName, cs.producerName, cs.artName].filter(n => n && n.trim()).map(n => n.trim().toLowerCase()));
-  const filteredCrew = (cs.crew || []).filter(p => {
-    if (TOP_ROLES.has(p.position)) return false;
-    if (p.name && topNames.has(p.name.trim().toLowerCase())) return false;
-    return true;
-  });
+  // ===== Crew — показываем ВЕСЬ список (raw из вызывного, без фильтрации) =====
+  // Раньше отсекали TOP_ROLES чтобы не дублировать "Roles strip" — но это
+  // прятало строки если roles strip не заполнен полностью. Теперь — полный список.
+  const filteredCrew = (cs.crew || []);
 
   function compactTable(rows, headerLabel, headerCount, headerBg, headerAccent, isCast) {
     const rowsHtml = rows.map((p, i) => {
