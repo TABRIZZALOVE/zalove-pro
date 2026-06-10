@@ -3705,6 +3705,36 @@ body.has-reel .theme-toggle { right: 158px; }
 .tm-avatar:hover .tm-avatar-edit { opacity: 1; }
 .tm-avatar-img .tm-avatar-edit { opacity: 0.85; }
 .tm-avatar-img:hover .tm-avatar-edit { opacity: 1; }
+
+/* Универсальный чип-аватар с инициалами (используется в callsheet, shootplan, report) */
+.person-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: #f0eee6;
+  color: #1a1a1a;
+  font-weight: 800; letter-spacing: 0.3px;
+  flex-shrink: 0;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.person-chip-img {
+  background-size: cover; background-position: center;
+  color: transparent;
+}
+.person-chip-img .person-chip-init {
+  position: absolute; bottom: -1px; right: -1px;
+  font-size: 7px; line-height: 9px;
+  background: rgba(0,0,0,0.75); color: #fff;
+  padding: 1px 3px; border-radius: 3px;
+  font-weight: 700;
+}
+.person-chip-init-only { background: #d8d3c4; }
+
+/* Ячейка ФИО с чипом в callsheet */
+.cs-name-cell { padding-left: 4px !important; }
+.cs-name-row { display: flex; align-items: center; gap: 6px; }
+.cs-name-row .people-input { flex: 1; min-width: 0; }
 .tm-name-en { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .tm-role-cell {
   display: inline-block;
@@ -7895,6 +7925,28 @@ body.dark-theme .task-deadline:focus { background: white; }
           <label class="form-label">Заметка</label>
           <textarea class="form-textarea" id="mb-note" rows="2" placeholder="Особенности работы, предпочтения, ставка..."></textarea>
         </div>
+        <hr style="margin:14px 0;border:none;border-top:1px solid var(--line,#e5e5e5);">
+        <div style="display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:flex-start;">
+          <div>
+            <label class="form-label" style="margin-bottom:4px;">Фото</label>
+            <div id="mb-avatar-preview" class="tm-avatar" style="width:96px;height:96px;font-size:28px;cursor:pointer;border-radius:10px;" onclick="_pickMbAvatarFile()" title="Загрузить фото">?</div>
+            <button type="button" id="mb-avatar-clear" onclick="_clearMbAvatar()" style="margin-top:6px;background:none;border:none;color:var(--muted,#888);font-size:11px;cursor:pointer;display:none;">× убрать фото</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label class="form-label">Биография / о человеке</label>
+              <textarea class="form-textarea" id="mb-bio" rows="3" placeholder="Кратко о специалисте: возраст, город, направление, особенности"></textarea>
+            </div>
+            <div>
+              <label class="form-label">Опыт / портфолио</label>
+              <textarea class="form-textarea" id="mb-experience" rows="3" placeholder="Ключевые проекты, бренды, артисты, награды. Можно ссылками."></textarea>
+            </div>
+            <div>
+              <label class="form-label">Сайт / портфолио (URL)</label>
+              <input class="form-input" id="mb-website" placeholder="https://...">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="doc-footer">
@@ -10661,6 +10713,11 @@ function openAddMember(memberId = null) {
   document.getElementById('mb-phone').value = m?.phone || '';
   document.getElementById('mb-email').value = m?.email || '';
   document.getElementById('mb-note').value = m?.note || '';
+  document.getElementById('mb-bio').value = m?.bio || '';
+  document.getElementById('mb-experience').value = m?.experience || '';
+  document.getElementById('mb-website').value = m?.website || '';
+  _mbAvatarTmp = m?.avatar || '';
+  _renderMbAvatarPreview(m);
   document.getElementById('mb-delete-btn').style.display = isEdit ? 'inline-flex' : 'none';
   document.getElementById('mb-info').textContent = isEdit ? ('ID: ' + memberId) : 'Сохранится в проекте';
   // Подключаем автокомплит: datalist + автозаполнение
@@ -10791,7 +10848,11 @@ function saveTeamMember() {
     instagram: document.getElementById('mb-instagram').value.trim(),
     phone: document.getElementById('mb-phone').value.trim(),
     email: document.getElementById('mb-email').value.trim(),
-    note: document.getElementById('mb-note').value.trim()
+    note: document.getElementById('mb-note').value.trim(),
+    bio: document.getElementById('mb-bio').value.trim(),
+    experience: document.getElementById('mb-experience').value.trim(),
+    website: document.getElementById('mb-website').value.trim(),
+    avatar: (typeof _mbAvatarTmp !== 'undefined' ? _mbAvatarTmp : '')
   };
   if (_editingMemberId) {
     const idx = team.findIndex(x => x.id === _editingMemberId);
@@ -10804,6 +10865,72 @@ function saveTeamMember() {
   closeAll();
   renderTeamMembers(DB.getProject(_currentProjectId));
   toast(_editingMemberId ? 'Участник обновлён' : 'Участник добавлен 🎬', 'success');
+}
+
+// Возвращает HTML-чип для отображения человека: фото-аватар (если есть) с инициалами поверх.
+// kind: 'compact' (мелкий 24px), 'mid' (32px), 'big' (40px)
+function _personChipHtml(name, avatar, kind = 'compact') {
+  const initials = ((name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2) || '?').toUpperCase();
+  const size = kind === 'big' ? 40 : (kind === 'mid' ? 32 : 24);
+  const fz = kind === 'big' ? 13 : (kind === 'mid' ? 10 : 8.5);
+  if (avatar) {
+    return `<span class="person-chip person-chip-img" style="width:${size}px;height:${size}px;font-size:${fz}px;background-image:url('${avatar.replace(/'/g, "\\'")}')" title="${escapeHtml(name || '')}"><span class="person-chip-init">${escapeHtml(initials)}</span></span>`;
+  }
+  return `<span class="person-chip person-chip-init-only" style="width:${size}px;height:${size}px;font-size:${fz}px;" title="${escapeHtml(name || '')}">${escapeHtml(initials)}</span>`;
+}
+// Поиск аватара по имени в команде проекта (для авто-резолвинга в крю/касте)
+function _findAvatarByName(project, name) {
+  if (!project || !name) return '';
+  const target = String(name).trim().toLowerCase();
+  if (!target) return '';
+  const m = (project.team || []).find(x => (x.name_ru || '').trim().toLowerCase() === target || (x.name_en || '').trim().toLowerCase() === target);
+  return m?.avatar || '';
+}
+
+// === Аватар в форме «Новый/Редактировать участник»
+let _mbAvatarTmp = '';
+function _renderMbAvatarPreview(m) {
+  const el = document.getElementById('mb-avatar-preview');
+  const clearBtn = document.getElementById('mb-avatar-clear');
+  if (!el) return;
+  const name = document.getElementById('mb-name-ru')?.value || (m?.name_ru) || '';
+  const initials = (name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase() || '?';
+  if (_mbAvatarTmp) {
+    el.classList.add('tm-avatar-img');
+    el.classList.remove('tm-avatar-init');
+    el.style.backgroundImage = `url('${_mbAvatarTmp.replace(/'/g, "\\'")}')`;
+    el.textContent = '';
+    if (clearBtn) clearBtn.style.display = '';
+  } else {
+    el.classList.remove('tm-avatar-img');
+    el.classList.add('tm-avatar-init');
+    el.style.backgroundImage = '';
+    el.textContent = initials;
+    if (clearBtn) clearBtn.style.display = 'none';
+  }
+}
+function _pickMbAvatarFile() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = async () => {
+    const file = inp.files?.[0];
+    if (!file) { document.body.removeChild(inp); return; }
+    if (file.size > 15 * 1024 * 1024) { toast('Файл слишком большой (макс 15 МБ)', 'error'); document.body.removeChild(inp); return; }
+    try {
+      _mbAvatarTmp = await _sbCompressImageHQ(file, 400, 0.88);
+      _renderMbAvatarPreview();
+    } catch (e) {
+      toast('Не удалось загрузить: ' + (e?.message || e), 'error');
+    } finally {
+      document.body.removeChild(inp);
+    }
+  };
+  document.body.appendChild(inp);
+  inp.click();
+}
+function _clearMbAvatar() {
+  _mbAvatarTmp = '';
+  _renderMbAvatarPreview();
 }
 
 // === Загрузка аватара участника команды ===
@@ -17763,7 +17890,10 @@ function attachNameAutocompleteToCallsheet() {
 
 function renderPeopleTable(kind, people) {
   const lastIdx = people.length - 1;
-  const rows = people.map((p, i) => `
+  const project = _currentProjectId ? DB.getProject(_currentProjectId) : null;
+  const rows = people.map((p, i) => {
+    const avatar = _findAvatarByName(project, p.name) || p.avatar || '';
+    return `
     <tr data-idx="${i}" data-kind="${kind}" draggable="true" class="cs-row-draggable">
       <td class="cs-drag-cell">
         <span class="cs-drag-handle" title="Перетащить">≡</span>
@@ -17773,12 +17903,18 @@ function renderPeopleTable(kind, people) {
         </div>
       </td>
       <td><input class="people-input" data-kind="${kind}" data-field="position" value="${escapeHtml(p.position || '')}" placeholder="Должность"></td>
-      <td><input class="people-input" data-kind="${kind}" data-field="name" value="${escapeHtml(p.name || '')}" placeholder="ФИО"></td>
+      <td class="cs-name-cell">
+        <div class="cs-name-row">
+          ${_personChipHtml(p.name, avatar, 'compact')}
+          <input class="people-input" data-kind="${kind}" data-field="name" value="${escapeHtml(p.name || '')}" placeholder="ФИО">
+        </div>
+      </td>
       <td><input class="people-input" data-kind="${kind}" data-field="phone" value="${escapeHtml(p.phone || '')}" placeholder="+7 ___ ___ __ __"></td>
       <td><input class="people-input center" data-kind="${kind}" data-field="callTime" type="time" value="${escapeHtml(p.callTime || '')}"></td>
       <td><button class="cs-del-btn-sm" onclick="deleteCsRow('${kind}', ${i})">×</button></td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
   return `
     <table class="cs-people-table">
       <thead>
@@ -18340,13 +18476,18 @@ function buildCallsheetPrintHTML(project, cs) {
       const posEn = translateRole(p.position);
       const callColor = isCast ? '#6b1d1f' : '#0a0907';
       const stripeBg = isCast ? (i % 2 ? '#faf3f3' : '#ffffff') : (i % 2 ? '#fafafa' : '#ffffff');
+      const avatar = _findAvatarByName(project, p.name) || p.avatar || '';
+      const initials = ((p.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2) || '?').toUpperCase();
+      const avChip = avatar
+        ? `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#0a0907 center/cover no-repeat;background-image:url('${avatar.replace(/'/g, "\\'")}');vertical-align:middle;margin-right:6px;"></span>`
+        : `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:8.5px;font-weight:800;vertical-align:middle;margin-right:6px;">${escapeHtml(initials)}</span>`;
       return `
         <tr style="background:${stripeBg};border-bottom:1px solid #ececec;">
           <td style="padding:5px 10px;font-weight:700;font-size:10px;">
             ${escapeHtml(p.position || '')}
             ${posEn && posEn !== p.position ? `<div style="font-size:8px;color:#999;font-weight:500;margin-top:1px;">${escapeHtml(posEn)}</div>` : ''}
           </td>
-          <td style="padding:5px 10px;font-size:10px;font-weight:600;">${escapeHtml(p.name || '')}</td>
+          <td style="padding:5px 10px;font-size:10px;font-weight:600;white-space:nowrap;">${avChip}<span style="vertical-align:middle;">${escapeHtml(p.name || '')}</span></td>
           <td style="padding:5px 10px;color:#444;font-family:'Montserrat',monospace;font-size:9.5px;font-weight:600;">${escapeHtml(p.phone || '')}</td>
           <td style="padding:5px 10px;text-align:center;font-weight:800;font-family:'Montserrat',monospace;font-size:10px;color:${callColor};">${escapeHtml(p.callTime || '')}</td>
         </tr>`;
