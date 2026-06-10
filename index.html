@@ -17611,10 +17611,10 @@ function renderCallsheetEditor() {
       </div>
     </div>
 
-    <!-- 7. Кастинг / Клиент — выделенная секция -->
+    <!-- 7. Клиент / Бренд / Артист / Кастинг — выделенная секция -->
     <div class="cs-section cs-cast-section">
       <div class="cs-section-title">
-        ${project.type === 'MV' ? '🎤 Артист и кастинг' : '👔 Клиент, агентство и кастинг'}
+        🎬 Клиент / Бренд / Артист / Кастинг
         <span class="cs-section-badge ${project.type === 'MV' ? 'mv' : 'ad'}">${project.type === 'MV' ? '🎵 МУЗ. КЛИП' : '📺 РЕКЛАМА'}</span>
       </div>
       ${renderPeopleTable('cast', cs.cast || [])}
@@ -18297,7 +18297,7 @@ function buildCallsheetPrintHTML(project, cs) {
   }
 
   if (cs.cast && cs.cast.length > 0) {
-    const castLabel = isMV ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ · АГЕНТСТВО · КАСТИНГ';
+    const castLabel = 'КЛИЕНТ · БРЕНД · АРТИСТ · КАСТИНГ';
     html += compactTable(cs.cast, castLabel, cs.cast.length + ' чел.', '#6b1d1f', '#d8b8b9', true);
   }
 
@@ -18487,7 +18487,7 @@ function _oldExportCallsheetPdfStub() {
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.text(isMV ? 'АРТИСТ И КАСТИНГ' : 'КЛИЕНТ, АГЕНТСТВО И КАСТИНГ', 18, y + 8.5);
+    doc.text('КЛИЕНТ / БРЕНД / АРТИСТ / КАСТИНГ', 18, y + 8.5);
     // Type badge
     doc.setFontSize(8);
     doc.setFillColor(255, 255, 255);
