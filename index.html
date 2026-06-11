@@ -6786,6 +6786,17 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
 
+      <!-- SHARE WITH CLIENT -->
+      <div id="shareWithClientBar" style="background:linear-gradient(135deg,#0a0907,#252320);color:#fff;border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="font-size:22px;">🔗</div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-weight:800;font-size:13px;letter-spacing:0.3px;">Поделиться проектом с клиентом</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:2px;font-weight:600;">Публичная ссылка без логина — клиент увидит лого, команду, тритмент, тайминг и ППМ</div>
+        </div>
+        <button class="btn" onclick="generateShareLink()" style="background:#fff;color:#0a0907;font-weight:800;">🔗 Скопировать ссылку</button>
+        <button class="btn btn-secondary" onclick="revokeShareLink()" id="revokeShareBtn" style="display:none;color:#ff8888;border-color:rgba(255,136,136,0.4);">Отозвать</button>
+      </div>
+
       <!-- DOCUMENTS -->
       <div class="section-title">Документация проекта <span class="pill">11 ТИПОВ · 8 ВСТРОЕНО</span></div>
       <div class="docs-grid">
@@ -11135,6 +11146,186 @@ function renderTeamMembers(project) {
   `;
   }).join('');
 }
+
+// ===== ПУБЛИЧНАЯ ССЫЛКА ДЛЯ КЛИЕНТА =====
+function _genShareToken() {
+  // Случайный URL-safe токен, ~22 символа
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let t = '';
+  for (let i = 0; i < 22; i++) t += chars[Math.floor(Math.random() * chars.length)];
+  return t;
+}
+async function generateShareLink() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  let token = project.shareToken;
+  if (!token) {
+    token = _genShareToken();
+    DB.updateProject(_currentProjectId, { shareToken: token });
+  }
+  const url = `${location.origin}/?share=${token}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('Ссылка скопирована: ' + url, 'success');
+    document.getElementById('revokeShareBtn').style.display = '';
+  } catch (e) {
+    // Fallback: prompt с ссылкой
+    prompt('Скопируй ссылку вручную:', url);
+  }
+}
+function revokeShareLink() {
+  if (!_currentProjectId) return;
+  if (!confirm('Отозвать публичную ссылку? Текущий URL перестанет работать.')) return;
+  DB.updateProject(_currentProjectId, { shareToken: null });
+  document.getElementById('revokeShareBtn').style.display = 'none';
+  toast('Ссылка отозвана. Можешь сгенерировать новую.', 'success');
+}
+function _refreshShareUI() {
+  const project = _currentProjectId ? DB.getProject(_currentProjectId) : null;
+  const btn = document.getElementById('revokeShareBtn');
+  if (btn) btn.style.display = (project && project.shareToken) ? '' : 'none';
+}
+
+// ===== ПУБЛИЧНЫЙ РЕЖИМ (для клиента, без логина) =====
+async function bootShareMode(token) {
+  // Создаём supabase client с ANON ключом (RLS на сервере разрешает чтение по shareToken)
+  if (typeof window.supabase === 'undefined') {
+    document.body.innerHTML = '<div style="padding:60px;text-align:center;font-family:Arial;color:#666;">Загрузка библиотек…</div>';
+    return;
+  }
+  const SUPA_URL = (window.SUPABASE_URL) || 'https://147-45-100-91.sslip.io';
+  const SUPA_ANON = window.SUPABASE_ANON_KEY || '';
+  const cli = window.supabase.createClient(SUPA_URL, SUPA_ANON);
+  try {
+    // Читаем через view (security_invoker) — RLS на сервере должна разрешить anon по token
+    const { data, error } = await cli.from('share_projects').select('*').eq('share_token', token).single();
+    if (error || !data) {
+      document.body.innerHTML = _shareErrorHTML(error?.message || 'ссылка недействительна или истекла');
+      return;
+    }
+    renderSharePage(data);
+  } catch (e) {
+    document.body.innerHTML = _shareErrorHTML(e.message);
+  }
+}
+function _shareErrorHTML(msg) {
+  return `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Montserrat',Arial,sans-serif;background:#fafaf8;">
+    <div style="text-align:center;max-width:480px;padding:32px;">
+      <div style="font-size:60px;margin-bottom:14px;">🔗</div>
+      <div style="font-size:22px;font-weight:900;margin-bottom:8px;">Ссылка недействительна</div>
+      <div style="font-size:13px;color:#666;line-height:1.5;">${escapeHtml(msg || '')}</div>
+      <div style="font-size:12px;color:#aaa;margin-top:20px;">Свяжитесь с продюсером для получения новой ссылки.</div>
+    </div>
+  </div>`;
+}
+function renderSharePage(d) {
+  const sd = d.share_data || {};
+  const bk = sd.brandKit || {};
+  const accent = bk.accent || '#6b1d1f';
+  const clientLogo = bk.logo || '';
+  const projectName = d.name || 'Проект';
+  const client = d.client || '';
+  const artist = d.artist || '';
+  const teamCount = sd.teamCount || 0;
+  const days = sd.days || 1;
+  // Документы доступные для просмотра/скачивания
+  const hasCreative = sd.creative && (sd.creative.treatment || sd.creative.refLinks || sd.creative.script);
+  const hasTiming = sd.timing && (sd.timing.rows || []).length > 0;
+  const hasPpm = sd.ppm && (sd.ppm.blocks || []).length > 0;
+
+  document.title = projectName + ' · ' + (client || 'ZALOVE');
+  document.body.innerHTML = `
+    <style>
+      body { margin:0; font-family:'Montserrat',-apple-system,Arial,sans-serif; background:#fafaf8; color:#0a0907; }
+      .sp-header { background:linear-gradient(135deg,${accent},${_darkenColor(accent, 0.4)});color:#fff;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap; }
+      .sp-logos { display:flex;align-items:center;gap:14px; }
+      .sp-logos img { height:34px;width:auto; }
+      .sp-logos .x { font-weight:300;opacity:0.5; }
+      .sp-title { font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:700;opacity:0.85; }
+      .sp-container { max-width:900px;margin:0 auto;padding:32px; }
+      .sp-h1 { font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1; }
+      .sp-sub { font-size:14px;color:#666;margin-top:6px;font-weight:600; }
+      .sp-card { background:#fff;border-radius:14px;padding:22px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+      .sp-team-bar { display:flex;align-items:center;gap:12px;font-size:14px;color:#444;font-weight:600; }
+      .sp-team-bar .num { font-size:36px;font-weight:900;color:${accent}; }
+      .sp-doc-list { display:grid;gap:10px;margin-top:12px; }
+      .sp-doc-item { display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fafafa;border:1px solid #ececec;border-radius:8px; }
+      .sp-doc-item .ico { font-size:22px; }
+      .sp-doc-item .title { font-weight:800;font-size:13px;flex:1; }
+      .sp-doc-item .btn { background:${accent};color:#fff;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;border:none; }
+      .sp-foot { text-align:center;padding:32px;color:#aaa;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:700; }
+    </style>
+    <div class="sp-header">
+      <div class="sp-logos">
+        <img src="logo.png" alt="ZALOVE" style="filter:brightness(0) invert(1);">
+        ${clientLogo ? `<span class="x">×</span><img src="${clientLogo}" alt="${escapeHtml(client)}" style="height:40px;background:#fff;padding:4px;border-radius:4px;">` : ''}
+      </div>
+      <div class="sp-title">Клиентский портал</div>
+    </div>
+    <div class="sp-container">
+      <div class="sp-h1">${escapeHtml(projectName)}</div>
+      <div class="sp-sub">
+        ${client ? escapeHtml(client) : ''}${artist ? ' · ' + escapeHtml(artist) : ''}
+        ${days ? ` · ${days} ${days === 1 ? 'смена' : 'смен'}` : ''}
+      </div>
+
+      <div class="sp-card" style="margin-top:24px;">
+        <div class="sp-team-bar">
+          <div class="num">${teamCount}</div>
+          <div>над вашим проектом трудятся<br>специалистов из команды ZALOVE PRODUCTION</div>
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#888;font-weight:700;margin-bottom:10px;">Доступные документы</div>
+        <div class="sp-doc-list">
+          ${hasCreative ? `<div class="sp-doc-item">
+            <div class="ico">📄</div>
+            <div class="title">Тритмент проекта</div>
+            ${sd.creative.treatment ? `<a class="btn" href="${escapeHtml(sd.creative.treatment)}" target="_blank">Скачать</a>` : '<span style="color:#aaa;font-size:11px;">в работе</span>'}
+          </div>` : ''}
+          ${hasTiming ? `<div class="sp-doc-item">
+            <div class="ico">⏰</div>
+            <div class="title">Тайминг проекта</div>
+            <button class="btn" onclick="alert('Скачивание тайминга недоступно из клиентского портала. Свяжитесь с продюсером.')">Посмотреть</button>
+          </div>` : ''}
+          ${hasPpm ? `<div class="sp-doc-item">
+            <div class="ico">📘</div>
+            <div class="title">ППМ-бук (PPM Book)</div>
+            <button class="btn" onclick="alert('Скачивание ППМ доступно через продюсера.')">Посмотреть</button>
+          </div>` : ''}
+          ${(!hasCreative && !hasTiming && !hasPpm) ? '<div style="color:#aaa;text-align:center;padding:20px;font-size:13px;">Документы пока не загружены. Зайдите позже.</div>' : ''}
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#888;font-weight:700;margin-bottom:10px;">Комментарии</div>
+        <div style="color:#aaa;text-align:center;padding:18px;font-size:13px;">Скоро — оставьте комментарий прямо здесь, и продюсер ответит.</div>
+      </div>
+    </div>
+    <div class="sp-foot">© ZALOVE PRODUCTION · ${new Date().getFullYear()}</div>
+  `;
+}
+
+// === HOOK ON BOOT: если в URL есть ?share=TOKEN — публичный режим ===
+(function shareHook() {
+  const params = new URLSearchParams(location.search);
+  const token = params.get('share');
+  if (token) {
+    // Ждём загрузки supabase SDK
+    const tryBoot = () => {
+      if (typeof window.supabase !== 'undefined') {
+        bootShareMode(token);
+      } else {
+        setTimeout(tryBoot, 200);
+      }
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryBoot);
+    } else { tryBoot(); }
+  }
+})();
 
 // ===== ЖИЗНЕННЫЙ ТРЕКЕР ТАБРИЗА =====
 // Карточки: спорт / питание / финансы / сон / обучение / здоровье / личный бренд.
