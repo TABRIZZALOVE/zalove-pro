@@ -11248,10 +11248,14 @@ async function bootShareMode(token) {
   const SUPA_ANON = window.SUPABASE_ANON_KEY || '';
   const cli = window.supabase.createClient(SUPA_URL, SUPA_ANON);
   try {
-    // Читаем через view (security_invoker) — RLS на сервере должна разрешить anon по token
-    const { data, error } = await cli.from('share_projects').select('*').eq('share_token', token).single();
-    if (error || !data) {
-      document.body.innerHTML = _shareErrorHTML(error?.message || 'ссылка недействительна или истекла');
+    // Читаем через RPC SECURITY DEFINER — обходит RLS, возвращает только публичные поля
+    const { data, error } = await cli.rpc('get_share_project', { p_token: token });
+    if (error) {
+      document.body.innerHTML = _shareErrorHTML(error.message || 'ошибка чтения');
+      return;
+    }
+    if (!data) {
+      document.body.innerHTML = _shareErrorHTML('ссылка недействительна или истекла');
       return;
     }
     renderSharePage(data);
