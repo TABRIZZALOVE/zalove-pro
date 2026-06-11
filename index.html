@@ -5403,47 +5403,97 @@ body.dark-theme .task-deadline:focus { background: white; }
   /* Топбар: greeting на отдельной строке */
   .greeting-line { font-size: 13px; }
 
-  /* Жизненный трекер — карточная сетка */
+  /* Жизненный трекер — премиум-дизайн с градиентами */
   .life-tracker-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
     gap: 14px;
-    margin-top: 8px;
+    margin-top: 12px;
   }
   .lt-card {
     position: relative;
-    background: var(--bg-2, #fafafa);
-    border: 1px solid var(--line, #ececec);
-    border-radius: 14px;
-    padding: 16px 14px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 18px 16px 16px;
     cursor: pointer;
-    transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+    transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), border-color 0.18s, box-shadow 0.18s, background 0.18s;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    min-height: 110px;
+    gap: 0;
+    min-height: 130px;
+    overflow: hidden;
+    isolation: isolate;
   }
-  .lt-card:hover { transform: translateY(-2px); border-color: var(--brand-red, #6b1d1f); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-  .lt-card-ico { font-size: 26px; }
-  .lt-card-title { font-weight: 800; font-size: 14px; letter-spacing: 0.2px; }
+  body:not(.dark-mode) .lt-card {
+    background: linear-gradient(145deg, #ffffff, #fafaf8);
+    border: 1px solid var(--line, #ececec);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .lt-card::before {
+    content: '';
+    position: absolute;
+    top: -20%; right: -10%;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    opacity: 0.12;
+    background: var(--lt-accent, #ff6b6b);
+    filter: blur(8px);
+    transition: opacity 0.2s, transform 0.3s;
+    z-index: 0;
+  }
+  .lt-card:hover { transform: translateY(-3px); border-color: var(--lt-accent, var(--brand-red, #6b1d1f)); box-shadow: 0 10px 26px rgba(0,0,0,0.25); }
+  body:not(.dark-mode) .lt-card:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.12); }
+  .lt-card:hover::before { opacity: 0.22; transform: scale(1.15); }
+  .lt-card:active { transform: translateY(-1px) scale(0.98); }
+  .lt-card-ico-wrap {
+    position: relative; z-index: 1;
+    width: 44px; height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--lt-accent, #ff6b6b);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  }
+  .lt-card-ico { font-size: 22px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2)); }
+  .lt-card-title {
+    position: relative; z-index: 1;
+    font-weight: 800; font-size: 15px;
+    letter-spacing: -0.2px;
+    color: var(--text, #1a1a1a);
+    line-height: 1.2;
+  }
   .lt-card-status {
+    position: relative; z-index: 1;
     font-size: 11px;
     color: var(--muted, #888);
     font-weight: 600;
+    margin-top: 6px;
+    line-height: 1.35;
+    letter-spacing: 0.1px;
   }
+  .lt-card.done .lt-card-status { color: #0a8a3a; font-weight: 700; }
+  .lt-card.skipped .lt-card-status { color: #b91c1c; font-weight: 700; }
+  .lt-card.done { border-color: rgba(10,138,58,0.4); }
   .lt-card-streak {
     position: absolute;
-    top: 10px; right: 10px;
-    background: #0a8a3a; color: #fff;
+    top: 14px; right: 14px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: #fff;
     font-size: 10px; font-weight: 800;
-    padding: 2px 7px; border-radius: 10px;
+    padding: 4px 9px; border-radius: 12px;
     letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(255,107,53,0.4);
+    z-index: 2;
   }
-  .lt-card.done {
-    border-color: #0a8a3a;
-    background: linear-gradient(135deg, rgba(10,138,58,0.06), transparent);
-  }
-  .lt-card.skipped { opacity: 0.55; }
+  /* Цветовые акценты для каждой карточки */
+  .lt-card[data-key="sport"]    { --lt-accent: #ef4444; }
+  .lt-card[data-key="food"]     { --lt-accent: #22c55e; }
+  .lt-card[data-key="sleep"]    { --lt-accent: #8b5cf6; }
+  .lt-card[data-key="finance"]  { --lt-accent: #eab308; }
+  .lt-card[data-key="learn"]    { --lt-accent: #3b82f6; }
+  .lt-card[data-key="health"]   { --lt-accent: #14b8a6; }
+  .lt-card[data-key="brand"]    { --lt-accent: #ec4899; }
   /* Модал-контент трекера */
   .lt-day-row {
     display: grid; grid-template-columns: 90px 1fr 110px 30px; gap: 10px;
@@ -11404,9 +11454,9 @@ function renderLifeTracker() {
       cls = 'done';
     }
     return `
-      <div class="lt-card ${cls}" onclick="openLifeTracker('${card.key}')">
+      <div class="lt-card ${cls}" data-key="${card.key}" onclick="openLifeTracker('${card.key}')">
         ${streak >= 2 ? `<div class="lt-card-streak">🔥 ${streak}</div>` : ''}
-        <div class="lt-card-ico">${card.icon}</div>
+        <div class="lt-card-ico-wrap"><span class="lt-card-ico">${card.icon}</span></div>
         <div class="lt-card-title">${card.title}</div>
         <div class="lt-card-status">${statusText}</div>
       </div>`;
