@@ -9540,9 +9540,34 @@ const DB = {
       }
     } catch (e) { console.warn('hydrate profile', e); }
 
+    const serverProjects = (projects || []).map(r => this._fromDb(r));
+    // ЗАЩИТА ОТ ПОТЕРИ: если локальный проект свежее по updatedAt — берём локальную версию
+    // (это бывает когда юзер обновил страницу до того как сервер успел получить последний save)
+    let merged = serverProjects;
+    try {
+      const localCache = this.load();
+      const localProjects = localCache.projects || [];
+      const localMap = new Map(localProjects.map(p => [p.id, p]));
+      merged = serverProjects.map(srv => {
+        const loc = localMap.get(srv.id);
+        if (!loc) return srv;
+        const srvT = Date.parse(srv.updatedAt || 0) || 0;
+        const locT = Date.parse(loc.updatedAt || 0) || 0;
+        if (locT > srvT) {
+          console.info('[hydrate] локальная версия свежее — оставляем для проекта', srv.name, '(local', loc.updatedAt, '>', srv.updatedAt, ')');
+          // Триггерим повторный push на сервер чтобы синхронизироваться
+          setTimeout(() => { this._withRetry(() => this.client.from('projects').update(this._toDb(loc)).eq('id', srv.id), 'rehydrate-resync'); }, 500);
+          return loc;
+        }
+        return srv;
+      });
+      // Локальные проекты которых нет на сервере (tmp_) — оставляем
+      const serverIds = new Set(serverProjects.map(p => p.id));
+      localProjects.forEach(loc => { if (!serverIds.has(loc.id)) merged.push(loc); });
+    } catch (e) { console.warn('hydrate merge', e); merged = serverProjects; }
     const cache = {
       version: 1,
-      projects: (projects || []).map(r => this._fromDb(r)),
+      projects: merged,
       brand,
       people
     };
@@ -14444,6 +14469,22 @@ function storyboardSave(immediate = false) {
 }
 // Если юзер закрывает модалку — флушим сразу, чтобы не потерять изменения
 window.addEventListener('beforeunload', () => { if (_sbSaveTimer) storyboardSave(true); });
+
+// ГЛОБАЛЬНЫЙ beforeunload — флашит ВСЕ дебаунс-таймеры, чтобы при обновлении страницы (Cmd+R)
+// несохранённые правки сметы/вызывного/брифа/тайминга/ППМ/шутинга/рапорта не терялись.
+window.addEventListener('beforeunload', () => {
+  try {
+    if (typeof _estimateSaveTimer !== 'undefined' && _estimateSaveTimer) { clearTimeout(_estimateSaveTimer); _estimateSaveTimer = null; if (typeof saveEstimateNow === 'function') saveEstimateNow(); }
+    if (typeof _csSaveTimer !== 'undefined' && _csSaveTimer) { clearTimeout(_csSaveTimer); _csSaveTimer = null; if (typeof saveCsNow === 'function') saveCsNow(); }
+    if (typeof _briefSaveTimer !== 'undefined' && _briefSaveTimer) { clearTimeout(_briefSaveTimer); _briefSaveTimer = null; if (typeof saveBriefNow === 'function') saveBriefNow(); }
+    if (typeof _timingSaveTimer !== 'undefined' && _timingSaveTimer) { clearTimeout(_timingSaveTimer); _timingSaveTimer = null; if (typeof saveTimingNow === 'function') saveTimingNow(); }
+    if (typeof _ppmSaveTimer !== 'undefined' && _ppmSaveTimer) { clearTimeout(_ppmSaveTimer); _ppmSaveTimer = null; if (typeof savePpmNow === 'function') savePpmNow(); }
+    if (typeof _spSaveTimer !== 'undefined' && _spSaveTimer) { clearTimeout(_spSaveTimer); _spSaveTimer = null; if (typeof saveShootplanNow === 'function') saveShootplanNow(); }
+    if (typeof _reportSaveTimer !== 'undefined' && _reportSaveTimer) { clearTimeout(_reportSaveTimer); _reportSaveTimer = null; if (typeof saveReportNow === 'function') saveReportNow(); }
+    if (typeof _ratingSaveTimer !== 'undefined' && _ratingSaveTimer) { clearTimeout(_ratingSaveTimer); _ratingSaveTimer = null; if (typeof saveRatingNow === 'function') saveRatingNow(); }
+    if (typeof _tasksSaveTimer !== 'undefined' && _tasksSaveTimer) { clearTimeout(_tasksSaveTimer); _tasksSaveTimer = null; }
+  } catch (e) { /* tolerate any error during unload */ }
+});
 
 function pluralRu(n, one, few, many) {
   const m10 = n % 10, m100 = n % 100;
