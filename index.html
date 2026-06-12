@@ -5403,6 +5403,84 @@ body.dark-theme .task-deadline:focus { background: white; }
   /* Топбар: greeting на отдельной строке */
   .greeting-line { font-size: 13px; }
 
+  /* База локаций — карточка-обложка на дашборде */
+  .locations-base-card {
+    display: flex; align-items: center; gap: 18px;
+    background: linear-gradient(135deg, #1e3a8a, #312e81);
+    color: #fff; border-radius: 16px;
+    padding: 22px 24px;
+    cursor: pointer; transition: transform 0.18s, box-shadow 0.18s;
+    box-shadow: 0 4px 14px rgba(30,58,138,0.25);
+    margin-top: 8px;
+  }
+  .locations-base-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,58,138,0.35); }
+  .lb-cover-ico { font-size: 42px; line-height: 1; }
+  .lb-cover-text { flex: 1; }
+  .lb-cover-title { font-weight: 900; font-size: 20px; letter-spacing: -0.3px; }
+  .lb-cover-sub { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 4px; font-weight: 600; }
+  .lb-cover-arrow { font-size: 24px; opacity: 0.6; }
+
+  /* База локаций — категории внутри модала */
+  .lb-cats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .lb-cat-card {
+    position: relative;
+    background: linear-gradient(145deg, var(--bg-2,#fafafa), var(--bg-3,#f5f5f0));
+    border: 1px solid var(--line,#ececec);
+    border-radius: 12px;
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    display: flex; flex-direction: column; gap: 6px;
+    min-height: 100px;
+  }
+  body.dark-mode .lb-cat-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border-color: rgba(255,255,255,0.08);
+  }
+  .lb-cat-card:hover { transform: translateY(-2px); border-color: var(--brand-red,#6b1d1f); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+  .lb-cat-card-ico { font-size: 26px; }
+  .lb-cat-card-title { font-weight: 800; font-size: 14px; }
+  .lb-cat-card-count { font-size: 11px; color: var(--muted,#888); font-weight: 600; }
+  .lb-cat-card-del {
+    position: absolute; top: 6px; right: 6px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: transparent; border: none; color: var(--muted,#aaa);
+    font-size: 13px; cursor: pointer; opacity: 0; transition: opacity 0.15s;
+  }
+  .lb-cat-card:hover .lb-cat-card-del { opacity: 1; }
+  .lb-cat-card-del:hover { color: var(--brand-red,#6b1d1f); }
+  .lb-cat-card.add { border: 1.5px dashed var(--line-2,#d0d0d0); justify-content: center; align-items: center; color: var(--muted,#888); text-align: center; }
+  .lb-cat-card.add:hover { border-color: var(--brand-red,#6b1d1f); color: var(--brand-red,#6b1d1f); transform: translateY(-1px); }
+
+  /* Список локаций внутри категории */
+  .lb-loc-list { display: flex; flex-direction: column; gap: 10px; }
+  .lb-loc-item {
+    background: var(--bg-2,#fafafa);
+    border: 1px solid var(--line,#ececec);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+  body.dark-mode .lb-loc-item { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+  .lb-loc-name { font-weight: 800; font-size: 15px; margin-bottom: 4px; }
+  .lb-loc-meta { font-size: 11.5px; color: var(--muted,#888); line-height: 1.5; }
+  .lb-loc-meta a { color: var(--brand-red,#6b1d1f); text-decoration: underline; }
+  .lb-loc-meta .price { color: #0a8a3a; font-weight: 800; font-family: 'Montserrat', monospace; }
+  .lb-loc-actions { display: flex; gap: 6px; align-items: center; }
+  .lb-loc-edit, .lb-loc-del {
+    background: none; border: 1px solid var(--line-2,#e5e5e5); padding: 6px 10px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; color: var(--text);
+  }
+  .lb-loc-edit:hover { border-color: var(--brand-red,#6b1d1f); color: var(--brand-red,#6b1d1f); }
+  .lb-loc-del:hover { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
   /* Жизненный трекер — премиум-дизайн с градиентами */
   .life-tracker-grid {
     display: grid !important;
@@ -6447,6 +6525,19 @@ body.dark-theme .task-deadline:focus { background: white; }
       <div id="lifeTrackerSection" style="display:none;">
         <div class="section-title">Дневник Табриза <span class="pill">мини-трекер — клик чтобы открыть</span></div>
         <div class="life-tracker-grid" id="lifeTrackerGrid"></div>
+      </div>
+
+      <!-- БАЗА ЛОКАЦИЙ (только для продюсера) -->
+      <div id="locationsBaseSection" style="display:none;">
+        <div class="section-title">🏛 База локаций <span class="pill" id="locations-count-pill">0</span></div>
+        <div class="locations-base-card" onclick="openLocationsBase()">
+          <div class="lb-cover-ico">📍</div>
+          <div class="lb-cover-text">
+            <div class="lb-cover-title">База локаций</div>
+            <div class="lb-cover-sub" id="lb-cover-sub">Офисы, павильоны, дома, лофты — клик чтобы открыть</div>
+          </div>
+          <div class="lb-cover-arrow">→</div>
+        </div>
       </div>
 
       <!-- PERSONAL BRAND HEALTH (старый блок — оставлен как модал внутри трекера) -->
@@ -8042,6 +8133,97 @@ body.dark-theme .task-deadline:focus { background: white; }
   </div>
 </div>
 
+<!-- БАЗА ЛОКАЦИЙ — модал с категориями и списком -->
+<div class="modal-overlay" id="m-locations-base">
+  <div class="doc-overlay" style="width: 920px; max-width: 96vw;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">🏛</div>
+        <div>
+          <div class="doc-header-title" id="lb-title">База локаций</div>
+          <div class="doc-header-subtitle" id="lb-sub">Все локации с которыми работали</div>
+        </div>
+      </div>
+      <div class="doc-actions-h">
+        <button class="btn btn-secondary" id="lb-back-btn" style="display:none;" onclick="lbBackToCategories()">← Категории</button>
+        <button class="modal-close-x" onclick="closeAll()">×</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div id="lb-content" style="padding:18px 22px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Редактирование одной локации -->
+<div class="modal-overlay" id="m-location-edit" style="z-index: 9500;">
+  <div class="doc-overlay" style="width: 560px;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">📍</div>
+        <div>
+          <div class="doc-header-title" id="le-title">Локация</div>
+          <div class="doc-header-subtitle">Где снимали и сколько стоит</div>
+        </div>
+      </div>
+      <button class="doc-close" onclick="closeLocationEdit()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="doc-content" style="display:flex;flex-direction:column;gap:10px;padding:18px 22px;">
+        <div>
+          <label class="form-label">Название локации *</label>
+          <input class="form-input" id="le-name" placeholder="AG Loft, Особняк Хлудова, ...">
+        </div>
+        <div>
+          <label class="form-label">Ссылка (Яндекс/Google Maps, сайт)</label>
+          <input class="form-input" id="le-link" type="url" placeholder="https://yandex.ru/maps/...">
+        </div>
+        <div>
+          <label class="form-label">Адрес</label>
+          <input class="form-input" id="le-address" placeholder="Улица, дом, корпус, этаж">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label class="form-label">Контактное лицо</label>
+            <input class="form-input" id="le-contact-name" placeholder="ФИО">
+          </div>
+          <div>
+            <label class="form-label">Телефон</label>
+            <input class="form-input" id="le-contact-phone" placeholder="+7 ___ ___ __ __">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label class="form-label">Telegram</label>
+            <input class="form-input" id="le-contact-tg" placeholder="@username">
+          </div>
+          <div>
+            <label class="form-label">Сумма (₽)</label>
+            <input class="form-input" id="le-price" type="number" min="0" placeholder="50000" style="font-family:'Montserrat',monospace;font-weight:700;">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Проекты где снимали (через запятую)</label>
+          <input class="form-input" id="le-projects" placeholder="ZVONKIY, SILA, ..." list="dl-le-projects">
+          <datalist id="dl-le-projects"></datalist>
+        </div>
+        <div>
+          <label class="form-label">Заметка</label>
+          <textarea class="form-textarea" id="le-notes" rows="2" placeholder="Особенности, что важно помнить, скидки, договорённости..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="le-info">Сохранится глобально</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-secondary btn" id="le-delete-btn" style="display:none;color:var(--brand-red);" onclick="deleteLocationFromForm()">🗑 Удалить</button>
+        <button class="btn-secondary btn" onclick="closeLocationEdit()">Отмена</button>
+        <button class="btn" onclick="saveLocation()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Жизненный трекер: одна универсальная карточка с переключателями -->
 <div class="modal-overlay" id="m-life-tracker">
   <div class="doc-overlay" style="width: 720px; max-width: 95vw;">
@@ -8962,6 +9144,8 @@ function openDoc(type) {
     'add-client': 'm-add-client',
     'brand-kit': 'm-brand-kit',
     'life-tracker': 'm-life-tracker',
+    'locations-base': 'm-locations-base',
+    'location-edit': 'm-location-edit',
     placeholder: 'm-placeholder'
   };
   const modalId = map[type] || 'm-new';
@@ -13342,6 +13526,27 @@ function openFactPopup(event, sid, rid) {
   const cellEl = event && event.currentTarget;
   const pop = document.getElementById('est-fact-popup');
   pop.classList.add('active');
+  // Enter в любом инпуте попапа = закрыть (как OK), Esc = тоже закрыть
+  if (!pop._enterWired) {
+    pop._enterWired = true;
+    pop.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        // Сначала flush save через blur — чтобы oninput успел зафиксировать
+        if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+          document.activeElement.blur();
+        }
+        // Принудительно сохраняем без дебаунса
+        clearTimeout(_estimateSaveTimer);
+        _estimateSaveTimer = null;
+        if (typeof saveEstimateNow === 'function') saveEstimateNow();
+        closeFactPopup();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeFactPopup();
+      }
+    });
+  }
   // Расчёт позиции (после того как display:block)
   requestAnimationFrame(() => {
     const popRect = pop.getBoundingClientRect();
@@ -13443,7 +13648,10 @@ function onFactEntryInput(e) {
   sub.innerHTML = `План <b>${fmtRub(total)}</b> · Факт <b>${fmtRub(fact)}</b>${deltaText}`;
   tot.innerHTML = `${row.entries.length} ${row.entries.length === 1 ? 'расход' : (row.entries.length < 5 ? 'расхода' : 'расходов')} · Σ <b>${fmtRub(fact)}</b>`;
   // Обновляем ячейку «Факт» и Δ в самой смете
-  const rowEl = document.querySelector(`.est-row-edit[data-row-id="${row.id}"]`);
+  const sidForRow = _factPopRow ? _factPopRow.sid : null;
+  const rowEl = sidForRow
+    ? document.querySelector(`.est-row-edit[data-row-id="${row.id}"][data-sid="${sidForRow}"]`)
+    : document.querySelector(`.est-row-edit[data-row-id="${row.id}"]`);
   if (rowEl) refreshRowFactDelta(rowEl, row);
   // Debounced save
   clearTimeout(_estimateSaveTimer);
@@ -13480,7 +13688,10 @@ function deleteFactEntry(entryId) {
   row.entries = row.entries.filter(e => e.id !== entryId);
   renderFactPopup();
   saveEstimateNow();
-  const rowEl = document.querySelector(`.est-row-edit[data-row-id="${row.id}"]`);
+  const sidForRow = _factPopRow ? _factPopRow.sid : null;
+  const rowEl = sidForRow
+    ? document.querySelector(`.est-row-edit[data-row-id="${row.id}"][data-sid="${sidForRow}"]`)
+    : document.querySelector(`.est-row-edit[data-row-id="${row.id}"]`);
   if (rowEl) refreshRowFactDelta(rowEl, row);
 }
 
