@@ -2904,6 +2904,72 @@ body.has-reel .theme-toggle { right: 158px; }
   opacity: 0.85;
   margin-bottom: 6px;
 }
+/* Карточка ПЛАН → ФАКТ = РАЗНИЦА */
+.plan-fact-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-top: 14px;
+}
+body:not(.dark-mode) .plan-fact-card {
+  background: linear-gradient(135deg, #ffffff, #fafaf8);
+  border: 1px solid var(--line, #ececec);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.pfc-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+}
+.pfc-block {
+  text-align: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--bg-3, #fafafa);
+}
+body.dark-mode .pfc-block { background: rgba(255,255,255,0.04); }
+.pfc-block.plan { border-left: 3px solid #6b7280; }
+.pfc-block.fact { border-left: 3px solid #f59e0b; }
+.pfc-block.delta { border-left: 3px solid #6b7280; }
+.pfc-block.delta.over { border-left-color: #d63838; background: rgba(214,56,56,0.05); }
+.pfc-block.delta.save { border-left-color: #059669; background: rgba(5,150,105,0.05); }
+.pfc-lbl {
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--muted, #888);
+  margin-bottom: 6px;
+}
+.pfc-val {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.pfc-block.fact .pfc-val { color: #f59e0b; }
+.pfc-block.delta.over .pfc-val { color: #d63838; }
+.pfc-block.delta.save .pfc-val { color: #059669; }
+.pfc-sub {
+  font-size: 11px;
+  color: var(--muted, #888);
+  margin-top: 4px;
+  font-weight: 600;
+}
+.pfc-arrow {
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--muted, #aaa);
+  opacity: 0.6;
+}
+@media (max-width: 768px) {
+  .pfc-row { grid-template-columns: 1fr; gap: 8px; }
+  .pfc-arrow { display: none; }
+}
+
 .project-total-card .ptc-amount {
   font-family: 'Anton', sans-serif;
   font-size: 56px;
@@ -7266,6 +7332,29 @@ body.dark-theme .task-deadline:focus { background: white; }
           <div class="ptc-cell">
             <div class="lbl">Заполнено позиций</div>
             <div class="val" id="ptc-rows-count">0 / 0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Большая карточка ИТОГО: ПЛАН vs ФАКТ vs Δ -->
+      <div class="plan-fact-card" id="plan-fact-card">
+        <div class="pfc-row">
+          <div class="pfc-block plan">
+            <div class="pfc-lbl">📋 ПЛАН</div>
+            <div class="pfc-val" id="pfc-plan">— ₽</div>
+            <div class="pfc-sub" id="pfc-plan-sub">всё что заложено</div>
+          </div>
+          <div class="pfc-arrow">→</div>
+          <div class="pfc-block fact">
+            <div class="pfc-lbl">💸 ФАКТ</div>
+            <div class="pfc-val" id="pfc-fact">— ₽</div>
+            <div class="pfc-sub" id="pfc-fact-sub">сколько реально потрачено</div>
+          </div>
+          <div class="pfc-arrow">=</div>
+          <div class="pfc-block delta" id="pfc-delta-block">
+            <div class="pfc-lbl" id="pfc-delta-lbl">📊 РАЗНИЦА</div>
+            <div class="pfc-val" id="pfc-delta">— ₽</div>
+            <div class="pfc-sub" id="pfc-delta-sub">ожидание</div>
           </div>
         </div>
       </div>
@@ -14007,6 +14096,48 @@ function updateEstimateTotals(project, est) {
     all.forEach(r => { if (Number(r.price) > 0) filledRows++; });
   });
   document.getElementById('ptc-rows-count').textContent = filledRows + ' / ' + totalRows;
+
+  // === КРАСИВАЯ КАРТОЧКА ПЛАН → ФАКТ = РАЗНИЦА ===
+  const pfcPlan = document.getElementById('pfc-plan');
+  const pfcFact = document.getElementById('pfc-fact');
+  const pfcDelta = document.getElementById('pfc-delta');
+  const pfcDeltaBlock = document.getElementById('pfc-delta-block');
+  const pfcDeltaLbl = document.getElementById('pfc-delta-lbl');
+  const pfcDeltaSub = document.getElementById('pfc-delta-sub');
+  const pfcFactSub = document.getElementById('pfc-fact-sub');
+  if (pfcPlan) {
+    pfcPlan.textContent = fmtRub(sub);
+    pfcFact.textContent = fmtRub(factTotal);
+    // Считаем количество расходов
+    let entriesCount = 0;
+    Object.values(est.sections || {}).forEach(sec => {
+      [...(sec.rows || []), ...(sec.customRows || [])].forEach(r => { entriesCount += (r.entries || []).length; });
+    });
+    pfcFactSub.textContent = entriesCount === 0 ? 'пока расходов нет' : `${entriesCount} ${entriesCount === 1 ? 'запись' : (entriesCount < 5 ? 'записи' : 'записей')}`;
+    const delta = factTotal - sub;
+    pfcDeltaBlock.classList.remove('over', 'save');
+    if (factTotal === 0) {
+      pfcDelta.textContent = '— ₽';
+      pfcDeltaLbl.textContent = '📊 РАЗНИЦА';
+      pfcDeltaSub.textContent = 'когда внесёшь факт — посчитаю';
+    } else if (delta > 0) {
+      pfcDeltaBlock.classList.add('over');
+      pfcDelta.textContent = '+' + fmtRub(delta);
+      pfcDeltaLbl.textContent = '⚠ ПЕРЕРАСХОД';
+      const pct = sub > 0 ? Math.round(delta / sub * 100) : 0;
+      pfcDeltaSub.textContent = pct > 0 ? `на ${pct}% больше плана` : 'превышение бюджета';
+    } else if (delta < 0) {
+      pfcDeltaBlock.classList.add('save');
+      pfcDelta.textContent = '−' + fmtRub(-delta);
+      pfcDeltaLbl.textContent = '✓ ЭКОНОМИЯ';
+      const pct = sub > 0 ? Math.round(-delta / sub * 100) : 0;
+      pfcDeltaSub.textContent = pct > 0 ? `сэкономлено ${pct}%` : 'в рамках бюджета';
+    } else {
+      pfcDelta.textContent = '0 ₽';
+      pfcDeltaLbl.textContent = '⚖ ВРОВЕНЬ';
+      pfcDeltaSub.textContent = 'факт точно равен плану';
+    }
+  }
 }
 
 function addEstimateRow(sid) {
