@@ -5481,13 +5481,16 @@ body.dark-theme .task-deadline:focus { background: white; }
   .lb-loc-edit:hover { border-color: var(--brand-red,#6b1d1f); color: var(--brand-red,#6b1d1f); }
   .lb-loc-del:hover { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
 
-  /* Жизненный трекер — премиум-дизайн с градиентами */
+  /* Жизненный трекер — горизонтальная сетка во всю ширину */
   .life-tracker-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
-    gap: 14px;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 12px;
     margin-top: 12px;
+    width: 100%;
   }
+  @media (max-width: 1200px) { .life-tracker-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
+  @media (max-width: 768px) { .life-tracker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
   .lt-card {
     position: relative;
     background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
@@ -11590,6 +11593,230 @@ function renderSharePage(d) {
   }
 })();
 
+// ===== БАЗА ЛОКАЦИЙ =====
+const DEFAULT_LOC_CATEGORIES = [
+  { id: 'office',    name: 'Офисы',     icon: '🏢' },
+  { id: 'pavilion',  name: 'Павильоны', icon: '🎬' },
+  { id: 'house',     name: 'Дома',      icon: '🏡' },
+  { id: 'loft',      name: 'Лофты',     icon: '🏭' }
+];
+let _lbCurrentCategoryId = null;
+let _lbEditingLocationId = null;
+
+function _lbAllData() {
+  try {
+    const cached = JSON.parse(localStorage.getItem('zalove_locations_base') || 'null');
+    if (cached && cached.categories) return cached;
+  } catch (_) {}
+  const fromProfile = (DB.profile && DB.profile.data && DB.profile.data.locationsBase) || null;
+  if (fromProfile && fromProfile.categories) return fromProfile;
+  return { categories: [...DEFAULT_LOC_CATEGORIES], items: [] };
+}
+function _lbSave(data) {
+  try { localStorage.setItem('zalove_locations_base', JSON.stringify(data)); } catch (_) {}
+  // Sync в profile.data.locationsBase
+  if (DB.user && DB.client) {
+    clearTimeout(window._lbSyncTimer);
+    window._lbSyncTimer = setTimeout(() => {
+      const cur = (DB.profile && DB.profile.data) || {};
+      const newData = { ...cur, locationsBase: data };
+      DB.client.from('profiles').update({ data: newData }).eq('id', DB.user.id).then(({ error }) => {
+        if (error) console.warn('locationsBase sync', error);
+        else if (DB.profile) DB.profile.data = newData;
+      });
+    }, 1200);
+  }
+}
+function renderLocationsBaseCover() {
+  const section = document.getElementById('locationsBaseSection');
+  if (!section) return;
+  if (DB._isFinancialBlocked && DB._isFinancialBlocked()) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  const data = _lbAllData();
+  const pill = document.getElementById('locations-count-pill');
+  if (pill) pill.textContent = data.items.length + (data.items.length === 1 ? ' локация' : ' лок.');
+  const sub = document.getElementById('lb-cover-sub');
+  if (sub) {
+    const cats = data.categories.length;
+    sub.textContent = `${cats} категорий · ${data.items.length} локаций — клик чтобы открыть`;
+  }
+}
+function openLocationsBase() {
+  _lbCurrentCategoryId = null;
+  closeAll();
+  document.getElementById('m-locations-base').classList.add('active');
+  document.getElementById('lb-back-btn').style.display = 'none';
+  _lbRenderCategories();
+}
+function _lbRenderCategories() {
+  const data = _lbAllData();
+  document.getElementById('lb-title').textContent = 'База локаций';
+  document.getElementById('lb-sub').textContent = 'Выбери категорию или создай новую';
+  document.getElementById('lb-back-btn').style.display = 'none';
+  const content = document.getElementById('lb-content');
+  const cats = data.categories || [];
+  content.innerHTML = `
+    <div class="lb-cats-grid">
+      ${cats.map(c => {
+        const count = (data.items || []).filter(it => it.categoryId === c.id).length;
+        return `
+          <div class="lb-cat-card" onclick="_lbOpenCategory('${c.id}')">
+            <button class="lb-cat-card-del" onclick="event.stopPropagation(); _lbDeleteCategory('${c.id}')" title="Удалить категорию">×</button>
+            <div class="lb-cat-card-ico">${c.icon || '📁'}</div>
+            <div class="lb-cat-card-title">${escapeHtml(c.name)}</div>
+            <div class="lb-cat-card-count">${count} ${count === 1 ? 'локация' : (count < 5 ? 'локации' : 'локаций')}</div>
+          </div>`;
+      }).join('')}
+      <div class="lb-cat-card add" onclick="_lbAddCategory()">
+        <div style="font-size:32px;line-height:1;">＋</div>
+        <div style="font-weight:700;font-size:13px;margin-top:6px;">Своя категория</div>
+      </div>
+    </div>`;
+}
+function _lbOpenCategory(catId) {
+  const data = _lbAllData();
+  const cat = (data.categories || []).find(c => c.id === catId);
+  if (!cat) return;
+  _lbCurrentCategoryId = catId;
+  document.getElementById('lb-title').textContent = `${cat.icon || '📁'} ${cat.name}`;
+  document.getElementById('lb-sub').textContent = 'Локации в этой категории';
+  document.getElementById('lb-back-btn').style.display = '';
+  const items = (data.items || []).filter(it => it.categoryId === catId);
+  const content = document.getElementById('lb-content');
+  content.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+      <button class="btn" onclick="_lbOpenLocationEdit(null)">＋ Добавить локацию</button>
+    </div>
+    <div class="lb-loc-list">
+      ${items.length === 0 ? '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Пока пусто. Нажми «＋ Добавить локацию» выше.</div>' :
+        items.map(it => _lbRenderLocItem(it)).join('')}
+    </div>`;
+}
+function _lbRenderLocItem(it) {
+  const contactBits = [];
+  if (it.contactName) contactBits.push(escapeHtml(it.contactName));
+  if (it.contactPhone) contactBits.push(escapeHtml(it.contactPhone));
+  if (it.contactTg) {
+    const handle = it.contactTg.replace(/^@/, '');
+    contactBits.push(`<a href="https://t.me/${escapeHtml(handle)}" target="_blank">@${escapeHtml(handle)}</a>`);
+  }
+  return `
+    <div class="lb-loc-item">
+      <div>
+        <div class="lb-loc-name">${escapeHtml(it.name || 'Без названия')}</div>
+        <div class="lb-loc-meta">
+          ${it.address ? `📍 ${escapeHtml(it.address)}<br>` : ''}
+          ${it.link ? `🔗 <a href="${escapeHtml(it.link)}" target="_blank" rel="noopener">${escapeHtml(it.link.replace(/^https?:\/\//, '').slice(0, 50))}</a><br>` : ''}
+          ${contactBits.length ? `👤 ${contactBits.join(' · ')}<br>` : ''}
+          ${it.price ? `💰 <span class="price">${Number(it.price).toLocaleString('ru-RU')} ₽</span>` : ''}
+          ${it.projects ? `<br>🎬 ${escapeHtml(it.projects)}` : ''}
+          ${it.notes ? `<br>📝 ${escapeHtml(it.notes)}` : ''}
+        </div>
+      </div>
+      <div class="lb-loc-actions">
+        <button class="lb-loc-edit" onclick="_lbOpenLocationEdit('${it.id}')">✎</button>
+        <button class="lb-loc-del" onclick="_lbDeleteLocation('${it.id}')">×</button>
+      </div>
+    </div>`;
+}
+function lbBackToCategories() { _lbCurrentCategoryId = null; _lbRenderCategories(); }
+function _lbAddCategory() {
+  const name = prompt('Название категории (например: «Природа», «Кафе», «Студии»):');
+  if (!name) return;
+  const icon = prompt('Иконка-эмодзи (одна, например: 🌳 ☕ 🎥):', '📁') || '📁';
+  const data = _lbAllData();
+  const id = 'cat_' + Date.now().toString(36);
+  data.categories.push({ id, name: name.trim(), icon: icon.trim().slice(0, 4) });
+  _lbSave(data);
+  renderLocationsBaseCover();
+  _lbRenderCategories();
+}
+function _lbDeleteCategory(catId) {
+  const data = _lbAllData();
+  const cat = data.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const itemsInCat = data.items.filter(it => it.categoryId === catId).length;
+  const msg = itemsInCat > 0
+    ? `Удалить категорию «${cat.name}»? Внутри ${itemsInCat} локаций — они тоже удалятся.`
+    : `Удалить категорию «${cat.name}»?`;
+  if (!confirm(msg)) return;
+  data.categories = data.categories.filter(c => c.id !== catId);
+  data.items = data.items.filter(it => it.categoryId !== catId);
+  _lbSave(data);
+  renderLocationsBaseCover();
+  _lbRenderCategories();
+}
+function _lbOpenLocationEdit(itemId) {
+  _lbEditingLocationId = itemId;
+  const data = _lbAllData();
+  const it = itemId ? data.items.find(x => x.id === itemId) : null;
+  document.getElementById('le-title').textContent = it ? 'Редактировать локацию' : 'Новая локация';
+  document.getElementById('le-name').value = it?.name || '';
+  document.getElementById('le-link').value = it?.link || '';
+  document.getElementById('le-address').value = it?.address || '';
+  document.getElementById('le-contact-name').value = it?.contactName || '';
+  document.getElementById('le-contact-phone').value = it?.contactPhone || '';
+  document.getElementById('le-contact-tg').value = it?.contactTg || '';
+  document.getElementById('le-price').value = it?.price || '';
+  document.getElementById('le-projects').value = it?.projects || '';
+  document.getElementById('le-notes').value = it?.notes || '';
+  document.getElementById('le-delete-btn').style.display = it ? 'inline-flex' : 'none';
+  document.getElementById('le-info').textContent = it ? ('ID: ' + itemId) : 'Сохранится глобально';
+  // datalist проектов из текущего workspace
+  const dl = document.getElementById('dl-le-projects');
+  if (dl) dl.innerHTML = (DB.getProjects() || []).map(p => `<option value="${escapeHtml(p.name)}"></option>`).join('');
+  document.getElementById('m-location-edit').classList.add('active');
+  setTimeout(() => document.getElementById('le-name').focus(), 100);
+}
+function closeLocationEdit() {
+  document.getElementById('m-location-edit').classList.remove('active');
+  _lbEditingLocationId = null;
+}
+function saveLocation() {
+  const name = document.getElementById('le-name').value.trim();
+  if (!name) { toast('Укажи название локации', 'error'); document.getElementById('le-name').focus(); return; }
+  const data = _lbAllData();
+  const item = {
+    id: _lbEditingLocationId || 'loc_' + Date.now().toString(36),
+    categoryId: _lbCurrentCategoryId || 'office',
+    name,
+    link: document.getElementById('le-link').value.trim(),
+    address: document.getElementById('le-address').value.trim(),
+    contactName: document.getElementById('le-contact-name').value.trim(),
+    contactPhone: document.getElementById('le-contact-phone').value.trim(),
+    contactTg: document.getElementById('le-contact-tg').value.trim(),
+    price: parseInt(document.getElementById('le-price').value) || 0,
+    projects: document.getElementById('le-projects').value.trim(),
+    notes: document.getElementById('le-notes').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+  if (_lbEditingLocationId) {
+    const idx = data.items.findIndex(x => x.id === _lbEditingLocationId);
+    if (idx >= 0) data.items[idx] = { ...data.items[idx], ...item };
+  } else {
+    data.items.push(item);
+  }
+  _lbSave(data);
+  closeLocationEdit();
+  renderLocationsBaseCover();
+  if (_lbCurrentCategoryId) _lbOpenCategory(_lbCurrentCategoryId);
+  toast(_lbEditingLocationId ? 'Локация обновлена' : 'Локация добавлена 📍', 'success');
+}
+function _lbDeleteLocation(itemId) {
+  if (!confirm('Удалить локацию?')) return;
+  const data = _lbAllData();
+  data.items = data.items.filter(it => it.id !== itemId);
+  _lbSave(data);
+  renderLocationsBaseCover();
+  if (_lbCurrentCategoryId) _lbOpenCategory(_lbCurrentCategoryId);
+}
+function deleteLocationFromForm() {
+  if (!_lbEditingLocationId) return;
+  const id = _lbEditingLocationId;
+  closeLocationEdit();
+  _lbDeleteLocation(id);
+}
+
 // ===== ЖИЗНЕННЫЙ ТРЕКЕР ТАБРИЗА =====
 // Карточки: спорт / питание / финансы / сон / обучение / здоровье / личный бренд.
 // Данные хранятся в profile.data.tracker[trackerKey][YYYY-MM-DD] = { value: 'yes'|'no'|'skip', note: '' }
@@ -11686,19 +11913,21 @@ function openLifeTracker(key) {
     document.getElementById('lt-sub').textContent = 'Активность в соцсетях';
     const content = document.getElementById('lt-content');
     content.innerHTML = '<div id="ltBrandHost" style="margin-top:4px;"></div>';
-    // Скопируем рендер brand-grid внутрь
+    // ПЕРЕМЕЩАЕМ (не клонируем) оригинальный brandGrid внутрь модала — кнопки и шкалы продолжат работать
     const brandHost = document.getElementById('ltBrandHost');
     const original = document.getElementById('brandGrid');
     if (original) {
-      // Клонируем чтобы оригинал не потерять — но проще сделать render туда же
-      brandHost.innerHTML = original.outerHTML;
+      // Запоминаем родителя чтобы вернуть назад при закрытии
+      window._brandGridOriginalParent = original.parentNode;
+      window._brandGridOriginalNext = original.nextSibling;
+      brandHost.appendChild(original);
     } else {
-      brandHost.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center;">Личный бренд не настроен. Платформы редактируются в коде.</div>';
+      brandHost.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center;">Личный бренд не настроен.</div>';
     }
     document.getElementById('m-life-tracker').classList.add('active');
-    if (typeof renderPersonalBrand === 'function') {
-      // если есть рендер бренда — вызовем
-      try { renderPersonalBrand(); } catch(_) {}
+    // Перерисуем шкалы заново (timestamp обновился)
+    if (typeof renderBrandHealth === 'function') {
+      try { renderBrandHealth(); } catch(e) { console.warn('renderBrandHealth', e); }
     }
     return;
   }
@@ -26410,6 +26639,8 @@ function bootAfterAuth() {
       if (brand) brand.style.display = 'none';
       const tracker = document.getElementById('lifeTrackerSection');
       if (tracker) tracker.style.display = 'none';
+      const lb = document.getElementById('locationsBaseSection');
+      if (lb) lb.style.display = 'none';
       // Активность команды — тоже не для ассистентов
       const activity = document.getElementById('teamActivitySection');
       if (activity) activity.style.display = 'none';
@@ -26436,6 +26667,13 @@ function bootAfterAuth() {
       }
     } catch (_) {}
     if (typeof renderLifeTracker === 'function') renderLifeTracker();
+    // База локаций
+    try {
+      if (DB.profile.data && DB.profile.data.locationsBase) {
+        localStorage.setItem('zalove_locations_base', JSON.stringify(DB.profile.data.locationsBase));
+      }
+    } catch (_) {}
+    if (typeof renderLocationsBaseCover === 'function') renderLocationsBaseCover();
   }
 
   renderProjects();
@@ -26456,6 +26694,16 @@ function bootAfterAuth() {
 bootApp();
 function openNewDoc() { closeAll(); document.getElementById('m-new').classList.add('active'); }
 function closeAll() {
+  // Возвращаем brandGrid в его оригинальное место (если он был перемещён в модал «Личный бренд» из трекера)
+  try {
+    const brandGrid = document.getElementById('brandGrid');
+    const origParent = window._brandGridOriginalParent;
+    if (brandGrid && origParent && brandGrid.parentNode !== origParent) {
+      origParent.insertBefore(brandGrid, window._brandGridOriginalNext || null);
+      window._brandGridOriginalParent = null;
+      window._brandGridOriginalNext = null;
+    }
+  } catch (_) {}
   // Сохранить смету немедленно, если есть несохранённые правки
   if (_estimateSaveTimer) {
     clearTimeout(_estimateSaveTimer);
