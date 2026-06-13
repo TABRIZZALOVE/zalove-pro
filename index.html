@@ -6599,14 +6599,7 @@ body.dark-theme .task-deadline:focus { background: white; }
       <!-- БАЗА ЛОКАЦИЙ (только для продюсера) -->
       <div id="locationsBaseSection" style="display:none;">
         <div class="section-title">🏛 База локаций <span class="pill" id="locations-count-pill">0</span></div>
-        <div class="locations-base-card" onclick="openLocationsBase()">
-          <div class="lb-cover-ico">📍</div>
-          <div class="lb-cover-text">
-            <div class="lb-cover-title">База локаций</div>
-            <div class="lb-cover-sub" id="lb-cover-sub">Офисы, павильоны, дома, лофты — клик чтобы открыть</div>
-          </div>
-          <div class="lb-cover-arrow">→</div>
-        </div>
+        <div id="locationsBaseInlineGrid"></div>
       </div>
 
       <!-- PERSONAL BRAND HEALTH (старый блок — оставлен как модал внутри трекера) -->
@@ -11724,11 +11717,55 @@ function renderLocationsBaseCover() {
   const data = _lbAllData();
   const pill = document.getElementById('locations-count-pill');
   if (pill) pill.textContent = data.items.length + (data.items.length === 1 ? ' локация' : ' лок.');
-  const sub = document.getElementById('lb-cover-sub');
-  if (sub) {
-    const cats = data.categories.length;
-    sub.textContent = `${cats} категорий · ${data.items.length} локаций — клик чтобы открыть`;
-  }
+  // Рисуем категории как сетку прямо на дашборде (стиль как у Дневника)
+  const grid = document.getElementById('locationsBaseInlineGrid');
+  if (!grid) return;
+  grid.style.cssText = 'display:grid !important;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;width:100%;margin-top:12px;';
+  const CAT_COLORS = {
+    office:   { from: '#1e3a8a', to: '#1e1b4b', accent: '#3b82f6' },
+    pavilion: { from: '#7c2d12', to: '#422006', accent: '#f59e0b' },
+    house:    { from: '#14532d', to: '#052e16', accent: '#22c55e' },
+    loft:     { from: '#581c87', to: '#3b0764', accent: '#a855f7' }
+  };
+  const fallbackColors = [
+    { from: '#0c4a6e', to: '#082f49', accent: '#0ea5e9' },
+    { from: '#831843', to: '#500724', accent: '#ec4899' },
+    { from: '#365314', to: '#1a2e05', accent: '#84cc16' },
+    { from: '#7c2d12', to: '#431407', accent: '#f97316' },
+    { from: '#134e4a', to: '#042f2e', accent: '#14b8a6' },
+    { from: '#713f12', to: '#422006', accent: '#eab308' }
+  ];
+  const cats = data.categories || [];
+  grid.innerHTML = cats.map((c, i) => {
+    const col = CAT_COLORS[c.id] || fallbackColors[i % fallbackColors.length];
+    const count = (data.items || []).filter(it => it.categoryId === c.id).length;
+    const countLabel = count === 0 ? 'пусто' : `${count} ${count === 1 ? 'локация' : (count < 5 ? 'локации' : 'локаций')}`;
+    return `
+      <div onclick="openLocationsBase('${c.id}')" style="position:relative;background:linear-gradient(145deg,${col.from},${col.to});border-radius:14px;padding:16px 14px 14px;cursor:pointer;color:#fff;min-height:140px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 12px rgba(0,0,0,0.25);transition:transform .15s,box-shadow .15s;overflow:hidden;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px rgba(0,0,0,0.4)';" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.25)';">
+        <button onclick="event.stopPropagation();_lbDeleteCategoryInline('${c.id}')" title="Удалить категорию" style="position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:13px;line-height:1;cursor:pointer;opacity:0;transition:opacity .15s;z-index:3;" onmouseover="this.style.opacity='1';" onmouseout="this.style.opacity='0';">×</button>
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:${col.accent};box-shadow:0 4px 10px rgba(0,0,0,0.25);font-size:22px;line-height:1;">${c.icon || '📁'}</div>
+        <div>
+          <div style="font-weight:900;font-size:14px;letter-spacing:-0.2px;line-height:1.15;">${escapeHtml(c.name)}</div>
+          <div style="font-size:10.5px;color:rgba(255,255,255,0.65);margin-top:4px;font-weight:700;letter-spacing:0.2px;">${countLabel}</div>
+        </div>
+        <div style="position:absolute;top:-25px;right:-25px;width:90px;height:90px;border-radius:50%;background:${col.accent};opacity:0.18;filter:blur(8px);"></div>
+      </div>`;
+  }).join('') + `
+    <div onclick="_lbAddCategoryInline()" style="position:relative;border:2px dashed rgba(255,255,255,0.18);border-radius:14px;padding:16px 14px;cursor:pointer;color:rgba(255,255,255,0.55);min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.02);transition:all .15s;" onmouseover="this.style.borderColor='#ec4899';this.style.color='#ec4899';this.style.background='rgba(236,72,153,0.06)';this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.18)';this.style.color='rgba(255,255,255,0.55)';this.style.background='rgba(255,255,255,0.02)';this.style.transform='';">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,0.06);font-size:24px;font-weight:300;line-height:1;">＋</div>
+      <div style="font-weight:800;font-size:12px;letter-spacing:0.3px;text-align:center;">Своя<br>категория</div>
+    </div>`;
+}
+
+// Inline-обертки чтобы клик на карточке открыл модал ПРЯМО на этой категории
+function _lbAddCategoryInline() {
+  _lbAddCategory();
+  // обновим inline-сетку
+  setTimeout(renderLocationsBaseCover, 100);
+}
+function _lbDeleteCategoryInline(catId) {
+  _lbDeleteCategory(catId);
+  renderLocationsBaseCover();
 }
 function openLocationsBase() {
   _lbCurrentCategoryId = null;
@@ -12061,63 +12098,153 @@ function openLifeTracker(key) {
     return;
   }
   closeAll();
+  // Цветовая палитра как в обложках карточек
+  const CARD_COLORS = {
+    sport:   { from: '#7f1d1d', to: '#450a0a', accent: '#ef4444' },
+    food:    { from: '#14532d', to: '#052e16', accent: '#22c55e' },
+    sleep:   { from: '#4c1d95', to: '#2e1065', accent: '#8b5cf6' },
+    finance: { from: '#713f12', to: '#422006', accent: '#eab308' },
+    learn:   { from: '#1e3a8a', to: '#1e1b4b', accent: '#3b82f6' },
+    health:  { from: '#134e4a', to: '#042f2e', accent: '#14b8a6' },
+    brand:   { from: '#831843', to: '#500724', accent: '#ec4899' }
+  };
+  const col = CARD_COLORS[card.key] || { from: '#374151', to: '#111827', accent: '#9ca3af' };
+  // Скрываем стандартный header модала чтобы заменить на цветную шапку
+  const header = document.querySelector('#m-life-tracker .doc-header');
+  if (header) header.style.display = 'none';
   document.getElementById('lt-icon').textContent = card.icon;
   document.getElementById('lt-title').textContent = card.title;
   document.getElementById('lt-sub').textContent = card.prompt;
   const today = _ltTodayStr();
   const all = _ltAllData();
-  // Берём последние 7 дней
+  // Берём последние 14 дней
   const days = [];
   const d = new Date();
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 14; i++) {
     const ds = d.toISOString().slice(0, 10);
     days.push({ ds, entry: (all[card.key] || {})[ds] || null });
     d.setDate(d.getDate() - 1);
   }
+  const streak = _ltStreak(card.key);
   const content = document.getElementById('lt-content');
+  content.style.padding = '0';
   content.innerHTML = `
-    <div style="background:var(--bg-3);border-radius:10px;padding:14px;margin-bottom:14px;">
-      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Сегодня · ${formatDateRu ? formatDateRu(today) : today}</div>
-      ${_ltRenderInput(card, today, (all[card.key] || {})[today])}
+    <!-- Премиум-шапка с градиентом -->
+    <div style="background:linear-gradient(135deg,${col.from},${col.to});color:#fff;padding:24px 26px 22px;position:relative;overflow:hidden;">
+      <button onclick="closeAll()" style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.35);border:none;color:#fff;font-size:18px;line-height:1;cursor:pointer;z-index:3;">×</button>
+      <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:${col.accent};opacity:0.2;filter:blur(10px);"></div>
+      <div style="display:flex;align-items:center;gap:14px;position:relative;z-index:2;">
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:${col.accent};font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,0.3);">${card.icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;font-weight:800;">мини-трекер</div>
+          <div style="font-size:28px;font-weight:900;letter-spacing:-0.5px;line-height:1.05;margin-top:2px;">${card.title}</div>
+          <div style="font-size:12px;opacity:0.8;font-weight:600;margin-top:4px;">${card.prompt}</div>
+        </div>
+        ${streak >= 2 ? `<div style="background:linear-gradient(135deg,#ff6b35,#f7931e);padding:8px 14px;border-radius:14px;text-align:center;box-shadow:0 4px 12px rgba(255,107,53,0.4);">
+          <div style="font-size:9px;letter-spacing:1px;font-weight:800;opacity:0.9;">СЕРИЯ</div>
+          <div style="font-size:20px;font-weight:900;line-height:1;margin-top:2px;">🔥 ${streak}</div>
+        </div>` : ''}
+      </div>
     </div>
-    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Последние 7 дней</div>
-    <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;">
-      ${days.map(d => _ltRenderDayRow(card, d.ds, d.entry)).join('')}
+
+    <!-- Карточка СЕГОДНЯ -->
+    <div style="padding:20px 22px 14px;">
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:${col.accent};opacity:0.1;filter:blur(8px);"></div>
+        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:${col.accent};font-weight:800;margin-bottom:12px;">⚡ сегодня · ${formatDateRu ? formatDateRu(today) : today}</div>
+        ${_ltRenderInput(card, today, (all[card.key] || {})[today], col)}
+      </div>
+    </div>
+
+    <!-- История 14 дней — карточная сетка -->
+    <div style="padding:8px 22px 22px;">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:10px;">📅 последние 14 дней</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">
+        ${days.reverse().map(d => _ltRenderDayCell(card, d.ds, d.entry, col, d.ds === today)).join('')}
+      </div>
     </div>
   `;
   document.getElementById('m-life-tracker').classList.add('active');
 }
-function _ltRenderInput(card, ds, entry) {
+function _ltRenderInput(card, ds, entry, col) {
+  col = col || { accent: '#6b1d1f', from: '#1a1a1a', to: '#000' };
   const e = entry || {};
+  const noteInput = `<input type="text" value="${escapeHtml(e.note || '')}" placeholder="Заметка (по желанию)" style="width:100%;margin-top:14px;padding:11px 14px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:13px;color:#fff;outline:none;font-family:inherit;" oninput="_ltSet('${card.key}', '${ds}', { note: this.value })">`;
   if (card.kind === 'amount') {
     return `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:#0a8a3a;margin-bottom:4px;">Доход ₽</div>
-          <input type="number" min="0" value="${e.income || ''}" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line-2);border-radius:6px;font-family:'Montserrat',monospace;font-size:13px;font-weight:700;" oninput="_ltSet('${card.key}', '${ds}', { income: parseInt(this.value)||0 })">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:14px;">
+          <div style="font-size:9px;letter-spacing:1.5px;font-weight:800;color:#22c55e;text-transform:uppercase;">💚 Доход</div>
+          <input type="number" min="0" value="${e.income || ''}" placeholder="0 ₽" style="width:100%;margin-top:8px;padding:0;background:transparent;border:none;font-family:'Montserrat',monospace;font-size:28px;font-weight:900;color:#fff;outline:none;" oninput="_ltSet('${card.key}', '${ds}', { income: parseInt(this.value)||0 })">
         </div>
-        <div>
-          <div style="font-size:10px;font-weight:700;color:#b91c1c;margin-bottom:4px;">Расход ₽</div>
-          <input type="number" min="0" value="${e.spend || ''}" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line-2);border-radius:6px;font-family:'Montserrat',monospace;font-size:13px;font-weight:700;" oninput="_ltSet('${card.key}', '${ds}', { spend: parseInt(this.value)||0 })">
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:14px;">
+          <div style="font-size:9px;letter-spacing:1.5px;font-weight:800;color:#ef4444;text-transform:uppercase;">💸 Расход</div>
+          <input type="number" min="0" value="${e.spend || ''}" placeholder="0 ₽" style="width:100%;margin-top:8px;padding:0;background:transparent;border:none;font-family:'Montserrat',monospace;font-size:28px;font-weight:900;color:#fff;outline:none;" oninput="_ltSet('${card.key}', '${ds}', { spend: parseInt(this.value)||0 })">
         </div>
       </div>
-      <input type="text" value="${escapeHtml(e.note || '')}" placeholder="Заметка (на что/откуда)" style="width:100%;margin-top:8px;padding:8px 10px;border:1px solid var(--line-2);border-radius:6px;font-size:12px;" oninput="_ltSet('${card.key}', '${ds}', { note: this.value })">`;
+      ${noteInput}`;
   }
   if (card.kind === 'scale') {
     return `
-      <div style="display:flex;gap:4px;justify-content:space-between;">
-        ${Array.from({length: 10}, (_, i) => i+1).map(n => `<button onclick="_ltSet('${card.key}', '${ds}', { value: ${n} });openLifeTracker('${card.key}')" style="flex:1;padding:10px 4px;border:1px solid ${e.value === n ? 'var(--brand-red)' : 'var(--line-2)'};background:${e.value === n ? 'var(--brand-red)' : '#fff'};color:${e.value === n ? '#fff' : 'var(--text)'};border-radius:6px;cursor:pointer;font-weight:800;font-size:13px;">${n}</button>`).join('')}
+      <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:10px;font-weight:600;">Оцени самочувствие от 1 до 10</div>
+      <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:6px;">
+        ${Array.from({length: 10}, (_, i) => i+1).map(n => {
+          const active = e.value === n;
+          // градиент от красного (1) к зелёному (10)
+          const hue = Math.round((n - 1) * 12); // 0..108 — от красного к зелёному
+          const baseBg = active ? `hsl(${hue},75%,50%)` : 'rgba(255,255,255,0.04)';
+          const baseBorder = active ? `hsl(${hue},75%,55%)` : 'rgba(255,255,255,0.1)';
+          return `<button onclick="_ltSet('${card.key}','${ds}',{value:${n}});openLifeTracker('${card.key}')" style="padding:14px 0;border:1.5px solid ${baseBorder};background:${baseBg};color:#fff;border-radius:10px;cursor:pointer;font-weight:900;font-size:16px;transition:transform .1s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='';">${n}</button>`;
+        }).join('')}
       </div>
-      <input type="text" value="${escapeHtml(e.note || '')}" placeholder="Что повлияло на самочувствие?" style="width:100%;margin-top:8px;padding:8px 10px;border:1px solid var(--line-2);border-radius:6px;font-size:12px;" oninput="_ltSet('${card.key}', '${ds}', { note: this.value })">`;
+      ${noteInput}`;
   }
-  // yes/no
+  // yes/no — премиум большие кнопки
+  const btn = (val, label, color, emoji) => {
+    const active = e.value === val;
+    return `<button onclick="_ltSet('${card.key}','${ds}',{value:'${val}'});openLifeTracker('${card.key}')" style="flex:1;padding:18px 12px;border:1.5px solid ${active ? color : 'rgba(255,255,255,0.12)'};background:${active ? color : 'rgba(255,255,255,0.04)'};color:#fff;border-radius:12px;cursor:pointer;font-weight:800;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .1s,background .15s,border-color .15s;letter-spacing:0.3px;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='';">
+      <div style="font-size:24px;line-height:1;">${emoji}</div>
+      <div>${label}</div>
+    </button>`;
+  };
   return `
-    <div class="lt-quick-toggle">
-      <button class="${e.value === 'yes' ? 'active yes' : ''}" onclick="_ltSet('${card.key}', '${ds}', { value: 'yes' });openLifeTracker('${card.key}')">${card.yesLabel || 'Да'}</button>
-      <button class="${e.value === 'no' ? 'active no' : ''}" onclick="_ltSet('${card.key}', '${ds}', { value: 'no' });openLifeTracker('${card.key}')">${card.noLabel || 'Нет'}</button>
-      <button class="${e.value === 'skip' ? 'active skip' : ''}" onclick="_ltSet('${card.key}', '${ds}', { value: 'skip' });openLifeTracker('${card.key}')">Пропуск</button>
+    <div style="display:flex;gap:10px;">
+      ${btn('yes', card.yesLabel || 'Да', '#22c55e', '✓')}
+      ${btn('no',  card.noLabel || 'Нет', '#ef4444', '✗')}
+      ${btn('skip', 'Пропуск', '#6b7280', '—')}
     </div>
-    <input type="text" value="${escapeHtml(e.note || '')}" placeholder="Заметка" style="width:100%;margin-top:8px;padding:8px 10px;border:1px solid var(--line-2);border-radius:6px;font-size:12px;" oninput="_ltSet('${card.key}', '${ds}', { note: this.value })">`;
+    ${noteInput}`;
+}
+
+// Карточка-день в истории
+function _ltRenderDayCell(card, ds, entry, col, isToday) {
+  const e = entry || {};
+  let badge = '<span style="color:rgba(255,255,255,0.25);font-size:13px;">—</span>';
+  let bg = 'rgba(255,255,255,0.03)';
+  let border = 'rgba(255,255,255,0.06)';
+  if (card.kind === 'amount') {
+    if (e.income || e.spend) {
+      badge = `<div style="font-size:9px;color:#22c55e;font-weight:800;line-height:1.2;">+${((e.income||0)/1000).toFixed(0)}k</div><div style="font-size:9px;color:#ef4444;font-weight:800;line-height:1.2;">−${((e.spend||0)/1000).toFixed(0)}k</div>`;
+      bg = 'rgba(234,179,8,0.08)'; border = 'rgba(234,179,8,0.25)';
+    }
+  } else if (card.kind === 'scale') {
+    if (e.value) {
+      const hue = Math.round((e.value - 1) * 12);
+      badge = `<div style="font-size:18px;font-weight:900;color:hsl(${hue},75%,55%);line-height:1;">${e.value}</div><div style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:700;">/10</div>`;
+      bg = `hsla(${hue},75%,50%,0.08)`; border = `hsla(${hue},75%,50%,0.25)`;
+    }
+  } else {
+    if (e.value === 'yes') { badge = '<div style="font-size:20px;color:#22c55e;font-weight:900;">✓</div>'; bg = 'rgba(34,197,94,0.08)'; border = 'rgba(34,197,94,0.25)'; }
+    else if (e.value === 'no') { badge = '<div style="font-size:20px;color:#ef4444;font-weight:900;">✗</div>'; bg = 'rgba(239,68,68,0.08)'; border = 'rgba(239,68,68,0.25)'; }
+    else if (e.value === 'skip') { badge = '<div style="font-size:18px;color:rgba(255,255,255,0.4);font-weight:900;">—</div>'; bg = 'rgba(107,114,128,0.08)'; border = 'rgba(107,114,128,0.25)'; }
+  }
+  const dayLabel = ds.slice(8) + '.' + ds.slice(5,7);
+  const todayRing = isToday ? `box-shadow:0 0 0 2px ${col.accent};` : '';
+  return `
+    <div title="${ds}${e.note ? ' · ' + e.note.replace(/"/g,'') : ''}" style="background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;${todayRing}">
+      <div style="font-size:9px;color:rgba(255,255,255,0.45);font-weight:700;letter-spacing:0.5px;">${dayLabel}</div>
+      ${badge}
+    </div>`;
 }
 function _ltRenderDayRow(card, ds, entry) {
   const e = entry || {};
@@ -26874,6 +27001,13 @@ function closeAll() {
       window._brandGridOriginalParent = null;
       window._brandGridOriginalNext = null;
     }
+  } catch (_) {}
+  // Возвращаем header модала трекера (он был скрыт когда мы делали премиум-шапку)
+  try {
+    const trackerHeader = document.querySelector('#m-life-tracker .doc-header');
+    if (trackerHeader) trackerHeader.style.display = '';
+    const trackerContent = document.getElementById('lt-content');
+    if (trackerContent) trackerContent.style.padding = '';
   } catch (_) {}
   // Сохранить смету немедленно, если есть несохранённые правки
   if (_estimateSaveTimer) {
