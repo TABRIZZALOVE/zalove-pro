@@ -5620,111 +5620,163 @@ body.dark-theme .task-deadline:focus { background: white; }
   .lb-cat-card.add { border: 1.5px dashed var(--line-2,#d0d0d0); justify-content: center; align-items: center; color: var(--muted,#888); text-align: center; }
   .lb-cat-card.add:hover { border-color: var(--brand-red,#6b1d1f); color: var(--brand-red,#6b1d1f); transform: translateY(-1px); }
 
-  /* Список локаций внутри категории — премиум-карточка */
+  /* Список локаций — Glass-стиль (вариант 3 · плавающие чипы) */
   .lb-loc-list { display: flex; flex-direction: column; gap: 14px; }
   .lb-loc-card {
-    background: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
-    border: 1px solid var(--line,#ececec);
-    border-radius: 16px;
-    padding: 18px 20px;
+    background: rgba(0,0,0,0.025);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 20px;
+    padding: 20px 22px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
     position: relative;
   }
+  body.dark-mode .lb-loc-card {
+    background: rgba(255,255,255,0.025);
+    border-color: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+  }
   .lb-loc-card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 28px -14px rgba(0,0,0,.22);
-    border-color: rgba(107,29,31,.28);
-  }
-  body.dark-mode .lb-loc-card {
-    background: linear-gradient(145deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.015) 100%);
-    border-color: rgba(255,255,255,0.08);
+    border-color: rgba(107,29,31,0.25);
+    box-shadow: 0 8px 28px -14px rgba(0,0,0,0.22);
   }
   body.dark-mode .lb-loc-card:hover {
-    border-color: rgba(255,140,140,.32);
-    box-shadow: 0 8px 28px -14px rgba(0,0,0,.65);
+    border-color: rgba(255,140,140,0.30);
+    box-shadow: 0 8px 28px -14px rgba(0,0,0,0.65);
   }
-  .lb-loc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-  .lb-loc-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
-  .lb-loc-name { font-weight: 800; font-size: 16.5px; letter-spacing: -.01em; line-height: 1.22; }
+  .lb-loc-headline {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .lb-loc-name {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
   .lb-loc-link {
-    font-size: 12px;
-    color: var(--brand-red,#6b1d1f) !important;
+    font-size: 12.5px;
+    color: var(--brand-red, #6b1d1f) !important;
     text-decoration: none;
     border-bottom: 1px dotted currentColor;
-    width: fit-content;
-    max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     padding-bottom: 1px;
-  }
-  .lb-loc-link:hover { opacity: .8; }
-  .lb-loc-pricepill {
-    background: linear-gradient(135deg, #e8f7ee 0%, #d6f0e0 100%);
-    color: #0a6f30;
-    font-weight: 800;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 12.5px;
-    padding: 6px 12px;
-    border-radius: 999px;
     white-space: nowrap;
-    flex-shrink: 0;
-    letter-spacing: -.005em;
   }
-  body.dark-mode .lb-loc-pricepill { background: linear-gradient(135deg, rgba(40,180,90,.18), rgba(20,120,60,.1)); color: #6ee79e; }
-  .lb-loc-row {
+  body.dark-mode .lb-loc-link { color: #ff9ea0 !important; }
+  .lb-loc-link:hover { opacity: 0.75; }
+  .lb-loc-pricepill {
+    margin-left: auto;
+    background: rgba(34,197,94,0.10);
+    color: #0a6f30;
+    border: 1px solid rgba(34,197,94,0.32);
+    font-weight: 800;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    white-space: nowrap;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: -0.005em;
+  }
+  body.dark-mode .lb-loc-pricepill { color: #4ade80; background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.28); }
+  .lb-loc-chips {
     display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    font-size: 13px;
-    color: var(--text);
-    padding-top: 9px;
-    border-top: 1px solid var(--line,#f0f0f0);
+    gap: 8px;
+    flex-wrap: wrap;
   }
-  body.dark-mode .lb-loc-row { border-top-color: rgba(255,255,255,0.05); }
-  .lb-loc-row-ico { font-size: 13px; opacity: .8; flex-shrink: 0; line-height: 1.45; width: 18px; text-align: center; }
-  .lb-loc-row-val { flex: 1; line-height: 1.45; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
-  .lb-loc-row-val b { font-weight: 700; }
   .lb-loc-chip {
     display: inline-flex;
     align-items: center;
-    background: var(--bg-2,#f3f3f3);
-    border: 1px solid var(--line,#e5e5e5);
-    padding: 3px 9px;
-    border-radius: 7px;
+    gap: 4px;
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 6px 12px;
+    border-radius: 99px;
     font-size: 12px;
     color: var(--text);
     text-decoration: none;
-    transition: border-color .15s ease, color .15s ease;
+    transition: border-color 0.15s ease, transform 0.15s ease;
     white-space: nowrap;
   }
-  .lb-loc-chip:hover { border-color: var(--brand-red,#6b1d1f); }
-  body.dark-mode .lb-loc-chip { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
-  .lb-loc-chip-tg { color: var(--brand-red,#6b1d1f); font-weight: 600; }
-  body.dark-mode .lb-loc-chip-tg { color: #ff9ea0; }
-  .lb-loc-notes {
-    background: var(--bg-2,#fafafa);
-    border-left: 3px solid var(--brand-red,#6b1d1f);
-    padding: 9px 12px;
-    border-radius: 7px;
+  body.dark-mode .lb-loc-chip {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.08);
+  }
+  .lb-loc-chip:hover { border-color: var(--brand-red, #6b1d1f); transform: translateY(-1px); }
+  .lb-loc-chip-mono { font-family: 'Montserrat', monospace; font-feature-settings: 'tnum'; }
+  .lb-loc-chip-tg {
+    background: rgba(56,189,248,0.10) !important;
+    border-color: rgba(56,189,248,0.32) !important;
+    color: #0369a1 !important;
+    font-weight: 600;
+  }
+  body.dark-mode .lb-loc-chip-tg { color: #7dd3fc !important; background: rgba(56,189,248,0.12) !important; }
+  .lb-loc-chip-projects {
+    background: rgba(245,158,11,0.08) !important;
+    border-color: rgba(245,158,11,0.28) !important;
+    color: #b45309 !important;
+  }
+  body.dark-mode .lb-loc-chip-projects { color: #fbbf24 !important; }
+  .lb-loc-notes-inline {
     font-size: 12.5px;
-    color: var(--muted,#555);
-    line-height: 1.5;
+    color: var(--muted, #888);
     font-style: italic;
     margin-top: 2px;
   }
-  body.dark-mode .lb-loc-notes { background: rgba(255,255,255,0.03); color: #c8c8c8; }
+  body.dark-mode .lb-loc-notes-inline { color: #aaa; }
+  /* Фотогалерея */
+  .lb-loc-photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .lb-loc-photo {
+    aspect-ratio: 4 / 3;
+    background: rgba(0,0,0,0.04) center/cover no-repeat;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.06);
+    cursor: zoom-in;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  body.dark-mode .lb-loc-photo { background-color: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
+  .lb-loc-photo:hover { transform: scale(1.025); border-color: var(--brand-red, #6b1d1f); box-shadow: 0 6px 16px -8px rgba(0,0,0,0.3); }
+  .lb-loc-photo-add {
+    aspect-ratio: 4 / 3;
+    background: transparent;
+    border: 1.5px dashed rgba(0,0,0,0.16);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    color: var(--muted, #888);
+    transition: border-color 0.15s, color 0.15s, transform 0.15s, background 0.15s;
+    text-align: center;
+  }
+  body.dark-mode .lb-loc-photo-add { border-color: rgba(255,255,255,0.13); }
+  .lb-loc-photo-add:hover {
+    border-color: var(--brand-red, #6b1d1f);
+    color: var(--brand-red, #6b1d1f);
+    transform: translateY(-1px);
+    background: rgba(107,29,31,0.04);
+  }
+  body.dark-mode .lb-loc-photo-add:hover { border-color: rgba(255,140,140,0.40); color: #ff9ea0; background: rgba(255,140,140,0.04); }
   .lb-loc-foot {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    padding-top: 10px;
-    border-top: 1px solid var(--line,#f0f0f0);
-    margin-top: 2px;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 1px solid rgba(0,0,0,0.06);
   }
   body.dark-mode .lb-loc-foot { border-top-color: rgba(255,255,255,0.05); }
   .lb-loc-foot-left, .lb-loc-foot-right { display: flex; gap: 6px; align-items: center; }
@@ -12285,35 +12337,34 @@ function _lbRenderLocItem(it) {
   const moveOptions = cats.length === 0
     ? '<div class="lb-loc-move-empty">Других категорий нет — создай ещё одну на главной</div>'
     : cats.map(c => `<button type="button" class="lb-loc-move-opt" onclick="_lbMoveLocationTo('${it.id}','${c.id}',event)">${c.icon || '📁'} ${escapeHtml(c.name)}</button>`).join('');
+  const photos = Array.isArray(it.photos) ? it.photos : [];
+  const photoTiles = photos.map((p, i) =>
+    `<div class="lb-loc-photo" style="background-image:url('${p.replace(/'/g, "\\'")}')" onclick="_lbOpenLightbox('${it.id}', ${i})" title="Открыть · ${i + 1} / ${photos.length}"></div>`
+  ).join('');
+  const photoStrip = `
+    <div class="lb-loc-photos">
+      ${photoTiles}
+      <div class="lb-loc-photo-add" onclick="_lbAddPhotos('${it.id}')" title="Загрузить одну или несколько фоток">
+        <div style="font-size:24px;line-height:1;">＋</div>
+        <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">${photos.length ? 'Ещё' : 'Загрузить'}</div>
+      </div>
+    </div>`;
   return `
     <div class="lb-loc-card" data-id="${it.id}">
-      <div class="lb-loc-head">
-        <div class="lb-loc-title">
-          <div class="lb-loc-name">${escapeHtml(it.name || 'Без названия')}</div>
-          ${it.link ? `<a href="${escapeHtml(it.link)}" target="_blank" rel="noopener" class="lb-loc-link" title="${escapeHtml(it.link)}">${escapeHtml(linkClean.slice(0, 50))}</a>` : ''}
-        </div>
-        ${it.price ? `<div class="lb-loc-pricepill">${Number(it.price).toLocaleString('ru-RU')} ₽</div>` : ''}
+      <div class="lb-loc-headline">
+        <div class="lb-loc-name">${escapeHtml(it.name || 'Без названия')}</div>
+        ${it.link ? `<a href="${escapeHtml(it.link)}" target="_blank" rel="noopener" class="lb-loc-link" title="${escapeHtml(it.link)}">${escapeHtml(linkClean.slice(0, 40))} →</a>` : ''}
+        ${it.price ? `<div class="lb-loc-pricepill">${Number(it.price).toLocaleString('ru-RU')} ₽/смена</div>` : ''}
       </div>
-      ${it.address ? `
-      <div class="lb-loc-row">
-        <span class="lb-loc-row-ico">📍</span>
-        <span class="lb-loc-row-val">${escapeHtml(it.address)}</span>
-      </div>` : ''}
-      ${(it.contactName || it.contactPhone || handle) ? `
-      <div class="lb-loc-row">
-        <span class="lb-loc-row-ico">👤</span>
-        <span class="lb-loc-row-val">
-          ${it.contactName ? `<b>${escapeHtml(it.contactName)}</b>` : ''}
-          ${it.contactPhone ? `<span class="lb-loc-chip">${escapeHtml(it.contactPhone)}</span>` : ''}
-          ${handle ? `<a class="lb-loc-chip lb-loc-chip-tg" href="https://t.me/${escapeHtml(handle)}" target="_blank" rel="noopener">@${escapeHtml(handle)}</a>` : ''}
-        </span>
-      </div>` : ''}
-      ${it.projects ? `
-      <div class="lb-loc-row">
-        <span class="lb-loc-row-ico">🎬</span>
-        <span class="lb-loc-row-val">${escapeHtml(it.projects)}</span>
-      </div>` : ''}
-      ${it.notes ? `<div class="lb-loc-notes">${escapeHtml(it.notes)}</div>` : ''}
+      <div class="lb-loc-chips">
+        ${it.address ? `<span class="lb-loc-chip">📍 ${escapeHtml(it.address)}</span>` : ''}
+        ${it.contactName ? `<span class="lb-loc-chip">👤 ${escapeHtml(it.contactName)}</span>` : ''}
+        ${it.contactPhone ? `<span class="lb-loc-chip lb-loc-chip-mono">📞 ${escapeHtml(it.contactPhone)}</span>` : ''}
+        ${handle ? `<a class="lb-loc-chip lb-loc-chip-tg" href="https://t.me/${escapeHtml(handle)}" target="_blank" rel="noopener">✈ @${escapeHtml(handle)}</a>` : ''}
+        ${it.projects ? `<span class="lb-loc-chip lb-loc-chip-projects">🎬 ${escapeHtml(it.projects)}</span>` : ''}
+      </div>
+      ${it.notes ? `<div class="lb-loc-notes-inline">📝 ${escapeHtml(it.notes)}</div>` : ''}
+      ${photoStrip}
       <div class="lb-loc-foot">
         <div class="lb-loc-foot-left">
           <div class="lb-loc-movewrap">
@@ -12360,6 +12411,150 @@ if (!window._lbMoveMenuListenerInstalled) {
       document.querySelectorAll('.lb-loc-movemenu.open').forEach(el => el.classList.remove('open'));
     }
   });
+}
+
+// ===== ФОТОГАЛЕРЕЯ ЛОКАЦИИ =====
+function _lbCompressImage(file, maxDim = 1400, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('image decode failed'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('file read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+async function _lbAddPhotos(itemId) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true; inp.style.display = 'none';
+  inp.onchange = async () => {
+    const files = Array.from(inp.files || []);
+    if (!files.length) return;
+    const data = _lbAllData();
+    const it = data.items.find(x => x.id === itemId);
+    if (!it) return;
+    if (!Array.isArray(it.photos)) it.photos = [];
+    toast(`Загружаю ${files.length} ${files.length === 1 ? 'фото' : 'фоток'}…`, 'success');
+    let okCount = 0;
+    for (const file of files) {
+      try {
+        const dataUrl = await _lbCompressImage(file);
+        it.photos.push(dataUrl);
+        okCount++;
+      } catch (e) {
+        console.warn('photo compress fail', e);
+      }
+    }
+    it.updatedAt = new Date().toISOString();
+    _lbSave(data);
+    if (_lbCurrentCategoryId) _lbOpenCategory(_lbCurrentCategoryId);
+    toast(`Загружено: ${okCount} из ${files.length} ✓`, 'success');
+  };
+  document.body.appendChild(inp);
+  inp.click();
+  setTimeout(() => inp.remove(), 60000);
+}
+let _lbLightboxItemId = null;
+let _lbLightboxIdx = 0;
+function _lbOpenLightbox(itemId, idx) {
+  const data = _lbAllData();
+  const it = data.items.find(x => x.id === itemId);
+  if (!it || !Array.isArray(it.photos) || !it.photos.length) return;
+  _lbLightboxItemId = itemId;
+  _lbLightboxIdx = Math.max(0, Math.min(parseInt(idx) || 0, it.photos.length - 1));
+  _lbRenderLightbox();
+  document.addEventListener('keydown', _lbLightboxKey);
+}
+function _lbCloseLightbox() {
+  const lb = document.getElementById('lb-lightbox');
+  if (lb) lb.remove();
+  document.removeEventListener('keydown', _lbLightboxKey);
+  _lbLightboxItemId = null;
+}
+function _lbLightboxNext() {
+  const data = _lbAllData();
+  const it = data.items.find(x => x.id === _lbLightboxItemId);
+  if (!it || !it.photos || it.photos.length < 2) return;
+  _lbLightboxIdx = (_lbLightboxIdx + 1) % it.photos.length;
+  _lbRenderLightbox();
+}
+function _lbLightboxPrev() {
+  const data = _lbAllData();
+  const it = data.items.find(x => x.id === _lbLightboxItemId);
+  if (!it || !it.photos || it.photos.length < 2) return;
+  _lbLightboxIdx = (_lbLightboxIdx - 1 + it.photos.length) % it.photos.length;
+  _lbRenderLightbox();
+}
+function _lbLightboxKey(e) {
+  if (e.key === 'Escape') _lbCloseLightbox();
+  else if (e.key === 'ArrowRight') _lbLightboxNext();
+  else if (e.key === 'ArrowLeft') _lbLightboxPrev();
+}
+function _lbDeleteCurrentPhoto() {
+  if (!_lbLightboxItemId) return;
+  if (!confirm('Удалить это фото?')) return;
+  const data = _lbAllData();
+  const it = data.items.find(x => x.id === _lbLightboxItemId);
+  if (!it || !it.photos) return;
+  it.photos.splice(_lbLightboxIdx, 1);
+  it.updatedAt = new Date().toISOString();
+  _lbSave(data);
+  if (_lbCurrentCategoryId) _lbOpenCategory(_lbCurrentCategoryId);
+  if (it.photos.length === 0) {
+    _lbCloseLightbox();
+    toast('Все фотки удалены', 'success');
+  } else {
+    _lbLightboxIdx = Math.min(_lbLightboxIdx, it.photos.length - 1);
+    _lbRenderLightbox();
+    toast('Фото удалено', 'success');
+  }
+}
+function _lbRenderLightbox() {
+  const data = _lbAllData();
+  const it = data.items.find(x => x.id === _lbLightboxItemId);
+  if (!it || !it.photos || !it.photos.length) { _lbCloseLightbox(); return; }
+  let lb = document.getElementById('lb-lightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'lb-lightbox';
+    lb.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.94);display:flex;align-items:center;justify-content:center;padding:40px;cursor:zoom-out;';
+    lb.onclick = (e) => { if (e.target === lb) _lbCloseLightbox(); };
+    document.body.appendChild(lb);
+  }
+  const photo = it.photos[_lbLightboxIdx];
+  const total = it.photos.length;
+  const showNav = total > 1;
+  const thumbs = total > 1 ? `
+    <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:6px;background:rgba(0,0,0,0.55);backdrop-filter:blur(20px);padding:8px;border-radius:14px;max-width:calc(100vw - 80px);overflow-x:auto;cursor:default;" onclick="event.stopPropagation()">
+      ${it.photos.map((p, i) => `<div onclick="_lbLightboxIdx=${i};_lbRenderLightbox();" style="width:54px;height:40px;flex-shrink:0;border-radius:6px;background:url('${p.replace(/'/g, "\\'")}') center/cover no-repeat;cursor:pointer;border:2px solid ${i === _lbLightboxIdx ? '#fff' : 'transparent'};transition:border-color .15s;"></div>`).join('')}
+    </div>` : '';
+  lb.innerHTML = `
+    <button onclick="event.stopPropagation();_lbCloseLightbox()" style="position:absolute;top:20px;right:20px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.10);color:#fff;border:1px solid rgba(255,255,255,0.20);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Закрыть (Esc)">×</button>
+    <div style="position:absolute;top:24px;left:24px;color:#fff;font-size:13px;font-weight:600;background:rgba(0,0,0,0.45);padding:8px 14px;border-radius:99px;backdrop-filter:blur(12px);">
+      ${escapeHtml(it.name || '')} · <span style="opacity:0.7;">${_lbLightboxIdx + 1} / ${total}</span>
+    </div>
+    <button onclick="event.stopPropagation();_lbDeleteCurrentPhoto()" style="position:absolute;top:20px;right:80px;height:42px;padding:0 14px;border-radius:21px;background:rgba(239,68,68,0.18);color:#fca5a5;border:1px solid rgba(239,68,68,0.35);font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" title="Удалить это фото">🗑 Удалить</button>
+    ${showNav ? `<button onclick="event.stopPropagation();_lbLightboxPrev()" style="position:absolute;left:24px;top:50%;transform:translateY(-50%);width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.20);font-size:26px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);" title="Предыдущее (←)">‹</button>` : ''}
+    ${showNav ? `<button onclick="event.stopPropagation();_lbLightboxNext()" style="position:absolute;right:24px;top:50%;transform:translateY(-50%);width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.20);font-size:26px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);" title="Следующее (→)">›</button>` : ''}
+    <img src="${photo}" style="max-width:calc(100vw - 140px);max-height:calc(100vh - 160px);border-radius:10px;box-shadow:0 20px 60px -20px rgba(0,0,0,0.6);display:block;cursor:default;" onclick="event.stopPropagation()" />
+    ${thumbs}
+  `;
 }
 function lbBackToCategories() { _lbCurrentCategoryId = null; _lbRenderCategories(); }
 function _lbAddCategory() {
