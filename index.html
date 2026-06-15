@@ -10991,6 +10991,38 @@ const ROLE_TRANSLATIONS = {
   'AI-специалист': 'AI Specialist',
   'Другая': 'Other'
 };
+// Миграция: исправляет ошибочное role_en="Director" у участников, чей русский role не "Режиссёр"
+// Запускается один раз после hydrate. Обновляет проекты на сервере где нашлись косяки.
+function _fixWrongRoleTranslations() {
+  if (!DB || !DB.getProjects) return;
+  const projects = DB.getProjects();
+  let fixedTotal = 0;
+  projects.forEach(p => {
+    if (!Array.isArray(p.team) || p.team.length === 0) return;
+    let changed = false;
+    const newTeam = p.team.map(m => {
+      const correctEn = translateRole(m.role || '');
+      // Если role_en ошибочно «Director» (или совпадает со старым неправильным переводом),
+      // а правильный перевод другой — обновляем
+      if (m.role_en && m.role && m.role !== 'Режиссёр' && m.role_en === 'Director' && correctEn !== 'Director') {
+        changed = true;
+        return { ...m, role_en: correctEn };
+      }
+      // Если role_en вообще пустой — заполним актуальным переводом
+      if (!m.role_en && correctEn) {
+        changed = true;
+        return { ...m, role_en: correctEn };
+      }
+      return m;
+    });
+    if (changed) {
+      DB.updateProject(p.id, { team: newTeam });
+      fixedTotal += newTeam.filter((m, i) => m.role_en !== p.team[i].role_en).length;
+    }
+  });
+  if (fixedTotal > 0) console.info(`[role-fix] починили role_en у ${fixedTotal} участников`);
+}
+
 function translateRole(roleRu) {
   if (!roleRu) return '';
   // Поддержка нескольких ролей через запятую: «Режиссёр, Сценарист» → «Director, Writer»
@@ -11469,7 +11501,13 @@ function renderTeamMembers(project) {
     return;
   }
   tbody.innerHTML = members.map(m => {
-    const roleEn = m.role_en || translateRole(m.role);
+    // Авто-фикс ошибочного role_en="Director" у не-режиссёров (рендер-фоллбек,
+    // даже если в БД ещё не починилось — на экране сразу правильный перевод)
+    let roleEn = m.role_en || translateRole(m.role);
+    if (m.role && m.role !== 'Режиссёр' && roleEn === 'Director') {
+      const correct = translateRole(m.role);
+      if (correct && correct !== 'Director') roleEn = correct;
+    }
     const initials = (m.name_ru || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
     const av = DB.resolveAvatar(m); // глобальный реестр имеет приоритет если member.avatar пуст
     const avatarCell = av
@@ -27013,6 +27051,8 @@ function bootAfterAuth() {
       }
     } catch (_) {}
     if (typeof renderLocationsBaseCover === 'function') renderLocationsBaseCover();
+    // Чиним ошибочные переводы ролей (унаследованные данные где у всех role_en="Director")
+    try { _fixWrongRoleTranslations(); } catch (e) { console.warn('role fix', e); }
   }
 
   renderProjects();
