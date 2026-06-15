@@ -12256,9 +12256,14 @@ function deleteLocationFromForm() {
 // Карточки: спорт / питание / финансы / сон / обучение / здоровье / личный бренд.
 // Данные хранятся в profile.data.tracker[trackerKey][YYYY-MM-DD] = { value: 'yes'|'no'|'skip', note: '' }
 const LIFE_TRACKER_CARDS = [
-  { key: 'sport',    icon: '🏋',  title: 'Спорт',        prompt: 'Была тренировка сегодня?', yesLabel: 'Да', noLabel: 'Нет', kind: 'yesno' },
-  { key: 'food',     icon: '🥗',  title: 'Питание',       prompt: 'Не ел вредной еды?',       yesLabel: 'Чисто', noLabel: 'Сорвался', kind: 'yesno' },
-  { key: 'sleep',    icon: '😴',  title: 'Сон',           prompt: 'Выспался (7+ часов)?',     yesLabel: 'Да', noLabel: 'Нет', kind: 'yesno' },
+  { key: 'sport',    icon: '🏋',  title: 'Спорт',        prompt: 'Что было сегодня?', kind: 'custom', customButtons: [
+    { val: 'crossfit', label: 'Кроссфит', color: '#22c55e', emoji: '🏋' },
+    { val: 'bjj',      label: 'БЖЖ',      color: '#3b82f6', emoji: '🥋' },
+    { val: 'rest',     label: 'Отдых',    color: '#8b5cf6', emoji: '🧘' },
+    { val: 'skip',     label: 'Пропуск',  color: '#6b7280', emoji: '—' }
+  ] },
+  { key: 'food',     icon: '🥗',  title: 'Питание',       prompt: 'Не ел вредной еды?',       yesLabel: 'Чисто', noLabel: 'Ел вредное', kind: 'yesno', extraButtons: [{ val: 'cheat', label: 'Читмил', color: '#f59e0b', emoji: '🍔' }] },
+  { key: 'sleep',    icon: '😴',  title: 'Сон',           prompt: 'Во сколько заснул и во сколько встал',     kind: 'sleep' },
   { key: 'finance',  icon: '💰',  title: 'Финансы',       prompt: 'Сегодняшние доход / расход', kind: 'amount' },
   { key: 'learn',    icon: '📚',  title: 'Обучение',      prompt: 'Учился сегодня (книга/курс/практика)?', yesLabel: 'Да', noLabel: 'Нет', kind: 'yesno' },
   { key: 'health',   icon: '🧘',  title: 'Здоровье',      prompt: 'Самочувствие 1–10',         kind: 'scale' },
@@ -12266,6 +12271,37 @@ const LIFE_TRACKER_CARDS = [
 ];
 
 function _ltTodayStr() { return new Date().toISOString().slice(0, 10); }
+function _ltSleepHours(bedtime, waketime) {
+  if (!bedtime || !waketime) return 0;
+  const [bh, bm] = String(bedtime).split(':').map(Number);
+  const [wh, wm] = String(waketime).split(':').map(Number);
+  if (isNaN(bh) || isNaN(wh)) return 0;
+  let bedMins = bh * 60 + (bm || 0);
+  let wakeMins = wh * 60 + (wm || 0);
+  if (wakeMins <= bedMins) wakeMins += 24 * 60; // спал через полночь
+  return (wakeMins - bedMins) / 60;
+}
+function _ltFormatHours(h) {
+  if (!h || h <= 0) return '0ч';
+  const tot = Math.round(h * 60);
+  return `${Math.floor(tot / 60)}ч ${(tot % 60).toString().padStart(2, '0')}м`;
+}
+function _ltIsFrozen(key) {
+  try { const a = JSON.parse(localStorage.getItem('zalove_life_tracker') || '{}'); return Array.isArray(a._frozen) && a._frozen.includes(key); }
+  catch (_) { return false; }
+}
+function _ltToggleFrozen(key) {
+  const all = _ltAllData();
+  if (!Array.isArray(all._frozen)) all._frozen = [];
+  const i = all._frozen.indexOf(key);
+  let frozen;
+  if (i >= 0) { all._frozen.splice(i, 1); frozen = false; }
+  else { all._frozen.push(key); frozen = true; }
+  _ltSave(all);
+  renderLifeTracker();
+  openLifeTracker(key);
+  toast(frozen ? '❄️ Заморожено · стрик и отметки приостановлены' : '☀️ Разморожено · можно снова отмечать', 'success');
+}
 function _ltAllData() {
   // Хранится в localStorage отдельно (приватно — не синкается с командой)
   try { return JSON.parse(localStorage.getItem('zalove_life_tracker') || '{}'); } catch (_) { return {}; }
@@ -12286,15 +12322,33 @@ function _ltSave(data) {
   }
 }
 function _ltStreak(key) {
+  // Замороженные карточки не накапливают стрик
+  if (_ltIsFrozen(key)) return 0;
   const all = _ltAllData();
   const dat = all[key] || {};
   let streak = 0;
   const d = new Date();
+  const cardDef = LIFE_TRACKER_CARDS.find(c => c.key === key);
   for (let i = 0; i < 365; i++) {
     const ds = d.toISOString().slice(0, 10);
     const e = dat[ds];
     if (!e) break;
-    if (e.value === 'yes' || (key === 'finance' && (e.income > 0 || e.spend > 0)) || (key === 'health' && e.value > 0)) streak++;
+    let isWin = false;
+    if (cardDef && Array.isArray(cardDef.customButtons) && cardDef.customButtons.length) {
+      // Кастомные кнопки: всё кроме skip/no — это «win»
+      isWin = !!e.value && e.value !== 'skip' && e.value !== 'no';
+    } else if (key === 'finance') {
+      isWin = (e.income > 0 || e.spend > 0);
+    } else if (key === 'health') {
+      isWin = e.value > 0;
+    } else if (key === 'food') {
+      isWin = e.value === 'yes' || e.value === 'cheat';
+    } else if (key === 'sleep') {
+      isWin = !!e.bedtime && !!e.waketime && _ltSleepHours(e.bedtime, e.waketime) >= 7;
+    } else {
+      isWin = e.value === 'yes';
+    }
+    if (isWin) streak++;
     else break;
     d.setDate(d.getDate() - 1);
   }
@@ -12325,24 +12379,44 @@ function renderLifeTracker() {
     const col = CARD_COLORS[card.key] || { from: '#374151', to: '#111827', accent: '#9ca3af' };
     const todayEntry = (all[card.key] || {})[today];
     const status = todayEntry?.value || '';
-    const streak = _ltStreak(card.key);
+    const frozen = _ltIsFrozen(card.key);
+    const streak = frozen ? 0 : _ltStreak(card.key);
     let statusText = 'нажми отметить';
     let statusColor = 'rgba(255,255,255,0.55)';
-    if (status === 'yes') { statusText = '✓ есть сегодня'; statusColor = '#22c55e'; }
-    else if (status === 'no') { statusText = '✗ нет сегодня'; statusColor = '#ef4444'; }
-    else if (status === 'skip') { statusText = '— пропуск'; statusColor = 'rgba(255,255,255,0.5)'; }
-    else if (todayEntry && card.kind === 'amount') {
-      const inc = todayEntry.income || 0, sp = todayEntry.spend || 0;
-      statusText = `+${inc.toLocaleString('ru-RU')}/−${sp.toLocaleString('ru-RU')}`;
-      statusColor = '#fbbf24';
+    // Заморозка имеет приоритет над всем
+    if (frozen) {
+      statusText = '❄️ заморожено';
+      statusColor = '#7dd3fc';
+    } else {
+      // customButtons — приоритет (определяем по карточке)
+      const customDef = Array.isArray(card.customButtons) ? card.customButtons.find(b => b.val === status) : null;
+      if (customDef) {
+        statusText = `${customDef.emoji || '•'} ${customDef.label.toLowerCase()}`;
+        statusColor = customDef.color || statusColor;
+      }
+      else if (card.kind === 'sleep' && todayEntry?.bedtime && todayEntry?.waketime) {
+        const h = _ltSleepHours(todayEntry.bedtime, todayEntry.waketime);
+        statusText = `😴 ${_ltFormatHours(h)}`;
+        statusColor = h >= 7 ? '#22c55e' : '#f59e0b';
+      }
+      else if (status === 'yes') { statusText = '✓ есть сегодня'; statusColor = '#22c55e'; }
+      else if (status === 'no') { statusText = '✗ нет сегодня'; statusColor = '#ef4444'; }
+      else if (status === 'skip') { statusText = '— пропуск'; statusColor = 'rgba(255,255,255,0.5)'; }
+      else if (status === 'cheat') { statusText = '🍔 читмил'; statusColor = '#f59e0b'; }
+      else if (todayEntry && card.kind === 'amount') {
+        const inc = todayEntry.income || 0, sp = todayEntry.spend || 0;
+        statusText = `+${inc.toLocaleString('ru-RU')}/−${sp.toLocaleString('ru-RU')}`;
+        statusColor = '#fbbf24';
+      }
+      else if (todayEntry && card.kind === 'scale') {
+        statusText = `оценка ${todayEntry.value}/10`;
+        statusColor = '#14b8a6';
+      }
     }
-    else if (todayEntry && card.kind === 'scale') {
-      statusText = `оценка ${todayEntry.value}/10`;
-      statusColor = '#14b8a6';
-    }
+    const frozenStyle = frozen ? 'filter:grayscale(0.6) brightness(0.65);' : '';
     return `
-      <div onclick="openLifeTracker('${card.key}')" style="position:relative;background:linear-gradient(145deg,${col.from},${col.to});border-radius:14px;padding:16px 14px 14px;cursor:pointer;color:#fff;min-height:140px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 12px rgba(0,0,0,0.25);transition:transform .15s,box-shadow .15s;overflow:hidden;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px rgba(0,0,0,0.4)';" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.25)';">
-        ${streak >= 2 ? `<div style="position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;letter-spacing:0.4px;box-shadow:0 2px 6px rgba(255,107,53,0.5);z-index:2;">🔥 ${streak}</div>` : ''}
+      <div onclick="openLifeTracker('${card.key}')" style="position:relative;background:linear-gradient(145deg,${col.from},${col.to});border-radius:14px;padding:16px 14px 14px;cursor:pointer;color:#fff;min-height:140px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 12px rgba(0,0,0,0.25);transition:transform .15s,box-shadow .15s;overflow:hidden;${frozenStyle}" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px rgba(0,0,0,0.4)';" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.25)';">
+        ${frozen ? `<div style="position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;letter-spacing:0.4px;box-shadow:0 2px 6px rgba(56,189,248,0.5);z-index:2;">❄️ ПАУЗА</div>` : (streak >= 2 ? `<div style="position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;letter-spacing:0.4px;box-shadow:0 2px 6px rgba(255,107,53,0.5);z-index:2;">🔥 ${streak}</div>` : '')}
         <div style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:${col.accent};box-shadow:0 4px 10px rgba(0,0,0,0.25);font-size:22px;line-height:1;">${card.icon}</div>
         <div>
           <div style="font-weight:900;font-size:14px;letter-spacing:-0.2px;line-height:1.15;">${card.title}</div>
@@ -12409,28 +12483,42 @@ function openLifeTracker(key) {
     days.push({ ds, entry: (all[card.key] || {})[ds] || null });
     d.setDate(d.getDate() - 1);
   }
-  const streak = _ltStreak(card.key);
+  const frozen = _ltIsFrozen(card.key);
+  const streak = frozen ? 0 : _ltStreak(card.key);
   const content = document.getElementById('lt-content');
   content.style.padding = '0';
   content.innerHTML = `
     <!-- Премиум-шапка с градиентом -->
-    <div style="background:linear-gradient(135deg,${col.from},${col.to});color:#fff;padding:24px 26px 22px;position:relative;overflow:hidden;">
-      <button onclick="closeAll()" style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.35);border:none;color:#fff;font-size:18px;line-height:1;cursor:pointer;z-index:3;">×</button>
+    <div style="background:linear-gradient(135deg,${col.from},${col.to});color:#fff;padding:24px 26px 22px;position:relative;overflow:hidden;${frozen ? 'filter:grayscale(0.55) brightness(0.7);' : ''}">
+      <div style="position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:3;">
+        <button onclick="_ltToggleFrozen('${card.key}')" title="${frozen ? 'Разморозить — снова начать отмечать' : 'Заморозить — приостановить трекер'}" style="height:32px;padding:0 12px;border-radius:16px;background:${frozen ? 'rgba(56,189,248,0.85)' : 'rgba(0,0,0,0.35)'};border:none;color:#fff;font-size:12px;line-height:1;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;">${frozen ? '☀️ Разморозить' : '❄️ Заморозить'}</button>
+        <button onclick="closeAll()" style="width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.35);border:none;color:#fff;font-size:18px;line-height:1;cursor:pointer;">×</button>
+      </div>
       <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:${col.accent};opacity:0.2;filter:blur(10px);"></div>
       <div style="display:flex;align-items:center;gap:14px;position:relative;z-index:2;">
         <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:${col.accent};font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,0.3);">${card.icon}</div>
         <div style="flex:1;">
-          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;font-weight:800;">мини-трекер</div>
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;font-weight:800;">мини-трекер${frozen ? ' · ❄️ пауза' : ''}</div>
           <div style="font-size:28px;font-weight:900;letter-spacing:-0.5px;line-height:1.05;margin-top:2px;">${card.title}</div>
           <div style="font-size:12px;opacity:0.8;font-weight:600;margin-top:4px;">${card.prompt}</div>
         </div>
-        ${streak >= 2 ? `<div style="background:linear-gradient(135deg,#ff6b35,#f7931e);padding:8px 14px;border-radius:14px;text-align:center;box-shadow:0 4px 12px rgba(255,107,53,0.4);">
+        ${(!frozen && streak >= 2) ? `<div style="background:linear-gradient(135deg,#ff6b35,#f7931e);padding:8px 14px;border-radius:14px;text-align:center;box-shadow:0 4px 12px rgba(255,107,53,0.4);">
           <div style="font-size:9px;letter-spacing:1px;font-weight:800;opacity:0.9;">СЕРИЯ</div>
           <div style="font-size:20px;font-weight:900;line-height:1;margin-top:2px;">🔥 ${streak}</div>
         </div>` : ''}
       </div>
     </div>
 
+    ${frozen ? `
+    <!-- Баннер «заморожено» -->
+    <div style="margin:18px 22px 0;padding:18px 20px;background:linear-gradient(135deg,rgba(56,189,248,0.10),rgba(14,165,233,0.05));border:1px solid rgba(56,189,248,0.30);border-radius:14px;display:flex;gap:14px;align-items:flex-start;">
+      <div style="font-size:32px;line-height:1;flex-shrink:0;">❄️</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:800;color:#7dd3fc;">Трекер заморожен</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:5px;line-height:1.45;">Отметки и стрик приостановлены — вернись когда захочешь снова взяться. История прошлых дней сохранена.</div>
+        <button onclick="_ltToggleFrozen('${card.key}')" style="margin-top:12px;padding:9px 16px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(14,165,233,0.4);">☀️ Разморозить и продолжить</button>
+      </div>
+    </div>` : `
     <!-- Карточка СЕГОДНЯ -->
     <div style="padding:20px 22px 14px;">
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px;position:relative;overflow:hidden;">
@@ -12438,7 +12526,7 @@ function openLifeTracker(key) {
         <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:${col.accent};font-weight:800;margin-bottom:12px;">⚡ сегодня · ${formatDateRu ? formatDateRu(today) : today}</div>
         ${_ltRenderInput(card, today, (all[card.key] || {})[today], col)}
       </div>
-    </div>
+    </div>`}
 
     <!-- История 14 дней — карточная сетка -->
     <div style="padding:8px 22px 22px;">
@@ -12483,7 +12571,31 @@ function _ltRenderInput(card, ds, entry, col) {
       </div>
       ${noteInput}`;
   }
-  // yes/no — премиум большие кнопки
+  if (card.kind === 'sleep') {
+    const hours = _ltSleepHours(e.bedtime, e.waketime);
+    const isLog = hours > 0;
+    const isGood = hours >= 7;
+    return `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:14px;">
+          <div style="font-size:9px;letter-spacing:1.5px;font-weight:800;color:#a78bfa;text-transform:uppercase;">🌙 Заснул</div>
+          <input type="time" value="${e.bedtime || ''}" style="width:100%;margin-top:8px;padding:0;background:transparent;border:none;font-family:'Montserrat',monospace;font-size:26px;font-weight:900;color:#fff;outline:none;color-scheme:dark;" oninput="_ltSet('${card.key}', '${ds}', { bedtime: this.value })">
+        </div>
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:14px;">
+          <div style="font-size:9px;letter-spacing:1.5px;font-weight:800;color:#fbbf24;text-transform:uppercase;">☀️ Встал</div>
+          <input type="time" value="${e.waketime || ''}" style="width:100%;margin-top:8px;padding:0;background:transparent;border:none;font-family:'Montserrat',monospace;font-size:26px;font-weight:900;color:#fff;outline:none;color-scheme:dark;" oninput="_ltSet('${card.key}', '${ds}', { waketime: this.value })">
+        </div>
+      </div>
+      ${isLog ? `<div style="margin-top:14px;padding:14px 16px;background:${isGood ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)'};border:1px solid ${isGood ? 'rgba(34,197,94,0.32)' : 'rgba(239,68,68,0.32)'};border-radius:12px;display:flex;align-items:center;gap:14px;">
+        <div style="font-size:30px;line-height:1;">${isGood ? '✓' : '⚠️'}</div>
+        <div style="flex:1;">
+          <div style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:800;letter-spacing:1.5px;text-transform:uppercase;">${isGood ? 'выспался' : 'мало сна'}</div>
+          <div style="font-size:24px;font-weight:900;color:${isGood ? '#22c55e' : '#ef4444'};font-family:'Montserrat',monospace;letter-spacing:-0.5px;line-height:1.1;margin-top:2px;">${_ltFormatHours(hours)}</div>
+        </div>
+      </div>` : '<div style="margin-top:14px;color:rgba(255,255,255,0.42);font-size:12px;text-align:center;font-weight:600;">Заполни оба поля — посчитаю длительность сна</div>'}
+      ${noteInput}`;
+  }
+  // yes/no / custom — премиум большие кнопки
   const btn = (val, label, color, emoji) => {
     const active = e.value === val;
     return `<button onclick="_ltSet('${card.key}','${ds}',{value:'${val}'});openLifeTracker('${card.key}')" style="flex:1;padding:18px 12px;border:1.5px solid ${active ? color : 'rgba(255,255,255,0.12)'};background:${active ? color : 'rgba(255,255,255,0.04)'};color:#fff;border-radius:12px;cursor:pointer;font-weight:800;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .1s,background .15s,border-color .15s;letter-spacing:0.3px;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='';">
@@ -12491,11 +12603,21 @@ function _ltRenderInput(card, ds, entry, col) {
       <div>${label}</div>
     </button>`;
   };
+  // Если у карточки задан customButtons — рендерим ТОЛЬКО их (вместо стандартных yes/no/skip)
+  if (Array.isArray(card.customButtons) && card.customButtons.length) {
+    return `
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(card.customButtons.length, 4)},minmax(0,1fr));gap:10px;">
+        ${card.customButtons.map(b => btn(b.val, b.label, b.color || '#6b7280', b.emoji || '•')).join('')}
+      </div>
+      ${noteInput}`;
+  }
+  const extras = (card.extraButtons || []).map(eb => btn(eb.val, eb.label, eb.color || '#f59e0b', eb.emoji || '★')).join('');
   return `
-    <div style="display:flex;gap:10px;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
       ${btn('yes', card.yesLabel || 'Да', '#22c55e', '✓')}
       ${btn('no',  card.noLabel || 'Нет', '#ef4444', '✗')}
       ${btn('skip', 'Пропуск', '#6b7280', '—')}
+      ${extras}
     </div>
     ${noteInput}`;
 }
@@ -12517,10 +12639,26 @@ function _ltRenderDayCell(card, ds, entry, col, isToday) {
       badge = `<div style="font-size:18px;font-weight:900;color:hsl(${hue},75%,55%);line-height:1;">${e.value}</div><div style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:700;">/10</div>`;
       bg = `hsla(${hue},75%,50%,0.08)`; border = `hsla(${hue},75%,50%,0.25)`;
     }
+  } else if (card.kind === 'sleep') {
+    if (e.bedtime && e.waketime) {
+      const h = _ltSleepHours(e.bedtime, e.waketime);
+      const ok = h >= 7;
+      badge = `<div style="font-size:13px;font-weight:900;color:${ok ? '#22c55e' : '#f59e0b'};line-height:1.1;">${h.toFixed(1)}ч</div>`;
+      bg = ok ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)';
+      border = ok ? 'rgba(34,197,94,0.25)' : 'rgba(245,158,11,0.28)';
+    }
   } else {
-    if (e.value === 'yes') { badge = '<div style="font-size:20px;color:#22c55e;font-weight:900;">✓</div>'; bg = 'rgba(34,197,94,0.08)'; border = 'rgba(34,197,94,0.25)'; }
+    // customButtons имеют приоритет над yes/no/skip/cheat
+    const customDef = Array.isArray(card.customButtons) ? card.customButtons.find(b => b.val === e.value) : null;
+    if (customDef) {
+      badge = `<div style="font-size:18px;line-height:1;">${customDef.emoji || '•'}</div>`;
+      bg = (customDef.color || '#6b7280') + '22';
+      border = (customDef.color || '#6b7280') + '55';
+    }
+    else if (e.value === 'yes') { badge = '<div style="font-size:20px;color:#22c55e;font-weight:900;">✓</div>'; bg = 'rgba(34,197,94,0.08)'; border = 'rgba(34,197,94,0.25)'; }
     else if (e.value === 'no') { badge = '<div style="font-size:20px;color:#ef4444;font-weight:900;">✗</div>'; bg = 'rgba(239,68,68,0.08)'; border = 'rgba(239,68,68,0.25)'; }
     else if (e.value === 'skip') { badge = '<div style="font-size:18px;color:rgba(255,255,255,0.4);font-weight:900;">—</div>'; bg = 'rgba(107,114,128,0.08)'; border = 'rgba(107,114,128,0.25)'; }
+    else if (e.value === 'cheat') { badge = '<div style="font-size:20px;">🍔</div>'; bg = 'rgba(245,158,11,0.10)'; border = 'rgba(245,158,11,0.32)'; }
   }
   const dayLabel = ds.slice(8) + '.' + ds.slice(5,7);
   const todayRing = isToday ? `box-shadow:0 0 0 2px ${col.accent};` : '';
