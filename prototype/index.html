@@ -11196,7 +11196,7 @@ const ROLE_TRANSLATIONS = {
   'Камерамен': 'Camera Operator',
   'Механик камеры': '1AC',
   'Механик ронина': 'Ronin Operator',
-  'Фокус-пуллер': '1AD/1AC',
+  'Фокус-пуллер': '1AC',
   'Плейбек / Логгер': 'Playback / Logger',
   'Стедикамщик': 'Steadicam Operator',
   'Кран-оператор / Долли': 'Crane / Dolly Operator',
@@ -11293,6 +11293,25 @@ function translateRole(roleRu) {
   return ROLE_TRANSLATIONS[roleRu] || roleRu;
 }
 
+// Контекстный перевод роли с учётом всей команды:
+// Механик камеры → "1AC" (один)
+// Фокус-пуллер  → "1AC" (один)
+// Если в команде ЕСТЬ оба — обе позиции переводятся как "1AD/1AC" (объединённая роль)
+function _ctxRoleEn(member, team) {
+  // Принимает либо объект участника (с .role или .position), либо строку-роль
+  const r = (typeof member === 'string' ? member : ((member && (member.role || member.position)) || '')).trim();
+  if (r === 'Механик камеры' || r === 'Фокус-пуллер') {
+    if (Array.isArray(team)) {
+      const getRole = m => ((m && (m.role || m.position)) || '').trim();
+      const hasMech = team.some(m => getRole(m) === 'Механик камеры');
+      const hasFocus = team.some(m => getRole(m) === 'Фокус-пуллер');
+      if (hasMech && hasFocus) return '1AD/1AC';
+    }
+    return '1AC';
+  }
+  return null; // null = используй стандартную логику (m.role_en || translateRole(m.role))
+}
+
 // Расширенный словарь смета-терминов RU → EN
 const SMETA_EN_DICT = {
   // ============== ЗАГОЛОВКИ РАЗДЕЛОВ ШАБЛОНА ==============
@@ -11354,7 +11373,7 @@ const SMETA_EN_DICT = {
   // 04. Операторский цех
   'Механик камеры': '1AC',
   'Механик ронина': 'Ronin Technician',
-  'Фокус-пуллер': '1AD/1AC',
+  'Фокус-пуллер': '1AC',
   'Плейбек / Логгер': 'Playback / Data Wrangler',
   'Стедикамщик': 'Steadicam Operator',
   'Долли': 'Dolly Operator',
@@ -11766,6 +11785,9 @@ function renderTeamMembers(project) {
       const correct = translateRole(m.role);
       if (correct && correct !== 'Director') roleEn = correct;
     }
+    // Контекстный перевод для камера-департамента (Механик + Фокус-пуллер → 1AD/1AC)
+    const ctxEn = _ctxRoleEn(m, members);
+    if (ctxEn) roleEn = ctxEn;
     const initials = (m.name_ru || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
     const av = DB.resolveAvatar(m); // глобальный реестр имеет приоритет если member.avatar пуст
     const avatarCell = av
@@ -16029,7 +16051,8 @@ function _buildTeamCreditsText() {
     return role ? `${role} - ${name}${igPart}` : `${name}${igPart}`;
   };
   const lineEn = (m) => {
-    const role = (m.role_en || translateRole(m.role || '') || '').trim();
+    const ctxEn = _ctxRoleEn(m, sorted);
+    const role = (ctxEn || m.role_en || translateRole(m.role || '') || '').trim();
     const name = (m.name_en || m.name_ru || '').trim();
     const ig = (m.instagram || '').trim();
     if (!name) return '';
@@ -21457,7 +21480,7 @@ function buildCallsheetPrintHTML(project, cs) {
 
   function compactTable(rows, headerLabel, headerCount, headerBg, headerAccent, isCast) {
     const rowsHtml = rows.map((p, i) => {
-      const posEn = translateRole(p.position);
+      const posEn = _ctxRoleEn(p.position, rows) || translateRole(p.position);
       const callColor = isCast ? '#6b1d1f' : '#0a0907';
       const stripeBg = isCast ? (i % 2 ? '#faf3f3' : '#ffffff') : (i % 2 ? '#fafafa' : '#ffffff');
       const avatar = _findAvatarByName(project, p.name) || p.avatar || '';
