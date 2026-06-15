@@ -3898,6 +3898,104 @@ body.dark-mode .pfc-block { background: rgba(255,255,255,0.04); }
 }
 .team-add-row:hover { color: var(--brand-red); background: rgba(232,35,29,0.04); }
 
+/* ===== РЕНТАЛ ПРОЕКТА ===== */
+.rentals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  padding: 10px 12px 16px;
+}
+.rental-card {
+  background: var(--bg-2, #fafafa);
+  border: 1px solid var(--line, #ececec);
+  border-radius: 14px;
+  padding: 18px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+}
+.rental-card:hover { transform: translateY(-1px); border-color: rgba(107,29,31,.25); box-shadow: 0 6px 18px -10px rgba(0,0,0,.2); }
+body.dark-mode .rental-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+body.dark-mode .rental-card:hover { border-color: rgba(255,140,140,.32); }
+.rental-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #f3f3f3 center/contain no-repeat;
+  border: 1.5px solid var(--line, #ececec);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 22px;
+  color: var(--muted, #999);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.rental-avatar.has-img { background-color: #fff; color: transparent; }
+.rental-avatar:hover { border-color: var(--brand-red, #6b1d1f); }
+body.dark-mode .rental-avatar { background-color: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+body.dark-mode .rental-avatar.has-img { background-color: #fff; }
+.rental-name {
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.25;
+  word-break: break-word;
+  color: var(--text);
+  max-width: 100%;
+}
+.rental-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.rental-card:hover .rental-actions { opacity: 1; }
+.rental-btn {
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.rental-btn:hover { background: rgba(0,0,0,0.75); }
+.rental-btn.rental-btn-del:hover { background: #b91c1c; }
+.rental-add-card {
+  background: transparent;
+  border: 1.5px dashed var(--line-2, #d5d5d5);
+  border-radius: 14px;
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--muted, #888);
+  min-height: 138px;
+  transition: border-color .15s, color .15s, transform .15s;
+  text-align: center;
+}
+.rental-add-card:hover { border-color: var(--brand-red, #6b1d1f); color: var(--brand-red, #6b1d1f); transform: translateY(-1px); }
+body.dark-mode .rental-add-card { border-color: rgba(255,255,255,.12); }
+body.dark-mode .rental-add-card:hover { border-color: rgba(255,140,140,.4); color: #ff9ea0; }
+
 /* Contracts folder badge in sidebar */
 .nav-group-folder {
   margin: 0 12px;
@@ -7039,6 +7137,17 @@ body.dark-theme .task-deadline:focus { background: white; }
         <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-secondary" onclick="exportTeamCreditsPdf()" title="Скачать список команды в PDF — для титров">📄 Титры PDF</button>
           <button class="btn btn-secondary" onclick="copyTeamCreditsText()" title="Скопировать список команды в буфер">⧉ Копировать титры</button>
+        </div>
+      </div>
+
+      <!-- RENTAL -->
+      <div class="section-title collapsible-title" data-collapse="rentals" onclick="toggleSection('rentals')">
+        <span class="collapse-arrow" id="rentals-arrow">▾</span>
+        Рентал проекта <span class="pill" id="rentals-count-pill">0</span>
+      </div>
+      <div class="team-members-section" id="rentals-section-body">
+        <div id="rentalsGrid" class="rentals-grid">
+          <!-- Динамически из project.rentals -->
         </div>
       </div>
 
@@ -11085,7 +11194,7 @@ const ROLE_TRANSLATIONS = {
   'Арт-директор': 'Art Director',
   'Оператор-постановщик (DOP)': 'Director of Photography',
   'Камерамен': 'Camera Operator',
-  'Механик камеры': '1AD/1AC',
+  'Механик камеры': '1AC',
   'Механик ронина': 'Ronin Operator',
   'Фокус-пуллер': '1AD/1AC',
   'Плейбек / Логгер': 'Playback / Logger',
@@ -11243,7 +11352,7 @@ const SMETA_EN_DICT = {
   'Хореограф': 'Choreographer',
   'Танцоры': 'Dancers',
   // 04. Операторский цех
-  'Механик камеры': '1AD/1AC',
+  'Механик камеры': '1AC',
   'Механик ронина': 'Ronin Technician',
   'Фокус-пуллер': '1AD/1AC',
   'Плейбек / Логгер': 'Playback / Data Wrangler',
@@ -11682,6 +11791,111 @@ function renderTeamMembers(project) {
     </tr>
   `;
   }).join('');
+}
+
+// ===== РЕНТАЛ ПРОЕКТА =====
+function renderRentals(project) {
+  const grid = document.getElementById('rentalsGrid');
+  const pill = document.getElementById('rentals-count-pill');
+  if (!grid) return;
+  const items = Array.isArray(project?.rentals) ? project.rentals : [];
+  if (pill) pill.textContent = items.length === 0 ? 'нет' : items.length;
+  const addCard = `<div class="rental-add-card" onclick="openRentalEdit(null)">
+    <div style="font-size:30px;line-height:1;">＋</div>
+    <div style="font-size:12px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;">Добавить рентал</div>
+  </div>`;
+  if (items.length === 0) {
+    grid.innerHTML = addCard;
+    return;
+  }
+  grid.innerHTML = items.map(r => {
+    const initials = (r.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+    const hasImg = !!r.avatar;
+    const av = hasImg
+      ? `<div class="rental-avatar has-img" style="background-image:url('${r.avatar.replace(/'/g, "\\'")}')" onclick="pickRentalAvatar('${r.id}')" title="Сменить логотип"></div>`
+      : `<div class="rental-avatar" onclick="pickRentalAvatar('${r.id}')" title="Загрузить логотип">${escapeHtml(initials || '?')}</div>`;
+    return `
+      <div class="rental-card">
+        <div class="rental-actions">
+          <button class="rental-btn" onclick="openRentalEdit('${r.id}')" title="Переименовать">✎</button>
+          <button class="rental-btn rental-btn-del" onclick="deleteRental('${r.id}')" title="Удалить">×</button>
+        </div>
+        ${av}
+        <div class="rental-name">${escapeHtml(r.name || '—')}</div>
+      </div>`;
+  }).join('') + addCard;
+}
+function openRentalEdit(rentalId) {
+  if (!_currentProjectId) { toast('Сначала открой проект', 'error'); return; }
+  const project = DB.getProject(_currentProjectId);
+  if (!Array.isArray(project.rentals)) project.rentals = [];
+  const existing = rentalId ? project.rentals.find(x => x.id === rentalId) : null;
+  const name = prompt(existing ? 'Новое название рентала:' : 'Название рентала (например, KinoStore):', existing ? existing.name : '');
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed) { if (rentalId && !existing?.name) return; toast('Название не может быть пустым', 'error'); return; }
+  if (existing) {
+    existing.name = trimmed;
+  } else {
+    project.rentals.push({
+      id: 'rent_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: trimmed,
+      avatar: ''
+    });
+  }
+  DB.updateProject(_currentProjectId, { rentals: project.rentals });
+  renderRentals(DB.getProject(_currentProjectId));
+  toast(existing ? 'Рентал обновлён' : 'Рентал добавлен ✓', 'success');
+}
+function deleteRental(rentalId) {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  const r = (project.rentals || []).find(x => x.id === rentalId);
+  if (!r) return;
+  if (!confirm(`Удалить «${r.name}»?`)) return;
+  project.rentals = (project.rentals || []).filter(x => x.id !== rentalId);
+  DB.updateProject(_currentProjectId, { rentals: project.rentals });
+  renderRentals(DB.getProject(_currentProjectId));
+  toast('Рентал удалён', 'success');
+}
+function pickRentalAvatar(rentalId) {
+  if (!_currentProjectId) return;
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 240;
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, size, size);
+        // contain-fit (для логотипов)
+        const ratio = Math.min(size / img.width, size / img.height);
+        const w = img.width * ratio, h = img.height * ratio;
+        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        const dataUrl = canvas.toDataURL('image/png');
+        const project = DB.getProject(_currentProjectId);
+        const r = (project.rentals || []).find(x => x.id === rentalId);
+        if (r) {
+          r.avatar = dataUrl;
+          DB.updateProject(_currentProjectId, { rentals: project.rentals });
+          renderRentals(DB.getProject(_currentProjectId));
+          toast('Логотип загружен ✓', 'success');
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  document.body.appendChild(inp);
+  inp.click();
+  setTimeout(() => inp.remove(), 6000);
 }
 
 // ===== ПУБЛИЧНАЯ ССЫЛКА ДЛЯ КЛИЕНТА =====
@@ -22071,6 +22285,7 @@ window.openProjectDetail = function(id, idx) {
   const project = DB.getProject(id);
   if (project) {
     renderTeamMembers(project);
+    renderRentals(project);
     renderClients(project);
     applyCollapseStates();
     renderCreative(project);
