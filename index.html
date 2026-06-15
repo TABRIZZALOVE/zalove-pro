@@ -8255,9 +8255,15 @@ body.dark-theme .task-deadline:focus { background: white; }
     </div>
     <div class="doc-body">
       <div class="doc-content" style="display:flex;flex-direction:column;gap:10px;padding:18px 22px;">
-        <div>
-          <label class="form-label">Название локации *</label>
-          <input class="form-input" id="le-name" placeholder="AG Loft, Особняк Хлудова, ...">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
+          <div>
+            <label class="form-label">Название локации *</label>
+            <input class="form-input" id="le-name" placeholder="AG Loft, Особняк Хлудова, ...">
+          </div>
+          <div>
+            <label class="form-label">Категория</label>
+            <select class="form-input" id="le-category"></select>
+          </div>
         </div>
         <div>
           <label class="form-label">Ссылка (Яндекс/Google Maps, сайт)</label>
@@ -11767,12 +11773,17 @@ function _lbDeleteCategoryInline(catId) {
   _lbDeleteCategory(catId);
   renderLocationsBaseCover();
 }
-function openLocationsBase() {
-  _lbCurrentCategoryId = null;
+function openLocationsBase(catId) {
   closeAll();
   document.getElementById('m-locations-base').classList.add('active');
-  document.getElementById('lb-back-btn').style.display = 'none';
-  _lbRenderCategories();
+  if (catId) {
+    // Клик из плитки на дашборде — сразу проваливаемся в список локаций категории
+    _lbOpenCategory(catId);
+  } else {
+    _lbCurrentCategoryId = null;
+    document.getElementById('lb-back-btn').style.display = 'none';
+    _lbRenderCategories();
+  }
 }
 function _lbRenderCategories() {
   const data = _lbAllData();
@@ -11865,6 +11876,7 @@ function _lbRenderLocItem(it) {
         </div>
       </div>
       <div class="lb-loc-actions">
+        <button class="lb-loc-edit" onclick="_lbMoveLocation('${it.id}')" title="Перенести в другую категорию">↗</button>
         <button class="lb-loc-edit" onclick="_lbOpenLocationEdit('${it.id}')">✎</button>
         <button class="lb-loc-del" onclick="_lbDeleteLocation('${it.id}')">×</button>
       </div>
@@ -11911,6 +11923,14 @@ function _lbOpenLocationEdit(itemId) {
   document.getElementById('le-price').value = it?.price || '';
   document.getElementById('le-projects').value = it?.projects || '';
   document.getElementById('le-notes').value = it?.notes || '';
+  // Селект категории — заполняем все доступные категории, выбираем текущую
+  const catSelect = document.getElementById('le-category');
+  if (catSelect) {
+    const currentCatId = it?.categoryId || _lbCurrentCategoryId || (data.categories[0]?.id || 'office');
+    catSelect.innerHTML = (data.categories || []).map(c =>
+      `<option value="${c.id}" ${c.id === currentCatId ? 'selected' : ''}>${c.icon || '📁'} ${escapeHtml(c.name)}</option>`
+    ).join('');
+  }
   document.getElementById('le-delete-btn').style.display = it ? 'inline-flex' : 'none';
   document.getElementById('le-info').textContent = it ? ('ID: ' + itemId) : 'Сохранится глобально';
   // datalist проектов из текущего workspace
@@ -11927,9 +11947,11 @@ function saveLocation() {
   const name = document.getElementById('le-name').value.trim();
   if (!name) { toast('Укажи название локации', 'error'); document.getElementById('le-name').focus(); return; }
   const data = _lbAllData();
+  // Категория из селекта (или fallback на текущий открытый список)
+  const selectedCat = document.getElementById('le-category')?.value || _lbCurrentCategoryId || (data.categories[0]?.id || 'office');
   const item = {
     id: _lbEditingLocationId || 'loc_' + Date.now().toString(36),
-    categoryId: _lbCurrentCategoryId || 'office',
+    categoryId: selectedCat,
     name,
     link: document.getElementById('le-link').value.trim(),
     address: document.getElementById('le-address').value.trim(),
@@ -11952,6 +11974,25 @@ function saveLocation() {
   renderLocationsBaseCover();
   if (_lbCurrentCategoryId) _lbOpenCategory(_lbCurrentCategoryId);
   toast(_lbEditingLocationId ? 'Локация обновлена' : 'Локация добавлена 📍', 'success');
+}
+function _lbMoveLocation(itemId) {
+  const data = _lbAllData();
+  const it = data.items.find(x => x.id === itemId);
+  if (!it) return;
+  const cats = (data.categories || []).filter(c => c.id !== it.categoryId);
+  if (cats.length === 0) { toast('Нет других категорий — создай хотя бы одну', 'warn'); return; }
+  const list = cats.map((c, i) => `${i + 1}. ${c.icon || '📁'} ${c.name}`).join('\n');
+  const answer = prompt(`Перенести «${it.name}» в категорию:\n\n${list}\n\nВведи номер:`);
+  if (!answer) return;
+  const idx = parseInt(answer.trim()) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= cats.length) { toast('Неверный номер', 'error'); return; }
+  const targetCat = cats[idx];
+  it.categoryId = targetCat.id;
+  it.updatedAt = new Date().toISOString();
+  _lbSave(data);
+  renderLocationsBaseCover();
+  if (_lbCurrentCategoryId) _lbOpenCategory(_lbCurrentCategoryId);
+  toast(`Перенесено в «${targetCat.name}» ✓`, 'success');
 }
 function _lbDeleteLocation(itemId) {
   if (!confirm('Удалить локацию?')) return;
