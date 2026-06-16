@@ -7116,8 +7116,8 @@ body.dark-theme .task-deadline:focus { background: white; }
               <div class="label">Съёмочные дни</div>
               <div class="value" id="detail-days">3 ДНЯ</div>
             </div>
-            <div class="detail-meta-item">
-              <div class="label">Сдача</div>
+            <div class="detail-meta-item" id="detail-deadline-wrap" onclick="openDeadlineEdit(event)" style="cursor:pointer;" title="Кликни чтобы поменять дату сдачи">
+              <div class="label">Сдача <span style="font-size:9px;opacity:0.5;font-weight:600;letter-spacing:0;margin-left:3px;">✎</span></div>
               <div class="value small" id="detail-deadline">04.06.2026</div>
             </div>
             <div class="detail-meta-item">
@@ -7127,6 +7127,7 @@ body.dark-theme .task-deadline:focus { background: white; }
           </div>
           <div class="detail-actions">
             <button class="btn" onclick="openNewDoc()">＋ Новый документ</button>
+            <button class="btn-secondary btn" onclick="editCurrentProject()" title="Изменить название, клиента, дату сдачи, бюджет и др.">✎ Редактировать</button>
             <button class="btn-secondary btn" onclick="exportProjectAllIcs()" title="Скачать .ics со всеми событиями проекта">📅 В календарь</button>
             <button class="btn-secondary btn">⤓ Экспорт всех</button>
             <button class="btn-secondary btn">📨 Поделиться</button>
@@ -10973,6 +10974,62 @@ function deleteProjectConfirm(id, name) {
     toast('Проект удалён', 'success');
     renderProjects();
   }
+}
+
+// Открыть форму редактирования ТЕКУЩЕГО проекта (со всеми полями)
+function editCurrentProject() {
+  if (!_currentProjectId) { toast('Сначала открой проект', 'error'); return; }
+  if (typeof openNewProject === 'function') {
+    openNewProject(_currentProjectId);
+  } else {
+    toast('Форма редактирования не найдена', 'error');
+  }
+}
+
+// Inline-редактирование даты сдачи прямо в шапке детальной страницы
+function openDeadlineEdit(ev) {
+  if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const wrap = document.getElementById('detail-deadline-wrap');
+  const valEl = document.getElementById('detail-deadline');
+  if (!wrap || !valEl) return;
+  if (wrap.dataset.editing === '1') return;
+  wrap.dataset.editing = '1';
+  const oldText = valEl.textContent;
+  const cur = project.deadline || '';
+  valEl.innerHTML = `<input type="date" id="detail-deadline-input" value="${cur}" style="font-family:inherit;font-size:13px;padding:4px 8px;border:1.5px solid var(--brand-red, #6b1d1f);border-radius:6px;background:var(--bg, transparent);color:inherit;outline:none;color-scheme:dark;" />`;
+  const inp = document.getElementById('detail-deadline-input');
+  setTimeout(() => { inp.focus(); try { inp.showPicker && inp.showPicker(); } catch (_) {} }, 30);
+  let committed = false;
+  const commit = (save = true) => {
+    if (committed) return;
+    committed = true;
+    wrap.dataset.editing = '';
+    if (save) {
+      const newVal = inp.value;
+      if (newVal !== (project.deadline || '')) {
+        DB.updateProject(_currentProjectId, { deadline: newVal });
+        const updated = DB.getProject(_currentProjectId);
+        valEl.textContent = updated.deadline ? (typeof formatDateRu === 'function' ? formatDateRu(updated.deadline) : updated.deadline) : '—';
+        toast('Дата сдачи обновлена ✓', 'success');
+        // Перерисуем список проектов чтобы новая дата отобразилась везде
+        if (typeof renderProjects === 'function') renderProjects();
+        if (typeof updateDashboardStats === 'function') updateDashboardStats();
+      } else {
+        valEl.textContent = oldText;
+      }
+    } else {
+      valEl.textContent = oldText;
+    }
+  };
+  inp.onchange = () => commit(true);
+  inp.onblur = () => commit(true);
+  inp.onkeydown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
+  };
 }
 
 function deleteProjectFromForm() {
