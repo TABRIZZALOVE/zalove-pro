@@ -8851,7 +8851,7 @@ body.dark-theme .task-deadline:focus { background: white; }
               <option>Механик ронина</option>
               <option>Фокус-пуллер</option>
               <option>Плейбек / Логгер</option>
-              <option>Стедикамщик</option>
+              <option>Оператор-стедикама</option>
               <option>Кран-оператор / Долли</option>
             </optgroup>
             <optgroup label="💡 Свет">
@@ -11380,7 +11380,7 @@ const ROLE_TRANSLATIONS = {
   'Механик ронина': 'Ronin Operator',
   'Фокус-пуллер': '1AC',
   'Плейбек / Логгер': 'Playback / Logger',
-  'Стедикамщик': 'Steadicam Operator',
+  'Оператор-стедикама': 'Steadicam Operator',
   'Кран-оператор / Долли': 'Crane / Dolly Operator',
   'Гаффер': 'Gaffer',
   'Осветитель': 'Lighting Technician',
@@ -11462,6 +11462,50 @@ function _fixWrongRoleTranslations() {
     }
   });
   if (fixedTotal > 0) console.info(`[role-fix] починили role_en у ${fixedTotal} участников`);
+}
+
+// Миграция: переименование устаревших ролей (RU)
+// Сейчас: «Стедикамщик» → «Оператор-стедикама»
+function _migrateRoleNames() {
+  if (!DB || !DB.getProjects) return;
+  const RENAMES = {
+    'Стедикамщик': 'Оператор-стедикама'
+  };
+  const projects = DB.getProjects();
+  let totalFixed = 0;
+  projects.forEach(p => {
+    if (!Array.isArray(p.team) || p.team.length === 0) return;
+    let changed = false;
+    const newTeam = p.team.map(m => {
+      const oldRole = (m.role || '').trim();
+      if (RENAMES[oldRole]) {
+        changed = true;
+        const newRole = RENAMES[oldRole];
+        return { ...m, role: newRole, role_en: translateRole(newRole) || m.role_en };
+      }
+      // Поддержка нескольких ролей через запятую
+      if (oldRole.includes(',')) {
+        const parts = oldRole.split(',').map(r => r.trim());
+        let partsChanged = false;
+        const newParts = parts.map(part => {
+          if (RENAMES[part]) { partsChanged = true; return RENAMES[part]; }
+          return part;
+        });
+        if (partsChanged) {
+          changed = true;
+          const newRole = newParts.join(', ');
+          return { ...m, role: newRole, role_en: translateRole(newRole) || m.role_en };
+        }
+      }
+      return m;
+    });
+    if (changed) {
+      const fixedCount = newTeam.filter((m, i) => m.role !== p.team[i].role).length;
+      DB.updateProject(p.id, { team: newTeam });
+      totalFixed += fixedCount;
+    }
+  });
+  if (totalFixed > 0) console.info(`[role-rename] переименовали роль у ${totalFixed} участников`);
 }
 
 function translateRole(roleRu) {
@@ -11559,7 +11603,7 @@ const SMETA_EN_DICT = {
   'Механик ронина': 'Ronin Technician',
   'Фокус-пуллер': '1AC',
   'Плейбек / Логгер': 'Playback / Data Wrangler',
-  'Стедикамщик': 'Steadicam Operator',
+  'Оператор-стедикама': 'Steadicam Operator',
   'Долли': 'Dolly Operator',
   'Кран': 'Crane Operator',
   'Роборука': 'Motion Control Operator',
@@ -14536,7 +14580,7 @@ const SMETA_TEMPLATE = [
     { name: 'Механик ронина', desc: 'Работа с ронином' },
     { name: 'Фокус-пуллер', desc: 'Работа с фокусом камеры' },
     { name: 'Плейбек / Логгер', desc: 'Слив материала, помощь с техникой' },
-    { name: 'Стедикамщик', desc: 'Стабилизирующая система «стедикам»' },
+    { name: 'Оператор-стедикама', desc: 'Стабилизирующая система «стедикам»' },
     { name: 'Долли', desc: 'Операторская телега' },
     { name: 'Кран', desc: 'Операторский кран' },
     { name: 'Роборука', desc: 'Motion Control' },
@@ -28019,6 +28063,7 @@ function bootAfterAuth() {
     if (typeof renderLocationsBaseCover === 'function') renderLocationsBaseCover();
     // Чиним ошибочные переводы ролей (унаследованные данные где у всех role_en="Director")
     try { _fixWrongRoleTranslations(); } catch (e) { console.warn('role fix', e); }
+    try { _migrateRoleNames(); } catch (e) { console.warn('role rename', e); }
   }
 
   renderProjects();
