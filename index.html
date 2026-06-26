@@ -10189,11 +10189,43 @@ const DB = {
     if (!key) return null;
     return this.getPeople()[key] || null;
   },
-  // Резолвит аватар: сначала из локального member.avatar, потом из глобального реестра
+  // Резолвит аватар:
+  //  1) Локальный member.avatar (текущий проект)
+  //  2) Глобальный реестр profile.data.people по tg-ключу
+  //  3) Глобальный реестр по name-ключу (если tg не совпало)
+  //  4) Скан всех проектов: ищем того же человека (по tg или имени) с аватаром
+  //     — заодно подтягиваем найденный аватар в глобальный реестр, чтобы в следующий раз был быстро
   resolveAvatar(m) {
-    if (m?.avatar) return m.avatar;
-    const p = this.resolvePersonProfile(m);
-    return p?.avatar || '';
+    if (!m) return '';
+    if (m.avatar) return m.avatar;
+    const tg = (m.telegram || '').trim().replace(/^@/, '').toLowerCase();
+    const name = (m.name_ru || m.name_en || '').trim().toLowerCase();
+    const people = this.getPeople();
+    // 2 — по tg
+    if (tg && people['tg:' + tg]?.avatar) return people['tg:' + tg].avatar;
+    // 3 — по имени
+    if (name && people['name:' + name]?.avatar) return people['name:' + name].avatar;
+    // 4 — fallback: сканируем все проекты
+    if (!tg && !name) return '';
+    try {
+      const projects = (this._memCache && this._memCache.projects) || this._projectsCache || [];
+      for (const pr of projects) {
+        const team = (pr && pr.team) || [];
+        for (const other of team) {
+          if (!other || !other.avatar) continue;
+          const otherTg = (other.telegram || '').trim().replace(/^@/, '').toLowerCase();
+          const otherName = (other.name_ru || other.name_en || '').trim().toLowerCase();
+          const tgMatch = tg && otherTg && tg === otherTg;
+          const nameMatch = name && otherName && name === otherName;
+          if (tgMatch || nameMatch) {
+            // Найден! Заодно подтянем в глобальный реестр, чтобы в следующий раз был быстро
+            try { this.savePersonProfile({ ...other }); } catch (_) {}
+            return other.avatar;
+          }
+        }
+      }
+    } catch (_) {}
+    return '';
   },
   // Сохраняет полный профиль человека в глобальный реестр и синкает на сервер
   savePersonProfile(m) {
