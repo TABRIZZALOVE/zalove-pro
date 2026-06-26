@@ -10190,41 +10190,81 @@ const DB = {
     return this.getPeople()[key] || null;
   },
   // Резолвит аватар:
-  //  1) Локальный member.avatar (текущий проект)
+  //  1) Локальный member.avatar
   //  2) Глобальный реестр profile.data.people по tg-ключу
-  //  3) Глобальный реестр по name-ключу (если tg не совпало)
-  //  4) Скан всех проектов: ищем того же человека (по tg или имени) с аватаром
-  //     — заодно подтягиваем найденный аватар в глобальный реестр, чтобы в следующий раз был быстро
+  //  3) Глобальный реестр по name-ключу
+  //  4) Скан ВСЕХ проектов (через getProjects + _memCache + _projectsCache) по tg, имени, фамилии
+  //  5) Скан callsheet.crew, отчётов, кастов — везде где могут быть .avatar + .name/.telegram
+  //  6) При нахождении — сохраняем в глобальный реестр, чтобы дальше работало быстро
   resolveAvatar(m) {
     if (!m) return '';
     if (m.avatar) return m.avatar;
     const tg = (m.telegram || '').trim().replace(/^@/, '').toLowerCase();
-    const name = (m.name_ru || m.name_en || '').trim().toLowerCase();
-    const people = this.getPeople();
-    // 2 — по tg
-    if (tg && people['tg:' + tg]?.avatar) return people['tg:' + tg].avatar;
-    // 3 — по имени
-    if (name && people['name:' + name]?.avatar) return people['name:' + name].avatar;
-    // 4 — fallback: сканируем все проекты
+    const name = (m.name_ru || m.name_en || m.name || '').trim().toLowerCase();
     if (!tg && !name) return '';
+    const people = this.getPeople();
+    if (tg && people['tg:' + tg] && people['tg:' + tg].avatar) return people['tg:' + tg].avatar;
+    if (name && people['name:' + name] && people['name:' + name].avatar) return people['name:' + name].avatar;
+    // 4 — скан проектов
     try {
-      const projects = (this._memCache && this._memCache.projects) || this._projectsCache || [];
-      for (const pr of projects) {
-        const team = (pr && pr.team) || [];
-        for (const other of team) {
-          if (!other || !other.avatar) continue;
-          const otherTg = (other.telegram || '').trim().replace(/^@/, '').toLowerCase();
-          const otherName = (other.name_ru || other.name_en || '').trim().toLowerCase();
-          const tgMatch = tg && otherTg && tg === otherTg;
-          const nameMatch = name && otherName && name === otherName;
-          if (tgMatch || nameMatch) {
-            // Найден! Заодно подтянем в глобальный реестр, чтобы в следующий раз был быстро
+      const projectsA = (typeof this.getProjects === 'function') ? (this.getProjects() || []) : [];
+      const projectsB = (this._memCache && this._memCache.projects) || [];
+      const projectsC = this._projectsCache || [];
+      const seen = new Set();
+      const allProjects = [];
+      [...projectsA, ...projectsB, ...projectsC].forEach(p => { if (p && p.id && !seen.has(p.id)) { seen.add(p.id); allProjects.push(p); } });
+      const nameTokens = name ? name.split(/\s+/).filter(t => t.length >= 3) : [];
+      const matchesPerson = (o) => {
+        if (!o) return false;
+        const oTg = (o.telegram || '').trim().replace(/^@/, '').toLowerCase();
+        const oName = (o.name_ru || o.name_en || o.name || '').trim().toLowerCase();
+        if (tg && oTg && tg === oTg) return true;
+        if (name && oName && name === oName) return true;
+        // Слабый матч по имени и фамилии (если хотя бы 2 общих токена ≥3 букв)
+        if (nameTokens.length >= 2 && oName) {
+          const oTokens = oName.split(/\s+/);
+          const shared = nameTokens.filter(t => oTokens.includes(t));
+          if (shared.length >= 2) return true;
+        }
+        return false;
+      };
+      // Проходим по team каждого проекта
+      for (const pr of allProjects) {
+        for (const other of (pr.team || [])) {
+          if (other && other.avatar && matchesPerson(other)) {
             try { this.savePersonProfile({ ...other }); } catch (_) {}
             return other.avatar;
           }
         }
+        // 5 — крю в callsheet
+        const cs = pr.callsheet || pr.cs;
+        if (cs && Array.isArray(cs.crew)) {
+          for (const c of cs.crew) {
+            if (c && c.avatar && matchesPerson({ name_ru: c.name, telegram: c.telegram })) {
+              return c.avatar;
+            }
+          }
+        }
+        // 5b — отчёты по дням
+        if (pr.reports && typeof pr.reports === 'object') {
+          for (const k of Object.keys(pr.reports)) {
+            const rep = pr.reports[k];
+            const crew = (rep && rep.crew) || [];
+            for (const c of crew) {
+              if (c && c.avatar && matchesPerson({ name_ru: c.name, telegram: c.telegram })) {
+                return c.avatar;
+              }
+            }
+          }
+        }
       }
-    } catch (_) {}
+      // 6 — пройдёмся по всему реестру people: может ключ другой, но avatar матчится по фрагменту имени
+      for (const key of Object.keys(people)) {
+        const p = people[key];
+        if (!p || !p.avatar) continue;
+        if (matchesPerson(p)) return p.avatar;
+      }
+    } catch (e) { console.warn('[resolveAvatar fallback]', e); }
     return '';
   },
   // Сохраняет полный профиль человека в глобальный реестр и синкает на сервер
@@ -14014,6 +14054,63 @@ function _personChipHtml(name, avatar, kind = 'compact') {
   return `<span class="person-chip person-chip-init-only" style="width:${size}px;height:${size}px;font-size:${fz}px;" title="${escapeHtml(name || '')}">${escapeHtml(initials)}</span>`;
 }
 // Поиск аватара по имени: сначала в команде проекта, потом в глобальном реестре людей
+// Дебаг-функция — запусти в консоли: debugAvatars()
+window.debugAvatars = function() {
+  if (!_currentProjectId) { console.log('Сначала открой проект'); return; }
+  const project = DB.getProject(_currentProjectId);
+  if (!project) { console.log('Проект не найден'); return; }
+  const team = project.team || [];
+  const people = DB.getPeople();
+  const allProjects = (DB.getProjects && DB.getProjects()) || [];
+  console.group(`🔍 Avatar debug · проект "${project.name}" · ${team.length} участников`);
+  console.log(`📁 People registry: ${Object.keys(people).length} записей`);
+  console.log(`📂 Проектов в workspace: ${allProjects.length}`);
+  const peopleWithAvatar = Object.values(people).filter(p => p && p.avatar).length;
+  console.log(`🖼  В реестре с аватаром: ${peopleWithAvatar}`);
+  console.log('\n— Разбор каждого участника:');
+  team.forEach(m => {
+    const initials = (m.name_ru || m.name_en || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+    const tgKey = (m.telegram || '').replace(/^@/, '').toLowerCase().trim();
+    const nameKey = (m.name_ru || m.name_en || '').trim().toLowerCase();
+    const local = !!m.avatar;
+    const regTg = tgKey && people['tg:' + tgKey] && people['tg:' + tgKey].avatar;
+    const regName = nameKey && people['name:' + nameKey] && people['name:' + nameKey].avatar;
+    // Прогоним резолв и посмотрим — нашёл или нет
+    const resolved = DB.resolveAvatar(m);
+    let inOtherProject = null;
+    if (!resolved) {
+      for (const pr of allProjects) {
+        if (pr.id === project.id) continue;
+        for (const o of (pr.team || [])) {
+          if (!o || !o.avatar) continue;
+          const oTg = (o.telegram || '').replace(/^@/, '').toLowerCase().trim();
+          const oN = (o.name_ru || o.name_en || '').trim().toLowerCase();
+          if ((tgKey && oTg === tgKey) || (nameKey && oN === nameKey)) {
+            inOtherProject = `"${pr.name}" — tg:${o.telegram} · name:${o.name_ru}`;
+            break;
+          }
+        }
+        if (inOtherProject) break;
+      }
+    }
+    const status = resolved ? '✅ найден' : '❌ ПУСТО';
+    console.log(`[${initials}] ${m.name_ru} → ${status}`, {
+      tg_input: m.telegram || '—',
+      tg_key: tgKey || '—',
+      name_key: nameKey || '—',
+      local_avatar: local,
+      'registry[tg:]': !!regTg,
+      'registry[name:]': !!regName,
+      'in_other_projects': inOtherProject || '—',
+      resolved_len: resolved ? resolved.length + ' bytes' : 0
+    });
+  });
+  console.groupEnd();
+  console.log('\n📋 Реестр people (только ключи с аватарами):');
+  Object.keys(people).filter(k => people[k] && people[k].avatar).forEach(k => {
+    console.log(`  ${k} · name="${people[k].name_ru || people[k].name_en || '?'}" tg="${people[k].telegram || '?'}"`);
+  });
+};
 function _findAvatarByName(project, name) {
   if (!name) return '';
   const target = String(name).trim().toLowerCase();
