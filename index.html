@@ -9546,14 +9546,14 @@ function openDoc(type) {
     _estimateMode = 'client';
     const project = DB.getProject(_currentProjectId);
     if (project) renderEstimate(project);
-    return;
+    // дальше пройдёт map → m-estimate.classList.add('active')
   }
   // Дополнительная смета — отдельный slot project.estimateExtra (стартует пустой)
   if (type === 'estimateExtra' && _currentProjectId) {
     _estimateMode = 'extra';
     const project = DB.getProject(_currentProjectId);
     if (project) renderEstimate(project);
-    return;
+    // дальше пройдёт map → m-estimate.classList.add('active')
   }
   // Вызывной — открываем редактор
   if (type === 'callsheet' && _currentProjectId) {
@@ -9611,6 +9611,7 @@ function openDoc(type) {
   }
   const map = {
     estimate: 'm-estimate',
+    estimateExtra: 'm-estimate',
     callsheet: 'm-callsheet',
     timing: 'm-timing',
     release: 'm-release',
