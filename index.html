@@ -8729,6 +8729,65 @@ body.dark-theme .task-deadline:focus { background: white; }
   </div>
 </div>
 
+<!-- Редактирование рентала -->
+<div class="modal-overlay" id="m-rental-edit" style="z-index: 9500;">
+  <div class="doc-overlay" style="width: 580px; max-width: 95vw;">
+    <div class="doc-header">
+      <div class="doc-header-l">
+        <div class="doc-header-icon">🎬</div>
+        <div>
+          <div class="doc-header-title" id="re-title">Рентал</div>
+          <div class="doc-header-subtitle">Сохранится глобально — при добавлении в другие проекты подтянется автоматически</div>
+        </div>
+      </div>
+      <button class="doc-close" onclick="closeRentalEdit()">×</button>
+    </div>
+    <div class="doc-body">
+      <div class="doc-content" style="display:flex;flex-direction:column;gap:14px;padding:18px 22px;">
+        <div style="display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:flex-start;">
+          <div>
+            <label class="form-label" style="margin-bottom:6px;">Логотип</label>
+            <div id="re-logo-preview" style="width:140px;height:140px;border-radius:14px;background:#fff center/contain no-repeat #f3f3f3;border:1.5px dashed var(--line-2,#ddd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:30px;color:#999;" onclick="_pickReLogo()" title="Загрузить логотип">＋</div>
+            <button type="button" id="re-logo-clear" onclick="_clearReLogo()" style="margin-top:6px;background:none;border:none;color:var(--muted,#888);font-size:11px;cursor:pointer;display:none;">× убрать</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label class="form-label">Название *</label>
+              <input class="form-input" id="re-name" placeholder="Например: KinoStore, KIRILLIN, RentRoom">
+            </div>
+            <div>
+              <label class="form-label">Сайт</label>
+              <input class="form-input" id="re-website" placeholder="https://kinostore.ru" type="url">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <label class="form-label">Телефон</label>
+                <input class="form-input" id="re-phone" placeholder="+7 ...">
+              </div>
+              <div>
+                <label class="form-label">Telegram</label>
+                <input class="form-input" id="re-telegram" placeholder="@username">
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Заметка</label>
+              <textarea class="form-input" id="re-note" placeholder="Особенности, тарифы, контакт-менеджер..." style="min-height:60px;resize:vertical;"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-footer">
+      <div class="doc-footer-info" id="re-info">Сохраняется в проекте + в глобальный реестр</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-secondary btn" id="re-delete-btn" onclick="deleteRentalFromForm()" style="display:none;color:#b91c1c;">🗑 Удалить</button>
+        <button class="btn-secondary btn" onclick="closeRentalEdit()">Отмена</button>
+        <button class="btn" onclick="saveRentalForm()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Новый клиент -->
 <div class="modal-overlay" id="m-add-client">
   <div class="doc-overlay" style="width: 600px;">
@@ -9569,6 +9628,7 @@ function openDoc(type) {
     'life-tracker': 'm-life-tracker',
     'locations-base': 'm-locations-base',
     'location-edit': 'm-location-edit',
+    'rental-edit': 'm-rental-edit',
     placeholder: 'm-placeholder'
   };
   const modalId = map[type] || 'm-new';
@@ -10133,6 +10193,7 @@ const DB = {
     // 2. Профиль (brand-данные внутри profiles.data.brand)
     let brand = {};
     let people = {};
+    let rentals = {};
     try {
       const { data: prof, error: prErr } = await this.client
         .from('profiles')
@@ -10142,6 +10203,7 @@ const DB = {
       if (!prErr) {
         brand = (prof?.data?.brand) || {};
         people = (prof?.data?.people) || {};
+        rentals = (prof?.data?.rentals) || {};
         // Запоминаем целиком data в this.profile для merge-sync
         if (this.profile) this.profile.data = prof?.data || {};
       }
@@ -10176,7 +10238,8 @@ const DB = {
       version: 1,
       projects: merged,
       brand,
-      people
+      people,
+      rentals
     };
     this._lastBrand = JSON.stringify(brand);
     // RBAC: ассистент не должен иметь финансовые данные ДАЖЕ в локальном кэше.
@@ -10301,6 +10364,69 @@ const DB = {
     cache.people[key] = merged;
     this.save(cache);
     this._syncPeopleToServer(cache.people);
+  },
+  // ===== РЕНТАЛЫ — глобальный реестр (profiles.data.rentals) =====
+  _rentalKey(r) {
+    if (!r) return null;
+    const name = (r.name || '').trim().toLowerCase();
+    return name ? 'rental:' + name : null;
+  },
+  getRentalsRegistry() {
+    const cache = this.load();
+    return (cache && cache.rentals) || {};
+  },
+  resolveRentalAvatar(r) {
+    if (!r) return '';
+    if (r.avatar) return r.avatar;
+    const key = this._rentalKey(r);
+    if (!key) return '';
+    const reg = this.getRentalsRegistry();
+    if (reg[key] && reg[key].avatar) return reg[key].avatar;
+    // Скан всех проектов
+    try {
+      const all = (this.getProjects && this.getProjects()) || [];
+      const name = (r.name || '').trim().toLowerCase();
+      for (const pr of all) {
+        for (const other of (pr.rentals || [])) {
+          if (!other || !other.avatar) continue;
+          if (((other.name || '').trim().toLowerCase()) === name) {
+            // Подтянем в реестр чтобы быстрее работало в следующий раз
+            try { this.saveRentalProfile({ ...other }); } catch (_) {}
+            return other.avatar;
+          }
+        }
+      }
+    } catch (_) {}
+    return '';
+  },
+  saveRentalProfile(r) {
+    const key = this._rentalKey(r);
+    if (!key) return;
+    const cache = this.load();
+    if (!cache.rentals) cache.rentals = {};
+    const existing = cache.rentals[key] || {};
+    const fields = ['name', 'avatar', 'website', 'phone', 'telegram', 'note'];
+    const merged = { ...existing };
+    fields.forEach(f => { if (r[f]) merged[f] = r[f]; });
+    cache.rentals[key] = merged;
+    this.save(cache);
+    this._syncRentalsToServer(cache.rentals);
+  },
+  _rentalsSyncTimer: null,
+  _syncRentalsToServer(rentals) {
+    if (!this.user || !this.client) return;
+    clearTimeout(this._rentalsSyncTimer);
+    this._rentalsSyncTimer = setTimeout(() => {
+      const currentData = (this.profile && this.profile.data) || {};
+      const newData = { ...currentData, rentals };
+      this._withRetry(
+        () => this.client.from('profiles').update({ data: newData }).eq('id', this.user.id),
+        'rentals sync'
+      ).then(({ error }) => {
+        if (error) console.error('rentals sync', error);
+        else if (this.profile) this.profile.data = newData;
+      });
+    }, 1200);
   },
   _peopleSyncTimer: null,
   _syncPeopleToServer(people) {
@@ -12081,56 +12207,68 @@ function renderRentals(project) {
   }
   grid.innerHTML = items.map(r => {
     const initials = (r.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
-    const hasImg = !!r.avatar;
-    const av = hasImg
-      ? `<div class="rental-avatar has-img" style="background-image:url('${r.avatar.replace(/'/g, "\\'")}')" onclick="pickRentalAvatar('${r.id}')" title="Сменить логотип"></div>`
-      : `<div class="rental-avatar" onclick="pickRentalAvatar('${r.id}')" title="Загрузить логотип">${escapeHtml(initials || '?')}</div>`;
+    // Авто-резолв логотипа — если у рентала в проекте нет фото,
+    // ищем в глобальном реестре profile.data.rentals → в других проектах
+    const av = (DB.resolveRentalAvatar && DB.resolveRentalAvatar(r)) || '';
+    const avatarHtml = av
+      ? `<div class="rental-avatar has-img" style="background-image:url('${av.replace(/'/g, "\\'")}')"></div>`
+      : `<div class="rental-avatar">${escapeHtml(initials || '?')}</div>`;
     return `
-      <div class="rental-card">
+      <div class="rental-card" onclick="openRentalEdit('${r.id}')" title="Открыть для редактирования" style="cursor:pointer;">
         <div class="rental-actions">
-          <button class="rental-btn" onclick="openRentalEdit('${r.id}')" title="Переименовать">✎</button>
-          <button class="rental-btn rental-btn-del" onclick="deleteRental('${r.id}')" title="Удалить">×</button>
+          <button class="rental-btn rental-btn-del" onclick="event.stopPropagation(); deleteRental('${r.id}')" title="Удалить">×</button>
         </div>
-        ${av}
+        ${avatarHtml}
         <div class="rental-name">${escapeHtml(r.name || '—')}</div>
       </div>`;
   }).join('') + addCard;
 }
+
+// ===== Модал редактирования/создания рентала =====
+let _editingRentalId = null;
+let _reLogoTmp = '';
 function openRentalEdit(rentalId) {
   if (!_currentProjectId) { toast('Сначала открой проект', 'error'); return; }
   const project = DB.getProject(_currentProjectId);
   if (!Array.isArray(project.rentals)) project.rentals = [];
   const existing = rentalId ? project.rentals.find(x => x.id === rentalId) : null;
-  const name = prompt(existing ? 'Новое название рентала:' : 'Название рентала (например, KinoStore):', existing ? existing.name : '');
-  if (name === null) return;
-  const trimmed = name.trim();
-  if (!trimmed) { if (rentalId && !existing?.name) return; toast('Название не может быть пустым', 'error'); return; }
-  if (existing) {
-    existing.name = trimmed;
+  _editingRentalId = rentalId || null;
+  _reLogoTmp = existing?.avatar || (existing ? (DB.resolveRentalAvatar(existing) || '') : '');
+  document.getElementById('re-title').textContent = existing ? 'Редактировать рентал' : 'Новый рентал';
+  document.getElementById('re-name').value = existing?.name || '';
+  document.getElementById('re-website').value = existing?.website || '';
+  document.getElementById('re-phone').value = existing?.phone || '';
+  document.getElementById('re-telegram').value = existing?.telegram || '';
+  document.getElementById('re-note').value = existing?.note || '';
+  document.getElementById('re-delete-btn').style.display = existing ? 'inline-flex' : 'none';
+  document.getElementById('re-info').textContent = existing ? ('ID: ' + rentalId) : 'Сохраняется в проекте + в глобальный реестр';
+  _renderReLogoPreview();
+  document.getElementById('m-rental-edit').classList.add('active');
+  setTimeout(() => document.getElementById('re-name').focus(), 100);
+}
+function closeRentalEdit() {
+  document.getElementById('m-rental-edit').classList.remove('active');
+  _editingRentalId = null;
+  _reLogoTmp = '';
+}
+function _renderReLogoPreview() {
+  const el = document.getElementById('re-logo-preview');
+  const clearBtn = document.getElementById('re-logo-clear');
+  if (!el) return;
+  if (_reLogoTmp) {
+    el.style.backgroundImage = `url('${_reLogoTmp.replace(/'/g, "\\'")}')`;
+    el.style.background = `url('${_reLogoTmp.replace(/'/g, "\\'")}') center/contain no-repeat #fff`;
+    el.style.borderStyle = 'solid';
+    el.textContent = '';
+    if (clearBtn) clearBtn.style.display = '';
   } else {
-    project.rentals.push({
-      id: 'rent_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      name: trimmed,
-      avatar: ''
-    });
+    el.style.background = '#f3f3f3';
+    el.style.borderStyle = 'dashed';
+    el.textContent = '＋';
+    if (clearBtn) clearBtn.style.display = 'none';
   }
-  DB.updateProject(_currentProjectId, { rentals: project.rentals });
-  renderRentals(DB.getProject(_currentProjectId));
-  toast(existing ? 'Рентал обновлён' : 'Рентал добавлен ✓', 'success');
 }
-function deleteRental(rentalId) {
-  if (!_currentProjectId) return;
-  const project = DB.getProject(_currentProjectId);
-  const r = (project.rentals || []).find(x => x.id === rentalId);
-  if (!r) return;
-  if (!confirm(`Удалить «${r.name}»?`)) return;
-  project.rentals = (project.rentals || []).filter(x => x.id !== rentalId);
-  DB.updateProject(_currentProjectId, { rentals: project.rentals });
-  renderRentals(DB.getProject(_currentProjectId));
-  toast('Рентал удалён', 'success');
-}
-function pickRentalAvatar(rentalId) {
-  if (!_currentProjectId) return;
+function _pickReLogo() {
   const inp = document.createElement('input');
   inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
   inp.onchange = () => {
@@ -12146,19 +12284,11 @@ function pickRentalAvatar(rentalId) {
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, size, size);
-        // contain-fit (для логотипов)
         const ratio = Math.min(size / img.width, size / img.height);
         const w = img.width * ratio, h = img.height * ratio;
         ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-        const dataUrl = canvas.toDataURL('image/png');
-        const project = DB.getProject(_currentProjectId);
-        const r = (project.rentals || []).find(x => x.id === rentalId);
-        if (r) {
-          r.avatar = dataUrl;
-          DB.updateProject(_currentProjectId, { rentals: project.rentals });
-          renderRentals(DB.getProject(_currentProjectId));
-          toast('Логотип загружен ✓', 'success');
-        }
+        _reLogoTmp = canvas.toDataURL('image/png');
+        _renderReLogoPreview();
       };
       img.src = e.target.result;
     };
@@ -12168,6 +12298,65 @@ function pickRentalAvatar(rentalId) {
   inp.click();
   setTimeout(() => inp.remove(), 6000);
 }
+function _clearReLogo() {
+  _reLogoTmp = '';
+  _renderReLogoPreview();
+}
+function saveRentalForm() {
+  const name = document.getElementById('re-name').value.trim();
+  if (!name) { toast('Укажи название рентала', 'error'); document.getElementById('re-name').focus(); return; }
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!Array.isArray(project.rentals)) project.rentals = [];
+  const data = {
+    name,
+    avatar: _reLogoTmp || '',
+    website: document.getElementById('re-website').value.trim(),
+    phone: document.getElementById('re-phone').value.trim(),
+    telegram: document.getElementById('re-telegram').value.trim(),
+    note: document.getElementById('re-note').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+  // Если фото оставили пустым — но есть в глобальном реестре под этим именем — подтянем
+  if (!data.avatar) {
+    const auto = DB.resolveRentalAvatar({ name });
+    if (auto) data.avatar = auto;
+  }
+  if (_editingRentalId) {
+    const idx = project.rentals.findIndex(x => x.id === _editingRentalId);
+    if (idx >= 0) project.rentals[idx] = { ...project.rentals[idx], ...data };
+  } else {
+    project.rentals.push({
+      id: 'rent_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      ...data
+    });
+  }
+  DB.updateProject(_currentProjectId, { rentals: project.rentals });
+  // Сохраняем в глобальный реестр — следующая локация/проект подтянет автоматически
+  try { DB.saveRentalProfile(data); } catch (e) { console.warn('rental registry sync', e); }
+  closeRentalEdit();
+  renderRentals(DB.getProject(_currentProjectId));
+  toast(_editingRentalId ? 'Рентал обновлён ✓' : 'Рентал добавлен ✓ · сохранён глобально', 'success');
+}
+function deleteRentalFromForm() {
+  if (!_editingRentalId) return;
+  const id = _editingRentalId;
+  closeRentalEdit();
+  deleteRental(id);
+}
+function deleteRental(rentalId) {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  const r = (project.rentals || []).find(x => x.id === rentalId);
+  if (!r) return;
+  if (!confirm(`Удалить «${r.name}» из этого проекта?\n\nИз глобального реестра он останется — можно будет добавить заново в других проектах.`)) return;
+  project.rentals = (project.rentals || []).filter(x => x.id !== rentalId);
+  DB.updateProject(_currentProjectId, { rentals: project.rentals });
+  renderRentals(DB.getProject(_currentProjectId));
+  toast('Рентал удалён из проекта', 'success');
+}
+// Старый pickRentalAvatar оставляем для совместимости — открывает модал редактирования
+function pickRentalAvatar(rentalId) { openRentalEdit(rentalId); }
 
 // ===== ПУБЛИЧНАЯ ССЫЛКА ДЛЯ КЛИЕНТА =====
 function _genShareToken() {
