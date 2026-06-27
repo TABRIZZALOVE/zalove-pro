@@ -7160,6 +7160,20 @@ body.dark-theme .task-deadline:focus { background: white; }
         </div>
       </div>
 
+      <!-- SMETA PROMO BLOCK · ДОПОЛНИТЕЛЬНАЯ СМЕТА -->
+      <div class="smeta-promo financial" onclick="openDoc('estimateExtra')" style="margin-top:12px;">
+        <div class="smeta-promo-icon">➕</div>
+        <div class="smeta-promo-content">
+          <div class="smeta-promo-label">Дополнительная смета · 🔒 только продюсер</div>
+          <div class="smeta-promo-title">Открыть доп. смету</div>
+          <div class="smeta-promo-sub" id="smeta-promo-sub-extra">для допов, переработок, отдельных позиций</div>
+        </div>
+        <div class="smeta-promo-stats">
+          <div class="smeta-promo-amount mask-value" id="smeta-promo-amount-extra">— ₽</div>
+          <div class="smeta-promo-count" id="smeta-promo-count-extra">не заполнена</div>
+        </div>
+      </div>
+
       <!-- TASKS BLOCK -->
       <div id="tasks-block" class="tasks-block">
         <!-- renderProjectTasks() заполнит -->
@@ -9474,6 +9488,12 @@ function openDoc(type) {
     const project = DB.getProject(_currentProjectId);
     if (project) renderEstimate(project);
   }
+  // Дополнительная смета — отдельный slot project.estimateExtra
+  if (type === 'estimateExtra' && _currentProjectId) {
+    _estimateMode = 'extra';
+    const project = DB.getProject(_currentProjectId);
+    if (project) renderEstimate(project);
+  }
   // Вызывной — открываем редактор
   if (type === 'callsheet' && _currentProjectId) {
     openCallsheetEditor(1);
@@ -10395,6 +10415,7 @@ const DB = {
     const p = { ...project };
     delete p.estimate;
     delete p.estimateTeam;
+    delete p.estimateExtra;
     delete p.subestimates;
     delete p.budget; // верхний бюджет
     delete p.budgetClient;
@@ -10512,7 +10533,7 @@ const DB = {
             const safeMerged = JSON.parse(JSON.stringify(merged));
             // Восстанавливаем все финансовые поля из серверных данных
             const fin = srv.data || {};
-            ['estimate','estimateTeam','subestimates','budget','budgetClient'].forEach(k => {
+            ['estimate','estimateTeam','estimateExtra','subestimates','budget','budgetClient'].forEach(k => {
               if (fin[k] !== undefined) safeMerged[k] = fin[k];
             });
             // budget — отдельная колонка
@@ -14675,8 +14696,9 @@ const SMETA_TEMPLATE = [
 ];
 
 function ensureEstimateOfMode(project, mode) {
-  // mode = 'client' | 'team'
-  const slot = mode === 'team' ? 'estimateTeam' : 'estimate';
+  // mode = 'client' | 'team' | 'extra'
+  // extra — отдельная «дополнительная» смета (после основной)
+  const slot = mode === 'team' ? 'estimateTeam' : (mode === 'extra' ? 'estimateExtra' : 'estimate');
   // Командная смета НЕ копируется автоматически — пользователь решает через кнопку
   if (!project[slot]) project[slot] = {};
   const est = project[slot];
@@ -14796,6 +14818,22 @@ function clearTeamEstimate() {
   toast('Командная смета очищена ✓', 'success');
 }
 
+function clearExtraEstimate() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  if (!confirm('Очистить ДОПОЛНИТЕЛЬНУЮ смету? Основная (клиентская/командная) не пострадает.')) return;
+  project.estimateExtra = undefined;
+  DB.updateProject(_currentProjectId, { estimateExtra: null });
+  if (_estimateMode === 'extra') {
+    _currentEstimate = null;
+    _estimateProjectId = null;
+  }
+  _estimateMode = 'extra';
+  renderEstimate(DB.getProject(_currentProjectId));
+  toast('Дополнительная смета очищена ✓', 'success');
+}
+
 function renderEstimate(project) {
   if (!project) return;
   // RBAC: ассистент не должен видеть смету. Закрываем и тихо возвращаемся.
@@ -14809,26 +14847,41 @@ function renderEstimate(project) {
   _estimateProjectId = project.id; // запоминаем какому проекту принадлежит загруженная смета
 
   // Title с режимом
-  const modeLabel = _estimateMode === 'team' ? 'для команды' : 'для клиента';
+  const isExtra = _estimateMode === 'extra';
+  const modeLabel = isExtra
+    ? '➕ дополнительная'
+    : (_estimateMode === 'team' ? 'для команды' : 'для клиента');
+  const titlePrefix = isExtra ? 'Доп. смета' : 'Смета';
   document.getElementById('est-project-title').innerHTML =
-    `Смета · ${escapeHtml(project.name)} <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">${modeLabel}</span>`;
+    `${titlePrefix} · ${escapeHtml(project.name)} <span style="font-size:11px;color:${isExtra ? '#f59e0b' : 'var(--muted)'};font-weight:${isExtra ? '800' : '400'};margin-left:8px;letter-spacing:${isExtra ? '0.5px' : '0'};text-transform:${isExtra ? 'uppercase' : 'none'};">${modeLabel}</span>`;
 
-  // Табы Клиент / Команда
+  // Табы Клиент / Команда (только для основной сметы). Для дополнительной — отдельный бейдж + кнопка "← к основной"
   const tabsEl = document.getElementById('est-mode-tabs');
   if (tabsEl) {
-    const teamFilled = !!(project.estimateTeam && Object.keys(project.estimateTeam.sections || {}).length);
-    tabsEl.innerHTML = `
-      <button class="est-mode-tab ${_estimateMode === 'client' ? 'active' : ''}" onclick="switchEstimateMode('client')">
-        📋 Клиентская <span class="est-tab-hint">(для клиента)</span>
-      </button>
-      <button class="est-mode-tab ${_estimateMode === 'team' ? 'active' : ''}" onclick="switchEstimateMode('team')">
-        👥 Командная <span class="est-tab-hint">(внутренняя)</span>
-      </button>
-      ${_estimateMode === 'team' ? `
-        <button class="est-mode-copy" style="background:#555;" onclick="copyEstimateFromClientToTeam()" title="Перезаписать командную данными из клиентской">↻ Из клиентской</button>
-        <button class="est-mode-copy" style="background:#991b1b;" onclick="clearTeamEstimate()" title="Очистить только командную смету">🗑 Очистить команд.</button>
-      ` : ''}
-    `;
+    if (isExtra) {
+      tabsEl.innerHTML = `
+        <button class="est-mode-tab active" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-color:#d97706;color:#fff;">
+          ➕ Дополнительная смета
+        </button>
+        <button class="est-mode-tab" onclick="switchEstimateMode('client')" title="Вернуться к основной смете">
+          ← К основной
+        </button>
+        <button class="est-mode-copy" style="background:#991b1b;" onclick="clearExtraEstimate()" title="Очистить дополнительную смету">🗑 Очистить доп.</button>
+      `;
+    } else {
+      tabsEl.innerHTML = `
+        <button class="est-mode-tab ${_estimateMode === 'client' ? 'active' : ''}" onclick="switchEstimateMode('client')">
+          📋 Клиентская <span class="est-tab-hint">(для клиента)</span>
+        </button>
+        <button class="est-mode-tab ${_estimateMode === 'team' ? 'active' : ''}" onclick="switchEstimateMode('team')">
+          👥 Командная <span class="est-tab-hint">(внутренняя)</span>
+        </button>
+        ${_estimateMode === 'team' ? `
+          <button class="est-mode-copy" style="background:#555;" onclick="copyEstimateFromClientToTeam()" title="Перезаписать командную данными из клиентской">↻ Из клиентской</button>
+          <button class="est-mode-copy" style="background:#991b1b;" onclick="clearTeamEstimate()" title="Очистить только командную смету">🗑 Очистить команд.</button>
+        ` : ''}
+      `;
+    }
   }
 
   // Ссылка на внешнюю смету
@@ -15053,9 +15106,10 @@ function saveEstimateNow() {
     return;
   }
   const est = _currentEstimate;
-  const slot = (_estimateMode === 'team') ? 'estimateTeam' : 'estimate';
+  const slot = (_estimateMode === 'team') ? 'estimateTeam' : (_estimateMode === 'extra' ? 'estimateExtra' : 'estimate');
   const upd = { [slot]: est };
   // Бюджет проекта берём из КЛИЕНТСКОЙ сметы (это сумма для клиента)
+  // Доп. смета НЕ влияет на budget проекта (она отдельная сущность)
   if (_estimateMode === 'client') {
     const sub = calcGrandTotal(est);
     upd.budget = Math.round(sub * (1 + (est.taxPercent || 0) / 100));
@@ -22794,7 +22848,8 @@ function toggleFreezeProject() {
 
 // Обновить промо-блок сметы (вверху проекта)
 function renderSmetaPromo(project) {
-  const est = ensureEstimate(project);
+  // Основная смета
+  const est = ensureEstimateOfMode(project, 'client');
   const sub = calcGrandTotal(est);
   const grand = sub + sub * ((est.taxPercent || 0) / 100);
   let filled = 0, total = 0;
@@ -22811,6 +22866,26 @@ function renderSmetaPromo(project) {
   if (sub2) sub2.textContent = grand > 0
     ? ('Налог ' + (est.taxPercent || 0) + '% · кликни чтобы продолжить редактирование')
     : '14 разделов · кликни чтобы начать заполнять';
+  // Дополнительная смета — только если уже создана/заполнена (иначе нулевые цифры в блоке)
+  const extra = project.estimateExtra ? ensureEstimateOfMode(project, 'extra') : null;
+  if (extra) {
+    const subE = calcGrandTotal(extra);
+    const grandE = subE + subE * ((extra.taxPercent || 0) / 100);
+    let filledE = 0, totalE = 0;
+    Object.values(extra.sections || {}).forEach(sec => {
+      const all = [...(sec.rows || []), ...(sec.customRows || [])];
+      totalE += all.length;
+      all.forEach(r => { if (Number(r.price) > 0) filledE++; });
+    });
+    const amtE = document.getElementById('smeta-promo-amount-extra');
+    if (amtE) amtE.textContent = grandE > 0 ? fmtRub(Math.round(grandE)) : '— ₽';
+    const cntE = document.getElementById('smeta-promo-count-extra');
+    if (cntE) cntE.textContent = grandE > 0 ? (filledE + ' / ' + totalE + ' позиций') : 'не заполнена';
+    const subE2 = document.getElementById('smeta-promo-sub-extra');
+    if (subE2) subE2.textContent = grandE > 0
+      ? ('Налог ' + (extra.taxPercent || 0) + '% · кликни чтобы продолжить')
+      : 'для допов, переработок, отдельных позиций';
+  }
 }
 
 // Обновить карточки ППМ и шутинг-плана в документации
