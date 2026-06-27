@@ -14876,6 +14876,29 @@ function ensureEstimateOfMode(project, mode) {
   // mode = 'client' | 'team' | 'extra'
   // extra — отдельная «дополнительная» смета (после основной)
   const slot = mode === 'team' ? 'estimateTeam' : (mode === 'extra' ? 'estimateExtra' : 'estimate');
+
+  // ПРИ ПЕРВОМ ОТКРЫТИИ ДОП. СМЕТЫ — копируем структуру и значения
+  // из основной (клиентской) сметы, чтобы пользователь видел все позиции
+  // и цены, а не пустой шаблон. Очищаем только entries (факт-операции).
+  if (mode === 'extra' && !project.estimateExtra && project.estimate &&
+      project.estimate.sections && Object.keys(project.estimate.sections).length) {
+    const clone = JSON.parse(JSON.stringify(project.estimate));
+    // Новые ID строк чтобы не пересечь с основной + чистые entries
+    Object.values(clone.sections || {}).forEach(sec => {
+      (sec.rows || []).forEach(r => {
+        r.id = 'ex_' + Math.random().toString(36).slice(2, 8);
+        r.entries = [];
+      });
+      (sec.customRows || []).forEach(r => {
+        r.id = 'exc_' + Math.random().toString(36).slice(2, 8);
+        r.entries = [];
+      });
+    });
+    // Заголовок и ссылка — стартуем чисто
+    clone.externalLink = '';
+    project.estimateExtra = clone;
+  }
+
   // Командная смета НЕ копируется автоматически — пользователь решает через кнопку
   if (!project[slot]) project[slot] = {};
   const est = project[slot];
@@ -14995,6 +15018,29 @@ function clearTeamEstimate() {
   toast('Командная смета очищена ✓', 'success');
 }
 
+function copyEstimateFromClientToExtra() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const clientEst = project.estimate;
+  if (!clientEst || !clientEst.sections || !Object.keys(clientEst.sections).length) {
+    toast('Клиентская смета пустая — нечего копировать', 'error');
+    return;
+  }
+  if (!confirm('Скопировать структуру и цены из основной (клиентской) сметы в дополнительную? Текущая дополнительная будет заменена.')) return;
+  const deepCopy = JSON.parse(JSON.stringify(clientEst));
+  Object.values(deepCopy.sections || {}).forEach(sec => {
+    (sec.rows || []).forEach(r => { r.id = 'ex_' + Math.random().toString(36).slice(2, 8); r.entries = []; });
+    (sec.customRows || []).forEach(r => { r.id = 'exc_' + Math.random().toString(36).slice(2, 8); r.entries = []; });
+  });
+  deepCopy.externalLink = '';
+  project.estimateExtra = deepCopy;
+  DB.updateProject(_currentProjectId, { estimateExtra: deepCopy });
+  _estimateMode = 'extra';
+  renderEstimate(DB.getProject(_currentProjectId));
+  toast('Дополнительная смета создана из основной ✓', 'success');
+}
+
 function clearExtraEstimate() {
   if (!_currentProjectId) return;
   const project = DB.getProject(_currentProjectId);
@@ -15043,6 +15089,7 @@ function renderEstimate(project) {
         <button class="est-mode-tab" onclick="switchEstimateMode('client')" title="Вернуться к основной смете">
           ← К основной
         </button>
+        <button class="est-mode-copy" style="background:#555;" onclick="copyEstimateFromClientToExtra()" title="Перезаписать дополнительную данными из основной (клиентской)">↻ Из основной</button>
         <button class="est-mode-copy" style="background:#991b1b;" onclick="clearExtraEstimate()" title="Очистить дополнительную смету">🗑 Очистить доп.</button>
       `;
     } else {
