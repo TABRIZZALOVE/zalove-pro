@@ -14880,6 +14880,14 @@ function ensureEstimateOfMode(project, mode) {
   // extra — отдельная «дополнительная» смета (после основной)
   const slot = mode === 'team' ? 'estimateTeam' : (mode === 'extra' ? 'estimateExtra' : 'estimate');
 
+  // ЗАЩИТА ОТ REFERENCE SHARING: если из-за прошлых багов локальный slot ссылается
+  // на тот же объект что и основная смета (project.estimate), то мутации одного
+  // изменяли бы и другую. Делаем глубокий клон чтобы разорвать ссылку.
+  if (slot !== 'estimate' && project[slot] && project.estimate && project[slot] === project.estimate) {
+    try { project[slot] = JSON.parse(JSON.stringify(project.estimate)); } catch (_) { project[slot] = {}; }
+    console.warn('[estimate] обнаружено reference sharing для', slot, '— клонирую');
+  }
+
   // ДОП. СМЕТА стартует пустой (точно так же как основная) — со всеми 14 разделами
   // и шаблонными строками qty=0, price=0. Чтобы скопировать данные из основной —
   // в шапке доп. сметы есть отдельная кнопка «↻ Из основной».
@@ -15316,7 +15324,21 @@ function saveEstimateNow() {
   }
   const est = _currentEstimate;
   const slot = (_estimateMode === 'team') ? 'estimateTeam' : (_estimateMode === 'extra' ? 'estimateExtra' : 'estimate');
-  const upd = { [slot]: est };
+  // КРИТИЧНО: клонируем перед патчем чтобы JSON.stringify шёл от свежей копии,
+  // и чтобы случайные shared references не привели к одновременной записи в estimate.
+  let estClone;
+  try { estClone = JSON.parse(JSON.stringify(est)); } catch (_) { estClone = est; }
+  const upd = { [slot]: estClone };
+  // ВАЖНО: если редактируем НЕ основную смету (extra/team), явно НЕ трогаем estimate.
+  // Если редактируем extra — гарантируем что estimate не затрётся (через explicit no-op).
+  if (slot === 'estimateExtra' && _currentProjectId) {
+    const proj = DB.getProject(_currentProjectId);
+    if (proj && proj.estimate) upd.estimate = proj.estimate; // явная фиксация чтобы merge не сбросил
+  }
+  if (slot === 'estimateTeam' && _currentProjectId) {
+    const proj = DB.getProject(_currentProjectId);
+    if (proj && proj.estimate) upd.estimate = proj.estimate;
+  }
   // Бюджет проекта берём из КЛИЕНТСКОЙ сметы (это сумма для клиента)
   // Доп. смета НЕ влияет на budget проекта (она отдельная сущность)
   if (_estimateMode === 'client') {
