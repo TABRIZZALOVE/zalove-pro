@@ -7201,10 +7201,6 @@ body.dark-theme .task-deadline:focus { background: white; }
           </tbody>
         </table>
         <div class="team-add-row" onclick="openAddMember()">＋ Добавить участника</div>
-        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-secondary" onclick="exportTeamCreditsPdf()" title="Скачать список команды в PDF — для титров">📄 Титры PDF</button>
-          <button class="btn btn-secondary" onclick="copyTeamCreditsText()" title="Скопировать список команды в буфер">⧉ Копировать титры</button>
-        </div>
       </div>
 
       <!-- RENTAL -->
@@ -7240,6 +7236,10 @@ body.dark-theme .task-deadline:focus { background: white; }
           </tbody>
         </table>
         <div class="team-add-row" onclick="openAddClient()">＋ Добавить клиента</div>
+        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="exportTeamCreditsPdf()" title="Скачать команду + рентал + клиентов в PDF — для титров">📄 Титры PDF</button>
+          <button class="btn btn-secondary" onclick="openCreditsEditor()" title="Открыть редактор титров: можно двигать строки и расставлять разделители">⧉ Копировать титры</button>
+        </div>
       </div>
 
       <!-- INTEGRATIONS (только для музыкальных клипов) -->
@@ -9546,12 +9546,14 @@ function openDoc(type) {
     _estimateMode = 'client';
     const project = DB.getProject(_currentProjectId);
     if (project) renderEstimate(project);
+    return;
   }
-  // Дополнительная смета — отдельный slot project.estimateExtra
+  // Дополнительная смета — отдельный slot project.estimateExtra (стартует пустой)
   if (type === 'estimateExtra' && _currentProjectId) {
     _estimateMode = 'extra';
     const project = DB.getProject(_currentProjectId);
     if (project) renderEstimate(project);
+    return;
   }
   // Вызывной — открываем редактор
   if (type === 'callsheet' && _currentProjectId) {
@@ -14877,27 +14879,9 @@ function ensureEstimateOfMode(project, mode) {
   // extra — отдельная «дополнительная» смета (после основной)
   const slot = mode === 'team' ? 'estimateTeam' : (mode === 'extra' ? 'estimateExtra' : 'estimate');
 
-  // ПРИ ПЕРВОМ ОТКРЫТИИ ДОП. СМЕТЫ — копируем структуру и значения
-  // из основной (клиентской) сметы, чтобы пользователь видел все позиции
-  // и цены, а не пустой шаблон. Очищаем только entries (факт-операции).
-  if (mode === 'extra' && !project.estimateExtra && project.estimate &&
-      project.estimate.sections && Object.keys(project.estimate.sections).length) {
-    const clone = JSON.parse(JSON.stringify(project.estimate));
-    // Новые ID строк чтобы не пересечь с основной + чистые entries
-    Object.values(clone.sections || {}).forEach(sec => {
-      (sec.rows || []).forEach(r => {
-        r.id = 'ex_' + Math.random().toString(36).slice(2, 8);
-        r.entries = [];
-      });
-      (sec.customRows || []).forEach(r => {
-        r.id = 'exc_' + Math.random().toString(36).slice(2, 8);
-        r.entries = [];
-      });
-    });
-    // Заголовок и ссылка — стартуем чисто
-    clone.externalLink = '';
-    project.estimateExtra = clone;
-  }
+  // ДОП. СМЕТА стартует пустой (точно так же как основная) — со всеми 14 разделами
+  // и шаблонными строками qty=0, price=0. Чтобы скопировать данные из основной —
+  // в шапке доп. сметы есть отдельная кнопка «↻ Из основной».
 
   // Командная смета НЕ копируется автоматически — пользователь решает через кнопку
   if (!project[slot]) project[slot] = {};
