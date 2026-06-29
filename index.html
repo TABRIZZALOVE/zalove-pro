@@ -21854,7 +21854,7 @@ function pullCrewFromTeam() {
   }
   // Не дублируем уже добавленных
   const existing = new Set((_currentCsData.crew || []).map(c => (c.name || '').toLowerCase()));
-  const actorRoles = ['Актёр главной роли', 'Актёр второго плана', 'АМС (массовка)', 'Танцор', 'Музыкант', 'Хореограф'];
+  const actorRoles = ['Актёр главной роли', 'Актёр второго плана', 'АМС (массовка)', 'Танцор', 'Танцоры', 'Музыкант'];
   let added = 0;
   project.team.forEach(m => {
     if (actorRoles.includes(m.role)) return; // актёры идут в кастинг
@@ -21916,7 +21916,7 @@ function pullCastFromTeam() {
     return;
   }
   const existing = new Set((_currentCsData.cast || []).map(c => (c.name || '').toLowerCase()));
-  const actorRoles = ['Актёр главной роли', 'Актёр второго плана', 'АМС (массовка)', 'Танцор', 'Музыкант', 'Хореограф'];
+  const actorRoles = ['Актёр главной роли', 'Актёр второго плана', 'АМС (массовка)', 'Танцор', 'Танцоры', 'Музыкант'];
   let added = 0;
   project.team.forEach(m => {
     if (!actorRoles.includes(m.role)) return;
