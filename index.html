@@ -22077,20 +22077,49 @@ function pullRentalsFromProject() {
   if (!Array.isArray(_currentCsData.rentals)) _currentCsData.rentals = [];
   const existing = new Set(_currentCsData.rentals.map(r => (r.name||'').trim().toLowerCase()));
   let added = 0;
+  // Авто-синхрон имени: если в вызывном уже есть рентал с похожим коротким именем
+  // (то же первое слово или совпадающий аватар) — обновляем имя на полное из проекта.
+  let renamed = 0;
   projectRentals.forEach(r => {
-    const key = (r.name||'').trim().toLowerCase();
-    if (!key || existing.has(key)) return;
+    const fullName = (r.name||'').trim();
+    if (!fullName) return;
+    const key = fullName.toLowerCase();
+    if (existing.has(key)) return; // уже добавлен под полным именем
+    // Попытка найти старую короткую запись (по первому слову или совпадающему аватару)
+    const firstWord = fullName.split(/\s+/)[0].toLowerCase();
+    const existingShort = _currentCsData.rentals.find(rt => {
+      const rtName = (rt.name||'').trim().toLowerCase();
+      if (!rtName) return false;
+      if (rtName === key) return false; // уже совпадает (но тогда existing.has сработал бы)
+      // Совпадает по первому слову и старое имя короче нового
+      const rtFirst = rtName.split(/\s+/)[0];
+      if (rtFirst === firstWord && rtName.length < key.length) return true;
+      // Или совпадает аватар
+      if (r.avatar && rt.avatar && rt.avatar === r.avatar) return true;
+      return false;
+    });
+    if (existingShort) {
+      // Обновляем существующую запись на полное имя
+      existingShort.name = fullName;
+      if (r.avatar && !existingShort.avatar) existingShort.avatar = r.avatar;
+      existing.add(key);
+      renamed++;
+      return;
+    }
     _currentCsData.rentals.push({
-      name: r.name || '',
+      name: fullName,
       avatar: r.avatar || (DB.resolveRentalAvatar ? DB.resolveRentalAvatar({name: r.name}) : ''),
       callTime: ''
     });
     added++;
   });
-  if (added === 0) { toast('Все ренталы уже в вызывном', 'success'); return; }
+  if (added === 0 && renamed === 0) { toast('Все ренталы уже в вызывном', 'success'); return; }
   saveCsNow();
   renderCallsheetEditor();
-  toast(`Подтянуто ${added} рентал${added === 1 ? '' : added < 5 ? 'а' : 'ов'} ✓`, 'success');
+  const parts = [];
+  if (added > 0) parts.push(`добавлено ${added}`);
+  if (renamed > 0) parts.push(`обновлено имён ${renamed}`);
+  toast('Ренталы синхронизированы: ' + parts.join(', ') + ' ✓', 'success');
 }
 function openCsRentalRegistryPicker() {
   if (!_currentCsData) return;
