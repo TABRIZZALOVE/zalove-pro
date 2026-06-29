@@ -21485,6 +21485,17 @@ function renderCallsheetEditor() {
         <button class="cs-pull-team" onclick="pullCastFromTeam()">⊕ Подтянуть актёров из проекта</button>
       </div>
     </div>
+
+    <!-- 8. Ренталы — техника / оборудование -->
+    <div class="cs-section cs-rentals-section">
+      <div class="cs-section-title">🎥 Ренталы · техника и оборудование</div>
+      ${renderCsRentalsBlock(cs.rentals || [])}
+      <div class="cs-table-actions">
+        <button class="cs-add-row" onclick="addCsRental()">＋ Добавить рентал</button>
+        <button class="cs-pull-team" onclick="pullRentalsFromProject()">⊕ Подтянуть из проекта</button>
+        <button class="cs-pull-team" onclick="openCsRentalRegistryPicker()">📂 Из реестра</button>
+      </div>
+    </div>
   `;
 
   // Bind input handlers
@@ -21496,6 +21507,8 @@ function renderCallsheetEditor() {
   });
   // Подключаем автокомплит ко всем полям имён
   attachNameAutocompleteToCallsheet();
+  // Подключаем обработчики для ренталов в вызывном
+  if (typeof attachCsRentalHandlers === 'function') attachCsRentalHandlers();
 }
 
 // Подключение автокомплита к полям имён в вызывном
@@ -21904,6 +21917,157 @@ function pullCastFromTeam() {
   saveCsNow();
   renderCallsheetEditor();
   toast(`Добавлено ${added} человек`, 'success');
+}
+
+/* ===== РЕНТАЛЫ В ВЫЗЫВНОМ ===== */
+function renderCsRentalsBlock(rentals) {
+  if (!Array.isArray(rentals) || rentals.length === 0) {
+    return `<div style="padding:18px;text-align:center;color:var(--muted);font-size:12.5px;background:rgba(0,0,0,0.025);border:1px dashed var(--line,#ddd);border-radius:8px;">
+      Ренталов пока нет. Добавь вручную, подтяни из проекта или выбери из общего реестра.
+    </div>`;
+  }
+  const rows = rentals.map((r, i) => {
+    const initials = (r.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0,2).toUpperCase();
+    const av = r.avatar
+      ? `<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:url('${r.avatar.replace(/'/g, "\\'")}') center/cover no-repeat #fff;border:1px solid var(--line);"></span>`
+      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:10px;font-weight:800;">${escapeHtml(initials)}</span>`;
+    return `<tr>
+      <td style="padding:6px 8px;width:40px;text-align:center;">${av}</td>
+      <td style="padding:6px 8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="name" value="${escapeHtml(r.name||'')}" placeholder="Название (KinoStore, KIRILLIN...)" style="border:none;background:transparent;padding:4px 6px;font-weight:700;"></td>
+      <td style="padding:6px 8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="contactName" value="${escapeHtml(r.contactName||'')}" placeholder="Контакт-менеджер" style="border:none;background:transparent;padding:4px 6px;"></td>
+      <td style="padding:6px 8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="phone" value="${escapeHtml(r.phone||'')}" placeholder="+7..." style="border:none;background:transparent;padding:4px 6px;font-family:'Montserrat',monospace;"></td>
+      <td style="padding:6px 8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="note" value="${escapeHtml(r.note||'')}" placeholder="заметка" style="border:none;background:transparent;padding:4px 6px;font-size:12px;color:var(--muted);"></td>
+      <td style="padding:6px 8px;width:30px;text-align:center;"><button type="button" onclick="deleteCsRental(${i})" style="background:transparent;border:none;color:#b91c1c;font-size:14px;cursor:pointer;padding:4px;" title="Удалить">×</button></td>
+    </tr>`;
+  }).join('');
+  return `<div style="overflow-x:auto;">
+    <table class="cs-people-table" style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:rgba(0,0,0,0.04);">
+          <th style="padding:8px;text-align:center;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;width:40px;">Лого</th>
+          <th style="padding:8px;text-align:left;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;">Название</th>
+          <th style="padding:8px;text-align:left;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;">Контакт</th>
+          <th style="padding:8px;text-align:left;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;">Телефон</th>
+          <th style="padding:8px;text-align:left;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;">Заметка</th>
+          <th style="padding:8px;width:30px;"></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+function addCsRental() {
+  if (!_currentCsData) return;
+  if (!Array.isArray(_currentCsData.rentals)) _currentCsData.rentals = [];
+  _currentCsData.rentals.push({ name: '', avatar: '', contactName: '', phone: '', note: '' });
+  saveCsNow();
+  renderCallsheetEditor();
+  attachCsRentalHandlers();
+}
+function deleteCsRental(idx) {
+  if (!_currentCsData || !Array.isArray(_currentCsData.rentals)) return;
+  _currentCsData.rentals.splice(idx, 1);
+  saveCsNow();
+  renderCallsheetEditor();
+}
+function csRentalUpdateField(idx, field, value) {
+  if (!_currentCsData || !Array.isArray(_currentCsData.rentals)) return;
+  if (!_currentCsData.rentals[idx]) return;
+  _currentCsData.rentals[idx][field] = value;
+  // Если меняется имя — подтягиваем логотип/контакт из глобального реестра
+  if (field === 'name' && value && (typeof DB.resolveRentalAvatar === 'function')) {
+    const guess = DB.resolveRentalAvatar({ name: value });
+    if (guess && !_currentCsData.rentals[idx].avatar) _currentCsData.rentals[idx].avatar = guess;
+    // Также подтянем контакт/телефон из реестра если в текущей записи пусто
+    try {
+      const reg = (DB.getRentalsRegistry && DB.getRentalsRegistry()) || {};
+      const key = 'rental:' + value.trim().toLowerCase();
+      const profile = reg[key];
+      if (profile) {
+        ['contactName','phone','note'].forEach(f => {
+          if (profile[f] && !_currentCsData.rentals[idx][f]) _currentCsData.rentals[idx][f] = profile[f];
+        });
+      }
+    } catch (_) {}
+  }
+  clearTimeout(_csSaveTimer);
+  _csSaveTimer = setTimeout(saveCsNow, 600);
+}
+function attachCsRentalHandlers() {
+  document.querySelectorAll('input[data-cs-rental-idx]').forEach(inp => {
+    inp.addEventListener('input', (e) => {
+      const idx = parseInt(inp.getAttribute('data-cs-rental-idx'));
+      const field = inp.getAttribute('data-cs-rental-field');
+      csRentalUpdateField(idx, field, e.target.value);
+    });
+    inp.addEventListener('blur', () => {
+      // На blur при изменении имени — перерендер чтобы подтянулся логотип
+      const field = inp.getAttribute('data-cs-rental-field');
+      if (field === 'name') {
+        setTimeout(() => renderCallsheetEditor(), 100);
+      }
+    });
+  });
+}
+function pullRentalsFromProject() {
+  if (!_currentProjectId || !_currentCsData) return;
+  const project = DB.getProject(_currentProjectId);
+  const projectRentals = (project && Array.isArray(project.rentals)) ? project.rentals : [];
+  if (projectRentals.length === 0) {
+    toast('В проекте нет ренталов. Добавь их в блоке «Рентал проекта»', 'warn');
+    return;
+  }
+  if (!Array.isArray(_currentCsData.rentals)) _currentCsData.rentals = [];
+  const existing = new Set(_currentCsData.rentals.map(r => (r.name||'').trim().toLowerCase()));
+  let added = 0;
+  projectRentals.forEach(r => {
+    const key = (r.name||'').trim().toLowerCase();
+    if (!key || existing.has(key)) return;
+    _currentCsData.rentals.push({
+      name: r.name || '',
+      avatar: r.avatar || (DB.resolveRentalAvatar ? DB.resolveRentalAvatar({name: r.name}) : ''),
+      contactName: r.contactName || '',
+      phone: r.phone || '',
+      note: r.note || ''
+    });
+    added++;
+  });
+  if (added === 0) { toast('Все ренталы уже в вызывном', 'success'); return; }
+  saveCsNow();
+  renderCallsheetEditor();
+  toast(`Подтянуто ${added} рентал${added === 1 ? '' : added < 5 ? 'а' : 'ов'} ✓`, 'success');
+}
+function openCsRentalRegistryPicker() {
+  if (!_currentCsData) return;
+  const reg = (DB.getRentalsRegistry && DB.getRentalsRegistry()) || {};
+  const items = Object.keys(reg).map(k => reg[k]).filter(r => r && r.name);
+  if (items.length === 0) {
+    toast('Глобальный реестр ренталов пуст. Создай рентал в любом проекте — сохранится автоматически.', 'warn');
+    return;
+  }
+  // Простой picker через prompt с нумерованным списком (можно потом доделать модалом)
+  const list = items.map((r, i) => `${i+1}. ${r.name}${r.contactName ? ' · ' + r.contactName : ''}`).join('\n');
+  const ans = prompt('Выбери рентал из реестра (введи номер):\n\n' + list);
+  if (!ans) return;
+  const n = parseInt(ans.trim()) - 1;
+  if (isNaN(n) || n < 0 || n >= items.length) { toast('Неверный номер', 'error'); return; }
+  const chosen = items[n];
+  if (!Array.isArray(_currentCsData.rentals)) _currentCsData.rentals = [];
+  // Не дублируем
+  if (_currentCsData.rentals.some(r => (r.name||'').trim().toLowerCase() === chosen.name.trim().toLowerCase())) {
+    toast('«' + chosen.name + '» уже в вызывном', 'warn');
+    return;
+  }
+  _currentCsData.rentals.push({
+    name: chosen.name,
+    avatar: chosen.avatar || '',
+    contactName: chosen.contactName || '',
+    phone: chosen.phone || '',
+    note: chosen.note || ''
+  });
+  saveCsNow();
+  renderCallsheetEditor();
+  toast(`«${chosen.name}» добавлен ✓`, 'success');
 }
 
 /* ===== ЭКСПОРТ ВЫЗЫВНОГО ===== */
