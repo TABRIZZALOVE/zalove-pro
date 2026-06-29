@@ -23016,24 +23016,49 @@ function deleteIntegrationFromForm() {
    ОБНОВЛЯЕМ openProjectDetail — подключаем team + creative + integrations
    ============================================================ */
 const _origOpenProjectDetail = window.openProjectDetail;
-window.openProjectDetail = function(id, idx) {
+window.openProjectDetail = async function(id, idx) {
   _currentProjectId = id;
-  _origOpenProjectDetail(id, idx);
-  const project = DB.getProject(id);
+  // Открываем визуально сразу
+  try { _origOpenProjectDetail(id, idx); } catch (e) { console.error('[openProjectDetail orig]', e); }
+  let project = DB.getProject(id);
+  // FALLBACK: если проекта нет в локальном кэше (например, кэш не догрузился),
+  // тянем напрямую с сервера и кладём в кэш, чтобы открытие отработало корректно.
+  if (!project && DB.client && id) {
+    try {
+      const { data: srv, error } = await DB.client.from('projects').select('*').eq('id', id).single();
+      if (!error && srv) {
+        const p = DB._fromDb ? DB._fromDb(srv) : srv;
+        // Кладём в memCache
+        if (!DB._memCache) DB._memCache = { projects: [] };
+        if (!Array.isArray(DB._memCache.projects)) DB._memCache.projects = [];
+        const existing = DB._memCache.projects.findIndex(x => x.id === id);
+        if (existing >= 0) DB._memCache.projects[existing] = p;
+        else DB._memCache.projects.push(p);
+        project = p;
+        // Повторяем оригинальный open чтобы заголовок/мета подтянулись
+        try { _origOpenProjectDetail(id, idx); } catch (_) {}
+      } else if (error) {
+        console.error('[openProjectDetail fetch]', error);
+        if (typeof toast === 'function') toast('Не удалось загрузить проект: ' + (error.message || 'unknown'), 'error');
+      }
+    } catch (e) { console.error('[openProjectDetail fetch ex]', e); }
+  }
   if (project) {
-    renderTeamMembers(project);
-    renderRentals(project);
-    renderClients(project);
-    applyCollapseStates();
-    renderCreative(project);
-    renderProjectTasks(project);
-    renderProjectRating(project);
-    renderIntegrations(project);
-    renderCallsheetCard(project);
-    renderSmetaPromo(project);
-    renderDocCreativeCards(project);
-    renderSubEstCards();
-    updateFreezeButton(project);
+    try { renderTeamMembers(project); } catch(e) { console.warn('renderTeamMembers', e); }
+    try { renderRentals(project); } catch(e) { console.warn('renderRentals', e); }
+    try { renderClients(project); } catch(e) { console.warn('renderClients', e); }
+    try { applyCollapseStates(); } catch(e) { console.warn('applyCollapseStates', e); }
+    try { renderCreative(project); } catch(e) { console.warn('renderCreative', e); }
+    try { renderProjectTasks(project); } catch(e) { console.warn('renderProjectTasks', e); }
+    try { renderProjectRating(project); } catch(e) { console.warn('renderProjectRating', e); }
+    try { renderIntegrations(project); } catch(e) { console.warn('renderIntegrations', e); }
+    try { renderCallsheetCard(project); } catch(e) { console.warn('renderCallsheetCard', e); }
+    try { renderSmetaPromo(project); } catch(e) { console.warn('renderSmetaPromo', e); }
+    try { renderDocCreativeCards(project); } catch(e) { console.warn('renderDocCreativeCards', e); }
+    try { renderSubEstCards(); } catch(e) { console.warn('renderSubEstCards', e); }
+    try { updateFreezeButton(project); } catch(e) { console.warn('updateFreezeButton', e); }
+  } else {
+    if (typeof toast === 'function') toast('Проект не найден. Перезагрузи страницу.', 'error');
   }
 };
 
