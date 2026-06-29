@@ -22305,7 +22305,7 @@ function buildCallsheetPrintHTML(project, cs) {
         <img src="logo.png" alt="ZALOVE" style="height:20px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
         ${clientLogo ? `<span style="color:rgba(255,255,255,0.4);font-weight:300;">×</span><div data-pdf-img="${escapeHtml(clientLogo)}" data-pdf-w="48" data-pdf-h="20" data-pdf-fit="contain" style="width:48px;height:20px;background:transparent;display:inline-block;"></div>` : ''}
         <div style="font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,0.85);text-transform:uppercase;font-weight:700;">${escapeHtml(hdrSubtitle)}</div>
-        ${csHeaderLogo ? `<span style="color:rgba(255,255,255,0.4);font-weight:300;margin:0 2px;">×</span><div data-pdf-img="${escapeHtml(csHeaderLogo)}" data-pdf-w="64" data-pdf-h="22" data-pdf-fit="contain" style="width:64px;height:22px;background:transparent;display:inline-block;"></div>` : ''}
+        ${csHeaderLogo ? `<span style="color:rgba(255,255,255,0.4);font-weight:300;margin:0 4px;">×</span><div data-pdf-img="${escapeHtml(csHeaderLogo)}" data-pdf-w="100" data-pdf-h="20" data-pdf-fit="contain" style="width:100px;height:20px;background:transparent;display:inline-block;"></div>` : ''}
       </div>
       <div style="text-align:right;">
         ${cs.date ? `<div style="font-size:13px;font-weight:800;letter-spacing:0.3px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
@@ -22479,13 +22479,12 @@ function buildCallsheetPrintHTML(project, cs) {
     }).join('');
     html += `
       <div style="margin:0 ${PAD_X}px 8px;">
-        <div style="background:#1e3a8a;color:white;padding:7px 12px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
+        <div style="background:#6b1d1f;color:white;padding:7px 12px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
           <div style="font-size:11px;font-weight:800;letter-spacing:1px;">РЕНТАЛЫ · ТЕХНИКА И ОБОРУДОВАНИЕ</div>
-          <div style="font-size:9px;font-weight:700;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:2px;letter-spacing:0.5px;">${rentals.length} ${rentals.length === 1 ? 'рентал' : 'ренталов'}</div>
         </div>
-        <table style="width:100%;border-collapse:collapse;background:white;border:1px solid #bfd6f4;border-top:none;">
+        <table style="width:100%;border-collapse:collapse;background:white;border:1px solid #d8b8b9;border-top:none;">
           <thead>
-            <tr style="background:#eaf1f9;color:#3a3a3a;">
+            <tr style="background:#faf3f3;color:#3a3a3a;">
               <th style="text-align:left;padding:5px 10px;font-weight:800;font-size:8px;letter-spacing:1px;">НАЗВАНИЕ</th>
               <th style="text-align:center;padding:5px 10px;font-weight:800;font-size:8px;letter-spacing:1px;width:120px;">ВЫЗОВ</th>
             </tr>
