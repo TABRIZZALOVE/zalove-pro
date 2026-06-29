@@ -21929,27 +21929,23 @@ function renderCsRentalsBlock(rentals) {
   const rows = rentals.map((r, i) => {
     const initials = (r.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0,2).toUpperCase();
     const av = r.avatar
-      ? `<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:url('${r.avatar.replace(/'/g, "\\'")}') center/cover no-repeat #fff;border:1px solid var(--line);"></span>`
-      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:10px;font-weight:800;">${escapeHtml(initials)}</span>`;
+      ? `<span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:url('${r.avatar.replace(/'/g, "\\'")}') center/cover no-repeat #fff;border:1px solid var(--line);"></span>`
+      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:11px;font-weight:800;">${escapeHtml(initials)}</span>`;
     return `<tr>
-      <td style="padding:6px 8px;width:40px;text-align:center;">${av}</td>
-      <td style="padding:6px 8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="name" value="${escapeHtml(r.name||'')}" placeholder="Название (KinoStore, KIRILLIN...)" style="border:none;background:transparent;padding:4px 6px;font-weight:700;"></td>
-      <td style="padding:6px 8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="contactName" value="${escapeHtml(r.contactName||'')}" placeholder="Контакт-менеджер" style="border:none;background:transparent;padding:4px 6px;"></td>
-      <td style="padding:6px 8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="phone" value="${escapeHtml(r.phone||'')}" placeholder="+7..." style="border:none;background:transparent;padding:4px 6px;font-family:'Montserrat',monospace;"></td>
-      <td style="padding:6px 8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="note" value="${escapeHtml(r.note||'')}" placeholder="заметка" style="border:none;background:transparent;padding:4px 6px;font-size:12px;color:var(--muted);"></td>
-      <td style="padding:6px 8px;width:30px;text-align:center;"><button type="button" onclick="deleteCsRental(${i})" style="background:transparent;border:none;color:#b91c1c;font-size:14px;cursor:pointer;padding:4px;" title="Удалить">×</button></td>
+      <td style="padding:8px;width:50px;text-align:center;">${av}</td>
+      <td style="padding:8px;"><input class="cs-input" data-cs-rental-idx="${i}" data-cs-rental-field="name" value="${escapeHtml(r.name||'')}" placeholder="Название (KinoStore, KIRILLIN...)" style="border:none;background:transparent;padding:4px 6px;font-weight:700;font-size:13px;"></td>
+      <td style="padding:8px;width:140px;"><input class="cs-input cs-time" type="time" data-cs-rental-idx="${i}" data-cs-rental-field="callTime" value="${escapeHtml(r.callTime||'')}" style="border:none;background:transparent;padding:4px 6px;font-family:'Montserrat',monospace;font-weight:700;text-align:center;"></td>
+      <td style="padding:8px;width:36px;text-align:center;"><button type="button" onclick="deleteCsRental(${i})" style="background:transparent;border:none;color:#b91c1c;font-size:16px;cursor:pointer;padding:4px;" title="Удалить">×</button></td>
     </tr>`;
   }).join('');
   return `<div style="overflow-x:auto;">
     <table class="cs-people-table" style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="background:rgba(0,0,0,0.04);">
-          <th style="padding:8px;text-align:center;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;width:40px;">Лого</th>
+          <th style="padding:8px;text-align:center;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;width:50px;">Лого</th>
           <th style="padding:8px;text-align:left;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;">Название</th>
-          <th style="padding:8px;text-align:left;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;">Контакт</th>
-          <th style="padding:8px;text-align:left;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;">Телефон</th>
-          <th style="padding:8px;text-align:left;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;">Заметка</th>
-          <th style="padding:8px;width:30px;"></th>
+          <th style="padding:8px;text-align:center;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);font-weight:800;width:140px;">Время вызова</th>
+          <th style="padding:8px;width:36px;"></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -21959,7 +21955,7 @@ function renderCsRentalsBlock(rentals) {
 function addCsRental() {
   if (!_currentCsData) return;
   if (!Array.isArray(_currentCsData.rentals)) _currentCsData.rentals = [];
-  _currentCsData.rentals.push({ name: '', avatar: '', contactName: '', phone: '', note: '' });
+  _currentCsData.rentals.push({ name: '', avatar: '', callTime: '' });
   saveCsNow();
   renderCallsheetEditor();
   attachCsRentalHandlers();
@@ -21974,21 +21970,10 @@ function csRentalUpdateField(idx, field, value) {
   if (!_currentCsData || !Array.isArray(_currentCsData.rentals)) return;
   if (!_currentCsData.rentals[idx]) return;
   _currentCsData.rentals[idx][field] = value;
-  // Если меняется имя — подтягиваем логотип/контакт из глобального реестра
+  // Если меняется имя — подтягиваем только логотип из глобального реестра
   if (field === 'name' && value && (typeof DB.resolveRentalAvatar === 'function')) {
     const guess = DB.resolveRentalAvatar({ name: value });
     if (guess && !_currentCsData.rentals[idx].avatar) _currentCsData.rentals[idx].avatar = guess;
-    // Также подтянем контакт/телефон из реестра если в текущей записи пусто
-    try {
-      const reg = (DB.getRentalsRegistry && DB.getRentalsRegistry()) || {};
-      const key = 'rental:' + value.trim().toLowerCase();
-      const profile = reg[key];
-      if (profile) {
-        ['contactName','phone','note'].forEach(f => {
-          if (profile[f] && !_currentCsData.rentals[idx][f]) _currentCsData.rentals[idx][f] = profile[f];
-        });
-      }
-    } catch (_) {}
   }
   clearTimeout(_csSaveTimer);
   _csSaveTimer = setTimeout(saveCsNow, 600);
@@ -22026,9 +22011,7 @@ function pullRentalsFromProject() {
     _currentCsData.rentals.push({
       name: r.name || '',
       avatar: r.avatar || (DB.resolveRentalAvatar ? DB.resolveRentalAvatar({name: r.name}) : ''),
-      contactName: r.contactName || '',
-      phone: r.phone || '',
-      note: r.note || ''
+      callTime: ''
     });
     added++;
   });
@@ -22061,9 +22044,7 @@ function openCsRentalRegistryPicker() {
   _currentCsData.rentals.push({
     name: chosen.name,
     avatar: chosen.avatar || '',
-    contactName: chosen.contactName || '',
-    phone: chosen.phone || '',
-    note: chosen.note || ''
+    callTime: ''
   });
   saveCsNow();
   renderCallsheetEditor();
@@ -22406,6 +22387,39 @@ function buildCallsheetPrintHTML(project, cs) {
   if (cs.cast && cs.cast.length > 0) {
     const castLabel = 'КЛИЕНТ · БРЕНД · АРТИСТ · КАСТИНГ';
     html += compactTable(cs.cast, castLabel, cs.cast.length + ' чел.', '#6b1d1f', '#d8b8b9', true);
+  }
+
+  // ===== Ренталы =====
+  const rentals = Array.isArray(cs.rentals) ? cs.rentals.filter(r => (r.name || '').trim()) : [];
+  if (rentals.length > 0) {
+    const rentalRowsHtml = rentals.map((r, i) => {
+      const stripeBg = i % 2 ? '#fafafa' : '#ffffff';
+      const initials = ((r.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2) || '?').toUpperCase();
+      const avChip = r.avatar
+        ? `<span data-pdf-img="${escapeHtml(r.avatar)}" data-pdf-w="22" data-pdf-h="22" data-pdf-fit="contain" data-pdf-round="1" style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ffffff;border:1px solid #e5e5e5;vertical-align:middle;margin-right:8px;"></span>`
+        : `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:8.5px;font-weight:800;vertical-align:middle;margin-right:8px;">${escapeHtml(initials)}</span>`;
+      return `
+        <tr style="background:${stripeBg};border-bottom:1px solid #ececec;">
+          <td style="padding:6px 10px;font-size:10.5px;font-weight:700;">${avChip}<span style="vertical-align:middle;">${escapeHtml(r.name || '')}</span></td>
+          <td style="padding:6px 10px;text-align:center;font-weight:800;font-family:'Montserrat',monospace;font-size:10px;color:#0a0907;">${escapeHtml(r.callTime || '')}</td>
+        </tr>`;
+    }).join('');
+    html += `
+      <div style="margin:0 ${PAD_X}px 8px;">
+        <div style="background:#1e3a8a;color:white;padding:7px 12px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1px;">РЕНТАЛЫ · ТЕХНИКА И ОБОРУДОВАНИЕ</div>
+          <div style="font-size:9px;font-weight:700;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:2px;letter-spacing:0.5px;">${rentals.length} ${rentals.length === 1 ? 'рентал' : 'ренталов'}</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;background:white;border:1px solid #bfd6f4;border-top:none;">
+          <thead>
+            <tr style="background:#eaf1f9;color:#3a3a3a;">
+              <th style="text-align:left;padding:5px 10px;font-weight:800;font-size:8px;letter-spacing:1px;">НАЗВАНИЕ</th>
+              <th style="text-align:center;padding:5px 10px;font-weight:800;font-size:8px;letter-spacing:1px;width:120px;">ВЫЗОВ</th>
+            </tr>
+          </thead>
+          <tbody>${rentalRowsHtml}</tbody>
+        </table>
+      </div>`;
   }
 
   // ===== Footer =====
