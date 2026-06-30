@@ -24262,39 +24262,86 @@ async function exportShootplanToPdf() {
 
 function buildShootplanPrintHTML(project, sp) {
   const c = document.createElement('div');
-  c.style.cssText = 'position:absolute;left:-9999px;top:0;width:1240px;background:#fff;color:#0a0907;font-family:\'Montserrat\',-apple-system,Arial,sans-serif;font-weight:600;line-height:1.4;';
+
+  // ===== Brand kit + цвета как в вызывном =====
+  const bk = project.brandKit || {};
+  const ptype = (project.type || '').toLowerCase();
+  const isMV = ptype.includes('music') || ptype.includes('видео') || ptype.includes('mv') || ptype.includes('клип');
+  const accent = bk.accent || (isMV ? '#6b1d1f' : '#1d4ed8');
+  const accentDeep = bk.accent ? _darkenColor(bk.accent, 0.4) : (isMV ? '#3d1416' : '#0c1e7a');
+  const clientLogo = bk.logo || '';
+
+  // Шрифт — как в вызывном (брендкит → Google Font on-the-fly)
+  const fontStack = bk.fontFamily
+    ? `'${bk.fontFamily}', 'Montserrat', -apple-system, Arial, sans-serif`
+    : `'Montserrat', -apple-system, Arial, sans-serif`;
+  if (bk.fontFamily && !document.querySelector(`link[data-bk-font="${bk.fontFamily}"]`)) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(bk.fontFamily.replace(/ /g, '+'))}:wght@400;600;700;800;900&display=swap`;
+    link.dataset.bkFont = bk.fontFamily;
+    document.head.appendChild(link);
+  }
+
+  c.style.cssText = `position:absolute;left:-9999px;top:0;width:1240px;background:#fff;color:#0a0907;font-family:${fontStack};font-weight:600;line-height:1.4;`;
+
+  const PAD_X = 24;
+  const projectName = project.name || '';
+  const projectClient = project.client || '';
+  const projectArtist = project.artist || '';
+  const firstDate = (sp.days.find(d => d.date) || {}).date || '';
+  const hdrSubtitle = (isMV ? 'Music Video' : 'Commercial') + ' · Shooting Plan';
+  const daysCount = sp.days.length;
+  const daysWord = daysCount === 1 ? 'день' : (daysCount >= 2 && daysCount <= 4 ? 'дня' : 'дней');
+
   let html = `
-    <div style="background:#fff;padding:14px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5;">
-      <img src="logo.png" alt="ZALOVE" style="height:24px;width:auto;" crossorigin="anonymous">
-      <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;">Шутинг-план · ${new Date().toLocaleDateString('ru-RU')}</div>
+    <!-- ===== HEADER (в стиле вызывного) ===== -->
+    <div style="background:linear-gradient(135deg,${accent},${accentDeep});padding:10px ${PAD_X}px;display:flex;justify-content:space-between;align-items:center;color:white;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="logo.png" alt="ZALOVE" style="height:20px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
+        ${clientLogo ? `<span style="color:rgba(255,255,255,0.4);font-weight:300;">×</span><div data-pdf-img="${escapeHtml(clientLogo)}" data-pdf-w="48" data-pdf-h="20" data-pdf-fit="contain" style="width:48px;height:20px;background:transparent;display:inline-block;"></div>` : ''}
+        <div style="font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,0.85);text-transform:uppercase;font-weight:700;">${escapeHtml(hdrSubtitle)}</div>
+      </div>
+      <div style="text-align:right;">
+        ${firstDate ? `<div style="font-size:13px;font-weight:800;letter-spacing:0.3px;">${escapeHtml(formatDateRu(firstDate))}</div>` : ''}
+        <div style="font-size:8.5px;color:rgba(255,255,255,0.8);margin-top:1px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;">${daysCount} ${daysWord}</div>
+      </div>
     </div>
-    <div style="padding:20px 30px 8px;">
-      <div style="font-size:26px;font-weight:900;letter-spacing:-0.5px;">ШУТИНГ-ПЛАН</div>
-      <div style="font-size:13px;color:#444;margin-top:4px;">${escapeHtml(project.name || '')}${project.client ? ' · ' + escapeHtml(project.client) : ''}</div>
+
+    <!-- ===== TITLE ===== -->
+    <div style="padding:14px ${PAD_X}px 8px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:26px;font-weight:900;letter-spacing:-0.5px;line-height:1;">ШУТИНГ-ПЛАН</div>
+        <div style="font-size:11px;color:#666;font-weight:600;text-align:right;max-width:60%;">
+          ${escapeHtml(projectName)}${projectClient ? ' · ' + escapeHtml(projectClient) : ''}${projectArtist ? ' · <span style="color:#888;">' + escapeHtml(projectArtist) + '</span>' : ''}
+        </div>
+      </div>
     </div>
   `;
+
   sp.days.forEach((day, di) => {
     html += `
-      <div style="margin:18px 30px;page-break-inside:avoid;">
-        <div style="background:#0a0907;color:white;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
-          <div style="font-size:14px;font-weight:800;letter-spacing:0.5px;">${escapeHtml(day.title || 'День ' + (di + 1))}${day.date ? ' · ' + formatDateRu(day.date) : ''}</div>
-          <div style="font-size:11px;color:#bbb;">${day.callTime ? 'Сбор: ' + escapeHtml(day.callTime) : ''}${day.locationName ? ' · ' + escapeHtml(day.locationName) : ''}</div>
+      <div style="margin:14px ${PAD_X}px;page-break-inside:avoid;">
+        <!-- Плашка дня — цвет акцента бренда (как кастинг в вызывном) -->
+        <div style="background:${accent};color:white;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;">
+          <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(day.title || 'ДЕНЬ ' + (di + 1))}${day.date ? ' · ' + formatDateRu(day.date) : ''}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.9);font-weight:700;letter-spacing:0.5px;">${day.callTime ? 'СБОР: ' + escapeHtml(day.callTime) : ''}${day.locationName ? (day.callTime ? ' · ' : '') + escapeHtml(day.locationName) : ''}</div>
         </div>
-        ${day.address || day.contact || day.weather ? `<div style="padding:8px 14px;background:#fafafa;border:1px solid #ececec;border-top:none;font-size:11px;display:flex;gap:18px;color:#555;">${day.address ? '<span>📍 ' + escapeHtml(day.address) + '</span>' : ''}${day.contact ? '<span>📞 ' + escapeHtml(day.contact) + '</span>' : ''}${day.weather ? '<span>🌤 ' + escapeHtml(day.weather) + '</span>' : ''}</div>` : ''}
-        <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #ececec;border-top:none;">
+        ${day.address || day.contact || day.weather ? `<div style="padding:7px 12px;background:#faf3f3;border:1px solid #d8b8b9;border-top:none;font-size:10.5px;display:flex;gap:18px;color:#5a3a3b;font-weight:600;">${day.address ? '<span>📍 ' + escapeHtml(day.address) + '</span>' : ''}${day.contact ? '<span>📞 ' + escapeHtml(day.contact) + '</span>' : ''}${day.weather ? '<span>🌤 ' + escapeHtml(day.weather) + '</span>' : ''}</div>` : ''}
+        <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #d8b8b9;border-top:none;">
           <thead>
-            <tr style="background:#f5f5f0;color:#555;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;">
-              <th style="padding:6px 4px;border-right:1px solid #ececec;width:25px;">#</th>
-              <th style="padding:6px 6px;border-right:1px solid #ececec;width:170px;text-align:center;">Кадр</th>
-              <th style="padding:6px 6px;border-right:1px solid #ececec;width:108px;text-align:center;">Костюм артиста</th>
-              <th style="padding:6px 6px;border-right:1px solid #ececec;width:108px;text-align:center;">Костюм ГГ</th>
-              ${SP_COLUMNS.map(col => `<th style="padding:6px 8px;border-right:1px solid #ececec;text-align:left;">${escapeHtml(col.label)}</th>`).join('')}
+            <tr style="background:#faf3f3;color:${accentDeep};font-weight:800;font-size:9px;letter-spacing:0.7px;text-transform:uppercase;">
+              <th style="padding:7px 4px;border-right:1px solid #e8c8c9;width:25px;">#</th>
+              <th style="padding:7px 6px;border-right:1px solid #e8c8c9;width:170px;text-align:center;">КАДР</th>
+              <th style="padding:7px 6px;border-right:1px solid #e8c8c9;width:108px;text-align:center;">КОСТЮМ АРТИСТА</th>
+              <th style="padding:7px 6px;border-right:1px solid #e8c8c9;width:108px;text-align:center;">КОСТЮМ ГГ</th>
+              ${SP_COLUMNS.map(col => `<th style="padding:7px 8px;border-right:1px solid #e8c8c9;text-align:left;">${escapeHtml(col.label).toUpperCase()}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
             ${(day.rows || []).map((row, ri) => `
               <tr style="border-top:1px solid #ececec;">
-                <td style="padding:5px 4px;border-right:1px solid #ececec;text-align:center;color:#888;font-weight:600;background:#fafafa;">${ri + 1}</td>
+                <td style="padding:5px 4px;border-right:1px solid #ececec;text-align:center;color:#888;font-weight:700;background:#fafafa;">${ri + 1}</td>
                 <td style="padding:4px;border-right:1px solid #ececec;text-align:center;vertical-align:middle;background:#fafafa;width:170px;">
                   ${row.image
                     ? `<div data-pdf-img="${escapeHtml(row.image)}" data-pdf-w="160" data-pdf-h="90" style="width:160px;height:90px;background-color:#fff;border-radius:3px;display:inline-block;"></div>`
@@ -24315,12 +24362,13 @@ function buildShootplanPrintHTML(project, sp) {
             `).join('')}
           </tbody>
         </table>
-        ${day.notes ? `<div style="margin-top:8px;padding:8px 12px;background:#fffaf0;border-left:3px solid #fbbf24;font-size:11px;color:#444;">📝 ${escapeHtml(day.notes)}</div>` : ''}
+        ${day.notes ? `<div style="margin-top:8px;padding:8px 12px;background:#faf3f3;border-left:3px solid ${accent};font-size:11px;color:#5a3a3b;font-weight:600;">📝 ${escapeHtml(day.notes)}</div>` : ''}
       </div>
     `;
   });
-  html += `<div style="margin:30px 30px 20px;padding-top:10px;border-top:1px solid #e5e5e5;font-size:9px;color:#888;letter-spacing:0.5px;">
-    ZALOVE PRODUCTION · ${escapeHtml(project.name || '')} · Шутинг-план · ${new Date().toLocaleDateString('ru-RU')}
+
+  html += `<div style="margin:30px ${PAD_X}px 20px;padding-top:10px;border-top:1px solid #e5e5e5;font-size:9px;color:#888;letter-spacing:0.5px;text-align:center;font-weight:700;">
+    ZALOVE PRODUCTION · ${escapeHtml(projectName)} · ШУТИНГ-ПЛАН · ${new Date().toLocaleDateString('ru-RU')}
   </div>`;
   c.innerHTML = html;
   return c;
