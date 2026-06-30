@@ -8033,6 +8033,7 @@ body.dark-theme .task-deadline:focus { background: white; }
       <div class="doc-footer-info" id="sp-footer-info">—</div>
       <div style="display:flex; gap:6px;">
         <button class="btn-secondary btn" onclick="clearShootplanData()" title="Очистить ВСЁ содержимое шутинг-плана" style="color:#d63838;">🗑 Очистить</button>
+        <button class="btn-secondary btn" onclick="spImportFromFile()" title="Загрузить чужой шутинг-план из Excel / CSV / PDF и автоматически разложить по колонкам">📥 Импорт из файла</button>
         <button class="btn-secondary btn" onclick="shootplanAddDay()">＋ день</button>
       </div>
     </div>
@@ -23549,6 +23550,229 @@ function createShootplanRow() {
   const row = { id: newSpId('row'), image: '', costumeArtistImg: '', costumeHeroImg: '' };
   SP_COLUMNS.forEach(c => row[c.key] = '');
   return row;
+}
+
+/* ============================================================
+   ИМПОРТ ШУТИНГ-ПЛАНА ИЗ XLSX / CSV / PDF
+   ============================================================ */
+function spFuzzyMatchHeader(h) {
+  const s = (h || '').toString().toLowerCase().trim();
+  if (!s) return null;
+  if (/время\s*трек|^время$|^трек|^time$|^хроном|тайм\s*код|таймкод/i.test(s)) return 'time';
+  if (/съ[её]м|shoot|duration|длител|на\s*съ[её]мку/i.test(s)) return 'shootTime';
+  if (/^сцен|^scene|эпизод/i.test(s)) return 'scene';
+  if (/кадр|frame|план(\s|$)/i.test(s)) return 'frame';
+  if (/локац|location|место|где\s*снимаем|объект/i.test(s)) return 'location';
+  if (/актёр|каст|cast|герой|^гг|персонаж|артист/i.test(s)) return 'cast';
+  if (/^свет|light|lighting|осветител/i.test(s)) return 'light';
+  if (/камер|оптик|camera|lens|объектив/i.test(s)) return 'camera';
+  if (/^звук|sound|audio/i.test(s)) return 'sound';
+  if (/реквизит|prop|бутафор/i.test(s)) return 'props';
+  if (/замет|note|коммент|деталь|примеч|описан/i.test(s)) return 'notes';
+  return null;
+}
+
+async function spImportFromFile() {
+  if (!_spProject) { toast('Сначала открой шутинг-план', 'error'); return; }
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.xlsx,.xls,.csv,.tsv,.pdf,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  inp.style.display = 'none';
+  inp.onchange = async () => {
+    const file = inp.files && inp.files[0];
+    if (!file) { try { document.body.removeChild(inp); } catch(_){} return; }
+    try { document.body.removeChild(inp); } catch(_){}
+    if (file.size > 30 * 1024 * 1024) { toast('Файл слишком большой (макс 30 МБ)', 'error'); return; }
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    let rows = [];
+    try {
+      if (ext === 'pdf') {
+        toast('Парсю PDF — это занимает несколько секунд...', 'success');
+        rows = await spParsePdf(file);
+      } else {
+        toast('Парсю файл...', 'success');
+        rows = await spParseSpreadsheet(file);
+      }
+    } catch (e) {
+      console.error('[spImport]', e);
+      toast('Не удалось распарсить файл: ' + (e.message || 'unknown'), 'error');
+      return;
+    }
+    if (!rows || rows.length === 0) {
+      toast('В файле не нашлось строк, которые можно импортировать. Проверь что есть колонки: Сцена / Время / Локация / Кадр и т.д.', 'warn');
+      return;
+    }
+    spShowImportPreview(rows, file.name);
+  };
+  document.body.appendChild(inp);
+  inp.click();
+  setTimeout(() => { try { if (inp.parentNode) inp.parentNode.removeChild(inp); } catch(_){} }, 120000);
+}
+
+function spParseSpreadsheet(file) {
+  return new Promise((resolve, reject) => {
+    if (typeof XLSX === 'undefined') { reject(new Error('XLSX библиотека не загрузилась — перезагрузи страницу')); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const allRows = [];
+        wb.SheetNames.forEach(sheetName => {
+          const sheet = wb.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet, { defval: '', header: 1, raw: false });
+          if (!json || json.length < 2) return;
+          // Ищем строку-заголовок: где больше всего ячеек распознаны как известные колонки
+          let headerRow = -1, bestScore = 0;
+          const maxScan = Math.min(json.length, 10);
+          for (let i = 0; i < maxScan; i++) {
+            const score = (json[i] || []).filter(c => spFuzzyMatchHeader(String(c || ''))).length;
+            if (score > bestScore) { bestScore = score; headerRow = i; }
+          }
+          if (headerRow < 0 || bestScore < 2) return;
+          const headers = (json[headerRow] || []).map(h => spFuzzyMatchHeader(String(h || '')));
+          for (let i = headerRow + 1; i < json.length; i++) {
+            const r = json[i] || [];
+            const obj = {};
+            let hasData = false;
+            headers.forEach((key, idx) => {
+              if (!key) return;
+              const v = String(r[idx] != null ? r[idx] : '').trim();
+              if (v) { obj[key] = obj[key] ? (obj[key] + ' ' + v) : v; hasData = true; }
+            });
+            if (hasData) allRows.push(obj);
+          }
+        });
+        resolve(allRows);
+      } catch (e) { reject(e); }
+    };
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function _spLoadPdfJs() {
+  if (window.pdfjsLib) return window.pdfjsLib;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Не удалось загрузить PDF.js'));
+    document.head.appendChild(s);
+  });
+  if (window.pdfjsLib) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  return window.pdfjsLib;
+}
+
+async function spParsePdf(file) {
+  const pdfjs = await _spLoadPdfJs();
+  if (!pdfjs) throw new Error('PDF.js недоступен');
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data: buf }).promise;
+  const allItems = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const text = await page.getTextContent();
+    text.items.forEach(it => {
+      if (!it.str) return;
+      allItems.push({
+        page: p,
+        x: Math.round(it.transform[4]),
+        y: Math.round(it.transform[5]),
+        text: it.str.trim()
+      });
+    });
+  }
+  // Группируем по строкам (близкие Y одной страницы)
+  const sorted = allItems.slice().sort((a, b) => a.page - b.page || -(a.y - b.y) || (a.x - b.x));
+  const lines = [];
+  let curr = [];
+  let lastY = null, lastPage = 0;
+  sorted.forEach(it => {
+    if (!it.text) return;
+    if (lastY === null || it.page !== lastPage || Math.abs(it.y - lastY) > 4) {
+      if (curr.length) lines.push(curr);
+      curr = [];
+    }
+    curr.push(it);
+    lastY = it.y; lastPage = it.page;
+  });
+  if (curr.length) lines.push(curr);
+  // Ищем заголовок-строку
+  let headerIdx = -1, headerKeys = [], headerXs = [];
+  const maxScan = Math.min(lines.length, 30);
+  for (let i = 0; i < maxScan; i++) {
+    const cells = lines[i].slice().sort((a, b) => a.x - b.x);
+    const keys = cells.map(c => spFuzzyMatchHeader(c.text));
+    const score = keys.filter(Boolean).length;
+    if (score >= 3) {
+      headerIdx = i;
+      headerKeys = keys;
+      headerXs = cells.map(c => c.x);
+      break;
+    }
+  }
+  const out = [];
+  if (headerIdx < 0) {
+    // Fallback: каждая строка PDF → 1 row, всё в notes
+    return lines.slice(0, 200).map(l => {
+      const txt = l.slice().sort((a, b) => a.x - b.x).map(it => it.text).join(' ').trim();
+      return txt ? { notes: txt } : null;
+    }).filter(Boolean);
+  }
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    const cells = lines[i].slice().sort((a, b) => a.x - b.x);
+    const row = {};
+    let hasData = false;
+    cells.forEach(c => {
+      // Ближайший заголовок по X
+      let bestIdx = 0, bestDist = Infinity;
+      headerXs.forEach((hx, hi) => {
+        if (!headerKeys[hi]) return;
+        const d = Math.abs(c.x - hx);
+        if (d < bestDist) { bestDist = d; bestIdx = hi; }
+      });
+      const key = headerKeys[bestIdx];
+      if (!key) return;
+      row[key] = row[key] ? (row[key] + ' ' + c.text) : c.text;
+      hasData = true;
+    });
+    if (hasData) out.push(row);
+  }
+  return out;
+}
+
+function spShowImportPreview(rows, filename) {
+  if (!_spProject) return;
+  const sp = ensureShootplan(_spProject);
+  const summary = rows.slice(0, 5).map((r, i) => {
+    const parts = [];
+    if (r.scene) parts.push('сцена ' + r.scene);
+    if (r.time) parts.push(r.time);
+    if (r.location) parts.push('📍 ' + r.location.substring(0, 30));
+    if (r.notes) parts.push((r.notes).substring(0, 60));
+    return (i + 1) + '. ' + parts.join(' · ').substring(0, 100);
+  }).join('\n');
+  const msg = `Распознано ${rows.length} строк из «${filename}».\n\n` +
+              `Создать новый день в шутинг-плане и импортировать туда?\n\n` +
+              `Превью первых 5 строк:\n${summary}\n\n` +
+              `OK = создать новый день · Отмена = пропустить`;
+  if (!confirm(msg)) return;
+  const newDay = createShootplanDay(sp.days.length + 1);
+  const now = new Date();
+  newDay.title = 'Импорт · ' + (filename || '').replace(/\.[^.]+$/, '').slice(0, 30);
+  newDay.rows = rows.map(r => {
+    const row = { id: newSpId('row'), image: '', costumeArtistImg: '', costumeHeroImg: '' };
+    SP_COLUMNS.forEach(c => { row[c.key] = r[c.key] || ''; });
+    return row;
+  });
+  sp.days.push(newDay);
+  _spOpenDays.add(newDay.id);
+  DB.updateProject(_currentProjectId, { shootplan: sp });
+  if (typeof renderShootplanEditor === 'function') renderShootplanEditor();
+  toast(`Импортировано ${rows.length} строк в новый день ✓`, 'success');
 }
 
 // === КАРТИНКА в строке шутинг-плана ===
