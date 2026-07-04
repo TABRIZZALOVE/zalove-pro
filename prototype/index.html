@@ -10483,26 +10483,83 @@ const DB = {
   },
 
   save(data) {
-    // Стратегия: сначала пробуем полный кэш (с картинками). Если localStorage переполнен,
-    // деградируем — сохраняем только мета (без base64 картинок). Картинки остаются в RAM
-    // и на сервере — при следующем hydrate они вернутся в localStorage.
+    // Стратегия 4 уровней. Данные ВСЕГДА безопасны — они в RAM (_memCache) и на Supabase.
+    // localStorage — просто скорость запуска. Если не влезает — деградируем молча.
+    // Level 1: полный кэш с картинками
     try {
       localStorage.setItem(this.KEY, JSON.stringify(data));
     } catch (e) {
-      console.warn('DB save: full cache не помещается, пробую без base64 картинок', e?.message);
+      // Level 2: рекурсивная обрезка ВСЕХ base64 строк (изображения любых типов)
       try {
-        const slim = this._stripBase64Images(data);
-        localStorage.setItem(this.KEY, JSON.stringify(slim));
-        // Тихо — не пугаем пользователя, на сервере всё ок
-        console.info('DB save: сохранено без base64 (картинки в Supabase, подтянутся при F5)');
+        const noImgs = this._stripAllBase64(data);
+        localStorage.setItem(this.KEY, JSON.stringify(noImgs));
+        console.info('DB save L2: без картинок (все на Supabase, подтянутся при F5)');
       } catch (e2) {
-        console.error('DB save fail (даже без картинок)', e2);
-        // Финальный fallback: только если совсем катастрофа — показываем тост
-        if (typeof toast === 'function') toast('localStorage переполнен', 'error');
+        // Level 3: только скелет проектов — id, name, ключевые поля для сайдбара
+        try {
+          const skeleton = this._buildSkeletonCache(data);
+          localStorage.setItem(this.KEY, JSON.stringify(skeleton));
+          console.info('DB save L3: минимальный кэш (только meta проектов, детали — с сервера)');
+        } catch (e3) {
+          // Level 4: очищаем localStorage — данные живы в _memCache и на Supabase
+          try { localStorage.removeItem(this.KEY); } catch (_) {}
+          console.warn('DB save L4: localStorage очищен. RAM + Supabase в порядке.', e3?.message);
+          // Тост — только один раз за сессию, и с корректной информацией
+          if (!this._quotaWarnedOnce && typeof toast === 'function') {
+            this._quotaWarnedOnce = true;
+            toast('Локальный кэш очищен · данные на сервере', 'success');
+          }
+        }
       }
     }
     // Если поменялся brand — синкаем в profiles.data
     try { this._syncBrandIfChanged(data); } catch (e) { console.warn('syncBrand', e); }
+  },
+
+  // Рекурсивно вырезает ЛЮБУЮ base64-строку (data:...) — картинки, файлы.
+  // Работает по всему дереву, ловит поля, которые могут появиться в будущем.
+  _stripAllBase64(data) {
+    const walk = (v) => {
+      if (v === null || v === undefined) return v;
+      if (typeof v === 'string') {
+        // Обрезаем только если это реально base64 payload (> 500 символов, чтобы не тронуть URL типа "data:image/gif")
+        return (v.length > 500 && v.startsWith('data:')) ? '' : v;
+      }
+      if (Array.isArray(v)) return v.map(walk);
+      if (typeof v === 'object') {
+        const out = {};
+        for (const k in v) {
+          if (Object.prototype.hasOwnProperty.call(v, k)) out[k] = walk(v[k]);
+        }
+        return out;
+      }
+      return v;
+    };
+    return walk(data);
+  },
+
+  // Скелетный кэш: только поля, которые нужны для сайдбара и первичного отображения.
+  // Всё остальное подтянется с сервера при открытии проекта.
+  _buildSkeletonCache(data) {
+    return {
+      version: data.version || 1,
+      projects: (data.projects || []).map(p => ({
+        id: p.id,
+        name: p.name || '',
+        deadline: p.deadline || '',
+        days: p.days || 0,
+        client: p.client || '',
+        artist: p.artist || '',
+        type: p.type || '',
+        status: p.status || '',
+        priority: p.priority || '',
+        stage: p.stage || '',
+        updatedAt: p.updatedAt || '',
+        createdAt: p.createdAt || '',
+        // coverImage пропускаем — тяжёлое base64
+        coverImage: ''
+      }))
+    };
   },
 
   // Глубокий клон с обрезкой base64 картинок (для fallback кэша в localStorage)
