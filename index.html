@@ -8752,9 +8752,10 @@ body.dark-theme .task-deadline:focus { background: white; }
             <button type="button" id="re-logo-clear" onclick="_clearReLogo()" style="margin-top:6px;background:none;border:none;color:var(--muted,#888);font-size:11px;cursor:pointer;display:none;">× убрать</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;">
-            <div>
-              <label class="form-label">Название *</label>
-              <input class="form-input" id="re-name" placeholder="Например: KinoStore, KIRILLIN, RentRoom">
+            <div style="position:relative;">
+              <label class="form-label">Название * <span style="color:var(--muted,#888);font-weight:400;font-size:10.5px;margin-left:6px;">начни печатать — подтянет из других проектов</span></label>
+              <input class="form-input" id="re-name" placeholder="Например: KinoStore, KIRILLIN, RentRoom" oninput="_rentalAcInput(event)" onfocus="_rentalAcInput(event)" onblur="setTimeout(_rentalAcHide,200)" autocomplete="off">
+              <div id="re-name-suggest" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--line,#ddd);border-radius:8px;max-height:260px;overflow-y:auto;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;margin-top:4px;"></div>
             </div>
             <div>
               <label class="form-label">Сайт</label>
@@ -12349,6 +12350,103 @@ function deleteRental(rentalId) {
 }
 // Старый pickRentalAvatar оставляем для совместимости — открывает модал редактирования
 function pickRentalAvatar(rentalId) { openRentalEdit(rentalId); }
+
+// ===== АВТОКОМПЛИТ ДЛЯ ИНПУТА НАЗВАНИЯ РЕНТАЛА =====
+// Собирает все известные ренталы: (a) глобальный реестр (profiles.data.rentals),
+// (b) все ренталы из всех проектов. Дедуп по имени (case-insensitive).
+let _rentalAcMatches = [];
+
+function _getAllKnownRentals() {
+  const map = new Map();
+  // 1) Глобальный реестр
+  const reg = (DB.getRentalsRegistry && DB.getRentalsRegistry()) || {};
+  Object.values(reg).forEach(r => {
+    if (!r || !r.name) return;
+    const k = String(r.name).trim().toLowerCase();
+    if (!k) return;
+    map.set(k, { ...r });
+  });
+  // 2) Все ренталы из всех проектов — сливаем поля, приоритет непустым
+  try {
+    const all = (DB.getProjects && DB.getProjects()) || [];
+    all.forEach(p => {
+      (p.rentals || []).forEach(r => {
+        if (!r || !r.name) return;
+        const k = String(r.name).trim().toLowerCase();
+        if (!k) return;
+        const existing = map.get(k) || {};
+        const merged = { ...existing };
+        ['name', 'avatar', 'website', 'phone', 'telegram', 'note'].forEach(f => {
+          if (r[f] && !merged[f]) merged[f] = r[f];
+        });
+        map.set(k, merged);
+      });
+    });
+  } catch (e) { console.warn('_getAllKnownRentals scan', e); }
+  return Array.from(map.values()).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ru'));
+}
+
+function _rentalAcInput(ev) {
+  const box = document.getElementById('re-name-suggest');
+  if (!box) return;
+  const q = String((ev && ev.target && ev.target.value) || '').trim().toLowerCase();
+  const all = _getAllKnownRentals();
+  // Исключаем уже добавленные в текущий проект (кроме того, который редактируем)
+  let excludeNames = new Set();
+  try {
+    const project = DB.getProject(_currentProjectId);
+    (project?.rentals || []).forEach(r => {
+      if (!r || !r.name) return;
+      if (_editingRentalId && r.id === _editingRentalId) return; // редактируемый — не исключаем
+      excludeNames.add(String(r.name).trim().toLowerCase());
+    });
+  } catch (_) {}
+  const matches = all.filter(r => {
+    const n = String(r.name || '').toLowerCase();
+    if (!n) return false;
+    if (excludeNames.has(n)) return false;
+    if (!q) return true;
+    return n.includes(q);
+  }).slice(0, 12);
+  if (matches.length === 0) { box.style.display = 'none'; _rentalAcMatches = []; return; }
+  _rentalAcMatches = matches;
+  box.innerHTML = matches.map((r, i) => {
+    const avatar = r.avatar
+      ? `<div style="width:34px;height:34px;border-radius:6px;background:url('${String(r.avatar).replace(/'/g, "\\'")}') center/cover no-repeat #f3f3f3;flex-shrink:0;border:1px solid #eee;"></div>`
+      : `<div style="width:34px;height:34px;border-radius:6px;background:#f3f3f3;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;flex-shrink:0;">🎥</div>`;
+    const sub = [r.website, r.phone, r.telegram].filter(Boolean)[0] || '';
+    return `<div class="rental-ac-item" style="display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;border-bottom:1px solid #f5f5f5;" onmouseover="this.style.background='#faf3f3'" onmouseout="this.style.background='#fff'" onmousedown="event.preventDefault();_rentalAcPick(${i})">
+      ${avatar}
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13px;color:#0a0907;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.name || '')}</div>
+        ${sub ? `<div style="font-size:11px;color:#888;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(sub)}</div>` : ''}
+      </div>
+      <div style="font-size:10px;color:#bbb;letter-spacing:0.5px;text-transform:uppercase;font-weight:700;">↵</div>
+    </div>`;
+  }).join('');
+  box.style.display = 'block';
+}
+
+function _rentalAcHide() {
+  const box = document.getElementById('re-name-suggest');
+  if (box) box.style.display = 'none';
+}
+
+function _rentalAcPick(idx) {
+  const r = _rentalAcMatches[idx];
+  if (!r) return;
+  document.getElementById('re-name').value = r.name || '';
+  document.getElementById('re-website').value = r.website || '';
+  document.getElementById('re-phone').value = r.phone || '';
+  document.getElementById('re-telegram').value = r.telegram || '';
+  document.getElementById('re-note').value = r.note || '';
+  if (r.avatar) {
+    _reLogoTmp = r.avatar;
+    _renderReLogoPreview();
+  }
+  _rentalAcHide();
+  toast('Данные ' + (r.name || 'рентала') + ' подтянуты ✓', 'success');
+}
 
 // ===== ПУБЛИЧНАЯ ССЫЛКА ДЛЯ КЛИЕНТА =====
 function _genShareToken() {
