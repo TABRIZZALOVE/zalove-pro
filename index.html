@@ -574,6 +574,55 @@ body::before {
   pointer-events: none;
   z-index: 2;
 }
+
+/* ===== ЗАКРЫТЫЙ ПРОЕКТ · ШТАМП «ПРОЕКТ СДАН» ===== */
+.project-card.closed .poster,
+.detail-poster.closed {
+  filter: grayscale(30%) brightness(0.85);
+}
+.project-card.closed .poster::after {
+  background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.55) 100%);
+}
+.closed-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  padding: 8px 22px;
+  background: rgba(10, 138, 58, 0.92);
+  color: #fff;
+  border: 3px double rgba(255, 255, 255, 0.75);
+  border-radius: 4px;
+  font-family: 'Montserrat', -apple-system, sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255,255,255,0.15);
+  z-index: 25;
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.closed-stamp small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 2px;
+  opacity: 0.85;
+  margin-top: 2px;
+  font-weight: 700;
+}
+.detail-poster.closed .closed-stamp {
+  font-size: 34px;
+  padding: 14px 40px;
+  letter-spacing: 5px;
+  border-width: 4px;
+}
+.detail-poster.closed .closed-stamp small {
+  font-size: 11px;
+  letter-spacing: 3px;
+}
+
 .detail-info { padding-top: 4px; }
 .detail-meta-tags {
   display: flex;
@@ -7133,7 +7182,7 @@ body.dark-theme .task-deadline:focus { background: white; }
             <button class="btn-secondary btn">📨 Поделиться</button>
             <button class="btn-dark btn">🤖 В Telegram</button>
             <button class="btn btn-freeze" id="freeze-btn" onclick="toggleFreezeProject()" style="margin-left: auto;">❄ Заморозить</button>
-            <button class="btn-secondary btn">🎬 Закрыть проект</button>
+            <button class="btn-secondary btn" id="close-project-btn" onclick="toggleCloseProject()">🎬 Закрыть проект</button>
           </div>
         </div>
       </div>
@@ -9969,14 +10018,7 @@ document.querySelector('.logo-svg, .user-logo')?.addEventListener('click', () =>
   }
 });
 
-// --- CLOSE PROJECT button (для демо конфетти) ---
-// Привязка к кнопке "Закрыть проект" если будет на странице
-document.addEventListener('click', (e) => {
-  if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Закрыть проект')) {
-    launchConfetti();
-    playClapSound();
-  }
-});
+// (старый глобальный click-хендлер удалён — теперь конфетти+хлопушка идут внутри toggleCloseProject)
 
 // Load weather on open
 window.addEventListener('DOMContentLoaded', loadWeather);
@@ -10813,6 +10855,7 @@ function projectCardHTML(p, idx) {
   const deadlineStr = formatDeadline(p);
   const meta = [p.client, p.type, deadlineStr ? 'сдача ' + deadlineStr : ''].filter(Boolean).join(' · ');
   const isFrozen = p.status === 'frozen';
+  const isClosed = p.status === 'done' || p.status === 'closed';
 
   // Снежинки для замороженных
   const snowflakes = isFrozen ? [
@@ -10829,7 +10872,7 @@ function projectCardHTML(p, idx) {
   const posterStyle = hasCover ? `background-image: url('${coverUrl.replace(/'/g, "\\'")}');` : '';
 
   return `
-    <div class="project-card ${isFrozen ? 'frozen' : ''}" data-project-id="${p.id}" onclick="openProjectDetail('${p.id}', ${idx + 1})">
+    <div class="project-card ${isFrozen ? 'frozen' : ''} ${isClosed ? 'closed' : ''}" data-project-id="${p.id}" onclick="openProjectDetail('${p.id}', ${idx + 1})">
       <div class="card-actions">
         <button class="btn-edit" onclick="event.stopPropagation(); openProjectForm('${p.id}')" title="Редактировать">✎</button>
         <button onclick="event.stopPropagation(); deleteProjectConfirm('${p.id}', '${escapeHtml(p.name)}')" title="Удалить">×</button>
@@ -10845,6 +10888,7 @@ function projectCardHTML(p, idx) {
         <div class="poster-title">${escapeHtml(p.client || p.artist || '')}</div>
         <div class="poster-slate"><strong>${escapeHtml((p.name || '').toUpperCase())}</strong>${escapeHtml(p.type || '')}</div>
         <div class="poster-num">${num}</div>
+        ${isClosed ? '<div class="closed-stamp">ПРОЕКТ СДАН<small>closed</small></div>' : ''}
       </div>
       <div class="card-body">
         <div class="card-title">${escapeHtml(p.name || 'Без названия')}</div>
@@ -11388,6 +11432,30 @@ function openProjectDetail(id, idx) {
     const status = STATUS_TAGS[p.status || 'preprod'];
     statusEl.textContent = status.txt;
     statusEl.className = 'poster-tag ' + status.cls;
+  }
+
+  // ===== ЗАКРЫТЫЙ ПРОЕКТ: штамп + смена кнопки =====
+  const isClosedDetail = (p.status === 'done' || p.status === 'closed');
+  const posterElForStamp = document.getElementById('detail-poster');
+  if (posterElForStamp) {
+    const oldStamp = posterElForStamp.querySelector('.closed-stamp');
+    if (isClosedDetail) {
+      posterElForStamp.classList.add('closed');
+      if (!oldStamp) {
+        const st = document.createElement('div');
+        st.className = 'closed-stamp';
+        st.innerHTML = 'ПРОЕКТ СДАН<small>' + (p.deadline ? new Date(p.deadline).toLocaleDateString('ru-RU') : 'closed') + '</small>';
+        posterElForStamp.appendChild(st);
+      }
+    } else {
+      posterElForStamp.classList.remove('closed');
+      if (oldStamp) oldStamp.remove();
+    }
+  }
+  const closeBtn = document.getElementById('close-project-btn');
+  if (closeBtn) {
+    closeBtn.textContent = isClosedDetail ? '🔓 Открыть заново' : '🎬 Закрыть проект';
+    closeBtn.title = isClosedDetail ? 'Вернуть проект в работу' : 'Пометить проект как сданный · «ПРОЕКТ СДАН»';
   }
 
   // Бюджет
@@ -23541,6 +23609,68 @@ function toggleFreezeProject() {
   updateFreezeButton(updated);
   renderProjects();
   renderStats();
+}
+
+// ===== ЗАКРЫТЬ / ОТКРЫТЬ ЗАНОВО ПРОЕКТ =====
+function toggleCloseProject() {
+  if (!_currentProjectId) return;
+  const project = DB.getProject(_currentProjectId);
+  if (!project) return;
+  const isClosed = (project.status === 'done' || project.status === 'closed');
+  if (isClosed) {
+    if (!confirm('Открыть проект «' + project.name + '» заново?\\n\\nСтатус вернётся к предыдущему (или PRE-PROD), штамп «ПРОЕКТ СДАН» исчезнет.')) return;
+    DB.updateProject(_currentProjectId, {
+      status: project.prevStatus || 'preprod',
+      prevStatus: null,
+      closedAt: null
+    });
+    toast('Проект вернулся в работу 🔓', 'success');
+  } else {
+    if (!confirm('Закрыть проект «' + project.name + '»?\\n\\nСтатус → DONE, на карточке появится штамп «ПРОЕКТ СДАН». Проект остаётся в базе — можно открыть заново.')) return;
+    DB.updateProject(_currentProjectId, {
+      prevStatus: project.status || 'preprod',
+      status: 'done',
+      closedAt: new Date().toISOString()
+    });
+    toast('🎬 Проект сдан! Поздравляю ✓', 'success');
+    // Конфетти + звук хлопушки (как раньше)
+    try { if (typeof launchConfetti === 'function') launchConfetti(); } catch (_) {}
+    try { if (typeof playClapSound === 'function') playClapSound(); } catch (_) {}
+  }
+  // Перерисовать детали + список
+  const updated = DB.getProject(_currentProjectId);
+  try {
+    if (typeof updateDetail === 'function') updateDetail(updated);
+    else if (typeof renderProjectDetail === 'function') renderProjectDetail(updated);
+  } catch (_) {}
+  try { renderProjects(); } catch (_) {}
+  try { renderStats(); } catch (_) {}
+  // Явно обновляем плашку статуса и штамп
+  const statusEl = document.getElementById('detail-status');
+  if (statusEl) {
+    const s = STATUS_TAGS[updated.status || 'preprod'] || STATUS_TAGS.preprod;
+    statusEl.textContent = s.txt;
+    statusEl.className = 'poster-tag ' + s.cls;
+  }
+  const posterEl = document.getElementById('detail-poster');
+  if (posterEl) {
+    const nowClosed = (updated.status === 'done' || updated.status === 'closed');
+    const oldStamp = posterEl.querySelector('.closed-stamp');
+    if (nowClosed) {
+      posterEl.classList.add('closed');
+      if (!oldStamp) {
+        const st = document.createElement('div');
+        st.className = 'closed-stamp';
+        st.innerHTML = 'ПРОЕКТ СДАН<small>' + new Date().toLocaleDateString('ru-RU') + '</small>';
+        posterEl.appendChild(st);
+      }
+    } else {
+      posterEl.classList.remove('closed');
+      if (oldStamp) oldStamp.remove();
+    }
+  }
+  const btn = document.getElementById('close-project-btn');
+  if (btn) btn.textContent = (updated.status === 'done' || updated.status === 'closed') ? '🔓 Открыть заново' : '🎬 Закрыть проект';
 }
 
 // Обновить промо-блок сметы (вверху проекта)
