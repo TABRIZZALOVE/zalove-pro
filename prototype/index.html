@@ -22463,8 +22463,9 @@ function buildCallsheetPrintHTML(project, cs) {
 
   const PAD_X = 24; // боковой паддинг — компактнее
   const bk = project.brandKit || {};
-  const accent = bk.accent || (isMV ? '#6b1d1f' : '#1d4ed8');
-  const accentDeep = bk.accent ? _darkenColor(bk.accent, 0.4) : (isMV ? '#3d1416' : '#0c1e7a');
+  // Единый бренд-цвет ZALOVE — тёмно-красный. Раньше для commercial был синий — убрал.
+  const accent = bk.accent || '#6b1d1f';
+  const accentDeep = bk.accent ? _darkenColor(bk.accent, 0.4) : '#3d1416';
   const clientLogo = bk.logo || '';
   const brandFont = bk.fontFamily ? `${bk.fontFamily}, ` : '';
   // Если есть кастомный шрифт — переопределяем font-family контейнера
@@ -22680,7 +22681,7 @@ function buildCallsheetPrintHTML(project, cs) {
   }
 
   if (cs.cast && cs.cast.length > 0) {
-    const castLabel = 'КЛИЕНТ · БРЕНД · АРТИСТ · КАСТИНГ';
+    const castLabel = 'КЛИЕНТ · БРЕНД · АРТИСТ · АГЕНСТВО · КАСТИНГ';
     html += compactTable(cs.cast, castLabel, cs.cast.length + ' чел.', '#6b1d1f', '#d8b8b9', true);
   }
 
@@ -24422,8 +24423,9 @@ function buildShootplanPrintHTML(project, sp) {
   const bk = project.brandKit || {};
   const ptype = (project.type || '').toLowerCase();
   const isMV = ptype.includes('music') || ptype.includes('видео') || ptype.includes('mv') || ptype.includes('клип');
-  const accent = bk.accent || (isMV ? '#6b1d1f' : '#1d4ed8');
-  const accentDeep = bk.accent ? _darkenColor(bk.accent, 0.4) : (isMV ? '#3d1416' : '#0c1e7a');
+  // Единый бренд-цвет ZALOVE — тёмно-красный. Синий для commercial убран.
+  const accent = bk.accent || '#6b1d1f';
+  const accentDeep = bk.accent ? _darkenColor(bk.accent, 0.4) : '#3d1416';
   const clientLogo = bk.logo || '';
 
   // Шрифт — как в вызывном (брендкит → Google Font on-the-fly)
