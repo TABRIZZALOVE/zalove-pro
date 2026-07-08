@@ -21583,13 +21583,38 @@ function renderCallsheetEditor() {
         </div>
       </div>
       <div style="margin-top: 12px;">
-        <div class="cs-field-label">Логотип после «COMMERCIAL · CALL SHEET» (бренд / клиент / партнёр)</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
-          <div id="cs-header-logo-preview" style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo ? `url('${(cs.headerLogo).replace(/'/g, "\\'")}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo()" title="Загрузить логотип">${cs.headerLogo ? '' : '＋'}</div>
-          <button type="button" onclick="_pickCsHeaderLogo()" style="background:transparent;border:1px solid var(--line);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;">${cs.headerLogo ? 'Заменить лого' : 'Загрузить лого'}</button>
-          ${cs.headerLogo ? `<button type="button" onclick="_clearCsHeaderLogo()" style="background:transparent;border:1px solid #fecaca;color:#b91c1c;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;">× убрать</button>` : ''}
+        <div class="cs-field-label" style="margin-bottom:8px;">Логотипы в шапке PDF (клиент · продакшн · агентство)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px;">Слот 1 — клиент / бренд</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo ? `url('${(cs.headerLogo).replace(/'/g,"\\'")}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo()" title="Слот 1">${cs.headerLogo ? '' : '＋'}</div>
+              <button type="button" onclick="_pickCsHeaderLogo()" style="background:transparent;border:1px solid var(--line);color:var(--text);padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">${cs.headerLogo ? 'Заменить' : 'Загрузить'}</button>
+              ${cs.headerLogo ? `<button type="button" onclick="_clearCsHeaderLogo()" style="background:transparent;border:1px solid #fecaca;color:#b91c1c;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">× убрать</button>` : ''}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px;">Слот 2 — продакшн</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo2 ? `url('${(cs.headerLogo2).replace(/'/g,"\\'")}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo2 ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo2()" title="Слот 2">${cs.headerLogo2 ? '' : '＋'}</div>
+              <button type="button" onclick="_pickCsHeaderLogo2()" style="background:transparent;border:1px solid var(--line);color:var(--text);padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">${cs.headerLogo2 ? 'Заменить' : 'Загрузить'}</button>
+              ${cs.headerLogo2 ? `<button type="button" onclick="_clearCsHeaderLogo2()" style="background:transparent;border:1px solid #fecaca;color:#b91c1c;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">× убрать</button>` : ''}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px;">Слот 3 — агентство</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo3 ? `url('${(cs.headerLogo3).replace(/'/g,"\\'")}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo3 ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo3()" title="Слот 3">${cs.headerLogo3 ? '' : '＋'}</div>
+              <button type="button" onclick="_pickCsHeaderLogo3()" style="background:transparent;border:1px solid var(--line);color:var(--text);padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">${cs.headerLogo3 ? 'Заменить' : 'Загрузить'}</button>
+              ${cs.headerLogo3 ? `<button type="button" onclick="_clearCsHeaderLogo3()" style="background:transparent;border:1px solid #fecaca;color:#b91c1c;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">× убрать</button>` : ''}
+            </div>
+          </div>
         </div>
-        <div style="font-size:10.5px;color:var(--muted);margin-top:5px;">Появится в шапке PDF после текста «COMMERCIAL · CALL SHEET». PNG/JPG, до 500×200px рекомендуется.</div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:6px;">Логотипы появятся в шапке вызывного вместо логотипа ZALOVE. PNG/JPG, до 500×200px.</div>
+      </div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="cs-hide-requisites" ${cs.hideRequisites ? 'checked' : ''} onchange="toggleCsHideRequisites(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent,#6b1d1f);">
+        <label for="cs-hide-requisites" style="font-size:12px;color:var(--text);font-weight:600;cursor:pointer;">Скрыть реквизиты ИП (ИНН, ОГРНИП) в PDF</label>
       </div>
     </div>
 
@@ -22265,6 +22290,77 @@ function _clearCsHeaderLogo() {
   saveCsNow();
   renderCallsheetEditor();
 }
+function _pickCsHeaderLogo2() {
+  if (!_currentCsData) return;
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 500, maxH = 200;
+        const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
+        const w = Math.round(img.width * ratio), h = Math.round(img.height * ratio);
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        _currentCsData.headerLogo2 = canvas.toDataURL('image/png');
+        saveCsNow(); renderCallsheetEditor();
+        if (typeof toast === 'function') toast('Логотип 2 загружен ✓', 'success');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  document.body.appendChild(inp); inp.click();
+  setTimeout(() => { if (inp.parentNode) inp.remove(); }, 6000);
+}
+function _clearCsHeaderLogo2() {
+  if (!_currentCsData) return;
+  _currentCsData.headerLogo2 = '';
+  saveCsNow(); renderCallsheetEditor();
+}
+function _pickCsHeaderLogo3() {
+  if (!_currentCsData) return;
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 500, maxH = 200;
+        const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
+        const w = Math.round(img.width * ratio), h = Math.round(img.height * ratio);
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        _currentCsData.headerLogo3 = canvas.toDataURL('image/png');
+        saveCsNow(); renderCallsheetEditor();
+        if (typeof toast === 'function') toast('Логотип 3 загружен ✓', 'success');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  document.body.appendChild(inp); inp.click();
+  setTimeout(() => { if (inp.parentNode) inp.remove(); }, 6000);
+}
+function _clearCsHeaderLogo3() {
+  if (!_currentCsData) return;
+  _currentCsData.headerLogo3 = '';
+  saveCsNow(); renderCallsheetEditor();
+}
+function toggleCsHideRequisites(val) {
+  if (!_currentCsData) return;
+  _currentCsData.hideRequisites = !!val;
+  saveCsNow();
+}
 // Скрыть/показать аватарку в PDF для конкретной строки (crew/cast/rentals)
 function toggleCsHideAvatar(kind, idx) {
   if (!_currentCsData) return;
@@ -22576,17 +22672,20 @@ function buildCallsheetPrintHTML(project, cs) {
     }
   }
 
-  // Логотип после CALL SHEET — отдельное поле в шапке вызывного
-  const csHeaderLogo = (cs.headerLogo && cs.headerLogo.trim()) || '';
+  // Логотипы в шапке вызывного (3 слота: клиент / продакшн / агентство)
+  const csHeaderLogo  = (cs.headerLogo  && cs.headerLogo.trim())  || '';
+  const csHeaderLogo2 = (cs.headerLogo2 && cs.headerLogo2.trim()) || '';
+  const csHeaderLogo3 = (cs.headerLogo3 && cs.headerLogo3.trim()) || '';
+  const _logoSlot = (url) => url
+    ? `<span style="color:rgba(255,255,255,0.35);font-weight:300;margin:0 4px;">·</span><div data-pdf-img="${escapeHtml(url)}" data-pdf-w="80" data-pdf-h="22" data-pdf-fit="contain" style="width:80px;height:22px;background:transparent;display:inline-block;vertical-align:middle;"></div>`
+    : '';
 
   // ===== Header: лого + дата + день — единая полоса =====
   let html = `
     <div style="background:linear-gradient(135deg,${accent},${accentDeep});padding:10px ${PAD_X}px;display:flex;justify-content:space-between;align-items:center;color:white;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <img src="logo.png" alt="ZALOVE" style="height:20px;width:auto;filter:brightness(0) invert(1);" crossorigin="anonymous">
-        ${clientLogo ? `<span style="color:rgba(255,255,255,0.4);font-weight:300;">×</span><div data-pdf-img="${escapeHtml(clientLogo)}" data-pdf-w="48" data-pdf-h="20" data-pdf-fit="contain" style="width:48px;height:20px;background:transparent;display:inline-block;"></div>` : ''}
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         <div style="font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,0.85);text-transform:uppercase;font-weight:700;">${escapeHtml(hdrSubtitle)}</div>
-        ${csHeaderLogo ? `<span style="color:rgba(255,255,255,0.4);font-weight:300;margin:0 4px;">×</span><div data-pdf-img="${escapeHtml(csHeaderLogo)}" data-pdf-w="100" data-pdf-h="20" data-pdf-fit="contain" style="width:100px;height:20px;background:transparent;display:inline-block;"></div>` : ''}
+        ${_logoSlot(csHeaderLogo)}${_logoSlot(csHeaderLogo2)}${_logoSlot(csHeaderLogo3)}
       </div>
       <div style="text-align:right;">
         ${cs.date ? `<div style="font-size:13px;font-weight:800;letter-spacing:0.3px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
@@ -22783,7 +22882,7 @@ function buildCallsheetPrintHTML(project, cs) {
   // ===== Footer =====
   html += `
     <div style="margin:8px ${PAD_X}px 12px;padding-top:8px;border-top:1px solid #e5e5e5;font-size:7.5px;color:#999;text-align:center;line-height:1.5;font-weight:600;">
-      ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670<br>
+      ${cs.hideRequisites ? '' : 'ИП Залов Табриз Руслан-Оглы · ИНН 180204378651 · ОГРНИП 324508100144670<br>'}
       <span style="color:#bbb;">${escapeHtml(project.name || '')} · день ${_currentCsDay} · сгенерирован ${new Date().toLocaleDateString('ru-RU')}</span>
     </div>`;
 
