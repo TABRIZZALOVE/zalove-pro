@@ -21935,9 +21935,8 @@ function renderPeopleTable(kind, people) {
     const realAvatar = _findAvatarByName(project, p.name) || p.avatar || '';
     const avatar = p.hideAvatar ? '' : realAvatar;
     const hasAnyAvatar = !!realAvatar;
-    const hideBtn = hasAnyAvatar
-      ? `<button class="cs-hide-avatar-btn ${p.hideAvatar ? 'hidden-state' : ''}" onclick="toggleCsHideAvatar('${kind}', ${i})" title="${p.hideAvatar ? 'Показать фото в PDF' : 'Скрыть фото в PDF (только для этой строки)'}" style="background:transparent;border:1px solid ${p.hideAvatar ? '#b91c1c' : 'var(--line)'};color:${p.hideAvatar ? '#b91c1c' : 'var(--muted)'};padding:2px 7px;border-radius:5px;font-size:10px;cursor:pointer;margin-left:4px;font-weight:700;line-height:1.4;">${p.hideAvatar ? '🚫 без фото' : '👁'}</button>`
-      : '';
+    // Кнопка доступна для КАЖДОЙ строки: скрывает фото или кружок-инициалы в PDF
+    const hideBtn = `<button class="cs-hide-avatar-btn ${p.hideAvatar ? 'hidden-state' : ''}" onclick="toggleCsHideAvatar('${kind}', ${i})" title="${p.hideAvatar ? 'Вернуть аватарку в PDF' : 'Убрать аватарку из PDF (только для этой строки)'}" style="background:transparent;border:1px solid ${p.hideAvatar ? '#b91c1c' : 'var(--line)'};color:${p.hideAvatar ? '#b91c1c' : 'var(--muted)'};padding:2px 7px;border-radius:5px;font-size:10px;cursor:pointer;margin-left:4px;font-weight:700;line-height:1.4;">${p.hideAvatar ? '🚫 без фото' : '👁'}</button>`;
     return `
     <tr data-idx="${i}" data-kind="${kind}" draggable="true" class="cs-row-draggable">
       <td class="cs-drag-cell">
@@ -22894,11 +22893,14 @@ function buildCallsheetPrintHTML(project, cs) {
       const stripeBg = isCast ? (i % 2 ? '#faf3f3' : '#ffffff') : (i % 2 ? '#fafafa' : '#ffffff');
       const avatar = (!p.hideAvatar) ? (_findAvatarByName(project, p.name) || p.avatar || '') : '';
       const initials = ((p.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2) || '?').toUpperCase();
-      const avChip = avatar
-        // Two-pass placeholder: html2canvas нарисует пустой круг, потом jsPDF.addImage
-        // вставит оригинальный base64 поверх — кристальная резкость без re-rasterization.
-        ? `<span data-pdf-img="${escapeHtml(avatar)}" data-pdf-w="22" data-pdf-h="22" data-pdf-fit="cover" data-pdf-round="1" style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#0a0907;vertical-align:middle;margin-right:6px;"></span>`
-        : `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:8.5px;font-weight:800;vertical-align:middle;margin-right:6px;">${escapeHtml(initials)}</span>`;
+      // hideAvatar → вообще без кружка (ни фото, ни инициалов)
+      const avChip = p.hideAvatar
+        ? ''
+        : (avatar
+          // Two-pass placeholder: html2canvas нарисует пустой круг, потом jsPDF.addImage
+          // вставит оригинальный base64 поверх — кристальная резкость без re-rasterization.
+          ? `<span data-pdf-img="${escapeHtml(avatar)}" data-pdf-w="22" data-pdf-h="22" data-pdf-fit="cover" data-pdf-round="1" style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#0a0907;vertical-align:middle;margin-right:6px;"></span>`
+          : `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:8.5px;font-weight:800;vertical-align:middle;margin-right:6px;">${escapeHtml(initials)}</span>`);
       return `
         <tr style="background:${stripeBg};border-bottom:1px solid #ececec;">
           <td style="padding:5px 10px;font-weight:700;font-size:10px;">
