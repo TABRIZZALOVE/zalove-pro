@@ -19,7 +19,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Версия зафиксирована (было @2 — авто-обновлялось и могло сломать приложение без предупреждения) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.2"></script>
 <script>
   // Supabase config — self-hosted на VPS Timeweb
   window.SUPABASE_URL = 'https://147-45-100-91.sslip.io';
@@ -10284,6 +10285,23 @@ const DB = {
     } catch (e) { console.warn('hydrate profile', e); }
 
     const serverProjects = (projects || []).map(r => this._fromDb(r));
+    // SEC-02: продюсеру догружаем финансы из отдельной таблицы project_finances
+    // и накладываем на проекты. До миграции (таблицы нет) — тихо пропускаем,
+    // финансы остаются там, где были (в projects.data), поведение не меняется.
+    if (!this._isFinancialBlocked()) {
+      try {
+        const { data: fins, error: fErr } = await this.client
+          .from('project_finances')
+          .select('project_id,data');
+        if (!fErr && Array.isArray(fins) && fins.length) {
+          const finMap = new Map(fins.map(f => [f.project_id, f.data || {}]));
+          serverProjects.forEach(p => {
+            const f = finMap.get(p.id);
+            if (f) this._applyFinances(p, f);
+          });
+        }
+      } catch (e) { /* таблицы ещё нет — работаем по-старому */ }
+    }
     // ЗАЩИТА ОТ ПОТЕРИ: если локальный проект свежее по updatedAt — берём локальную версию
     // (это бывает когда юзер обновил страницу до того как сервер успел получить последний save)
     let merged = serverProjects;
@@ -10690,6 +10708,67 @@ const DB = {
     }
     return p;
   },
+  // ── SEC-02: новая модель финансов (отдельная таблица project_finances) ──
+  // Финансовые ключи, которые в новой модели живут в project_finances, а не в projects.data.
+  _FIN_KEYS: ['estimate', 'estimateTeam', 'estimateExtra', 'subestimates', 'budgetClient'],
+
+  // Собрать финансовую часть проекта в объект для project_finances.data
+  _extractFinances(project) {
+    const fin = {};
+    if (!project) return fin;
+    this._FIN_KEYS.forEach(k => { if (project[k] !== undefined) fin[k] = project[k]; });
+    if (project.budget !== undefined && project.budget !== null) fin.budget = project.budget;
+    if (project.reports) {
+      const rf = {};
+      Object.keys(project.reports).forEach(day => {
+        const r = project.reports[day];
+        if (r && r.finance !== undefined) rf[day] = r.finance;
+      });
+      if (Object.keys(rf).length) fin.reportsFinance = rf;
+    }
+    return fin;
+  },
+
+  // Наложить финансы из project_finances на объект проекта в памяти (для продюсера)
+  _applyFinances(project, fin) {
+    if (!project || !fin) return project;
+    this._FIN_KEYS.forEach(k => { if (fin[k] !== undefined) project[k] = fin[k]; });
+    if (fin.budget !== undefined && fin.budget !== null) project.budget = fin.budget;
+    if (fin.reportsFinance && typeof fin.reportsFinance === 'object') {
+      project.reports = project.reports || {};
+      Object.keys(fin.reportsFinance).forEach(day => {
+        project.reports[day] = project.reports[day] || {};
+        project.reports[day].finance = fin.reportsFinance[day];
+      });
+    }
+    return project;
+  },
+
+  // Запись проекта продюсером с поддержкой новой модели.
+  // 1) пишем финансы в project_finances; 2) если получилось — в projects.data
+  //    финансы НЕ дублируем (вырезаем), чтобы ассистент не мог их прочитать.
+  // Если таблицы ещё нет (до миграции) — откат на старое поведение: полный проект в projects.data.
+  async _pushProjectRow(id, row) {
+    if (!id || String(id).startsWith('tmp_') || !row) return;
+    let finOk = false;
+    try {
+      const fin = this._extractFinances(row);
+      const { error: fErr } = await this.client
+        .from('project_finances')
+        .upsert({ project_id: id, data: fin, updated_at: new Date().toISOString() });
+      finOk = !fErr;
+      if (fErr) console.debug('[fin] project_finances недоступна, пишу по-старому:', fErr.message);
+    } catch (e) { finOk = false; }
+    const payload = finOk ? this._stripFinancials(row) : row;
+    this._pending++;
+    const { error } = await this._withRetry(
+      () => this.client.from('projects').update(this._toDb(payload)).eq('id', id),
+      'update'
+    );
+    this._pending--;
+    if (error) this._errToast('update', error);
+  },
+
   getProjects() {
     // In-memory кэш (с картинками) приоритетнее localStorage (может быть без картинок
     // из-за quota). _memCache хранит свежие данные после hydrate/мутаций.
@@ -10812,15 +10891,10 @@ const DB = {
             });
           });
       } else {
-        // ПРОДЮСЕР: полный merged, как раньше
-        this._pending++;
-        this._withRetry(
-          () => this.client.from('projects').update(this._toDb(merged)).eq('id', id),
-          'update'
-        ).then(({ error }) => {
-          this._pending--;
-          if (error) this._errToast('update', error);
-        });
+        // ПРОДЮСЕР: новая модель — финансы уходят в project_finances, в projects.data
+        // не дублируются. До миграции (таблицы нет) _pushProjectRow сам откатится
+        // на полный merged, т.е. поведение остаётся прежним.
+        this._pushProjectRow(id, merged);
       }
     }
     return merged;
@@ -10896,7 +10970,7 @@ function projectCardHTML(p, idx) {
   // Обложка: если задана — используем как фон-картинку
   const coverUrl = p.coverImage || '';
   const hasCover = !!coverUrl;
-  const posterStyle = hasCover ? `background-image: url('${coverUrl.replace(/'/g, "\\'")}');` : '';
+  const posterStyle = hasCover ? `background-image: url('${safeUrl(coverUrl)}');` : '';
 
   return `
     <div class="project-card ${isFrozen ? 'frozen' : ''} ${isClosed ? 'closed' : ''}" data-project-id="${p.id}" onclick="openProjectDetail('${p.id}', ${idx + 1})">
@@ -10932,6 +11006,18 @@ function projectCardHTML(p, idx) {
 function escapeHtml(s) {
   if (s == null) return '';
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Санитайзинг URL перед вставкой в src / background-image.
+// Пропускает легитимные значения без изменений (data:image, http(s), blob, относительные),
+// но блокирует инъекции: кавычки/<> (выход из атрибута), javascript:/vbscript:, не-картиночные data:.
+function safeUrl(u) {
+  if (u == null) return '';
+  const str = String(u).trim();
+  if (str === '') return '';
+  if (/["'<>]/.test(str)) return '';
+  if (/^\s*(javascript|vbscript|file|data):/i.test(str) && !/^data:image\//i.test(str)) return '';
+  return str;
 }
 
 /* ===== Popup с разбивкой расчёта прогресса ===== */
@@ -12323,7 +12409,7 @@ function renderTeamMembers(project) {
     const initials = (m.name_ru || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
     const av = DB.resolveAvatar(m); // глобальный реестр имеет приоритет если member.avatar пуст
     const avatarCell = av
-      ? `<div class="tm-avatar tm-avatar-img" style="background-image:url('${av.replace(/'/g, "\\'")}')" onclick="event.stopPropagation(); pickTeamAvatar('${m.id}')" title="Сменить фото"><span class="tm-avatar-edit">✎</span></div>`
+      ? `<div class="tm-avatar tm-avatar-img" style="background-image:url('${safeUrl(av)}')" onclick="event.stopPropagation(); pickTeamAvatar('${m.id}')" title="Сменить фото"><span class="tm-avatar-edit">✎</span></div>`
       : `<div class="tm-avatar tm-avatar-init" onclick="event.stopPropagation(); pickTeamAvatar('${m.id}')" title="Загрузить фото">${escapeHtml(initials || '?')}<span class="tm-avatar-edit">＋</span></div>`;
     return `
     <tr>
@@ -12368,7 +12454,7 @@ function renderRentals(project) {
     // ищем в глобальном реестре profile.data.rentals → в других проектах
     const av = (DB.resolveRentalAvatar && DB.resolveRentalAvatar(r)) || '';
     const avatarHtml = av
-      ? `<div class="rental-avatar has-img" style="background-image:url('${av.replace(/'/g, "\\'")}')"></div>`
+      ? `<div class="rental-avatar has-img" style="background-image:url('${safeUrl(av)}')"></div>`
       : `<div class="rental-avatar">${escapeHtml(initials || '?')}</div>`;
     return `
       <div class="rental-card" onclick="openRentalEdit('${r.id}')" title="Открыть для редактирования" style="cursor:pointer;">
@@ -12413,8 +12499,8 @@ function _renderReLogoPreview() {
   const clearBtn = document.getElementById('re-logo-clear');
   if (!el) return;
   if (_reLogoTmp) {
-    el.style.backgroundImage = `url('${_reLogoTmp.replace(/'/g, "\\'")}')`;
-    el.style.background = `url('${_reLogoTmp.replace(/'/g, "\\'")}') center/contain no-repeat #fff`;
+    el.style.backgroundImage = `url('${safeUrl(_reLogoTmp)}')`;
+    el.style.background = `url('${safeUrl(_reLogoTmp)}') center/contain no-repeat #fff`;
     el.style.borderStyle = 'solid';
     el.textContent = '';
     if (clearBtn) clearBtn.style.display = '';
@@ -12564,7 +12650,7 @@ function _rentalAcInput(ev) {
   _rentalAcMatches = matches;
   box.innerHTML = matches.map((r, i) => {
     const avatar = r.avatar
-      ? `<div style="width:34px;height:34px;border-radius:6px;background:url('${String(r.avatar).replace(/'/g, "\\'")}') center/cover no-repeat #f3f3f3;flex-shrink:0;border:1px solid #eee;"></div>`
+      ? `<div style="width:34px;height:34px;border-radius:6px;background:url('${safeUrl(String(r.avatar))}') center/cover no-repeat #f3f3f3;flex-shrink:0;border:1px solid #eee;"></div>`
       : `<div style="width:34px;height:34px;border-radius:6px;background:#f3f3f3;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;flex-shrink:0;">🎥</div>`;
     const sub = [r.website, r.phone, r.telegram].filter(Boolean)[0] || '';
     return `<div class="rental-ac-item" style="display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;border-bottom:1px solid #f5f5f5;" onmouseover="this.style.background='#faf3f3'" onmouseout="this.style.background='#fff'" onmousedown="event.preventDefault();_rentalAcPick(${i})">
@@ -12716,7 +12802,7 @@ function renderSharePage(d) {
     <div class="sp-header">
       <div class="sp-logos">
         <img src="logo.png" alt="ZALOVE" style="filter:brightness(0) invert(1);">
-        ${clientLogo ? `<span class="x">×</span><img src="${clientLogo}" alt="${escapeHtml(client)}" style="height:40px;background:#fff;padding:4px;border-radius:4px;">` : ''}
+        ${clientLogo ? `<span class="x">×</span><img src="${safeUrl(clientLogo)}" alt="${escapeHtml(client)}" style="height:40px;background:#fff;padding:4px;border-radius:4px;">` : ''}
       </div>
       <div class="sp-title">Клиентский портал</div>
     </div>
@@ -12967,7 +13053,7 @@ function _lbRenderLocItem(it) {
     : cats.map(c => `<button type="button" class="lb-loc-move-opt" onclick="_lbMoveLocationTo('${it.id}','${c.id}',event)">${c.icon || '📁'} ${escapeHtml(c.name)}</button>`).join('');
   const photos = Array.isArray(it.photos) ? it.photos : [];
   const photoTiles = photos.map((p, i) =>
-    `<div class="lb-loc-photo" style="background-image:url('${p.replace(/'/g, "\\'")}')" onclick="_lbOpenLightbox('${it.id}', ${i})" title="Открыть · ${i + 1} / ${photos.length}"></div>`
+    `<div class="lb-loc-photo" style="background-image:url('${safeUrl(p)}')" onclick="_lbOpenLightbox('${it.id}', ${i})" title="Открыть · ${i + 1} / ${photos.length}"></div>`
   ).join('');
   const photoStrip = `
     <div class="lb-loc-photos">
@@ -13170,7 +13256,7 @@ function _lbRenderLightbox() {
   const showNav = total > 1;
   const thumbs = total > 1 ? `
     <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:6px;background:rgba(0,0,0,0.55);backdrop-filter:blur(20px);padding:8px;border-radius:14px;max-width:calc(100vw - 80px);overflow-x:auto;cursor:default;" onclick="event.stopPropagation()">
-      ${it.photos.map((p, i) => `<div onclick="_lbLightboxIdx=${i};_lbRenderLightbox();" style="width:54px;height:40px;flex-shrink:0;border-radius:6px;background:url('${p.replace(/'/g, "\\'")}') center/cover no-repeat;cursor:pointer;border:2px solid ${i === _lbLightboxIdx ? '#fff' : 'transparent'};transition:border-color .15s;"></div>`).join('')}
+      ${it.photos.map((p, i) => `<div onclick="_lbLightboxIdx=${i};_lbRenderLightbox();" style="width:54px;height:40px;flex-shrink:0;border-radius:6px;background:url('${safeUrl(p)}') center/cover no-repeat;cursor:pointer;border:2px solid ${i === _lbLightboxIdx ? '#fff' : 'transparent'};transition:border-color .15s;"></div>`).join('')}
     </div>` : '';
   lb.innerHTML = `
     <button onclick="event.stopPropagation();_lbCloseLightbox()" style="position:absolute;top:20px;right:20px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.10);color:#fff;border:1px solid rgba(255,255,255,0.20);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Закрыть (Esc)">×</button>
@@ -13180,7 +13266,7 @@ function _lbRenderLightbox() {
     <button onclick="event.stopPropagation();_lbDeleteCurrentPhoto()" style="position:absolute;top:20px;right:80px;height:42px;padding:0 14px;border-radius:21px;background:rgba(239,68,68,0.18);color:#fca5a5;border:1px solid rgba(239,68,68,0.35);font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" title="Удалить это фото">🗑 Удалить</button>
     ${showNav ? `<button onclick="event.stopPropagation();_lbLightboxPrev()" style="position:absolute;left:24px;top:50%;transform:translateY(-50%);width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.20);font-size:26px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);" title="Предыдущее (←)">‹</button>` : ''}
     ${showNav ? `<button onclick="event.stopPropagation();_lbLightboxNext()" style="position:absolute;right:24px;top:50%;transform:translateY(-50%);width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.20);font-size:26px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);" title="Следующее (→)">›</button>` : ''}
-    <img src="${photo}" style="max-width:calc(100vw - 140px);max-height:calc(100vh - 160px);border-radius:10px;box-shadow:0 20px 60px -20px rgba(0,0,0,0.6);display:block;cursor:default;" onclick="event.stopPropagation()" />
+    <img src="${safeUrl(photo)}" style="max-width:calc(100vw - 140px);max-height:calc(100vh - 160px);border-radius:10px;box-shadow:0 20px 60px -20px rgba(0,0,0,0.6);display:block;cursor:default;" onclick="event.stopPropagation()" />
     ${thumbs}
   `;
 }
@@ -13788,14 +13874,14 @@ function _renderBkLogoPreview() {
   const clearBtn = document.getElementById('bk-logo-clear');
   const pv = document.getElementById('bk-preview-logo');
   if (_bkLogoTmp) {
-    el.style.backgroundImage = `url('${_bkLogoTmp.replace(/'/g, "\\'")}')`;
+    el.style.backgroundImage = `url('${safeUrl(_bkLogoTmp)}')`;
     el.style.backgroundSize = 'contain';
     el.style.backgroundPosition = 'center';
     el.style.backgroundRepeat = 'no-repeat';
-    el.style.background = `url('${_bkLogoTmp.replace(/'/g, "\\'")}') center/contain no-repeat #fff`;
+    el.style.background = `url('${safeUrl(_bkLogoTmp)}') center/contain no-repeat #fff`;
     el.textContent = '';
     if (clearBtn) clearBtn.style.display = '';
-    if (pv) { pv.style.background = `url('${_bkLogoTmp.replace(/'/g, "\\'")}') center/contain no-repeat #fff`; pv.textContent = ''; }
+    if (pv) { pv.style.background = `url('${safeUrl(_bkLogoTmp)}') center/contain no-repeat #fff`; pv.textContent = ''; }
   } else {
     el.style.background = '#fff';
     el.textContent = '＋';
@@ -14021,7 +14107,7 @@ function _renderCbAvatarPreview() {
   const initials = (name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase() || '?';
   if (_cbAvatarTmp) {
     el.classList.add('tm-avatar-img'); el.classList.remove('tm-avatar-init');
-    el.style.backgroundImage = `url('${_cbAvatarTmp.replace(/'/g, "\\'")}')`;
+    el.style.backgroundImage = `url('${safeUrl(_cbAvatarTmp)}')`;
     el.textContent = '';
     if (clearBtn) clearBtn.style.display = '';
   } else {
@@ -14147,7 +14233,7 @@ function renderClients(project) {
     const initials = (c.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase() || '?';
     const avatar = c.avatar || '';
     const avatarCell = avatar
-      ? `<div class="tm-avatar tm-avatar-img" style="background-image:url('${avatar.replace(/'/g, "\\'")}')" onclick="event.stopPropagation(); pickClientAvatar('${c.id}')" title="Сменить фото"><span class="tm-avatar-edit">✎</span></div>`
+      ? `<div class="tm-avatar tm-avatar-img" style="background-image:url('${safeUrl(avatar)}')" onclick="event.stopPropagation(); pickClientAvatar('${c.id}')" title="Сменить фото"><span class="tm-avatar-edit">✎</span></div>`
       : `<div class="tm-avatar tm-avatar-init" onclick="event.stopPropagation(); pickClientAvatar('${c.id}')" title="Загрузить фото">${escapeHtml(initials)}<span class="tm-avatar-edit">＋</span></div>`;
     const contactBits = [];
     if (c.phone) contactBits.push(escapeHtml(c.phone));
@@ -14545,7 +14631,7 @@ function _personChipHtml(name, avatar, kind = 'compact') {
   const size = kind === 'big' ? 40 : (kind === 'mid' ? 32 : 24);
   const fz = kind === 'big' ? 13 : (kind === 'mid' ? 10 : 8.5);
   if (avatar) {
-    return `<span class="person-chip person-chip-img" style="width:${size}px;height:${size}px;font-size:${fz}px;background-image:url('${avatar.replace(/'/g, "\\'")}')" title="${escapeHtml(name || '')}"><span class="person-chip-init">${escapeHtml(initials)}</span></span>`;
+    return `<span class="person-chip person-chip-img" style="width:${size}px;height:${size}px;font-size:${fz}px;background-image:url('${safeUrl(avatar)}')" title="${escapeHtml(name || '')}"><span class="person-chip-init">${escapeHtml(initials)}</span></span>`;
   }
   return `<span class="person-chip person-chip-init-only" style="width:${size}px;height:${size}px;font-size:${fz}px;" title="${escapeHtml(name || '')}">${escapeHtml(initials)}</span>`;
 }
@@ -14645,7 +14731,7 @@ function _renderMbAvatarPreview(m) {
   if (_mbAvatarTmp) {
     el.classList.add('tm-avatar-img');
     el.classList.remove('tm-avatar-init');
-    el.style.backgroundImage = `url('${_mbAvatarTmp.replace(/'/g, "\\'")}')`;
+    el.style.backgroundImage = `url('${safeUrl(_mbAvatarTmp)}')`;
     el.textContent = '';
     if (clearBtn) clearBtn.style.display = '';
   } else {
@@ -16638,7 +16724,7 @@ function storyboardRowHtml(row, idx) {
     <div class="sb-num">${idx + 1}</div>
     <div class="sb-img-wrap">
       ${row.image
-        ? `<img src="${row.image}" alt="кадр ${idx + 1}">
+        ? `<img src="${safeUrl(row.image)}" alt="кадр ${idx + 1}">
            <button class="sb-img-del" title="Удалить картинку" onclick="storyboardRemoveImage(${idx})">✕</button>`
         : `<label class="sb-upload">＋ референс<input type="file" accept="image/*" hidden onchange="storyboardUploadImage(${idx}, this)"></label>`}
     </div>
@@ -16911,7 +16997,7 @@ async function exportStoryboardToPdf() {
                 <div style="display:flex;align-items:center;justify-content:center;${FONT_CSS}font-size:34px;font-weight:900;color:#0a0907;line-height:1;">${globalIdx + 1}</div>
                 <div style="width:320px;height:164px;background:#fafaf8;border-radius:5px;overflow:hidden;display:block;">
                   ${r.image
-                    ? `<img src="${r.image}" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;" crossorigin="anonymous">`
+                    ? `<img src="${safeUrl(r.image)}" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;" crossorigin="anonymous">`
                     : `<div style="color:#aaa;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;line-height:164px;text-align:center;${FONT_CSS}">Без референса</div>`}
                 </div>
                 <div style="padding:2px 6px;font-size:12.5px;line-height:1.45;color:#1a1a18;white-size:pre-wrap;white-space:pre-wrap;word-break:break-word;overflow:hidden;font-weight:500;${FONT_CSS}">${escapeHtml(r.description || '')}</div>
@@ -21588,7 +21674,7 @@ function renderCallsheetEditor() {
           <div>
             <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px;">Слот 1 — клиент / бренд</div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo ? `url('${(cs.headerLogo).replace(/'/g,"\\'")}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo()" title="Слот 1">${cs.headerLogo ? '' : '＋'}</div>
+              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo ? `url('${safeUrl((cs.headerLogo))}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo()" title="Слот 1">${cs.headerLogo ? '' : '＋'}</div>
               <button type="button" onclick="_pickCsHeaderLogo()" style="background:transparent;border:1px solid var(--line);color:var(--text);padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">${cs.headerLogo ? 'Заменить' : 'Загрузить'}</button>
               ${cs.headerLogo ? `<button type="button" onclick="_clearCsHeaderLogo()" style="background:transparent;border:1px solid #fecaca;color:#b91c1c;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">× убрать</button>` : ''}
             </div>
@@ -21596,7 +21682,7 @@ function renderCallsheetEditor() {
           <div>
             <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px;">Слот 2 — продакшн</div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo2 ? `url('${(cs.headerLogo2).replace(/'/g,"\\'")}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo2 ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo2()" title="Слот 2">${cs.headerLogo2 ? '' : '＋'}</div>
+              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo2 ? `url('${safeUrl((cs.headerLogo2))}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo2 ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo2()" title="Слот 2">${cs.headerLogo2 ? '' : '＋'}</div>
               <button type="button" onclick="_pickCsHeaderLogo2()" style="background:transparent;border:1px solid var(--line);color:var(--text);padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">${cs.headerLogo2 ? 'Заменить' : 'Загрузить'}</button>
               ${cs.headerLogo2 ? `<button type="button" onclick="_clearCsHeaderLogo2()" style="background:transparent;border:1px solid #fecaca;color:#b91c1c;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">× убрать</button>` : ''}
             </div>
@@ -21604,7 +21690,7 @@ function renderCallsheetEditor() {
           <div>
             <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px;">Слот 3 — агентство</div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo3 ? `url('${(cs.headerLogo3).replace(/'/g,"\\'")}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo3 ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo3()" title="Слот 3">${cs.headerLogo3 ? '' : '＋'}</div>
+              <div style="width:64px;height:30px;border-radius:6px;background:${cs.headerLogo3 ? `url('${safeUrl((cs.headerLogo3))}') center/contain no-repeat #fff` : '#f3f3f3'};border:1.5px ${cs.headerLogo3 ? 'solid var(--line,#ddd)' : 'dashed var(--line-2,#ccc)'};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;" onclick="_pickCsHeaderLogo3()" title="Слот 3">${cs.headerLogo3 ? '' : '＋'}</div>
               <button type="button" onclick="_pickCsHeaderLogo3()" style="background:transparent;border:1px solid var(--line);color:var(--text);padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">${cs.headerLogo3 ? 'Заменить' : 'Загрузить'}</button>
               ${cs.headerLogo3 ? `<button type="button" onclick="_clearCsHeaderLogo3()" style="background:transparent;border:1px solid #fecaca;color:#b91c1c;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">× убрать</button>` : ''}
             </div>
@@ -21685,7 +21771,7 @@ function renderCallsheetEditor() {
           <div class="cs-field-label">🖼 Картинка локации</div>
           <div class="cs-location-img-wrap" id="cs-location-img-wrap">
             ${cs.locationImage
-              ? `<div class="cs-location-img-thumb"><img src="${cs.locationImage}" alt=""><button type="button" class="cs-location-img-del" onclick="removeCallsheetLocationImage()" title="Удалить">×</button></div>`
+              ? `<div class="cs-location-img-thumb"><img src="${safeUrl(cs.locationImage)}" alt=""><button type="button" class="cs-location-img-del" onclick="removeCallsheetLocationImage()" title="Удалить">×</button></div>`
               : `<label class="cs-location-img-upload">＋ загрузить кадр локации<input type="file" accept="image/*" hidden onchange="uploadCallsheetLocationImage(this)"></label>`}
           </div>
         </div>
@@ -22222,7 +22308,7 @@ function renderCsRentalsBlock(rentals) {
     const hasAvatar = !!r.avatar;
     const showAv = hasAvatar && !r.hideAvatar;
     const av = showAv
-      ? `<span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:url('${r.avatar.replace(/'/g, "\\'")}') center/cover no-repeat #fff;border:1px solid var(--line);"></span>`
+      ? `<span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:url('${safeUrl(r.avatar)}') center/cover no-repeat #fff;border:1px solid var(--line);"></span>`
       : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#d8d3c4;color:#1a1a1a;font-size:11px;font-weight:800;${r.hideAvatar ? 'opacity:0.55;' : ''}">${escapeHtml(initials)}</span>`;
     const hideBtn = hasAvatar
       ? `<button type="button" onclick="toggleCsHideAvatar('rentals', ${i})" style="background:transparent;border:1px solid ${r.hideAvatar ? '#b91c1c' : 'var(--line)'};color:${r.hideAvatar ? '#b91c1c' : 'var(--muted)'};padding:3px 8px;border-radius:6px;font-size:10.5px;cursor:pointer;font-weight:700;line-height:1.3;" title="${r.hideAvatar ? 'Показать фото в PDF' : 'Скрыть фото в PDF'}">${r.hideAvatar ? '🚫 без фото' : '👁 скрыть фото'}</button>`
@@ -22272,6 +22358,7 @@ function _pickCsHeaderLogo() {
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, w, h);
         _currentCsData.headerLogo = canvas.toDataURL('image/png');
+        _currentCsData.headerLogoAR = w / h;
         saveCsNow();
         renderCallsheetEditor();
         if (typeof toast === 'function') toast('Логотип загружен ✓', 'success');
@@ -22308,6 +22395,7 @@ function _pickCsHeaderLogo2() {
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         _currentCsData.headerLogo2 = canvas.toDataURL('image/png');
+        _currentCsData.headerLogo2AR = w / h;
         saveCsNow(); renderCallsheetEditor();
         if (typeof toast === 'function') toast('Логотип 2 загружен ✓', 'success');
       };
@@ -22341,6 +22429,7 @@ function _pickCsHeaderLogo3() {
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         _currentCsData.headerLogo3 = canvas.toDataURL('image/png');
+        _currentCsData.headerLogo3AR = w / h;
         saveCsNow(); renderCallsheetEditor();
         if (typeof toast === 'function') toast('Логотип 3 загружен ✓', 'success');
       };
@@ -22676,16 +22765,21 @@ function buildCallsheetPrintHTML(project, cs) {
   const csHeaderLogo  = (cs.headerLogo  && cs.headerLogo.trim())  || '';
   const csHeaderLogo2 = (cs.headerLogo2 && cs.headerLogo2.trim()) || '';
   const csHeaderLogo3 = (cs.headerLogo3 && cs.headerLogo3.trim()) || '';
-  const _logoSlot = (url) => url
-    ? `<span style="color:rgba(255,255,255,0.35);font-weight:300;margin:0 4px;">·</span><div data-pdf-img="${escapeHtml(url)}" data-pdf-w="80" data-pdf-h="22" data-pdf-fit="contain" style="width:80px;height:22px;background:transparent;display:inline-block;vertical-align:middle;"></div>`
-    : '';
+  // Все лого — единая высота 26px (ровно под полосу), ширина — по пропорциям картинки
+  const _logoSlot = (url, ar) => {
+    if (!url) return '';
+    const H = 26;
+    const a = (ar && isFinite(ar) && ar > 0) ? Math.min(Math.max(ar, 0.8), 4.5) : 3;
+    const W = Math.round(H * a);
+    return `<span style="color:rgba(255,255,255,0.35);font-weight:300;margin:0 4px;">·</span><div data-pdf-img="${escapeHtml(url)}" data-pdf-w="${W}" data-pdf-h="${H}" data-pdf-fit="contain" style="width:${W}px;height:${H}px;background:transparent;display:inline-block;vertical-align:middle;"></div>`;
+  };
 
   // ===== Header: лого + дата + день — единая полоса =====
   let html = `
     <div style="background:linear-gradient(135deg,${accent},${accentDeep});padding:10px ${PAD_X}px;display:flex;justify-content:space-between;align-items:center;color:white;">
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         <div style="font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,0.85);text-transform:uppercase;font-weight:700;">${escapeHtml(hdrSubtitle)}</div>
-        ${_logoSlot(csHeaderLogo)}${_logoSlot(csHeaderLogo2)}${_logoSlot(csHeaderLogo3)}
+        ${_logoSlot(csHeaderLogo, cs.headerLogoAR)}${_logoSlot(csHeaderLogo2, cs.headerLogo2AR)}${_logoSlot(csHeaderLogo3, cs.headerLogo3AR)}
       </div>
       <div style="text-align:right;">
         ${cs.date ? `<div style="font-size:13px;font-weight:800;letter-spacing:0.3px;">${escapeHtml(formatDateRu(cs.date))}</div>` : ''}
@@ -24374,17 +24468,17 @@ function renderShootplanEditor() {
                     <td class="sp-row-num">${ri + 1}</td>
                     <td class="sp-img-cell">
                       ${row.image
-                        ? `<div class="sp-img-thumb"><img src="${row.image}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'image')">×</button></div>`
+                        ? `<div class="sp-img-thumb"><img src="${safeUrl(row.image)}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'image')">×</button></div>`
                         : `<label class="sp-img-upload">＋<input type="file" accept="image/*" hidden onchange="spUploadImage(${di}, ${ri}, this, 'image')"></label>`}
                     </td>
                     <td class="sp-img-cell-v">
                       ${row.costumeArtistImg
-                        ? `<div class="sp-img-thumb-v"><img src="${row.costumeArtistImg}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'costumeArtistImg')">×</button></div>`
+                        ? `<div class="sp-img-thumb-v"><img src="${safeUrl(row.costumeArtistImg)}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'costumeArtistImg')">×</button></div>`
                         : `<label class="sp-img-upload-v" title="Костюм артиста">＋<input type="file" accept="image/*" hidden onchange="spUploadImage(${di}, ${ri}, this, 'costumeArtistImg')"></label>`}
                     </td>
                     <td class="sp-img-cell-v">
                       ${row.costumeHeroImg
-                        ? `<div class="sp-img-thumb-v"><img src="${row.costumeHeroImg}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'costumeHeroImg')">×</button></div>`
+                        ? `<div class="sp-img-thumb-v"><img src="${safeUrl(row.costumeHeroImg)}" alt=""><button class="sp-img-del" onclick="spRemoveImage(${di}, ${ri}, 'costumeHeroImg')">×</button></div>`
                         : `<label class="sp-img-upload-v" title="Костюм главного героя">＋<input type="file" accept="image/*" hidden onchange="spUploadImage(${di}, ${ri}, this, 'costumeHeroImg')"></label>`}
                     </td>
                     ${SP_COLUMNS.map(c => `
@@ -25528,7 +25622,7 @@ function ppmImageSlot(path, value, placeholder) {
   const hasImage = !!value;
   return `
     <label class="ppm-image-slot ${hasImage ? 'has-image' : ''}">
-      ${hasImage ? `<img src="${value}" alt="">` : `<div class="icon">📷</div><div>${escapeHtml(placeholder || 'фото')}</div>`}
+      ${hasImage ? `<img src="${safeUrl(value)}" alt="">` : `<div class="icon">📷</div><div>${escapeHtml(placeholder || 'фото')}</div>`}
       ${hasImage ? '<div class="ppm-image-replace">заменить</div>' : ''}
       <input type="file" accept="image/*" data-ppm-image="${path}">
     </label>
@@ -25631,7 +25725,7 @@ function ppmImageBox(meta, boxW, boxH, radius) {
   const dx = Math.round((boxW - fit.w) / 2);
   const dy = Math.round((boxH - fit.h) / 2);
   return `<div style="width:${boxW}px;height:${boxH}px;background:#f5f5f0;border-radius:${radius}px;position:relative;overflow:hidden;">
-    <img src="${meta.src}" style="position:absolute;left:${dx}px;top:${dy}px;width:${fit.w}px;height:${fit.h}px;display:block;" crossorigin="anonymous">
+    <img src="${safeUrl(meta.src)}" style="position:absolute;left:${dx}px;top:${dy}px;width:${fit.w}px;height:${fit.h}px;display:block;" crossorigin="anonymous">
   </div>`;
 }
 
@@ -26216,7 +26310,7 @@ function _unused_buildPpmPrintHTML(project, p) {
     html += secHead('02', 'Раскадровка');
     html += `<div style="padding:0 40px 20px;display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;">${p.storyboard.map((f, i) => `
       <div style="background:#fafafa;border:1px solid #ececec;border-radius:4px;overflow:hidden;">
-        <div style="width:100%;height:200px;background:#f5f5f0;position:relative;">${f.image ? `<img src="${f.image}" style="width:100%;height:100%;object-fit:contain;display:block;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px;">[ кадр ' + (i + 1) + ' ]</div>'}</div>
+        <div style="width:100%;height:200px;background:#f5f5f0;position:relative;">${f.image ? `<img src="${safeUrl(f.image)}" style="width:100%;height:100%;object-fit:contain;display:block;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px;">[ кадр ' + (i + 1) + ' ]</div>'}</div>
         <div style="padding:8px 10px;font-size:11px;min-height:32px;">${escapeHtml(f.caption || '—')}</div>
       </div>
     `).join('')}</div>`;
@@ -26226,7 +26320,7 @@ function _unused_buildPpmPrintHTML(project, p) {
     html += secHead('03', 'Локации');
     html += `<div style="padding:0 40px 20px;">${p.locations.map((loc, i) => `
       <div style="display:grid;grid-template-columns:280px 1fr;gap:18px;margin-bottom:18px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;">
-        <div style="width:100%;height:200px;background:#f5f5f0;border-radius:4px;">${loc.image ? `<img src="${loc.image}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px;">[ фото ]</div>'}</div>
+        <div style="width:100%;height:200px;background:#f5f5f0;border-radius:4px;">${loc.image ? `<img src="${safeUrl(loc.image)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px;">[ фото ]</div>'}</div>
         <div style="font-size:11px;">
           <div style="font-size:14px;font-weight:700;margin-bottom:6px;">${escapeHtml(loc.name || 'Локация #' + (i + 1))}</div>
           ${loc.address ? `<div><b>Адрес:</b> ${escapeHtml(loc.address)}</div>` : ''}
@@ -26241,7 +26335,7 @@ function _unused_buildPpmPrintHTML(project, p) {
     html += secHead('04', 'Кастинг');
     html += `<div style="padding:0 40px 20px;display:grid;grid-template-columns:repeat(2, 1fr);gap:14px;">${p.cast.map((a, i) => `
       <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:12px;">
-        <div style="width:100%;height:160px;background:#f5f5f0;border-radius:4px;">${a.image ? `<img src="${a.image}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">[ фото ]</div>'}</div>
+        <div style="width:100%;height:160px;background:#f5f5f0;border-radius:4px;">${a.image ? `<img src="${safeUrl(a.image)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">[ фото ]</div>'}</div>
         <div style="font-size:11px;">
           <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#888;text-transform:uppercase;">${escapeHtml(a.category || 'актёр')}</div>
           <div style="font-size:15px;font-weight:800;margin-top:2px;">${escapeHtml(a.name || '—')}</div>
@@ -26263,7 +26357,7 @@ function _unused_buildPpmPrintHTML(project, p) {
           ${[0, 1, 2].map(idx => {
             const opt = (co.options || [])[idx] || {};
             return `<div>
-              <div style="width:100%;height:180px;background:#f5f5f0;border-radius:4px;">${opt.image ? `<img src="${opt.image}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">[ опция ${idx + 1} ]</div>`}</div>
+              <div style="width:100%;height:180px;background:#f5f5f0;border-radius:4px;">${opt.image ? `<img src="${safeUrl(opt.image)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">[ опция ${idx + 1} ]</div>`}</div>
               ${opt.caption ? `<div style="font-size:10px;margin-top:4px;">${escapeHtml(opt.caption)}</div>` : ''}
             </div>`;
           }).join('')}
@@ -26277,8 +26371,8 @@ function _unused_buildPpmPrintHTML(project, p) {
     html += `<div style="padding:0 40px 20px;">${p.makeup.map((m, i) => {
       const actor = p.cast.find(a => a.id === m.castId);
       return `<div style="margin-bottom:14px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;">
-        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ГРИМ</div><div style="width:100%;height:140px;background:#f5f5f0;border-radius:4px;">${m.makeupRef ? `<img src="${m.makeupRef}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div></div>
-        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ВОЛОСЫ</div><div style="width:100%;height:140px;background:#f5f5f0;border-radius:4px;">${m.hairRef ? `<img src="${m.hairRef}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div></div>
+        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ГРИМ</div><div style="width:100%;height:140px;background:#f5f5f0;border-radius:4px;">${m.makeupRef ? `<img src="${safeUrl(m.makeupRef)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div></div>
+        <div><div style="font-size:10px;color:#888;margin-bottom:4px;">ВОЛОСЫ</div><div style="width:100%;height:140px;background:#f5f5f0;border-radius:4px;">${m.hairRef ? `<img src="${safeUrl(m.hairRef)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div></div>
         <div style="font-size:11px;">
           <div style="font-size:13px;font-weight:700;margin-bottom:4px;">${actor ? escapeHtml(actor.name) : '—'}</div>
           <div style="white-space:pre-wrap;color:#444;">${escapeHtml(m.description || '—')}</div>
@@ -26293,9 +26387,9 @@ function _unused_buildPpmPrintHTML(project, p) {
       <div style="margin-bottom:18px;background:#fafafa;border:1px solid #ececec;border-radius:4px;padding:14px;">
         ${d.name ? `<div style="font-size:13px;font-weight:700;margin-bottom:8px;">${escapeHtml(d.name)}</div>` : ''}
         <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;">
-          <div style="width:100%;height:160px;background:#f5f5f0;border-radius:4px;">${d.floorplan ? `<img src="${d.floorplan}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">[ floor plan ]</div>'}</div>
-          <div style="width:100%;height:160px;background:#f5f5f0;border-radius:4px;">${d.detail1 ? `<img src="${d.detail1}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div>
-          <div style="width:100%;height:160px;background:#f5f5f0;border-radius:4px;">${d.detail2 ? `<img src="${d.detail2}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div>
+          <div style="width:100%;height:160px;background:#f5f5f0;border-radius:4px;">${d.floorplan ? `<img src="${safeUrl(d.floorplan)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">[ floor plan ]</div>'}</div>
+          <div style="width:100%;height:160px;background:#f5f5f0;border-radius:4px;">${d.detail1 ? `<img src="${safeUrl(d.detail1)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div>
+          <div style="width:100%;height:160px;background:#f5f5f0;border-radius:4px;">${d.detail2 ? `<img src="${safeUrl(d.detail2)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div>
         </div>
         ${d.notes ? `<div style="margin-top:8px;font-size:11px;color:#555;">${escapeHtml(d.notes)}</div>` : ''}
       </div>
@@ -26311,7 +26405,7 @@ function _unused_buildPpmPrintHTML(project, p) {
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">${cat.label}</div>
         <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:8px;">${p.props[cat.key].map(item => `
           <div>
-            <div style="width:100%;height:110px;background:#f5f5f0;border-radius:3px;">${item.image ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:3px;">` : ''}</div>
+            <div style="width:100%;height:110px;background:#f5f5f0;border-radius:3px;">${item.image ? `<img src="${safeUrl(item.image)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:3px;">` : ''}</div>
             ${item.caption ? `<div style="font-size:9px;margin-top:3px;color:#555;">${escapeHtml(item.caption)}</div>` : ''}
           </div>
         `).join('')}</div>
@@ -26371,7 +26465,7 @@ function _unused_buildPpmPrintHTML(project, p) {
       <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;">
         ${(cs.items || []).map(item => `
           <div>
-            <div style="width:100%;height:140px;background:#f5f5f0;border-radius:4px;">${item.image ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div>
+            <div style="width:100%;height:140px;background:#f5f5f0;border-radius:4px;">${item.image ? `<img src="${safeUrl(item.image)}" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:4px;">` : ''}</div>
             ${item.caption ? `<div style="font-size:10px;margin-top:4px;color:#444;">${escapeHtml(item.caption)}</div>` : ''}
           </div>
         `).join('')}
@@ -29525,7 +29619,7 @@ async function runCoverSearch() {
       return;
     }
     out.innerHTML = results.map(r => `
-      <div class="cover-result" style="background-image:url('${r.url.replace(/'/g, "\\'")}');" onclick="selectCover('${r.url.replace(/'/g, "\\'")}')" title="${escapeHtml(r.label || '')}">
+      <div class="cover-result" style="background-image:url('${safeUrl(r.url)}');" onclick="selectCover('${safeUrl(r.url)}')" title="${escapeHtml(r.label || '')}">
         ${r.label ? `<div class="label">${escapeHtml(r.label)}</div>` : ''}
       </div>
     `).join('');
